@@ -131,6 +131,23 @@ function DistributionList({
   );
 }
 
+function OverviewPanelTitle({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div>
+      <div className="font-medium">{title}</div>
+      <div className="mt-1 text-sm font-normal leading-tight text-muted-foreground">
+        {description}
+      </div>
+    </div>
+  );
+}
+
 export function AgentOverviewTopicsAndSentiment({
   topics,
   sentimentDistribution,
@@ -147,7 +164,12 @@ export function AgentOverviewTopicsAndSentiment({
   return (
     <div className={analyticsAdvancedOverviewGridClass}>
       <AnalyticsChartShell
-        title="Common Topics"
+        title={(
+          <OverviewPanelTitle
+            title="Common Topics"
+            description="Most discussed themes across conversations in the selected period."
+          />
+        )}
         className="bg-background"
         isEmpty={topicChartData.length === 0}
         emptyMessage="Nothing available yet."
@@ -192,7 +214,12 @@ export function AgentOverviewTopicsAndSentiment({
       </AnalyticsChartShell>
 
       <AnalyticsChartShell
-        title="Customer Sentiment"
+        title={(
+          <OverviewPanelTitle
+            title="Customer Sentiment"
+            description="Sentiment breakdown across conversations in the selected period."
+          />
+        )}
         className="bg-background"
         shellStyle={{ height: COMMON_TOPICS_SHELL_HEIGHT }}
       >

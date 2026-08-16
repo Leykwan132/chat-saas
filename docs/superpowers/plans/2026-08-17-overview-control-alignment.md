@@ -16,6 +16,7 @@
 - Keep the compact metric cards selectable and content-sized.
 - Use a 12px label-to-value gap with the 24px value typography.
 - Display a graph subtitle for the selected metric and its Daily/Cumulative aggregation.
+- Display muted descriptions below the Common Topics and Customer Sentiment titles, using medium title weights.
 - Keep code self-explanatory with no comments and under 300 lines per code file.
 - Run tests with Node 22 in the same shell command.
 
@@ -66,6 +67,8 @@ In `AgentOverviewMetrics.tsx`, remove the unused `rows` destructuring, remove `m
 Use `gap-3` for the label/value stack and `text-2xl` for the value.
 
 In `AgentOverviewTrendChart.tsx`, accept the existing `OverviewTrendDataMode` and render a muted subtitle below the chart title, such as `Daily AI conversations in the selected period.`
+
+In `AgentOverviewTopicsAndSentiment.tsx`, use composed `AnalyticsChartShell` titles to render each panel's medium-weight title and its muted description without changing shared analytics panels.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
