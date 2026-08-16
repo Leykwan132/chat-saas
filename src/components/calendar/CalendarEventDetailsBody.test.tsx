@@ -28,7 +28,7 @@ test('renders summary beside internal notes in neutral content surfaces', () => 
   expect(markup).toContain('sm:grid-cols-2');
   expect(markup.match(/flex items-center gap-2/g)).toHaveLength(2);
   expect(markup.match(/size-4 shrink-0 text-muted-foreground/g)).toHaveLength(2);
-  expect(markup.match(/flex flex-col gap-1.5/g)).toHaveLength(2);
+  expect(markup.match(/flex flex-col gap-3/g)).toHaveLength(2);
   expect(markup).toContain('rounded-lg bg-muted px-4 py-3');
   expect(markup).toContain('mb-1 text-xl font-semibold tracking-tight text-foreground');
   expect(markup.indexOf('Internal notes')).toBeLessThan(markup.indexOf('Summary'));

@@ -162,7 +162,7 @@ function NotesBlock({ remarks }: { remarks?: string }) {
   const hasRemarks = Boolean(remarks?.trim());
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <NotebookPen className="size-4 shrink-0 text-muted-foreground" />
         <h3 className="text-sm font-semibold text-muted-foreground">Internal notes</h3>
@@ -176,7 +176,7 @@ function NotesBlock({ remarks }: { remarks?: string }) {
 
 function SummaryBlock({ summary }: { summary: string }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <AlignLeft className="size-4 shrink-0 text-muted-foreground" />
         <h3 className="text-sm font-semibold text-muted-foreground">Summary</h3>
