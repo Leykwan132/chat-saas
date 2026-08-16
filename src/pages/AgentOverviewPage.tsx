@@ -138,6 +138,7 @@ export default function AgentOverviewPage() {
       <AgentOverviewTrendChart
         rows={trendRows}
         mode={chartMode}
+        dataMode={trendDataMode}
       />
       <AgentOverviewTopicsAndSentiment
         topics={summary.trendingTopics}

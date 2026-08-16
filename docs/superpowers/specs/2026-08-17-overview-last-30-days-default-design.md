@@ -20,6 +20,7 @@ Show the rolling last 30 days when a user opens an agent Overview page, make its
 - Display each metric label above its value and let the card height follow the two-line content without reserved chart space.
 - Use slightly more label-to-value space and a smaller value size within each metric card.
 - Reduce the main Overview trend chart height from 497px to 400px so it is visible sooner below the metrics.
+- Display a concise graph subtitle that names the selected metric and whether values are daily or cumulative.
 
 ## Testing
 

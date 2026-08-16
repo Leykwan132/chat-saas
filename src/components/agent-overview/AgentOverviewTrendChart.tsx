@@ -8,6 +8,7 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatTooltipDateLabel } from '@/components/analytics/creditUsageChartModel';
+import type { OverviewTrendDataMode } from './agentOverviewTrendModel';
 
 export type OverviewChartMode =
   | 'aiAssistedConversations'
@@ -88,20 +90,33 @@ function hasModeData(rows: OverviewTrendRow[], mode: OverviewChartMode) {
   return rows.some((row) => row[mode] > 0);
 }
 
+function getTrendDescription(mode: OverviewChartMode, dataMode: OverviewTrendDataMode) {
+  const selectedLabel = getModeLabel(mode);
+  return dataMode === 'daily'
+    ? `Daily ${selectedLabel} in the selected period.`
+    : `Cumulative ${selectedLabel} across the selected period.`;
+}
+
 export function AgentOverviewTrendChart({
   rows,
   mode,
+  dataMode,
 }: {
   rows: OverviewTrendRow[];
   mode: OverviewChartMode;
+  dataMode: OverviewTrendDataMode;
 }) {
   const hasData = hasModeData(rows, mode);
   const selectedLabel = getModeLabel(mode);
+  const trendDescription = getTrendDescription(mode, dataMode);
 
   return (
     <Card className="rounded-lg py-0 shadow-none ring-1 ring-border/70">
       <CardHeader className="flex flex-col gap-3 px-5 pt-5 pb-0 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle className="text-lg font-semibold">{selectedLabel}</CardTitle>
+        <div className="space-y-1">
+          <CardTitle className="text-lg font-semibold">{selectedLabel}</CardTitle>
+          <CardDescription>{trendDescription}</CardDescription>
+        </div>
       </CardHeader>
       <CardContent className="px-5 pt-0 pb-6">
         {!hasData ? (

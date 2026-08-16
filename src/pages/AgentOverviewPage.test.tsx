@@ -88,8 +88,13 @@ test('renders compact metric cards with labels above values and no previews', ()
 
 test('uses a compact height when the selected trend has no activity', () => {
   const markup = renderToStaticMarkup(
-    <AgentOverviewTrendChart rows={[]} mode="aiAssistedConversations" />,
+    <AgentOverviewTrendChart
+      rows={[]}
+      mode="aiAssistedConversations"
+      dataMode="daily"
+    />,
   );
 
   expect(markup).toContain('height:400px');
+  expect(markup).toContain('Daily AI conversations in the selected period.');
 });
