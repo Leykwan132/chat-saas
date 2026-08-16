@@ -58,6 +58,7 @@ test('opens Overview with last 30 days and the shortened AI label', () => {
   expect(markup).toContain('</h1><p class="text-sm text-muted-foreground">Jul 19 – Aug 17</p>');
   expect(markup).toContain('AI conversations');
   expect(markup).toContain('sm:justify-between');
+  expect(markup).toContain('sm:items-end');
   expect(markup).toContain('data-slot="toggle-group"');
   expect(markup).toContain('data-variant="ghost"');
   expect(markup).toContain('data-state="on"');

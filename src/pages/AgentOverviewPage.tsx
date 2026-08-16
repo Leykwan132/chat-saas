@@ -118,7 +118,7 @@ export default function AgentOverviewPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
-      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="font-title text-3xl font-normal tracking-tight">Overview</h1>
           <p className="text-sm text-muted-foreground">{periodLabel}</p>
