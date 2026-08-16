@@ -7,10 +7,7 @@ import { displayNameForUser, serviceTimeZone } from "./fields";
 import type { BookingSlot, RosterEntry } from "./types";
 import { advanceCalendarAvailabilityPreload } from "../calendarAvailabilityPreload";
 import { loadAvailabilityRoster, type AvailabilityRosterEntry } from "./availabilityRoster";
-import {
-  availabilityRejectionReasons,
-  entryAvailableForSlot,
-} from "./availabilityEligibility";
+import { entryAvailableForSlot } from "./availabilityEligibility";
 
 export { isAssignedToService } from "./availabilityEligibility";
 
@@ -213,24 +210,7 @@ export async function resolveAvailableInterval(
     endAt: args.endAt + bufferMs,
     ignoreGoogleHealth: args.ignoreGoogleHealth,
   });
-  if (assignee?.user === undefined || assignee.user === null) {
-    if (args.logUnavailableReason) {
-      console.warn("booking_slot_unavailable", {
-        serviceId: args.service._id,
-        assignmentStrategy: args.service.assignmentStrategy,
-        startAt: args.startAt,
-        endAt: args.endAt,
-        candidates: entries.map((entry) => ({
-          userId: entry.user?._id ?? null,
-          reasons: availabilityRejectionReasons({
-            service: args.service, entry, startAt: args.startAt - bufferMs, endAt: args.endAt + bufferMs,
-            ignoreGoogleHealth: args.ignoreGoogleHealth,
-          }),
-        })),
-      });
-    }
-    return null;
-  }
+  if (assignee?.user === undefined || assignee.user === null) return null;
   return {
     startAt: args.startAt,
     endAt: args.endAt,

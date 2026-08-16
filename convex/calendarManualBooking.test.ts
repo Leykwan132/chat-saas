@@ -221,13 +221,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
       available: false,
       message: "That slot is no longer available.",
     });
-    expect(unavailableLog).toHaveBeenCalledWith("booking_slot_unavailable", {
-      serviceId: fixture.serviceId,
-      assignmentStrategy: "balanced",
-      startAt: timeOffStartAt,
-      endAt: timeOffEndAt,
-      candidates: [{ userId: fixture.userId, reasons: ["time_off"] }],
-    });
+    expect(unavailableLog).not.toHaveBeenCalled();
   } finally {
     unavailableLog.mockRestore();
   }
