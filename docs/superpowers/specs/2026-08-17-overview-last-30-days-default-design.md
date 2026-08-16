@@ -12,6 +12,7 @@ Show the rolling last 30 days when a user opens an agent Overview page, make its
 - Leave dedicated usage pages unchanged.
 - Display the Overview title on the left and the active date range with persistent 1d, 7d, 30d, and 90d controls on the right on wider screens.
 - Use unoutlined ghost controls; give the selected range a muted color fill.
+- Place the existing Daily/Cumulative selector in the same right-aligned header control row.
 - Remove the Overview time-range dropdown from the selected trend chart.
 - Keep the displayed date range read-only; do not offer a custom date picker or arbitrary From/To ranges.
 - Rename the AI-assisted conversation metric and selected chart label to `AI conversations`.

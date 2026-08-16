@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import {
   Area,
   AreaChart,
@@ -92,11 +91,9 @@ function hasModeData(rows: OverviewTrendRow[], mode: OverviewChartMode) {
 export function AgentOverviewTrendChart({
   rows,
   mode,
-  actions,
 }: {
   rows: OverviewTrendRow[];
   mode: OverviewChartMode;
-  actions?: ReactNode;
 }) {
   const hasData = hasModeData(rows, mode);
   const selectedLabel = getModeLabel(mode);
@@ -105,7 +102,6 @@ export function AgentOverviewTrendChart({
     <Card className="rounded-lg py-0 shadow-none ring-1 ring-border/70">
       <CardHeader className="flex flex-col gap-3 px-5 pt-5 pb-0 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="text-lg font-semibold">{selectedLabel}</CardTitle>
-        {actions}
       </CardHeader>
       <CardContent className="px-5 pt-0 pb-6">
         {!hasData ? (

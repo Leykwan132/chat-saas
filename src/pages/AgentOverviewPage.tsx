@@ -123,6 +123,10 @@ export default function AgentOverviewPage() {
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <p className="text-sm text-muted-foreground">{periodLabel}</p>
           <AgentOverviewTimeRangeButtons value={timeRange} onChange={setTimeRange} />
+          <AgentOverviewDataModeSelect
+            value={trendDataMode}
+            onChange={setTrendDataMode}
+          />
         </div>
       </div>
       <AgentOverviewMetrics
@@ -134,14 +138,6 @@ export default function AgentOverviewPage() {
       <AgentOverviewTrendChart
         rows={trendRows}
         mode={chartMode}
-        actions={(
-          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            <AgentOverviewDataModeSelect
-              value={trendDataMode}
-              onChange={setTrendDataMode}
-            />
-          </div>
-        )}
       />
       <AgentOverviewTopicsAndSentiment
         topics={summary.trendingTopics}

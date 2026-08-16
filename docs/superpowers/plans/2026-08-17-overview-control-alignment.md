@@ -12,6 +12,7 @@
 
 - Keep the selected range visibly filled and all unselected ranges ghost-style.
 - Keep the title left-aligned and the date plus ranges right-aligned at the `sm` breakpoint and above.
+- Keep the Daily/Cumulative selector in that same header control row.
 - Keep the compact metric cards selectable and content-sized.
 - Keep code self-explanatory with no comments and under 300 lines per code file.
 - Run tests with Node 22 in the same shell command.
@@ -39,6 +40,7 @@ expect(markup).toContain('sm:justify-between');
 expect(markup).toContain('data-variant="ghost"');
 expect(markup).toContain('data-state="on"');
 expect(metricsMarkup).not.toContain('min-h-[116px]');
+expect(markup.indexOf('aria-label="Overview data mode"')).toBeLessThan(markup.indexOf('AI conversations'));
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -53,7 +55,7 @@ Expected: FAIL because the header has no responsive split layout, the range Togg
 
 - [ ] **Step 3: Write the minimal implementation**
 
-In `AgentOverviewPage.tsx`, use a responsive header container with `sm:justify-between` and retain the period label plus range controls in the right-side group.
+In `AgentOverviewPage.tsx`, use a responsive header container with `sm:justify-between` and keep the period label, range controls, and Daily/Cumulative selector in its right-side group. Remove the selector from the trend-card actions.
 
 In `AgentOverviewTimeRangeButtons.tsx`, switch the ToggleGroup variant to `ghost` and retain its existing `data-state=on` muted fill behavior from the shared component.
 
