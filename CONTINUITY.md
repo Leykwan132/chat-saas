@@ -41,7 +41,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
-- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, shows content-sized text-only metrics, and exposes right-aligned ghost range shortcuts; PR #62 branch update pending commit.
+- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, shows content-sized text-only metrics, and exposes right-aligned ghost range shortcuts; draft PR #62 tracks commit `25e42830` on `codex/overview-date-range-controls`.
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
 - 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the fully rounded availability time combobox with a start–end separator.
 - 2026-08-16 [CODE] Google health now blocks only Meet availability; daily maintenance renews watches and no longer sweeps stale syncs.
@@ -60,7 +60,8 @@
 - `CONTINUITY.md`
 
 # Receipts
-- 2026-08-17 [TOOL] Compact-card and ghost-control revision passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit and push to PR #62 remain pending.
+- 2026-08-17 [TOOL] Compact-card and ghost-control revision passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `25e42830` was pushed to PR #62.
+- 2026-08-17 [TOOL] The full Node v22 `bun test` run repeated the known unrelated baseline: 1270 pass, 161 fail, 112 errors, chiefly missing Stripe test environment variables, unsupported `import.meta.glob`, and unavailable `vi.advanceTimersByTimeAsync`.
 - 2026-08-17 [TOOL] Overview 1d-range regression passed 4 focused tests; the production build passed, while Convex codegen's embedded typecheck did not report diagnostics.
 - 2026-08-17 [TOOL] Draft PR #62 was created from `codex/overview-date-range-controls` against `main`; the local checkout tracks the pushed branch and is clean.
 - 2026-08-17 [TOOL] Date-shortcut regression passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; work remains local for user testing.
