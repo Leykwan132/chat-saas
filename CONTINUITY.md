@@ -8,8 +8,8 @@
 - 2026-08-15 [USER] D656 ACTIVE: Calendar creation actions use the booking dialog and preserve the selected date.
 - 2026-08-15 [USER] D657 ACTIVE: Google Calendar connection controls are PostHog early access for `leykwan132@gmail.com` and `kwanrealtyofficial@gmail.com`.
 - 2026-08-15 [USER] D658 ACTIVE: connected-calendar manual events fail closed: a Google write failure prevents local retention.
-- 2026-08-15 [USER] D659 ACTIVE: remote bookings generate Google Meet links only through the assigned staff member’s connected calendar.
-- 2026-08-15 [USER] D660 ACTIVE: Service location offers Google Meet and In person; Google Meet is unavailable until the eligible user connects Google Calendar.
+- 2026-08-15 [USER] D659 ACTIVE: Google Meet bookings generate Google Meet links only through the assigned staff member’s connected calendar.
+- 2026-08-15 [USER] D660 ACTIVE: Service location offers Video call, Google Meet, and In person; Google Meet is unavailable until the eligible user connects Google Calendar.
 - 2026-08-15 [USER] D668 ACTIVE: standard Dialog and Sheet backdrops use the unblurred light overlay.
 - 2026-08-16 [USER] D671 ACTIVE: calendar provenance communicates Google synchronization only, with one white check inside a solid green circle.
 - 2026-08-16 [USER] D677 ACTIVE: Create Booking has an editable, prefilled Title that is used locally and in Google Calendar.
@@ -23,7 +23,8 @@
 - 2026-08-16 [USER] D696 ACTIVE: only Google Meet (`locationMode: "remote"`) services require healthy Google Calendar synchronization; In person and legacy-location services do not reject availability for `google_calendar_unhealthy`.
 - 2026-08-16 [USER] D697 ACTIVE: a successful Google Calendar sync remains healthy regardless of age; the daily maintenance job renews watches only and does not run stale-sync sweeps.
 - 2026-08-16 [USER] D698 ACTIVE: manually created and CSV-imported customers are assigned to the active agent, with personal-workspace owner scope retained.
-- 2026-08-16 [USER] D699 ACTIVE: remote-service customer confirmations include the generated Google Meet link when the booking has one.
+- 2026-08-16 [USER] D699 ACTIVE: Google Meet customer confirmations include the generated meeting link when the booking has one.
+- 2026-08-16 [USER] D700 ACTIVE: Video call is a manual, non-Google service location; users create and share its meeting link themselves.
 - 2026-08-16 [TOOL] Investigation: `service_not_assigned` compares service assignee WorkOS IDs with each roster schedule’s WorkOS ID. The inspected service was created after the personal-assignment migration and already belongs to the agent owner; its logged candidate is a distinct user’s schedule, so the migration is not the proven cause of that log.
 
 # Decisions
@@ -37,7 +38,7 @@
 
 # Done (recent)
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
-- 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and location gating were implemented.
+- 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented.
 - 2026-08-16 [CODE] Google health now blocks only Meet availability; daily maintenance renews watches and no longer sweeps stale syncs.
 - 2026-08-16 [CODE] Manual and CSV customers persist active-agent scope; personal workspace entries keep owner scope.
 - 2026-08-16 [TOOL] Personal-service assignment repair (9 records) and safe personal-customer backfill (31 scanned) completed on the development deployment.
@@ -45,16 +46,18 @@
 - 2026-08-16 [CODE] Remote booking confirmation and update messages now include the Google Meet link when available.
 
 # Working set
-- `convex/customerAgentScope.ts`
-- `convex/customers.ts`
-- `convex/customerImportPool.ts`
-- `convex/customerSearch.test.ts`
 - `convex/schema.ts`
 - `convex/appointmentBooking/fields.ts`
 - `convex/appointmentBooking/fields.test.ts`
 - `convex/appointmentBooking/confirmations.ts`
-- `src/pages/CustomersPage.tsx`
-- `src/components/ImportCustomersDialog.tsx`
+- `convex/appointmentBooking/services.ts`
+- `convex/appointmentBookingAvailability.test.ts`
+- `src/lib/serviceForm.ts`
+- `src/lib/serviceForm.test.ts`
+- `src/components/services/ServiceLocationField.tsx`
+- `src/components/services/serviceFormShared.test.tsx`
+- `docs/superpowers/specs/2026-08-16-service-video-call-location-design.md`
+- `docs/superpowers/plans/2026-08-16-service-video-call-location.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -67,3 +70,4 @@
 - 2026-08-16 [TOOL] Safe personal-manual customer migration passed 5 focused tests, Convex and workspace TypeScript checks, deployed successfully, completed a dry run, and scanned 31 records successfully.
 - 2026-08-16 [TOOL] Remote booking confirmation link regression passed 3 focused tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
 - 2026-08-16 [TOOL] `git push` published `136f2315..889d8a25` to `origin/cursor/google-calendar-booking-sync-10b0`; `gh pr edit 56` replaced the stale Task 7–9 body with the full calendar, service, availability, and customer-scope change set.
+- 2026-08-16 [TOOL] Video call service location passed 15 focused tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
