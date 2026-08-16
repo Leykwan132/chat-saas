@@ -71,7 +71,7 @@ export function EditBookingForm({
               <Switch id="dialog-event-all-day" checked={state.allDay} onCheckedChange={(allDay) => update({ allDay })} disabled={disabled} />
             </div>
             {!state.allDay ? (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
                 <EditableTimeCombobox
                   value={state.startTime}
                   onChange={(startTime) => update({ startTime })}
@@ -79,6 +79,7 @@ export function EditBookingForm({
                   disabled={disabled}
                   portalContainer={comboboxPortalContainerRef}
                 />
+                <span className="text-muted-foreground" aria-hidden="true">–</span>
                 <EditableTimeCombobox
                   value={state.endTime}
                   onChange={(endTime) => update({ endTime })}

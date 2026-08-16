@@ -12,5 +12,7 @@ test('uses the availability time combobox in every booking edit form', () => {
     expect(formSource).toContain("from '@/components/EditableTimeCombobox'");
     expect(formSource.match(/<EditableTimeCombobox/g)?.length).toBe(2);
     expect(formSource).not.toContain('TimeSelectInput');
+    expect(formSource).toContain('grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]');
+    expect(formSource).toContain('aria-hidden="true">–</span>');
   }
 });

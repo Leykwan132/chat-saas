@@ -180,13 +180,14 @@ export function CalendarEventDetailsEditBody({
           </EditRow>
           {!form.allDay ? (
             <EditRow label="Time" icon={Clock}>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
                 <EditableTimeCombobox
                   value={form.startTime}
                   onChange={(startTime) => onFormChange({ startTime })}
                   ariaLabel="Start time"
                   portalContainer={comboboxPortalContainerRef}
                 />
+                <span className="text-muted-foreground" aria-hidden="true">–</span>
                 <EditableTimeCombobox
                   value={form.endTime}
                   onChange={(endTime) => onFormChange({ endTime })}

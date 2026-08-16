@@ -38,7 +38,7 @@
 
 # Done (recent)
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
-- 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the availability time combobox.
+- 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the fully rounded availability time combobox with a start–end separator.
 - 2026-08-16 [CODE] Google health now blocks only Meet availability; daily maintenance renews watches and no longer sweeps stale syncs.
 - 2026-08-16 [CODE] Manual and CSV customers persist active-agent scope; personal workspace entries keep owner scope.
 - 2026-08-16 [TOOL] Personal-service assignment repair (9 records) and safe personal-customer backfill (31 scanned) completed on the development deployment.
@@ -72,5 +72,5 @@
 - 2026-08-16 [TOOL] `git push` published `136f2315..889d8a25` to `origin/cursor/google-calendar-booking-sync-10b0`; `gh pr edit 56` replaced the stale Task 7–9 body with the full calendar, service, availability, and customer-scope change set.
 - 2026-08-16 [TOOL] Video call service location passed 15 focused tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
 - 2026-08-16 [TOOL] Full `bun test` is blocked by repository test-runner configuration outside this change: missing Stripe price environment variables, Bun lacks `import.meta.glob`, and a test expects unavailable `vi.advanceTimersByTimeAsync`; the Video call-focused tests remain green.
-- 2026-08-16 [TOOL] Unified booking time inputs passed 4 focused tests, the Node v22 production build, and `git diff --check`.
+- 2026-08-16 [TOOL] Unified booking time inputs, including the shared pill styling and start–end separator, passed 4 focused tests, the Node v22 production build, and `git diff --check`.
 - 2026-08-16 [TOOL] Removed the temporary `booking_slot_unavailable` availability diagnostic; the focused regression and Convex type check passed, and the connected development deployment updated successfully.
