@@ -163,8 +163,8 @@ function NotesBlock({ remarks }: { remarks?: string }) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-3">
-        <NotebookPen className="size-5 shrink-0 text-muted-foreground" />
+      <div className="flex items-center gap-2">
+        <NotebookPen className="size-4 shrink-0 text-muted-foreground" />
         <h3 className="text-sm font-semibold text-muted-foreground">Internal notes</h3>
       </div>
       <div className="rounded-lg bg-muted px-4 py-3">
@@ -177,8 +177,8 @@ function NotesBlock({ remarks }: { remarks?: string }) {
 function SummaryBlock({ summary }: { summary: string }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-3">
-        <AlignLeft className="size-5 shrink-0 text-muted-foreground" />
+      <div className="flex items-center gap-2">
+        <AlignLeft className="size-4 shrink-0 text-muted-foreground" />
         <h3 className="text-sm font-semibold text-muted-foreground">Summary</h3>
       </div>
       <div className="rounded-lg bg-muted px-4 py-3"><p className="whitespace-pre-wrap break-words text-base leading-relaxed text-foreground">{summary}</p></div>
