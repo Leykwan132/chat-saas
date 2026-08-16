@@ -97,6 +97,7 @@ test('uses a compact height when the selected trend has no activity', () => {
   );
 
   expect(markup).toContain('height:400px');
-  expect(markup).toContain('Daily AI conversations in the selected period.');
+  expect(markup).toContain('Conversations each day.');
   expect(markup).toContain('space-y-0.5');
+  expect(markup).toContain('font-sans text-xl font-medium tracking-tight leading-tight');
 });

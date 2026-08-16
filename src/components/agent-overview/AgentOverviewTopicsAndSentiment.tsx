@@ -140,7 +140,7 @@ function OverviewPanelTitle({
 }) {
   return (
     <div>
-      <div className="font-medium leading-tight">{title}</div>
+      <div className="font-sans font-medium leading-tight">{title}</div>
       <div className="mt-0.5 text-sm font-normal leading-tight text-muted-foreground">
         {description}
       </div>
@@ -167,7 +167,7 @@ export function AgentOverviewTopicsAndSentiment({
         title={(
           <OverviewPanelTitle
             title="Common Topics"
-            description="Most discussed themes across conversations in the selected period."
+            description="Most discussed topics."
           />
         )}
         className="bg-background"
@@ -217,7 +217,7 @@ export function AgentOverviewTopicsAndSentiment({
         title={(
           <OverviewPanelTitle
             title="Customer Sentiment"
-            description="Sentiment breakdown across conversations in the selected period."
+            description="Conversation sentiment."
           />
         )}
         className="bg-background"

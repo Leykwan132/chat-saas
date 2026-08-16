@@ -91,10 +91,22 @@ function hasModeData(rows: OverviewTrendRow[], mode: OverviewChartMode) {
 }
 
 function getTrendDescription(mode: OverviewChartMode, dataMode: OverviewTrendDataMode) {
-  const selectedLabel = getModeLabel(mode);
-  return dataMode === 'daily'
-    ? `Daily ${selectedLabel} in the selected period.`
-    : `Cumulative ${selectedLabel} across the selected period.`;
+  const descriptions: Record<OverviewTrendDataMode, Record<OverviewChartMode, string>> = {
+    daily: {
+      aiAssistedConversations: 'Conversations each day.',
+      credits: 'Credits spent each day.',
+      bookings: 'Appointments booked each day.',
+      humanEscalations: 'Escalations each day.',
+    },
+    cumulative: {
+      aiAssistedConversations: 'Total conversations.',
+      credits: 'Total credits spent.',
+      bookings: 'Total appointments booked.',
+      humanEscalations: 'Total escalations.',
+    },
+  };
+
+  return descriptions[dataMode][mode];
 }
 
 export function AgentOverviewTrendChart({
@@ -114,7 +126,9 @@ export function AgentOverviewTrendChart({
     <Card className="rounded-lg py-0 shadow-none ring-1 ring-border/70">
       <CardHeader className="flex flex-col gap-3 px-5 pt-5 pb-0 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-0.5">
-          <CardTitle className="text-lg font-semibold leading-tight">{selectedLabel}</CardTitle>
+          <CardTitle className="font-sans text-xl font-medium tracking-tight leading-tight">
+            {selectedLabel}
+          </CardTitle>
           <CardDescription className="leading-tight">{trendDescription}</CardDescription>
         </div>
       </CardHeader>

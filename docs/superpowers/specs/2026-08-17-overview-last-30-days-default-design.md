@@ -20,8 +20,8 @@ Show the rolling last 30 days when a user opens an agent Overview page, make its
 - Display each metric label above its value and let the card height follow the two-line content without reserved chart space.
 - Use slightly more label-to-value space and a smaller value size within each metric card.
 - Reduce the main Overview trend chart height from 497px to 400px so it is visible sooner below the metrics.
-- Display a concise graph subtitle that names the selected metric and whether values are daily or cumulative.
-- Give Common Topics and Customer Sentiment matching muted descriptions, and use a medium title weight for those panels.
+- Display a short, plain-language graph subtitle that explains the selected metric and its Daily/Cumulative aggregation.
+- Give Common Topics and Customer Sentiment short, plain-language descriptions, and match their medium sans-serif title typography to the selected graph.
 - Keep every Overview title and description visually close, using a 2px gap and tight line-height.
 
 ## Testing

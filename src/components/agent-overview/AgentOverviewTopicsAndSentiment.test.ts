@@ -56,8 +56,8 @@ test('distributes full-width topic rows with separators', () => {
   expect(markup).toContain('justify-start');
   expect(markup.match(/style="height:340px"/g)).toHaveLength(2);
   expect(markup.match(/bg-background/g)).toHaveLength(2);
-  expect(markup).toContain('Most discussed themes across conversations in the selected period.');
-  expect(markup).toContain('Sentiment breakdown across conversations in the selected period.');
-  expect(markup.match(/font-medium/g)).toHaveLength(2);
+  expect(markup).toContain('Most discussed topics.');
+  expect(markup).toContain('Conversation sentiment.');
+  expect(markup.match(/font-sans font-medium leading-tight/g)).toHaveLength(2);
   expect(markup).toContain('mt-0.5');
 });
