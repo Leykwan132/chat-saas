@@ -1,7 +1,7 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-17 [USER] Goal: default the Agent Overview homepage analytics range to Last 30 days; retain Billing period as a user-selectable option.
+- 2026-08-17 [USER] Goal: default the Agent Overview homepage analytics range to Last 30 days with 1d, 7d, 30d, and 90d shortcuts, compact content-sized metrics, and right-aligned ghost date controls.
 - 2026-08-16 [CODE] Now: calendar booking availability is deployed with source indicators, Google Meet booking links, diagnostics, and personal-service assignment repair.
 - 2026-08-16 [CODE] Now: manual and CSV customer creation persist the active agent scope; personal entries retain owner scope, and the safe legacy personal-customer backfill has completed.
 - 2026-08-16 [TOOL] Now: PR #56 is current with the local branch and a full-change description.
@@ -29,9 +29,9 @@
 
 # Decisions
 - 2026-08-17 [USER] D701 ACTIVE: Overview defaults to the rolling Last 30 days; dedicated usage pages retain their existing defaults.
-- 2026-08-17 [USER] D702 ACTIVE: Overview metric cards are compact, text-only selectable controls; the selected chart is 400px tall and uses `AI conversations`.
-- 2026-08-17 [USER] D703 ACTIVE: Overview date controls are read-only date text plus Billing period, 7d, 30d, and 90d shortcut buttons; no custom range picker is available.
-- 2026-08-17 [USER] D704 ACTIVE: Overview date controls offer only 1d, 7d, 30d, and 90d; Billing period is removed.
+- 2026-08-17 [USER] D702 ACTIVE: Overview metric cards are compact, text-only, content-sized selectable controls; the selected chart is 400px tall and uses `AI conversations`.
+- 2026-08-17 [USER] D703 SUPERSEDED by D704: Overview date controls previously included Billing period.
+- 2026-08-17 [USER] D704 ACTIVE: Overview date controls offer only 1d, 7d, 30d, and 90d as right-aligned ghost buttons beside the title on wider screens; the active range uses a muted fill and no custom picker is available.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
@@ -41,7 +41,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
-- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, shows compact text-only metrics, and exposes read-only date-adjacent range shortcuts; draft PR #62 is open from `codex/overview-date-range-controls`.
+- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, shows content-sized text-only metrics, and exposes right-aligned ghost range shortcuts; PR #62 branch update pending commit.
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
 - 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the fully rounded availability time combobox with a start–end separator.
 - 2026-08-16 [CODE] Google health now blocks only Meet availability; daily maintenance renews watches and no longer sweeps stale syncs.
@@ -52,12 +52,15 @@
 - `src/pages/AgentOverviewPage.tsx`
 - `src/pages/AgentOverviewPage.test.tsx`
 - `src/components/agent-overview/AgentOverviewMetrics.tsx`
+- `src/components/agent-overview/AgentOverviewTimeRangeButtons.tsx`
 - `src/components/agent-overview/AgentOverviewTrendChart.tsx`
 - `docs/superpowers/specs/2026-08-17-overview-last-30-days-default-design.md`
 - `docs/superpowers/plans/2026-08-17-overview-date-range-and-metric-layout.md`
+- `docs/superpowers/plans/2026-08-17-overview-control-alignment.md`
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Compact-card and ghost-control revision passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit and push to PR #62 remain pending.
 - 2026-08-17 [TOOL] Overview 1d-range regression passed 4 focused tests; the production build passed, while Convex codegen's embedded typecheck did not report diagnostics.
 - 2026-08-17 [TOOL] Draft PR #62 was created from `codex/overview-date-range-controls` against `main`; the local checkout tracks the pushed branch and is clean.
 - 2026-08-17 [TOOL] Date-shortcut regression passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; work remains local for user testing.

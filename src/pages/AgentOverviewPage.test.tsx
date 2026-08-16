@@ -56,7 +56,10 @@ test('opens Overview with last 30 days and the shortened AI label', () => {
 
   expect(markup).toContain('<h1 class="font-title text-3xl font-normal tracking-tight">Overview</h1>');
   expect(markup).toContain('AI conversations');
+  expect(markup).toContain('sm:justify-between');
   expect(markup).toContain('data-slot="toggle-group"');
+  expect(markup).toContain('data-variant="ghost"');
+  expect(markup).toContain('data-state="on"');
   expect(markup).toContain('>1d</button>');
   expect(markup).toContain('>7d</button>');
   expect(markup).toContain('>30d</button>');
@@ -69,7 +72,6 @@ test('renders compact metric cards with labels above values and no previews', ()
     <AgentOverviewMetrics
       primary={[{ label: 'AI conversations', value: '12', mode: 'aiAssistedConversations' }]}
       secondary={[]}
-      rows={[]}
       selectedMode="aiAssistedConversations"
       onSelectMode={() => undefined}
     />,
@@ -77,6 +79,7 @@ test('renders compact metric cards with labels above values and no previews', ()
 
   expect(markup.indexOf('AI conversations')).toBeLessThan(markup.indexOf('12'));
   expect(markup).not.toContain('<svg');
+  expect(markup).not.toContain('min-h-[116px]');
 });
 
 test('uses a compact height when the selected trend has no activity', () => {

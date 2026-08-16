@@ -28,7 +28,7 @@ export function AgentOverviewTimeRangeButtons({
       onValueChange={(nextValue) => {
         if (nextValue) onChange(nextValue as CreditTimeRange);
       }}
-      variant="outline"
+      variant="ghost"
       size="sm"
       spacing={1}
       aria-label="Overview time range"

@@ -8,14 +8,15 @@ Show the rolling last 30 days when a user opens an agent Overview page, make its
 
 - Initialize the Overview page's analytics range as `30d`.
 - Use that range for both summary metrics and credit-usage data.
-- Keep Billing period and the other time ranges selectable after the page loads.
+- Keep only 1d, 7d, 30d, and 90d selectable after the page loads.
 - Leave dedicated usage pages unchanged.
-- Display the active date range beneath the Overview title with persistent Billing period, 7d, 30d, and 90d buttons beside it.
+- Display the Overview title on the left and the active date range with persistent 1d, 7d, 30d, and 90d controls on the right on wider screens.
+- Use unoutlined ghost controls; give the selected range a muted color fill.
 - Remove the Overview time-range dropdown from the selected trend chart.
 - Keep the displayed date range read-only; do not offer a custom date picker or arbitrary From/To ranges.
 - Rename the AI-assisted conversation metric and selected chart label to `AI conversations`.
 - Keep the metric cards selectable, but remove their decorative mini trend graphs.
-- Display each metric label above its value and reduce the card height.
+- Display each metric label above its value and let the card height follow the two-line content without reserved chart space.
 - Reduce the main Overview trend chart height from 497px to 400px so it is visible sooner below the metrics.
 
 ## Testing

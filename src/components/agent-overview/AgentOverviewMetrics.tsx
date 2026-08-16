@@ -1,10 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import type {
-  OverviewChartMode,
-  OverviewTrendRow,
-} from './AgentOverviewTrendChart';
+import type { OverviewChartMode } from './AgentOverviewTrendChart';
 
 export type OverviewMetricItem = {
   label: string;
@@ -15,7 +12,6 @@ export type OverviewMetricItem = {
 function MetricCell({
   item,
   isSelected,
-  rows,
   onSelect,
 }: {
   item: OverviewMetricItem;
@@ -28,7 +24,7 @@ function MetricCell({
       aria-pressed={isSelected}
       onClick={() => onSelect(item.mode)}
       className={cn(
-        'relative flex min-h-[116px] min-w-0 flex-col justify-between gap-3 px-5 py-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+        'relative flex min-w-0 flex-col px-5 py-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
         isSelected ? 'bg-muted/50 hover:bg-muted/50' : 'bg-card hover:bg-muted/40',
       )}
     >
@@ -47,13 +43,11 @@ function MetricCell({
 export function AgentOverviewMetrics({
   primary,
   secondary,
-  rows,
   selectedMode,
   onSelectMode,
 }: {
   primary: OverviewMetricItem[];
   secondary: OverviewMetricItem[];
-  rows: OverviewTrendRow[];
   selectedMode: OverviewChartMode;
   onSelectMode: (mode: OverviewChartMode) => void;
 }) {
@@ -80,7 +74,7 @@ export function AgentOverviewMetricsSkeleton() {
     <Card className="overflow-hidden rounded-lg border border-border bg-border p-0 shadow-none">
       <CardContent className="grid gap-px bg-border p-0 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="flex min-h-[116px] flex-col justify-between gap-3 bg-card px-5 py-4">
+          <div key={index} className="flex flex-col gap-2 bg-card px-5 py-4">
             <Skeleton className="h-4 w-36 rounded-md" />
             <Skeleton className="h-9 w-28 rounded-md" />
           </div>

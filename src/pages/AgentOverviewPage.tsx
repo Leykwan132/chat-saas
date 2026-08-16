@@ -118,9 +118,9 @@ export default function AgentOverviewPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
-      <div className="flex min-w-0 flex-col gap-2">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-title text-3xl font-normal tracking-tight">Overview</h1>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <p className="text-sm text-muted-foreground">{periodLabel}</p>
           <AgentOverviewTimeRangeButtons value={timeRange} onChange={setTimeRange} />
         </div>
@@ -128,7 +128,6 @@ export default function AgentOverviewPage() {
       <AgentOverviewMetrics
         primary={primaryMetrics}
         secondary={secondaryMetrics}
-        rows={trendRows}
         selectedMode={chartMode}
         onSelectMode={setChartMode}
       />
