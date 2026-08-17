@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { expect, test } from 'vitest';
 
 test('landing page hides the browser scrollbar indicator while keeping page scroll available', () => {
@@ -22,11 +22,12 @@ test('home page does not show a spinner while landing auth state loads', () => {
   expect(homeSource).toContain('landing-page');
 });
 
-test('landing sign-up CTAs load and report the Google Ads conversion', () => {
+test('landing sign-up CTAs leave Google Ads conversion reporting to the global tag', () => {
   const landingSource = readFileSync(new URL('./LandingPage.tsx', import.meta.url), 'utf8');
   const htmlSource = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
 
   expect(htmlSource).toContain('https://www.googletagmanager.com/gtag/js?id=AW-17745887902');
   expect(htmlSource).toContain("gtag('config', 'AW-17745887902')");
-  expect(landingSource).toContain("reportGoogleAdsConversion(() => {");
+  expect(landingSource).not.toContain('reportGoogleAdsConversion');
+  expect(existsSync(new URL('../lib/googleAdsConversion.ts', import.meta.url))).toBe(false);
 });
