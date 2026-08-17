@@ -2,7 +2,7 @@
 
 # Snapshot
 - 2026-08-18 [USER] Goal: merge `origin/main` into the Google Ads PR branch and resolve its conflict.
-- 2026-08-18 [CODE] Now: `origin/main` has been merged locally; the sole ledger conflict is resolved and awaits verification and push.
+- 2026-08-18 [CODE] Now: merge commit `bbbf038` brings `origin/main` into `codex/google-ads-tag`; PR #65 is current and ready for review.
 - 2026-08-18 [USER] Goal: add Google Ads tag `AW-17745887902` to the app on a new branch.
 - 2026-08-18 [CODE] PR #65 is open and ready for review with the global Google Ads tag on `codex/google-ads-tag`.
 - 2026-08-17 [CODE] Existing active work: `main` includes PR #63’s Agent Overview topic-panel layout and donut-hover interaction.
@@ -34,6 +34,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-18 [TOOL] Merge commit `bbbf038` was pushed to `origin/codex/google-ads-tag`; the working tree is clean and tracks the remote branch.
 - 2026-08-18 [TOOL] Fetching `origin/main` advanced it from `16f5749` to `ea09604`; the sole merge conflict was `CONTINUITY.md`, caused by its independent compaction on `main`.
 - 2026-08-18 [TOOL] The merge includes landing feature-section files from `main` without application-code conflicts.
 - 2026-08-18 [TOOL] Ready-for-review PR #65 was opened against `main` from `codex/google-ads-tag`; the GitHub connector was forbidden from creating it, and authenticated GitHub CLI fallback succeeded.
