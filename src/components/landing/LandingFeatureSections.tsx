@@ -3,9 +3,9 @@ import { motion } from 'motion/react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { cn } from '@/lib/utils';
 
-const FEATURE_ANSWER_IMAGE = 'https://storage.kilobot.app/Landing/answer.png';
-const FEATURE_BOOKING_IMAGE = 'https://storage.kilobot.app/Landing/booking.png';
-const FEATURE_CUSTOM_IMAGE = 'https://storage.kilobot.app/Landing/custom.png';
+const FEATURE_ANSWER_IMAGE = 'https://storage.kilobot.app/Landing/questions-updated.png';
+const FEATURE_BOOKING_IMAGE = 'https://storage.kilobot.app/Landing/booking-updated.png';
+const FEATURE_CUSTOM_IMAGE = 'https://storage.kilobot.app/Landing/customs-updated.png';
 
 const FEATURE_SHOWCASE_IMAGES = {
   appointmentBooking: 'https://storage.kilobot.app/AB.png',
@@ -128,7 +128,7 @@ function FeatureCard({
 
 export function FeaturesSection() {
   return (
-    <section className="bg-white px-6 py-24 sm:px-8 sm:py-32 dark:bg-[#060606]">
+    <section className="bg-zinc-100 px-6 py-24 sm:px-8 sm:py-32 dark:bg-[#060606]">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto mb-16 max-w-3xl text-center sm:mb-20">
           <SectionHeading

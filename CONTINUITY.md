@@ -11,7 +11,7 @@
 - 2026-08-17 [USER] D701–D718 ACTIVE: Agent Overview defaults to a 30-day range, uses compact controls and contextual graph copy, and limits live topic analytics to entitled plans with an in-panel upgrade path.
 - 2026-08-17 [USER] D716 ACTIVE: Knowledge Base Q&A exposes five reusable customer-support question presets.
 - 2026-08-16 [USER] D637–D700 ACTIVE: Google Calendar is individual and primary-calendar-only; connected Google writes fail closed, Meet requires eligible healthy synchronization, and manual/CSV customers retain active-agent scope.
-- 2026-08-17 [USER] D719 ACTIVE: landing benefit cards present portrait images above their copy on the page background, using customer-outcome content rather than product-module labels.
+- 2026-08-17 [USER] D719 ACTIVE: landing benefit cards present the supplied revised portrait images above their copy on a zinc-gray section background, using customer-outcome content rather than product-module labels.
 
 # Done (recent)
 - 2026-08-17 [CODE] Draft PR #64 presents the landing conversation-benefits redesign with supplied answer, customization, and booking imagery; production availability is UNCONFIRMED.
@@ -31,4 +31,5 @@
 - 2026-08-17 [TOOL] Verified the three supplied remote assets are transparent 1080×1350 PNGs.
 - 2026-08-17 [TOOL] Local review branch `codex/landing-customer-conversations` was created from the detached checkout.
 - 2026-08-17 [TOOL] Draft PR #64 was opened against `main`; the GitHub connector lacked write access, so authenticated `gh` created it.
+- 2026-08-17 [TOOL] The revised landing assets are transparent 1080×1350 PNGs; their focused regression and Node v22.22.0 production build passed.
 - 2026-08-17 [TOOL] PR #62 remains the existing draft for Agent Overview and Q&A work.
