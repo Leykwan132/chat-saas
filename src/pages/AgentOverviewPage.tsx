@@ -16,6 +16,7 @@ import { AgentOverviewDataModeSelect } from '@/components/agent-overview/AgentOv
 import { AgentOverviewSkeleton } from '@/components/agent-overview/AgentOverviewSkeleton';
 import { AgentOverviewTimeRangeButtons } from '@/components/agent-overview/AgentOverviewTimeRangeButtons';
 import { AgentOverviewTopicsAndSentiment } from '@/components/agent-overview/AgentOverviewTopicsAndSentiment';
+import { useRetainedOverviewData } from '@/components/agent-overview/useRetainedOverviewData';
 import {
   AgentOverviewTrendChart,
   type OverviewChartMode,
@@ -61,14 +62,15 @@ export default function AgentOverviewPage() {
       ? { agentId: selectedAgentId, timeRange }
       : 'skip',
   );
+  const overviewData = useRetainedOverviewData(summary, creditUsage);
 
   const trendRows = useMemo(
     () => buildOverviewTrendRows(
-      summary?.daily ?? [],
-      creditUsage?.dailyUsage,
+      overviewData.data?.summary.daily ?? [],
+      overviewData.data?.creditUsage.dailyUsage,
       trendDataMode,
     ),
-    [creditUsage?.dailyUsage, summary?.daily, trendDataMode],
+    [overviewData.data?.creditUsage.dailyUsage, overviewData.data?.summary.daily, trendDataMode],
   );
 
   if (!selectedAgentId) {
@@ -83,37 +85,39 @@ export default function AgentOverviewPage() {
     return <AccessDenied />;
   }
 
-  if (summary === undefined || creditUsage === undefined) {
+  if (overviewData.data === undefined) {
     return <AgentOverviewSkeleton />;
   }
+
+  const { summary: resolvedSummary, creditUsage: resolvedCreditUsage } = overviewData.data;
 
   const primaryMetrics = [
     {
       label: 'AI conversations',
-      value: formatWholeNumber(summary.aiAssistedConversationCount),
+      value: formatWholeNumber(resolvedSummary.aiAssistedConversationCount),
       mode: 'aiAssistedConversations',
     },
     {
       label: 'Total credits spent',
-      value: formatCredits(creditUsage?.totalCreditsUsed ?? null),
+      value: formatCredits(resolvedCreditUsage.totalCreditsUsed ?? null),
       mode: 'credits',
     },
     {
       label: 'Booked appointments',
-      value: formatWholeNumber(summary.bookedAppointments),
+      value: formatWholeNumber(resolvedSummary.bookedAppointments),
       mode: 'bookings',
     },
     {
       label: 'Human escalation',
-      value: formatWholeNumber(summary.escalations),
+      value: formatWholeNumber(resolvedSummary.escalations),
       mode: 'humanEscalations',
     },
   ] satisfies OverviewMetricItem[];
   const secondaryMetrics = [] satisfies OverviewMetricItem[];
   const periodLabel = formatPeriodLabel(
-    summary.periodStartMs,
-    summary.periodEndMs,
-    summary.timeZone,
+    resolvedSummary.periodStartMs,
+    resolvedSummary.periodEndMs,
+    resolvedSummary.timeZone,
   );
 
   return (
@@ -124,7 +128,11 @@ export default function AgentOverviewPage() {
           <p className="text-sm text-muted-foreground">{periodLabel}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <AgentOverviewTimeRangeButtons value={timeRange} onChange={setTimeRange} />
+          <AgentOverviewTimeRangeButtons
+            value={timeRange}
+            onChange={setTimeRange}
+            isRefreshing={overviewData.isRefreshing}
+          />
           <AgentOverviewDataModeSelect
             value={trendDataMode}
             onChange={setTrendDataMode}
@@ -143,8 +151,8 @@ export default function AgentOverviewPage() {
         dataMode={trendDataMode}
       />
       <AgentOverviewTopicsAndSentiment
-        topics={summary.trendingTopics}
-        sentimentDistribution={summary.sentimentDistribution}
+        topics={resolvedSummary.trendingTopics}
+        sentimentDistribution={resolvedSummary.sentimentDistribution}
       />
     </div>
   );
