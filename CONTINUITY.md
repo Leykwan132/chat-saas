@@ -90,6 +90,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Recharts 3.8 `Pie` does not expose the legacy `activeIndex` prop; removing it retained the state-driven custom sector behavior and passed the focused topic-panel test, Node v22 TypeScript check, and `git diff --check`.
 - 2026-08-17 [TOOL] Commit `c4f64af` was pushed to `codex/overview-topic-panel-interaction`, and the user’s main local checkout fast-forwarded cleanly to that commit for testing.
 - 2026-08-17 [TOOL] Browser-only `dummyData=true` mode passed 11 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; publication to the user’s local feature branch remains.
 - 2026-08-17 [TOOL] Branch `codex/overview-topic-panel-interaction` was pushed and draft PR #63 was created against `main`; the GitHub plugin endpoint returned a 403 integration-permission error, and the authorized GitHub CLI fallback created the PR.

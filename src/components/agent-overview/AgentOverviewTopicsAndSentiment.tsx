@@ -239,7 +239,6 @@ export function AgentOverviewTopicsAndSentiment({
                   outerRadius="86%"
                   strokeWidth={3}
                   stroke="var(--background)"
-                  activeIndex={activeTopicIndex ?? undefined}
                   shape={({ index, outerRadius = 0, ...props }: PieSectorShapeProps) => (
                     <Sector
                       {...props}
