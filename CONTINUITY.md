@@ -43,7 +43,7 @@
 - 2026-08-17 [USER] D713 ACTIVE: Overview range buttons have concise top tooltips, and only the Overview Daily/Cumulative selector matches their fully rounded 32px text-sm styling.
 - 2026-08-17 [USER] D714 ACTIVE: Common Topics and Customer Sentiment use the existing `topic_analytics` entitlement: Free and Starter receive an explicitly labelled local sample preview with Preview and Upgrade actions, while Growth and Business receive live data.
 - 2026-08-17 [USER] D715 SUPERSEDED by D717: The Overview data-mode label was centered independently of its chevron.
-- 2026-08-17 [USER] D716 ACTIVE: Knowledge Base Q&A shows one compact row of five universal support-question presets above Add Q&A; selecting one fills the first blank question or adds a new prefilled row, replacing Add more.
+- 2026-08-17 [USER] D716 ACTIVE: Knowledge Base Q&A shows one compact row of five universal support-question presets above Add Q&A: Refund policy, Shipping & delivery, Services, Payment methods, and Opening hours; selecting one fills the first blank question or adds a new prefilled row, replacing Add more.
 - 2026-08-17 [USER] D717 ACTIVE: Daily/Cumulative retains normal label-chevron spacing and uses a distinct outlined Select surface, visually separate from the date-range shortcuts.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
@@ -56,7 +56,7 @@
 # Done (recent)
 - 2026-08-17 [CODE] Overview Daily/Cumulative now has a distinct outlined Select surface, separating it from date-range filters; PR #62 tracks commit `e7058e6c`.
 - 2026-08-17 [CODE] Overview Daily/Cumulative control again uses its earlier clickable Select presentation with a visible chevron; PR #62 tracks commit `0498d594`.
-- 2026-08-17 [CODE] Knowledge Base Q&A now offers five reusable support-question presets for refund policy, shipping, pricing, payment methods, and opening hours; PR #62 tracks commit `74dfc6d7`.
+- 2026-08-17 [CODE] Knowledge Base Q&A now offers five reusable support-question presets for refund policy, shipping, services, payment methods, and opening hours; PR #62 tracks commit `52e8f5a2`.
 - 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, retains its last complete dashboard during later range refreshes, shows concise range tooltips and a non-blocking busy state, gives Daily/Cumulative the same 32px rounded text-sm control styling with a centered label, and restricts live topic/sentiment analytics to entitled plans with sample previews and persistent Upgrade actions for Free and Starter; PR #62 tracks commit `535fce13`.
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
 - 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the fully rounded availability time combobox with a start–end separator.
@@ -78,6 +78,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Services Q&A preset replacement passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `52e8f5a2` was pushed to PR #62.
 - 2026-08-17 [TOOL] Distinct Overview Daily/Cumulative Select styling passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `e7058e6c` was pushed to PR #62.
 - 2026-08-17 [TOOL] Five-option Q&A picker passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `74dfc6d7` was pushed to PR #62.
 - 2026-08-17 [TOOL] Restored Overview Daily/Cumulative Select treatment passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `0498d594` was pushed to PR #62.
