@@ -216,6 +216,11 @@ export function AgentOverviewTopicsAndSentiment({
 
   return (
     <div className={analyticsAdvancedOverviewGridClass}>
+      {previewing ? (
+        <div className="col-span-full flex justify-end">
+          <Button type="button" variant="outline" onClick={onUpgrade}>Upgrade</Button>
+        </div>
+      ) : null}
       <AnalyticsChartShell
         title={(
           <OverviewPanelTitle
@@ -230,7 +235,6 @@ export function AgentOverviewTopicsAndSentiment({
         emptyMessage="Nothing available yet."
         shellStyle={{ height: COMMON_TOPICS_SHELL_HEIGHT }}
       >
-        {previewing ? <p className="px-5 pt-2 text-sm text-muted-foreground">Sample data — not from your conversations.</p> : null}
         <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pb-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
           <DistributionList items={topicChartData} />
 
