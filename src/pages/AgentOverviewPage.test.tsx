@@ -66,7 +66,7 @@ test('opens Overview with last 30 days and the shortened AI label', () => {
   expect(markup).toContain('sm:justify-between');
   expect(markup).toContain('sm:items-end');
   expect(markup).toContain('data-slot="toggle-group"');
-  expect(markup).toContain('data-variant="ghost"');
+  expect(markup).toContain('data-variant="default"');
   expect(markup).toContain('data-state="on"');
   expect(markup.indexOf('aria-label="Overview data mode"')).toBeLessThan(markup.indexOf('AI conversations'));
   expect(markup).toContain('>1d</button>');

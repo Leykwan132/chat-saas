@@ -69,10 +69,10 @@ export default function AgentOverviewPage() {
   const trendRows = useMemo(
     () => buildOverviewTrendRows(
       overviewData.data?.summary.daily ?? [],
-      overviewData.data?.creditUsage.dailyUsage,
+      overviewData.data?.creditUsage?.dailyUsage,
       trendDataMode,
     ),
-    [overviewData.data?.creditUsage.dailyUsage, overviewData.data?.summary.daily, trendDataMode],
+    [overviewData.data?.creditUsage?.dailyUsage, overviewData.data?.summary.daily, trendDataMode],
   );
 
   if (!selectedAgentId) {
@@ -101,7 +101,7 @@ export default function AgentOverviewPage() {
     },
     {
       label: 'Total credits spent',
-      value: formatCredits(resolvedCreditUsage.totalCreditsUsed ?? null),
+      value: formatCredits(resolvedCreditUsage?.totalCreditsUsed ?? null),
       mode: 'credits',
     },
     {

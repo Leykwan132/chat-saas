@@ -55,6 +55,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
+- 2026-08-17 [CODE] Overview range controls now use the supported ToggleGroup variant, and the page safely renders completed analytics responses with no credit-usage record.
 - 2026-08-17 [CODE] Common Topics and Customer Sentiment sample preview now presents a lower-left Upgrade now action inside each panel; PR #62 tracks commit `2e37752a`.
 - 2026-08-17 [CODE] Overview Daily/Cumulative now uses an outline-only Select surface without a background or shadow; PR #62 tracks commit `83ace30b`.
 - 2026-08-17 [CODE] Overview Daily/Cumulative now has a distinct outlined Select surface, separating it from date-range filters; PR #62 tracks commit `e7058e6c`.
@@ -81,6 +82,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Overview TypeScript correction passed 7 focused tests, the app TypeScript check, the Node v22.22.0 production build, and `git diff --check`; commit pending.
 - 2026-08-17 [TOOL] In-panel analytics-preview Upgrade now actions passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `2e37752a` was pushed to PR #62.
 - 2026-08-17 [TOOL] Lower-left analytics-preview Upgrade now funnel passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `93e7142b` was pushed to PR #62.
 - 2026-08-17 [TOOL] Outline-only Overview Daily/Cumulative Select styling passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `83ace30b` was pushed to PR #62.

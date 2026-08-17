@@ -38,7 +38,7 @@ export function AgentOverviewTimeRangeButtons({
         onValueChange={(nextValue) => {
           if (nextValue) onChange(nextValue as CreditTimeRange);
         }}
-        variant="ghost"
+        variant="default"
         size="sm"
         spacing={1}
         aria-busy={isRefreshing}
