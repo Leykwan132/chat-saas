@@ -23,6 +23,7 @@ import type * as agentOverviewMessages from "../agentOverviewMessages.js";
 import type * as agentOverviewModel from "../agentOverviewModel.js";
 import type * as agentOverviewSentiment from "../agentOverviewSentiment.js";
 import type * as agentOverviewTestHelpers from "../agentOverviewTestHelpers.js";
+import type * as agentOverviewTopicAnalytics from "../agentOverviewTopicAnalytics.js";
 import type * as agentOverviewTopics from "../agentOverviewTopics.js";
 import type * as agentRuntime from "../agentRuntime.js";
 import type * as agentUsage from "../agentUsage.js";
@@ -453,6 +454,7 @@ declare const fullApi: ApiFromModules<{
   agentOverviewModel: typeof agentOverviewModel;
   agentOverviewSentiment: typeof agentOverviewSentiment;
   agentOverviewTestHelpers: typeof agentOverviewTestHelpers;
+  agentOverviewTopicAnalytics: typeof agentOverviewTopicAnalytics;
   agentOverviewTopics: typeof agentOverviewTopics;
   agentRuntime: typeof agentRuntime;
   agentUsage: typeof agentUsage;

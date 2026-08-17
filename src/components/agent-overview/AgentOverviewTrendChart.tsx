@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import {
   Area,
   AreaChart,
@@ -9,6 +8,7 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatTooltipDateLabel } from '@/components/analytics/creditUsageChartModel';
+import type { OverviewTrendDataMode } from './agentOverviewTrendModel';
 
 export type OverviewChartMode =
   | 'aiAssistedConversations'
@@ -36,11 +37,11 @@ export type OverviewTrendRow = {
   humanEscalations: number;
 };
 
-const CHART_HEIGHT = 497;
+const CHART_HEIGHT = 400;
 
 const CHART_CONFIG = {
   aiAssistedConversations: {
-    label: 'AI-assisted conversation',
+    label: 'AI conversations',
     color: 'var(--chart-3)',
   },
   credits: { label: 'Total credits spent', color: 'var(--primary)' },
@@ -49,7 +50,7 @@ const CHART_CONFIG = {
 } satisfies ChartConfig;
 
 const CHART_LABELS: Record<OverviewChartMode, string> = {
-  aiAssistedConversations: 'AI-assisted conversation',
+  aiAssistedConversations: 'AI conversations',
   credits: 'Total credits spent',
   bookings: 'Booked appointments',
   humanEscalations: 'Human escalation',
@@ -89,23 +90,47 @@ function hasModeData(rows: OverviewTrendRow[], mode: OverviewChartMode) {
   return rows.some((row) => row[mode] > 0);
 }
 
+function getTrendDescription(mode: OverviewChartMode, dataMode: OverviewTrendDataMode) {
+  const descriptions: Record<OverviewTrendDataMode, Record<OverviewChartMode, string>> = {
+    daily: {
+      aiAssistedConversations: 'Conversations each day.',
+      credits: 'Credits spent each day.',
+      bookings: 'Appointments booked each day.',
+      humanEscalations: 'Escalations each day.',
+    },
+    cumulative: {
+      aiAssistedConversations: 'Total conversations.',
+      credits: 'Total credits spent.',
+      bookings: 'Total appointments booked.',
+      humanEscalations: 'Total escalations.',
+    },
+  };
+
+  return descriptions[dataMode][mode];
+}
+
 export function AgentOverviewTrendChart({
   rows,
   mode,
-  actions,
+  dataMode,
 }: {
   rows: OverviewTrendRow[];
   mode: OverviewChartMode;
-  actions?: ReactNode;
+  dataMode: OverviewTrendDataMode;
 }) {
   const hasData = hasModeData(rows, mode);
   const selectedLabel = getModeLabel(mode);
+  const trendDescription = getTrendDescription(mode, dataMode);
 
   return (
     <Card className="rounded-lg py-0 shadow-none ring-1 ring-border/70">
       <CardHeader className="flex flex-col gap-3 px-5 pt-5 pb-0 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle className="text-lg font-semibold">{selectedLabel}</CardTitle>
-        {actions}
+        <div className="space-y-0.5">
+          <CardTitle className="font-sans text-xl font-medium tracking-tight leading-tight">
+            {selectedLabel}
+          </CardTitle>
+          <CardDescription className="leading-tight">{trendDescription}</CardDescription>
+        </div>
       </CardHeader>
       <CardContent className="px-5 pt-0 pb-6">
         {!hasData ? (
@@ -180,5 +205,5 @@ export function AgentOverviewTrendChart({
 }
 
 export function AgentOverviewTrendChartSkeleton() {
-  return <Skeleton className="h-[607px] rounded-lg" />;
+  return <Skeleton className="h-[510px] rounded-lg" />;
 }

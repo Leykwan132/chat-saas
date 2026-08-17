@@ -1,9 +1,10 @@
 import { startOfTimeZoneDay } from "./timeZoneDateKeys";
 import { DAY_MS, getUsagePeriodStartMs } from "./usageMonthKey";
 
-export type AnalyticsTimeRange = "7d" | "30d" | "90d" | "period";
+export type AnalyticsTimeRange = "1d" | "7d" | "30d" | "90d" | "period";
 
 const TIME_RANGE_DAYS: Record<Exclude<AnalyticsTimeRange, "period">, number> = {
+  "1d": 1,
   "7d": 7,
   "30d": 30,
   "90d": 90,

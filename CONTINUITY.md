@@ -1,7 +1,7 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0` against the merged `origin/main` baseline.
+- 2026-08-17 [USER] Goal: default the Agent Overview homepage analytics range to Last 30 days with 1d, 7d, 30d, and 90d shortcuts, compact content-sized metrics, right-aligned date plus Daily/Cumulative controls, and contextual graph and lower-panel subtitles.
 - 2026-08-16 [CODE] Now: calendar booking availability is deployed with source indicators, Google Meet booking links, diagnostics, and personal-service assignment repair.
 - 2026-08-16 [CODE] Now: manual and CSV customer creation persist the active agent scope; personal entries retain owner scope, and the safe legacy personal-customer backfill has completed.
 - 2026-08-16 [TOOL] Now: PR #56 is current with the local branch and a full-change description.
@@ -28,6 +28,24 @@
 - 2026-08-16 [TOOL] Investigation: `service_not_assigned` compares service assignee WorkOS IDs with each roster schedule’s WorkOS ID. The inspected service was created after the personal-assignment migration and already belongs to the agent owner; its logged candidate is a distinct user’s schedule, so the migration is not the proven cause of that log.
 
 # Decisions
+- 2026-08-17 [USER] D701 ACTIVE: Overview defaults to the rolling Last 30 days; dedicated usage pages retain their existing defaults.
+- 2026-08-17 [USER] D702 ACTIVE: Overview metric cards are compact, text-only, content-sized selectable controls with a 12px label/value gap and 24px value type; the selected chart is 400px tall and uses `AI conversations`.
+- 2026-08-17 [USER] D703 SUPERSEDED by D704: Overview date controls previously included Billing period.
+- 2026-08-17 [USER] D704 ACTIVE: Overview shows the active date directly below its title, with only 1d, 7d, 30d, and 90d ghost buttons right-aligned on wider screens; the active range uses a muted fill and no custom picker is available.
+- 2026-08-17 [USER] D705 ACTIVE: Overview’s Daily/Cumulative selector shares the right-aligned header control row with the date and range controls.
+- 2026-08-17 [USER] D706 ACTIVE: Overview graph titles include a brief, plain-language muted subtitle appropriate to the selected metric and Daily/Cumulative aggregation.
+- 2026-08-17 [USER] D707 ACTIVE: Common Topics and Customer Sentiment use brief muted subtitles; their medium sans-serif title typography matches the selected graph.
+- 2026-08-17 [USER] D708 ACTIVE: Overview graph and lower-panel titles use tight line-height with a 2px title-description gap.
+- 2026-08-17 [USER] D709 ACTIVE: Common Topics and Customer Sentiment use the same 20px horizontal inset as the Overview metric cards.
+- 2026-08-17 [USER] D710 ACTIVE: Overview range and Daily/Cumulative controls bottom-align with the title/date block on wider screens.
+- 2026-08-17 [USER] D711 ACTIVE: Overview title and active date use an 8px gap, with the date beneath the title.
+- 2026-08-17 [USER] D712 ACTIVE: After initial Overview load, date-range changes retain the last completed dashboard content and show only a subtle busy state on the range controls; Daily/Cumulative changes remain immediate.
+- 2026-08-17 [USER] D713 ACTIVE: Overview range buttons have concise top tooltips, and only the Overview Daily/Cumulative selector matches their fully rounded 32px text-sm styling.
+- 2026-08-17 [USER] D714 ACTIVE: Common Topics and Customer Sentiment use the existing `topic_analytics` entitlement: Free and Starter receive an explicitly labelled local sample preview with Preview and Upgrade actions, while Growth and Business receive live data.
+- 2026-08-17 [USER] D715 SUPERSEDED by D717: The Overview data-mode label was centered independently of its chevron.
+- 2026-08-17 [USER] D716 ACTIVE: Knowledge Base Q&A shows one compact row of five universal support-question presets above Add Q&A: Refund policy, Shipping & delivery, Services, Payment methods, and Opening hours; selecting one fills the first blank question or adds a new prefilled row, replacing Add more.
+- 2026-08-17 [USER] D717 ACTIVE: Daily/Cumulative retains normal label-chevron spacing and uses a distinct outline-only Select surface without a background fill or shadow, visually separate from date-range shortcuts.
+- 2026-08-17 [USER] D718 ACTIVE: Analytics sample preview shows one primary `Upgrade now` funnel inside the lower-left of each Common Topics and Customer Sentiment panel, using the existing upgrade flow.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
@@ -37,30 +55,61 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
+- 2026-08-17 [CODE] Overview range controls now use the supported ToggleGroup variant, and the page safely renders completed analytics responses with no credit-usage record.
+- 2026-08-17 [CODE] Common Topics and Customer Sentiment sample preview now presents a lower-left Upgrade now action inside each panel; PR #62 tracks commit `2e37752a`.
+- 2026-08-17 [CODE] Overview Daily/Cumulative now uses an outline-only Select surface without a background or shadow; PR #62 tracks commit `83ace30b`.
+- 2026-08-17 [CODE] Overview Daily/Cumulative now has a distinct outlined Select surface, separating it from date-range filters; PR #62 tracks commit `e7058e6c`.
+- 2026-08-17 [CODE] Overview Daily/Cumulative control again uses its earlier clickable Select presentation with a visible chevron; PR #62 tracks commit `0498d594`.
+- 2026-08-17 [CODE] Knowledge Base Q&A now offers five reusable support-question presets for refund policy, shipping, services, payment methods, and opening hours; PR #62 tracks commit `52e8f5a2`.
+- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, retains its last complete dashboard during later range refreshes, shows concise range tooltips and a non-blocking busy state, gives Daily/Cumulative the same 32px rounded text-sm control styling with a centered label, and restricts live topic/sentiment analytics to entitled plans with sample previews and persistent Upgrade actions for Free and Starter; PR #62 tracks commit `535fce13`.
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
 - 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the fully rounded availability time combobox with a start–end separator.
 - 2026-08-16 [CODE] Google health now blocks only Meet availability; daily maintenance renews watches and no longer sweeps stale syncs.
 - 2026-08-16 [CODE] Manual and CSV customers persist active-agent scope; personal workspace entries keep owner scope.
-- 2026-08-16 [TOOL] Personal-service assignment repair (9 records) and safe personal-customer backfill (31 scanned) completed on the development deployment.
-- 2026-08-16 [TOOL] Pushed 51 local commits to `cursor/google-calendar-booking-sync-10b0` and rewrote PR #56 to cover the full change set.
 - 2026-08-16 [CODE] Remote booking confirmation and update messages now include the Google Meet link when available.
 
 # Working set
-- `convex/schema.ts`
-- `convex/appointmentBooking/fields.ts`
-- `convex/appointmentBooking/fields.test.ts`
-- `convex/appointmentBooking/confirmations.ts`
-- `convex/appointmentBooking/services.ts`
-- `convex/appointmentBookingAvailability.test.ts`
-- `src/lib/serviceForm.ts`
-- `src/lib/serviceForm.test.ts`
-- `src/components/services/ServiceLocationField.tsx`
-- `src/components/services/serviceFormShared.test.tsx`
-- `docs/superpowers/specs/2026-08-16-service-video-call-location-design.md`
-- `docs/superpowers/plans/2026-08-16-service-video-call-location.md`
+- `src/components/knowledge-base/QASection.tsx`
+- `src/components/knowledge-base/QASection.test.tsx`
+- `src/components/knowledge-base/qaQuestionPresets.ts`
+- `src/components/knowledge-base/qaQuestionPresets.test.ts`
+- `src/pages/AgentOverviewPage.tsx`
+- `src/components/agent-overview/AgentOverviewTopicsAndSentiment.tsx`
+- `src/components/agent-overview/AgentOverviewDataModeSelect.tsx`
+- `docs/superpowers/specs/2026-08-17-overview-preview-upgrade-action-design.md`
+- `docs/superpowers/specs/2026-08-17-knowledge-base-qa-presets-design.md`
+- `docs/superpowers/plans/2026-08-17-knowledge-base-qa-presets.md`
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Overview TypeScript correction passed 7 focused tests, the app TypeScript check, the Node v22.22.0 production build, and `git diff --check`; commit pending.
+- 2026-08-17 [TOOL] In-panel analytics-preview Upgrade now actions passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `2e37752a` was pushed to PR #62.
+- 2026-08-17 [TOOL] Lower-left analytics-preview Upgrade now funnel passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `93e7142b` was pushed to PR #62.
+- 2026-08-17 [TOOL] Outline-only Overview Daily/Cumulative Select styling passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `83ace30b` was pushed to PR #62.
+- 2026-08-17 [TOOL] Services Q&A preset replacement passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `52e8f5a2` was pushed to PR #62.
+- 2026-08-17 [TOOL] Distinct Overview Daily/Cumulative Select styling passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `e7058e6c` was pushed to PR #62.
+- 2026-08-17 [TOOL] Five-option Q&A picker passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `74dfc6d7` was pushed to PR #62.
+- 2026-08-17 [TOOL] Restored Overview Daily/Cumulative Select treatment passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `0498d594` was pushed to PR #62.
+- 2026-08-17 [TOOL] Q&A presets passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `8c10b40a` was pushed to PR #62. The full suite repeated the known baseline: 1280 pass, 161 fail, 112 errors from missing Stripe environment variables, unsupported `import.meta.glob`, and unavailable `vi.advanceTimersByTimeAsync`.
+- 2026-08-17 [TOOL] Centered Daily/Cumulative control and persistent sample-preview Upgrade action passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `535fce13` was pushed to PR #62.
+- 2026-08-17 [TOOL] Topic-analytics entitlement and preview passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `94e21d2e` was pushed to PR #62.
+- 2026-08-17 [TOOL] Overview range retention, tooltip, busy-state, and Daily/Cumulative control regressions passed 8 focused tests; the Node v22.22.0 production build and `git diff --check` passed. Commits `85088d92`, `63b7b904`, and `e607ed52` await push to PR #62.
+- 2026-08-17 [TOOL] Title-date spacing refinement passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit `0d66102d` was pushed to PR #62.
+- 2026-08-17 [TOOL] Bottom-aligned header controls passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit `125b1678` was pushed to PR #62.
+- 2026-08-17 [TOOL] Lower-panel inset alignment passed 5 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `b82de7b4` was pushed to PR #62.
+- 2026-08-17 [TOOL] Overview copy and title-type refinement passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `82432d30` was pushed to PR #62.
+- 2026-08-17 [TOOL] Date-under-title layout passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit `1409b6d3` was pushed to PR #62.
+- 2026-08-17 [TOOL] Tight title-description spacing passed 5 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `4ba9dba5` was pushed to PR #62.
+- 2026-08-17 [TOOL] Lower-panel descriptions and lighter titles passed 5 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `f239eebd` was pushed to PR #62.
+- 2026-08-17 [TOOL] Graph-subtitle revision passed 5 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `570b1524` was pushed to PR #62.
+- 2026-08-17 [TOOL] Metric spacing and typography refinement passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit `98174118` was pushed to PR #62.
+- 2026-08-17 [TOOL] Daily/Cumulative header relocation passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit `d8726dfa` was pushed to PR #62.
+- 2026-08-17 [TOOL] Compact-card and ghost-control revision passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `25e42830` was pushed to PR #62.
+- 2026-08-17 [TOOL] The full Node v22 `bun test` run repeated the known unrelated baseline: 1275 pass, 161 fail, 112 errors, chiefly missing Stripe test environment variables, unsupported `import.meta.glob`, and unavailable `vi.advanceTimersByTimeAsync`.
+- 2026-08-17 [TOOL] Overview 1d-range regression passed 4 focused tests; the production build passed, while Convex codegen's embedded typecheck did not report diagnostics.
+- 2026-08-17 [TOOL] Draft PR #62 was created from `codex/overview-date-range-controls` against `main`; the local checkout tracks the pushed branch and is clean.
+- 2026-08-17 [TOOL] Date-shortcut regression passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; work remains local for user testing.
+- 2026-08-17 [TOOL] Overview date-range and compact-layout regression was RED before implementation, then passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; work remains local for user testing.
 - 2026-08-16 [TOOL] Calendar availability diagnostics regression was RED before implementation, then passed with Convex and workspace type checks, focused availability tests, `git diff --check`, and deployment.
 - 2026-08-16 [TOOL] `serviceAvailabilityMigration:runNormalizePersonalServiceAssignments` completed in one batch for 9 records on the connected development deployment.
 - 2026-08-16 [TOOL] Location-aware Google-health regression was RED for an in-person service, then passed 4/4 focused availability tests with Convex and workspace TypeScript checks and `git diff --check` under Node v22.22.0.

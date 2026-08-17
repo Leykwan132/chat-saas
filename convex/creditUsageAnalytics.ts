@@ -29,6 +29,7 @@ const TOP_MODEL_SERIES_LIMIT = 8;
 
 export const creditTimeRangeValidator = v.optional(
   v.union(
+    v.literal("1d"),
     v.literal("7d"),
     v.literal("30d"),
     v.literal("90d"),

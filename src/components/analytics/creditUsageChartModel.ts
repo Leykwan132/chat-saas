@@ -1,6 +1,6 @@
 import type { ChartConfig } from '@/components/ui/chart';
 
-export type CreditTimeRange = '7d' | '30d' | '90d' | 'period';
+export type CreditTimeRange = '1d' | '7d' | '30d' | '90d' | 'period';
 export type CreditMetric = 'daily' | 'cumulative';
 
 export const TIME_RANGE_OPTIONS: Array<{ value: CreditTimeRange; label: string }> = [
