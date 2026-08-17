@@ -43,6 +43,7 @@
 - 2026-08-17 [USER] D713 ACTIVE: Overview range buttons have concise top tooltips, and only the Overview Daily/Cumulative selector matches their fully rounded 32px text-sm styling.
 - 2026-08-17 [USER] D714 ACTIVE: Common Topics and Customer Sentiment use the existing `topic_analytics` entitlement: Free and Starter receive an explicitly labelled local sample preview with Preview and Upgrade actions, while Growth and Business receive live data.
 - 2026-08-17 [USER] D715 ACTIVE: The Overview data-mode label stays visually centered with its chevron independently positioned; sample preview retains a compact Upgrade action without a long disclosure sentence.
+- 2026-08-17 [USER] D716 ACTIVE: Knowledge Base Q&A shows seven universal support-question presets above Add Q&A; selecting one fills the first blank question or adds a new prefilled row, replacing Add more.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
@@ -52,6 +53,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
+- 2026-08-17 [CODE] Knowledge Base Q&A now offers reusable support-question presets for refund policy, shipping, returns, pricing, payment methods, opening hours, and support contact; PR #62 tracks commit `8c10b40a`.
 - 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, retains its last complete dashboard during later range refreshes, shows concise range tooltips and a non-blocking busy state, gives Daily/Cumulative the same 32px rounded text-sm control styling with a centered label, and restricts live topic/sentiment analytics to entitled plans with sample previews and persistent Upgrade actions for Free and Starter; PR #62 tracks commit `535fce13`.
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
 - 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the fully rounded availability time combobox with a start–end separator.
@@ -60,21 +62,19 @@
 - 2026-08-16 [CODE] Remote booking confirmation and update messages now include the Google Meet link when available.
 
 # Working set
+- `src/components/knowledge-base/QASection.tsx`
+- `src/components/knowledge-base/QASection.test.tsx`
+- `src/components/knowledge-base/qaQuestionPresets.ts`
+- `src/components/knowledge-base/qaQuestionPresets.test.ts`
 - `src/pages/AgentOverviewPage.tsx`
-- `src/pages/AgentOverviewPage.test.tsx`
-- `src/components/agent-overview/AgentOverviewDataModeSelect.tsx`
-- `src/components/agent-overview/AgentOverviewMetrics.tsx`
-- `src/components/agent-overview/AgentOverviewTimeRangeButtons.tsx`
-- `src/components/agent-overview/AgentOverviewTrendChart.tsx`
-- `docs/superpowers/specs/2026-08-17-overview-last-30-days-default-design.md`
-- `docs/superpowers/specs/2026-08-17-overview-range-loading-and-controls-design.md`
-- `docs/superpowers/specs/2026-08-17-overview-topic-analytics-preview-design.md`
-- `docs/superpowers/plans/2026-08-17-overview-date-range-and-metric-layout.md`
-- `docs/superpowers/plans/2026-08-17-overview-control-alignment.md`
-- `docs/superpowers/plans/2026-08-17-overview-range-loading-and-controls.md`
+- `src/components/agent-overview/AgentOverviewTopicsAndSentiment.tsx`
+- `docs/superpowers/specs/2026-08-17-overview-preview-upgrade-action-design.md`
+- `docs/superpowers/specs/2026-08-17-knowledge-base-qa-presets-design.md`
+- `docs/superpowers/plans/2026-08-17-knowledge-base-qa-presets.md`
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Q&A presets passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `8c10b40a` was pushed to PR #62. The full suite repeated the known baseline: 1280 pass, 161 fail, 112 errors from missing Stripe environment variables, unsupported `import.meta.glob`, and unavailable `vi.advanceTimersByTimeAsync`.
 - 2026-08-17 [TOOL] Centered Daily/Cumulative control and persistent sample-preview Upgrade action passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `535fce13` was pushed to PR #62.
 - 2026-08-17 [TOOL] Topic-analytics entitlement and preview passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `94e21d2e` was pushed to PR #62.
 - 2026-08-17 [TOOL] Overview range retention, tooltip, busy-state, and Daily/Cumulative control regressions passed 8 focused tests; the Node v22.22.0 production build and `git diff --check` passed. Commits `85088d92`, `63b7b904`, and `e607ed52` await push to PR #62.
