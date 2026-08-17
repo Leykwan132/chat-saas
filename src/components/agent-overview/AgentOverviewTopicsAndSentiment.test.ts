@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, test } from 'vitest';
 import {
   AgentOverviewTopicsAndSentiment,
+  AgentOverviewPreviewUpgradeAction,
   buildTopicChartData,
 } from './AgentOverviewTopicsAndSentiment';
 
@@ -74,4 +75,14 @@ test('shows Preview and Upgrade actions for plans without topic analytics', () =
 
   expect(markup).toContain('Preview');
   expect(markup).toContain('Upgrade');
+});
+
+test('renders one lower-left upgrade action for analytics preview', () => {
+  const markup = renderToStaticMarkup(
+    createElement(AgentOverviewPreviewUpgradeAction, { onUpgrade: () => undefined }),
+  );
+
+  expect(markup).toContain('Upgrade now');
+  expect(markup).toContain('col-span-full flex justify-start');
+  expect(markup).not.toContain('justify-end');
 });

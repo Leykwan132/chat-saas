@@ -184,6 +184,18 @@ function LockedTopicAnalyticsPanel({
   );
 }
 
+export function AgentOverviewPreviewUpgradeAction({
+  onUpgrade,
+}: {
+  onUpgrade?: () => void;
+}) {
+  return (
+    <div className="col-span-full flex justify-start">
+      <Button type="button" onClick={onUpgrade}>Upgrade now</Button>
+    </div>
+  );
+}
+
 export function AgentOverviewTopicsAndSentiment({
   topics,
   sentimentDistribution,
@@ -216,11 +228,6 @@ export function AgentOverviewTopicsAndSentiment({
 
   return (
     <div className={analyticsAdvancedOverviewGridClass}>
-      {previewing ? (
-        <div className="col-span-full flex justify-end">
-          <Button type="button" variant="outline" onClick={onUpgrade}>Upgrade</Button>
-        </div>
-      ) : null}
       <AnalyticsChartShell
         title={(
           <OverviewPanelTitle
@@ -295,6 +302,7 @@ export function AgentOverviewTopicsAndSentiment({
           </div>
         </div>
       </AnalyticsChartShell>
+      {previewing ? <AgentOverviewPreviewUpgradeAction onUpgrade={onUpgrade} /> : null}
     </div>
   );
 }
