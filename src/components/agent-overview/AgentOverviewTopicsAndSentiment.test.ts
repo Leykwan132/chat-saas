@@ -1,7 +1,10 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, test } from 'vitest';
-import { AgentOverviewActiveDonutChart } from './AgentOverviewActiveDonutChart';
+import {
+  AgentOverviewActiveDonutChart,
+  getActiveDonutTooltipPosition,
+} from './AgentOverviewActiveDonutChart';
 import {
   AgentOverviewTopicsAndSentiment,
   AgentOverviewPreviewUpgradeAction,
@@ -80,7 +83,27 @@ test('keeps customer counts with customer-sentiment donut data', () => {
   ]);
 });
 
-test('renders the active donut label and customer count in a tooltip', () => {
+test('positions an active donut tooltip beyond the matching slice', () => {
+  const right = getActiveDonutTooltipPosition({
+    cx: 100,
+    cy: 100,
+    midAngle: 0,
+    outerRadius: 50,
+  });
+  const top = getActiveDonutTooltipPosition({
+    cx: 100,
+    cy: 100,
+    midAngle: 90,
+    outerRadius: 50,
+  });
+
+  expect(right.x).toBeGreaterThan(100);
+  expect(right.y).toBeLessThan(100);
+  expect(top.x).toBeLessThan(100);
+  expect(top.y).toBeLessThan(100);
+});
+
+test('removes the static donut tooltip treatment', () => {
   const markup = renderToStaticMarkup(
     createElement(AgentOverviewActiveDonutChart, {
       data: [{ key: 'pricing', label: 'Pricing', customerCount: 4, fill: '#7cb4f4' }],
@@ -88,10 +111,8 @@ test('renders the active donut label and customer count in a tooltip', () => {
     }),
   );
 
-  expect(markup).toContain('role="tooltip"');
-  expect(markup).toContain('Pricing');
-  expect(markup).toContain('4 customers');
-  expect(markup).toContain('block text-xs');
+  expect(markup).not.toContain('shadow-sm');
+  expect(markup).not.toContain('inset-x-0 -top-2');
 });
 
 test('does not render an active donut tooltip without a hovered row', () => {

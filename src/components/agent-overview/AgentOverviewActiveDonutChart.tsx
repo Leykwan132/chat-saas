@@ -10,6 +10,10 @@ import {
 const activeDonutChartConfig = {
   customerCount: { label: 'Customers' },
 } satisfies ChartConfig;
+const ACTIVE_SECTOR_RADIUS_OFFSET = 10;
+const TOOLTIP_WIDTH = 184;
+const TOOLTIP_HEIGHT = 72;
+const TOOLTIP_GAP = 8;
 
 export type AgentOverviewActiveDonutDatum = {
   key: string;
@@ -27,7 +31,33 @@ export function getActiveDonutOuterRadius(
   index: number,
   activeIndex: number | null,
 ) {
-  return index === activeIndex ? outerRadius + 10 : outerRadius;
+  return index === activeIndex ? outerRadius + ACTIVE_SECTOR_RADIUS_OFFSET : outerRadius;
+}
+
+export function getActiveDonutTooltipPosition({
+  cx,
+  cy,
+  midAngle,
+  outerRadius,
+}: {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  outerRadius: number;
+}) {
+  const angle = (-midAngle * Math.PI) / 180;
+  const xDirection = Math.cos(angle);
+  const yDirection = Math.sin(angle);
+  const projectedTooltipHalfSize =
+    (Math.abs(xDirection) * TOOLTIP_WIDTH) / 2 +
+    (Math.abs(yDirection) * TOOLTIP_HEIGHT) / 2;
+  const distance =
+    outerRadius + ACTIVE_SECTOR_RADIUS_OFFSET + projectedTooltipHalfSize + TOOLTIP_GAP;
+
+  return {
+    x: cx + xDirection * distance - TOOLTIP_WIDTH / 2,
+    y: cy + yDirection * distance - TOOLTIP_HEIGHT / 2,
+  };
 }
 
 export function AgentOverviewActiveDonutChart({
@@ -37,8 +67,6 @@ export function AgentOverviewActiveDonutChart({
   data: AgentOverviewActiveDonutDatum[];
   activeIndex: number | null;
 }) {
-  const activeDatum = activeIndex === null ? null : data[activeIndex] ?? null;
-
   return (
     <div className="relative mx-auto aspect-square size-full max-h-[230px] max-w-[230px]">
       <ChartContainer config={activeDonutChartConfig} className="size-full">
@@ -71,32 +99,56 @@ export function AgentOverviewActiveDonutChart({
             outerRadius="86%"
             strokeWidth={3}
             stroke="var(--background)"
-            shape={({ index, outerRadius = 0, ...props }: PieSectorShapeProps) => (
-              <Sector
-                {...props}
-                outerRadius={getActiveDonutOuterRadius(outerRadius, index, activeIndex)}
-              />
-            )}
+            shape={({
+              index,
+              outerRadius = 0,
+              cx = 0,
+              cy = 0,
+              midAngle = 0,
+              ...sectorProps
+            }: PieSectorShapeProps) => {
+              const datum = data[index];
+              const active = index === activeIndex && datum !== undefined;
+
+              return (
+                <g>
+                  <Sector
+                    {...sectorProps}
+                    cx={cx}
+                    cy={cy}
+                    outerRadius={getActiveDonutOuterRadius(outerRadius, index, activeIndex)}
+                  />
+                  {active ? (
+                    <foreignObject
+                      {...getActiveDonutTooltipPosition({ cx, cy, midAngle, outerRadius })}
+                      width={TOOLTIP_WIDTH}
+                      height={TOOLTIP_HEIGHT}
+                      pointerEvents="none"
+                    >
+                      <div
+                        xmlns="http://www.w3.org/1999/xhtml"
+                        role="tooltip"
+                        aria-atomic="true"
+                        aria-live="polite"
+                        className="flex size-full items-center justify-center"
+                      >
+                        <div className="max-w-full rounded-lg border bg-background px-3 py-2 text-center">
+                          <span className="block text-xs leading-tight font-medium text-foreground">
+                            {datum.label}
+                          </span>
+                          <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">
+                            {formatCustomerCount(datum.customerCount)}
+                          </span>
+                        </div>
+                      </div>
+                    </foreignObject>
+                  ) : null}
+                </g>
+              );
+            }}
           />
         </PieChart>
       </ChartContainer>
-      {activeDatum ? (
-        <div
-          role="tooltip"
-          aria-atomic="true"
-          aria-live="polite"
-          className="pointer-events-none absolute inset-x-0 -top-2 z-10 flex -translate-y-full justify-center"
-        >
-          <div className="max-w-full rounded-lg border bg-background px-3 py-2 text-center shadow-sm">
-            <span className="block text-xs leading-tight font-medium text-foreground">
-              {activeDatum.label}
-            </span>
-            <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">
-              {formatCustomerCount(activeDatum.customerCount)}
-            </span>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
