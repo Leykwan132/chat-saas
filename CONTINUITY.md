@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-17 [USER] Goal: resolve PR #64 against the current `main` while preserving the revised landing benefit artwork and gray background.
-- 2026-08-17 [CODE] Now: `origin/main` commit `16f5749` is merged without commit into `codex/landing-customer-conversations`; only the continuity ledger needed reconciliation.
-- 2026-08-17 [CODE] Next: validate the merged application and push the merge commit to PR #64.
+- 2026-08-17 [CODE] Now: merge commit `94b9854` brings `origin/main` commit `16f5749` into `codex/landing-customer-conversations`; PR #64 awaits review.
+- 2026-08-17 [CODE] Next: revise only if requested; the landing update’s public changelog entry remains deferred until production availability is confirmed.
 - 2026-08-17 [TOOL] Existing active work: merged `main` includes PR #63’s Agent Overview topic-panel layout and donut-hover interaction.
 - 2026-08-17 [ASSUMPTION] The landing update remains unshipped; its public changelog entry remains deferred until production availability is confirmed.
 
@@ -36,3 +36,4 @@
 - 2026-08-17 [TOOL] The revised landing assets are transparent 1080×1350 PNGs.
 - 2026-08-17 [TOOL] PR #64 was created from `codex/landing-customer-conversations` against `main`.
 - 2026-08-17 [TOOL] PR #63’s focused tests, Node v22 TypeScript check, Vite build, and `git diff --check` passed before its merge to `main`.
+- 2026-08-17 [TOOL] PR #64 merge resolution passed 13 focused landing-and-overview tests, the Node v22.22.0 production build, and `git diff --check`; `origin/main` is an ancestor of the branch.
