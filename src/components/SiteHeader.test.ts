@@ -31,8 +31,8 @@ test('site header balances the brand icon with the wordmark', () => {
   expect(brandSource).not.toContain("'size-7 transition-all duration-300'");
 });
 
-test('public Start for free handlers report the Google Ads conversion', () => {
-  expect(siteHeaderSource).toContain("reportGoogleAdsConversion(() => {");
-  expect(blogLayoutSource).toContain("reportGoogleAdsConversion(() => {");
-  expect(legalLayoutSource).toContain("reportGoogleAdsConversion(() => {");
+test('public Start for free handlers do not report Google Ads conversions', () => {
+  expect(siteHeaderSource).not.toContain('reportGoogleAdsConversion');
+  expect(blogLayoutSource).not.toContain('reportGoogleAdsConversion');
+  expect(legalLayoutSource).not.toContain('reportGoogleAdsConversion');
 });

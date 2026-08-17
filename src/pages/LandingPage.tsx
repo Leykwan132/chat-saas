@@ -13,7 +13,6 @@ import {
   UpgradeInboxSection,
 } from '@/components/landing/LandingConversionSections';
 import { StatsSection } from '@/components/landing/LandingStatsSection';
-import { reportGoogleAdsConversion } from '@/lib/googleAdsConversion';
 import '@/styles/landing-page.css';
 
 export default function LandingPage() {
@@ -23,9 +22,7 @@ export default function LandingPage() {
   const returnTo = { returnTo: POST_LOGIN_REDIRECT };
   const onSignUp = () => {
     posthog?.capture('signup_cta_clicked', { source: 'landing_page' });
-    reportGoogleAdsConversion(() => {
-      void signUp({ state: returnTo });
-    });
+    void signUp({ state: returnTo });
   };
 
   return (

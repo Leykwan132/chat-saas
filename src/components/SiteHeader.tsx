@@ -7,7 +7,6 @@ import { SiteHeaderActions } from '@/components/site-header/SiteHeaderActions';
 import { SiteHeaderBrand } from '@/components/site-header/SiteHeaderBrand';
 import { SiteHeaderNavigation } from '@/components/site-header/SiteHeaderNavigation';
 import { siteHeaderNavLinks } from '@/components/site-header/siteHeaderLinks';
-import { reportGoogleAdsConversion } from '@/lib/googleAdsConversion';
 import { cn } from '@/lib/utils';
 
 export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
@@ -33,9 +32,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
     setIsOpen(false);
   };
   const onSignUp = () => {
-    reportGoogleAdsConversion(() => {
-      void signUp(returnTo);
-    });
+    void signUp(returnTo);
     setIsOpen(false);
   };
 

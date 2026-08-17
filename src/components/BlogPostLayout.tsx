@@ -5,7 +5,6 @@ import { ArrowRight } from 'lucide-react';
 import { ModeToggle } from '@/components/mode-toggle';
 import { SiteFooter } from '@/components/SiteFooter';
 import { POST_LOGIN_REDIRECT } from '@/constants';
-import { reportGoogleAdsConversion } from '@/lib/googleAdsConversion';
 
 type BlogPostLayoutProps = {
   title: string;
@@ -26,9 +25,7 @@ export function BlogPostLayout({
 
   const onSignIn = () => void signIn(returnTo);
   const onSignUp = () => {
-    reportGoogleAdsConversion(() => {
-      void signUp(returnTo);
-    });
+    void signUp(returnTo);
   };
 
   return (

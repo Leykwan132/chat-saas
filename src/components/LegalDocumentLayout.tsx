@@ -5,7 +5,6 @@ import { ArrowRight } from 'lucide-react';
 import { ModeToggle } from '@/components/mode-toggle';
 import { SiteFooter } from '@/components/SiteFooter';
 import { POST_LOGIN_REDIRECT } from '@/constants';
-import { reportGoogleAdsConversion } from '@/lib/googleAdsConversion';
 
 type LegalDocumentLayoutProps = {
   title: string;
@@ -20,9 +19,7 @@ export function LegalDocumentLayout({ title, lastUpdated, children }: LegalDocum
 
   const onSignIn = () => void signIn(returnTo);
   const onSignUp = () => {
-    reportGoogleAdsConversion(() => {
-      void signUp(returnTo);
-    });
+    void signUp(returnTo);
   };
 
   return (
