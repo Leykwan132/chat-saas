@@ -50,4 +50,4 @@
 - Modify: `CONTINUITY.md`
 
 - [x] Run the focused tests, Node v22 TypeScript check, Vite production build, and `git diff --check`.
-- [ ] Commit and push the browser-only test-data update to draft PR #63.
+- [x] Commit and push the browser-only test-data update to draft PR #63.
