@@ -41,6 +41,7 @@
 - 2026-08-17 [USER] D711 ACTIVE: Overview title and active date use an 8px gap, with the date beneath the title.
 - 2026-08-17 [USER] D712 ACTIVE: After initial Overview load, date-range changes retain the last completed dashboard content and show only a subtle busy state on the range controls; Daily/Cumulative changes remain immediate.
 - 2026-08-17 [USER] D713 ACTIVE: Overview range buttons have concise top tooltips, and only the Overview Daily/Cumulative selector matches their fully rounded 32px text-sm styling.
+- 2026-08-17 [USER] D714 ACTIVE: Common Topics and Customer Sentiment use the existing `topic_analytics` entitlement: Free and Starter receive an explicitly labelled local sample preview with Preview and Upgrade actions, while Growth and Business receive live data.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
@@ -66,6 +67,7 @@
 - `src/components/agent-overview/AgentOverviewTrendChart.tsx`
 - `docs/superpowers/specs/2026-08-17-overview-last-30-days-default-design.md`
 - `docs/superpowers/specs/2026-08-17-overview-range-loading-and-controls-design.md`
+- `docs/superpowers/specs/2026-08-17-overview-topic-analytics-preview-design.md`
 - `docs/superpowers/plans/2026-08-17-overview-date-range-and-metric-layout.md`
 - `docs/superpowers/plans/2026-08-17-overview-control-alignment.md`
 - `docs/superpowers/plans/2026-08-17-overview-range-loading-and-controls.md`
