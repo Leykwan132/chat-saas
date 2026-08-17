@@ -5,6 +5,7 @@ import {
   AgentOverviewTopicsAndSentiment,
   AgentOverviewPreviewUpgradeAction,
   buildTopicChartData,
+  getTopicChartOuterRadius,
 } from './AgentOverviewTopicsAndSentiment';
 
 test('builds colored customer-share rows for Common Topics', () => {
@@ -55,13 +56,18 @@ test('distributes full-width topic rows with separators', () => {
   expect(markup).toContain('max-h-[230px]');
   expect(markup).toContain('!size-[min(230px,100%)]');
   expect(markup).toContain('justify-start');
-  expect(markup.match(/style="height:340px"/g)).toHaveLength(2);
+  expect(markup.match(/style="min-height:340px"/g)).toHaveLength(2);
   expect(markup.match(/bg-background/g)).toHaveLength(2);
   expect(markup).toContain('Most discussed topics.');
   expect(markup).toContain('Conversation sentiment.');
   expect(markup.match(/font-sans font-medium leading-tight/g)).toHaveLength(2);
   expect(markup).toContain('mt-0.5');
   expect(markup.match(/px-5 pb-3 pt-5/g) ?? []).toHaveLength(2);
+});
+
+test('keeps topic rows visible and expands the hovered donut segment', () => {
+  expect(getTopicChartOuterRadius(86, 2, 2)).toBe(96);
+  expect(getTopicChartOuterRadius(86, 2, 1)).toBe(86);
 });
 
 test('shows Preview and Upgrade actions for plans without topic analytics', () => {
