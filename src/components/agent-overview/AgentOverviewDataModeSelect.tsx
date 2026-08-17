@@ -28,7 +28,7 @@ export function AgentOverviewDataModeSelect({
       <SelectTrigger
         aria-label="Overview data mode"
         size="sm"
-        className="h-8 rounded-full border-border bg-background px-3 text-sm shadow-sm"
+        className="h-8 rounded-full border-border bg-transparent px-3 text-sm"
       >
         <SelectValue placeholder="Data mode" />
       </SelectTrigger>
