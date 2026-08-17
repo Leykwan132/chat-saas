@@ -6,7 +6,7 @@ Help users start useful Q&A entries without writing common customer-support ques
 
 ## Layout
 
-Render one row of five small outline buttons immediately above the `Add Q&A` heading. Replace the existing `Add more` button with this picker. The choices are Refund policy, Shipping & delivery, Pricing, Payment methods, and Opening hours.
+Render one row of five small outline buttons immediately above the `Add Q&A` heading. Replace the existing `Add more` button with this picker. The choices are Refund policy, Shipping & delivery, Services, Payment methods, and Opening hours.
 
 ## Behavior
 

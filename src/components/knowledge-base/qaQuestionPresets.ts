@@ -6,7 +6,7 @@ export type QAPairDraft = {
 export const qaQuestionPresets = [
   { label: 'Refund policy', question: 'What is your refund policy?' },
   { label: 'Shipping & delivery', question: 'What are your shipping and delivery options?' },
-  { label: 'Pricing', question: 'How much does it cost?' },
+  { label: 'Services', question: 'What services do you offer?' },
   { label: 'Payment methods', question: 'What payment methods do you accept?' },
   { label: 'Opening hours', question: 'What are your opening hours?' },
 ] as const;
