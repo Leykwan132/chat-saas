@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-18 [USER] Goal: merge the latest `origin/main` into the Google Ads sign-up conversion branch, resolve conflicts, and update its PR description.
-- 2026-08-18 [CODE] Now: `origin/main` advanced to `ddb1a1c` and added the Google Ads base tag plus `src/googleAdsTag.test.mjs`; the merge is paused on `CONTINUITY.md` and `index.html` conflicts.
-- 2026-08-18 [CODE] Next: finish conflict resolution, run focused verification, push the merge commit, and update the current PR description.
+- 2026-08-18 [CODE] Now: merge commit `fdcd68e` incorporates `origin/main` at `ddb1a1c`; `CONTINUITY.md` and `index.html` conflicts are resolved and PR #66 is pushed.
+- 2026-08-18 [CODE] Next: update PR #66’s description after GitHub write access is restored.
 - 2026-08-18 [ASSUMPTION] The customer-facing conversion tracking remains unshipped; do not add a release changelog entry until production availability is confirmed.
 
 # Decisions
@@ -17,7 +17,7 @@
 # Done (recent)
 - 2026-08-18 [CODE] Google Ads conversion tracking covers landing, shared header, blog-layout, and legal-layout “Start for free” actions while preserving WorkOS and PostHog behavior.
 - 2026-08-18 [CODE] The design, implementation plan, helper, CTA wiring, continuity ledger, and incoming `src/googleAdsTag.test.mjs` are committed on the branch.
-- 2026-08-18 [TOOL] Focused conversion, landing, and header tests pass: 8 tests across 3 files; the Node 22 production build passed before this merge.
+- 2026-08-18 [TOOL] Focused conversion, landing, and header tests pass: 8 tests across 3 files; the loader test passes; the Node 22 production build passed after the merge.
 - 2026-08-18 [CODE] `origin/main` includes PR #65’s Google Ads base tag and loader test; those changes are retained in this merge.
 - 2026-08-17 [CODE] PR #63’s Common Topics layout, hover interaction, browser-only dummy data, and centered donut-detail work merged into `main`.
 - 2026-08-16 [CODE] Google Calendar booking, availability, customer scope, and remote-link milestones were deployed.
@@ -36,8 +36,9 @@
 - 2026-08-18 [CODE] `CONTINUITY.md`
 
 # Receipts
-- 2026-08-18 [TOOL] `git fetch origin main` advanced `origin/main` from `ea09604` to `ddb1a1c`; merge conflicts are limited to `CONTINUITY.md` and `index.html`.
+- 2026-08-18 [TOOL] `git fetch origin main` advanced `origin/main` from `ea09604` to `ddb1a1c`; merge conflicts in `CONTINUITY.md` and `index.html` were resolved in `fdcd68e`.
 - 2026-08-18 [TOOL] The incoming `src/googleAdsTag.test.mjs` verifies the Google Ads loader URL and config ID and is retained.
+- 2026-08-18 [TOOL] PR #66 is open at `https://github.com/Leykwan132/chat-saas/pull/66`; GitHub search succeeded, but PR description updates return 403 and local `gh` authentication remains invalid.
 - 2026-08-18 [TOOL] `bun run test` previously reported 477 test files passed and 18 unrelated pre-existing Convex/calendar/sidebar failures outside this change.
 - 2026-08-18 [TOOL] Node v22.22.0 `bun run build` previously passed with exit code 0; existing Vite warnings reported an unset Meta app ID and large chunks.
 - 2026-08-18 [TOOL] The branch was pushed to `origin`; earlier PR creation was blocked by GitHub connector 403 and invalid local `gh` authentication.
