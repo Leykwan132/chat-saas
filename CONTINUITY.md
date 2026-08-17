@@ -45,7 +45,7 @@
 - 2026-08-17 [USER] D715 SUPERSEDED by D717: The Overview data-mode label was centered independently of its chevron.
 - 2026-08-17 [USER] D716 ACTIVE: Knowledge Base Q&A shows one compact row of five universal support-question presets above Add Q&A: Refund policy, Shipping & delivery, Services, Payment methods, and Opening hours; selecting one fills the first blank question or adds a new prefilled row, replacing Add more.
 - 2026-08-17 [USER] D717 ACTIVE: Daily/Cumulative retains normal label-chevron spacing and uses a distinct outline-only Select surface without a background fill or shadow, visually separate from date-range shortcuts.
-- 2026-08-17 [USER] D718 ACTIVE: Analytics sample preview shows one primary `Upgrade now` funnel below both panels, aligned to the lower-left and using the existing upgrade flow.
+- 2026-08-17 [USER] D718 ACTIVE: Analytics sample preview shows one primary `Upgrade now` funnel inside the lower-left of each Common Topics and Customer Sentiment panel, using the existing upgrade flow.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
@@ -55,7 +55,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
-- 2026-08-17 [CODE] Common Topics and Customer Sentiment sample preview now presents one lower-left Upgrade now action after both panels; PR #62 tracks commit `93e7142b`.
+- 2026-08-17 [CODE] Common Topics and Customer Sentiment sample preview now presents a lower-left Upgrade now action inside each panel; PR #62 tracks commit `2e37752a`.
 - 2026-08-17 [CODE] Overview Daily/Cumulative now uses an outline-only Select surface without a background or shadow; PR #62 tracks commit `83ace30b`.
 - 2026-08-17 [CODE] Overview Daily/Cumulative now has a distinct outlined Select surface, separating it from date-range filters; PR #62 tracks commit `e7058e6c`.
 - 2026-08-17 [CODE] Overview Daily/Cumulative control again uses its earlier clickable Select presentation with a visible chevron; PR #62 tracks commit `0498d594`.
@@ -81,6 +81,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] In-panel analytics-preview Upgrade now actions passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `2e37752a` was pushed to PR #62.
 - 2026-08-17 [TOOL] Lower-left analytics-preview Upgrade now funnel passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `93e7142b` was pushed to PR #62.
 - 2026-08-17 [TOOL] Outline-only Overview Daily/Cumulative Select styling passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `83ace30b` was pushed to PR #62.
 - 2026-08-17 [TOOL] Services Q&A preset replacement passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `52e8f5a2` was pushed to PR #62.
