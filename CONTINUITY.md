@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-18 [USER] Goal: measure every unauthenticated “Start for free” CTA with the supplied Google Ads sign-up conversion and open a review PR.
 - 2026-08-18 [CODE] Now: branch `codex/google-ads-signup-conversion` contains the approved design, shared conversion helper, base Google tag, and four public CTA handler integrations.
-- 2026-08-18 [CODE] Next: push the branch and open the draft PR; production availability is UNCONFIRMED.
+- 2026-08-18 [CODE] Next: re-authenticate GitHub access, then open the draft PR from the already-pushed branch; production availability is UNCONFIRMED.
 - 2026-08-18 [ASSUMPTION] Do not add a public changelog entry until this unshipped conversion-tracking change is confirmed in production.
 
 # Decisions
@@ -39,6 +39,7 @@
 - 2026-08-18 [TOOL] Node v22.22.0 `bun run build` passed with exit code 0; existing Vite warnings reported an unset Meta app ID and large chunks.
 - 2026-08-18 [TOOL] `git diff --check` passed and the branch diff contains only the approved design/plan, Google Ads bootstrap/helper, CTA integrations, and focused tests.
 - 2026-08-18 [TOOL] `bun install --frozen-lockfile` restored missing local dependencies without changing tracked lockfiles.
+- 2026-08-18 [TOOL] Branch `codex/google-ads-signup-conversion` pushed to `origin`; GitHub PR creation returned 403 because the integration lacks repository access, and local `gh` authentication is invalid.
 - 2026-08-17 [TOOL] Fetching `origin/main` advanced it from `f531ea3` to `16f5749`; the sole merge overlap was `CONTINUITY.md`.
 - 2026-08-17 [TOOL] The pending merge includes PR #63 application and planning files without application-code conflicts.
 - 2026-08-17 [TOOL] The landing benefit regression passed and the Node v22.22.0 production build passed before this merge.
