@@ -1,6 +1,8 @@
 # CONTINUITY.md
 
 # Snapshot
+- 2026-08-18 [USER] Goal: add Google Ads tag `AW-17745887902` to the app on a new branch.
+- 2026-08-18 [CODE] Now: the global Google Ads tag is implemented on `codex/google-ads-tag` and validated by a focused Node v22 test.
 - 2026-08-17 [USER] Goal: show the active overview donut label and customer count in the donut center.
 - 2026-08-17 [CODE] Now: the centered-detail implementation is validated locally and awaits commit, publication to draft PR #63, and a local-checkout fast-forward.
 - 2026-08-17 [USER] Goal: expose browser-only Common Topics and Customer Sentiment test data with `?dummyData=true` in local development, then remove the flag before merge.
@@ -67,6 +69,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
+- 2026-08-18 [CODE] Added the global Google Ads tag for `AW-17745887902` in the application document head on `codex/google-ads-tag`.
 - 2026-08-17 [CODE] Active overview donut details now render in the donut center as a two-line label/count overlay; commit pending for PR #63.
 - 2026-08-17 [CODE] Active overview donut tooltips now calculate their position from the selected sector's radial midpoint and render shadow-free beside that sector; commit pending for PR #63.
 - 2026-08-17 [CODE] Active overview donut details now display in a two-line tooltip above the chart, and direct slice tooltips use the same two-line label/count order; commit pending for PR #63.
@@ -100,6 +103,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-18 [TOOL] The focused Node v22 test for the Google Ads loader/configuration passed (1 test, 0 failures), and `git diff --check` passed. The checkout has no installed Vitest dependencies, so the project Vitest runner cannot initialize.
 - 2026-08-17 [TOOL] Centered-detail work passed 14 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
 - 2026-08-17 [TOOL] Slice-anchored tooltip work passed 15 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
 - 2026-08-17 [TOOL] Active-tooltip regression work passed 14 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
