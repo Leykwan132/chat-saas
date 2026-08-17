@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-18 [USER] Goal: remove app-triggered Google Ads conversion events; Google manages conversion measurement from the configured onboarding entry.
 - 2026-08-18 [CODE] Now: merge conflicts with the already-merged conversion implementation are resolved in favor of removing the helper and CTA callbacks; verification passes and the base tag remains in `index.html`.
-- 2026-08-18 [CODE] Next: commit the resolved merge, push the follow-up branch, and open a new review PR.
+- 2026-08-18 [CODE] Next: open the follow-up review PR after GitHub authentication is restored.
 - 2026-08-18 [ASSUMPTION] The removal is unshipped; do not add a release changelog entry until production availability is confirmed.
 
 # Decisions
@@ -41,4 +41,5 @@
 - 2026-08-18 [TOOL] Post-merge focused Vitest checks (7), loader test (1), and Node v22.22.0 production build passed; only existing Meta app ID and large-chunk Vite warnings remain.
 - 2026-08-18 [TOOL] The incoming `src/googleAdsTag.test.mjs` verifies the Google Ads loader URL and config ID and remains intact.
 - 2026-08-18 [TOOL] Local `gh` authentication is invalid and GitHub connector writes previously returned 403; follow-up PR creation will be retried after pushing.
+- 2026-08-18 [TOOL] Follow-up branch `codex/google-ads-signup-conversion` was pushed at `0c1daac`; GitHub connector PR creation returned an internal error and `gh auth status` confirms its token is invalid.
 - 2026-08-17 [TOOL] PR #64 merge resolution passed focused landing-and-overview tests, the Node v22.22.0 production build, and `git diff --check`.
