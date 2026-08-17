@@ -1,9 +1,11 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, test } from 'vitest';
+import { AgentOverviewActiveDonutChart } from './AgentOverviewActiveDonutChart';
 import {
   AgentOverviewTopicsAndSentiment,
   AgentOverviewPreviewUpgradeAction,
+  buildSentimentChartData,
   buildTopicChartData,
   getTopicChartOuterRadius,
 } from './AgentOverviewTopicsAndSentiment';
@@ -54,7 +56,6 @@ test('distributes full-width topic rows with separators', () => {
   expect(markup.match(/data-slot="separator"/g)).toHaveLength(topics.length + 1);
   expect(markup).toContain('justify-between');
   expect(markup).toContain('max-h-[230px]');
-  expect(markup).toContain('!size-[min(230px,100%)]');
   expect(markup).toContain('justify-start');
   expect(markup.match(/style="min-height:340px"/g)).toHaveLength(2);
   expect(markup.match(/bg-background/g)).toHaveLength(2);
@@ -63,11 +64,43 @@ test('distributes full-width topic rows with separators', () => {
   expect(markup.match(/font-sans font-medium leading-tight/g)).toHaveLength(2);
   expect(markup).toContain('mt-0.5');
   expect(markup.match(/px-5 pb-3 pt-5/g) ?? []).toHaveLength(2);
+  expect(markup).not.toContain('px-5 pb-5 pt-2');
 });
 
 test('keeps topic rows visible and expands the hovered donut segment', () => {
   expect(getTopicChartOuterRadius(86, 2, 2)).toBe(96);
   expect(getTopicChartOuterRadius(86, 2, 1)).toBe(86);
+});
+
+test('keeps customer counts with customer-sentiment donut data', () => {
+  expect(buildSentimentChartData({ positive: 6, neutral: 3, negative: 1 })).toEqual([
+    expect.objectContaining({ label: 'Positive', customerCount: 6 }),
+    expect.objectContaining({ label: 'Neutral', customerCount: 3 }),
+    expect.objectContaining({ label: 'Negative', customerCount: 1 }),
+  ]);
+});
+
+test('renders the active donut label above its customer count', () => {
+  const markup = renderToStaticMarkup(
+    createElement(AgentOverviewActiveDonutChart, {
+      data: [{ key: 'pricing', label: 'Pricing', customerCount: 4, fill: '#7cb4f4' }],
+      activeIndex: 0,
+    }),
+  );
+
+  expect(markup).toContain('Pricing');
+  expect(markup).toContain('4 customers');
+});
+
+test('renders active-detail regions for both donut charts', () => {
+  const markup = renderToStaticMarkup(
+    createElement(AgentOverviewTopicsAndSentiment, {
+      topics: [{ topicId: 'pricing', topic: 'Pricing', count: 4, description: null }],
+      sentimentDistribution: { positive: 6, neutral: 3, negative: 1 },
+    }),
+  );
+
+  expect(markup.match(/aria-live="polite"/g)).toHaveLength(2);
 });
 
 test('shows Preview and Upgrade actions for plans without topic analytics', () => {

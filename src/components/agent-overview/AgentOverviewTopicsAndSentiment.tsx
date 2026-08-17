@@ -1,19 +1,15 @@
 import { Fragment, useMemo, useState } from 'react';
-import { Pie, PieChart, Sector } from 'recharts';
-import type { PieSectorShapeProps } from 'recharts/types/polar/Pie';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from '@/components/ui/chart';
 import { Separator } from '@/components/ui/separator';
 import {
   AnalyticsChartShell,
   AnalyticsChartShellSkeleton,
-  AnalyticsCustomerSentimentPieChart,
   analyticsAdvancedOverviewGridClass,
 } from '@/components/analytics/AnalyticsUi';
+import {
+  AgentOverviewActiveDonutChart,
+  getActiveDonutOuterRadius,
+  type AgentOverviewActiveDonutDatum,
+} from './AgentOverviewActiveDonutChart';
 import {
   AgentOverviewPreviewUpgradeAction,
   LockedTopicAnalyticsPanel,
@@ -42,10 +38,6 @@ const SAMPLE_TOPICS: AgentOverviewCommonTopic[] = [
 ];
 const SAMPLE_SENTIMENT = { positive: 14, neutral: 7, negative: 3 };
 
-const topicChartConfig = {
-  customers: { label: 'Customers' },
-} satisfies ChartConfig;
-
 export type AgentOverviewCommonTopic = {
   topicId: string;
   topic: string;
@@ -53,21 +45,12 @@ export type AgentOverviewCommonTopic = {
   description: string | null;
 };
 
-export type AgentOverviewTopicChartDatum = {
-  key: string;
-  label: string;
-  customerCount: number;
+export type AgentOverviewTopicChartDatum = AgentOverviewActiveDonutDatum & {
   percentage: number;
-  fill: string;
   detail?: string;
 };
 
-type AgentOverviewDistributionItem = {
-  key: string;
-  label: string;
-  percentage: number;
-  fill: string;
-};
+type AgentOverviewDistributionItem = AgentOverviewActiveDonutDatum & { percentage: number };
 
 export function buildTopicChartData(
   topics: AgentOverviewCommonTopic[],
@@ -92,18 +75,14 @@ export function getTopicChartOuterRadius(
   index: number,
   activeTopicIndex: number | null,
 ) {
-  return index === activeTopicIndex ? outerRadius + 10 : outerRadius;
+  return getActiveDonutOuterRadius(outerRadius, index, activeTopicIndex);
 }
 
 function formatPercentage(percentage: number) {
   return `${percentage % 1 === 0 ? percentage.toFixed(0) : percentage.toFixed(2)}%`;
 }
 
-function formatCustomerCount(count: number) {
-  return `${count.toLocaleString()} customer${count === 1 ? '' : 's'}`;
-}
-
-function buildSentimentChartData(
+export function buildSentimentChartData(
   distribution: CustomerSentimentCounts,
 ): AgentOverviewDistributionItem[] {
   const total = CUSTOMER_SENTIMENTS.reduce(
@@ -114,6 +93,7 @@ function buildSentimentChartData(
   return CUSTOMER_SENTIMENTS.map((sentiment) => ({
     key: sentiment,
     label: CUSTOMER_SENTIMENT_LABELS[sentiment],
+    customerCount: distribution[sentiment],
     percentage:
       total > 0
         ? Number(((distribution[sentiment] / total) * 100).toFixed(2))
@@ -170,6 +150,7 @@ export function AgentOverviewTopicsAndSentiment({
   topicAnalyticsEnabled?: boolean;
   onUpgrade?: () => void;
 }) {
+  const [activeSentimentIndex, setActiveSentimentIndex] = useState<number | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [activeTopicIndex, setActiveTopicIndex] = useState<number | null>(null);
   const previewing = !topicAnalyticsEnabled && showPreview;
@@ -207,47 +188,9 @@ export function AgentOverviewTopicsAndSentiment({
         shellStyle={{ minHeight: COMMON_TOPICS_SHELL_MIN_HEIGHT }}
       >
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pb-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
+          <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
             <DistributionList items={topicChartData} onItemHover={setActiveTopicIndex} />
-
-            <ChartContainer
-              config={topicChartConfig}
-              className="mx-auto aspect-square size-full max-h-[230px] max-w-[230px]"
-            >
-              <PieChart>
-                <ChartTooltip
-                  cursor={false}
-                  content={(
-                    <ChartTooltipContent
-                      hideLabel
-                      formatter={(value, _name, item) => {
-                        const topic = item.payload as AgentOverviewTopicChartDatum;
-                        return (
-                          <span className="font-medium text-foreground">
-                            {topic.label}: {formatCustomerCount(Number(value))}
-                          </span>
-                        );
-                      }}
-                    />
-                  )}
-                />
-                <Pie
-                  data={topicChartData}
-                  dataKey="customerCount"
-                  nameKey="label"
-                  innerRadius="48%"
-                  outerRadius="86%"
-                  strokeWidth={3}
-                  stroke="var(--background)"
-                  shape={({ index, outerRadius = 0, ...props }: PieSectorShapeProps) => (
-                    <Sector
-                      {...props}
-                      outerRadius={getTopicChartOuterRadius(outerRadius, index, activeTopicIndex)}
-                    />
-                  )}
-                />
-              </PieChart>
-            </ChartContainer>
+            <AgentOverviewActiveDonutChart data={topicChartData} activeIndex={activeTopicIndex} />
           </div>
           {previewing ? <AgentOverviewPreviewUpgradeAction onUpgrade={onUpgrade} /> : null}
         </div>
@@ -266,14 +209,12 @@ export function AgentOverviewTopicsAndSentiment({
         shellStyle={{ minHeight: COMMON_TOPICS_SHELL_MIN_HEIGHT }}
       >
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pb-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
-            <DistributionList items={sentimentChartData} />
-            <div className="flex min-h-0 flex-1 items-start justify-center [&_[data-slot=chart]]:!size-[min(230px,100%)]">
-              <AnalyticsCustomerSentimentPieChart
-                distribution={displayedSentiment}
-                showLegend={false}
-              />
-            </div>
+          <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
+            <DistributionList items={sentimentChartData} onItemHover={setActiveSentimentIndex} />
+            <AgentOverviewActiveDonutChart
+              data={sentimentChartData}
+              activeIndex={activeSentimentIndex}
+            />
           </div>
           {previewing ? <AgentOverviewPreviewUpgradeAction onUpgrade={onUpgrade} /> : null}
         </div>

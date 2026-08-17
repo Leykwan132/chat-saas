@@ -1,6 +1,8 @@
 # CONTINUITY.md
 
 # Snapshot
+- 2026-08-17 [USER] Goal: show the hovered Common Topics and Customer Sentiment label above its customer count in the donut center, and remove excess lower-panel spacing.
+- 2026-08-17 [CODE] Now: the scoped active-donut implementation is validated locally and awaits commit, publication to draft PR #63, and a local-checkout fast-forward.
 - 2026-08-17 [USER] Goal: expose browser-only Common Topics and Customer Sentiment test data with `?dummyData=true` in local development, then remove the flag before merge.
 - 2026-08-17 [CODE] Now: draft PR #63 and the user’s local feature checkout include browser-only `?dummyData=true` panel data for testing.
 - 2026-08-17 [USER] Goal: fix the cramped Agent Overview Common Topics container, activate the matching donut segment on topic-row hover, and publish a draft PR for approval.
@@ -32,6 +34,7 @@
 - 2026-08-16 [TOOL] Investigation: `service_not_assigned` compares service assignee WorkOS IDs with each roster schedule’s WorkOS ID. The inspected service was created after the personal-assignment migration and already belongs to the agent owner; its logged candidate is a distinct user’s schedule, so the migration is not the proven cause of that log.
 
 # Decisions
+- 2026-08-17 [USER] D721 ACTIVE: Hovering either overview distribution row expands its matching donut slice and shows its wrapped title plus customer count in the donut center; each shell provides the sole lower padding.
 - 2026-08-17 [USER] D720 ACTIVE: `?dummyData=true` overrides only the overview’s Common Topics and Customer Sentiment inputs in local development; it makes no backend writes and will be removed before PR #63 merges.
 - 2026-08-17 [USER] D719 ACTIVE: Common Topics uses a 340px minimum height rather than a fixed height, and hovering a topic row expands its matching donut segment by 10px.
 - 2026-08-17 [USER] D701 ACTIVE: Overview defaults to the rolling Last 30 days; dedicated usage pages retain their existing defaults.
@@ -61,6 +64,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
+- 2026-08-17 [CODE] Common Topics and Customer Sentiment now share a dedicated active donut renderer, display the hovered label and count in the donut center, and avoid duplicate inner bottom padding; the committed iteration awaits publication to PR #63.
 - 2026-08-17 [CODE] Local-development Agent Overview URLs with `?dummyData=true` now render browser-only seven-topic and 60/30/10 sentiment data without Convex writes; draft PR #63 tracks commit `c4f64af`.
 - 2026-08-17 [CODE] Common Topics now grows beyond its 340px minimum to keep every topic row and bottom padding visible; hovering a row expands its matching donut segment. Draft PR #63 tracks `c9f6cff`.
 - 2026-08-17 [CODE] Overview range controls now use the supported ToggleGroup variant, and the page safely renders completed analytics responses with no credit-usage record.
@@ -90,6 +94,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Active-donut regression work passed 14 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
 - 2026-08-17 [TOOL] Recharts 3.8 `Pie` does not expose the legacy `activeIndex` prop; removing it retained the state-driven custom sector behavior and passed the focused topic-panel test, Node v22 TypeScript check, and `git diff --check`.
 - 2026-08-17 [TOOL] Commit `c4f64af` was pushed to `codex/overview-topic-panel-interaction`, and the user’s main local checkout fast-forwarded cleanly to that commit for testing.
 - 2026-08-17 [TOOL] Browser-only `dummyData=true` mode passed 11 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; publication to the user’s local feature branch remains.
