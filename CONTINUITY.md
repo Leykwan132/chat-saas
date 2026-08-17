@@ -84,7 +84,7 @@
 - 2026-08-17 [TOOL] Metric spacing and typography refinement passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit `98174118` was pushed to PR #62.
 - 2026-08-17 [TOOL] Daily/Cumulative header relocation passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit `d8726dfa` was pushed to PR #62.
 - 2026-08-17 [TOOL] Compact-card and ghost-control revision passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `25e42830` was pushed to PR #62.
-- 2026-08-17 [TOOL] The full Node v22 `bun test` run repeated the known unrelated baseline: 1270 pass, 161 fail, 112 errors, chiefly missing Stripe test environment variables, unsupported `import.meta.glob`, and unavailable `vi.advanceTimersByTimeAsync`.
+- 2026-08-17 [TOOL] The full Node v22 `bun test` run repeated the known unrelated baseline: 1275 pass, 161 fail, 112 errors, chiefly missing Stripe test environment variables, unsupported `import.meta.glob`, and unavailable `vi.advanceTimersByTimeAsync`.
 - 2026-08-17 [TOOL] Overview 1d-range regression passed 4 focused tests; the production build passed, while Convex codegen's embedded typecheck did not report diagnostics.
 - 2026-08-17 [TOOL] Draft PR #62 was created from `codex/overview-date-range-controls` against `main`; the local checkout tracks the pushed branch and is clean.
 - 2026-08-17 [TOOL] Date-shortcut regression passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; work remains local for user testing.
