@@ -51,4 +51,4 @@
 
 - [x] Run the focused test, the Node v22 production build, and `git diff --check`.
 - [x] Commit only the topic panel code, focused test, design, plan, and ledger updates.
-- [ ] Push `codex/overview-topic-panel-interaction` and open a draft PR against `main`.
+- [x] Push `codex/overview-topic-panel-interaction` and open draft PR #63 against `main`.

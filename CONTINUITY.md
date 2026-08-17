@@ -2,7 +2,7 @@
 
 # Snapshot
 - 2026-08-17 [USER] Goal: fix the cramped Agent Overview Common Topics container, activate the matching donut segment on topic-row hover, and publish a draft PR for approval.
-- 2026-08-17 [CODE] Now: layout and hover interaction are implemented and validated; full-suite baseline remains 1282 pass, 161 fail, and 112 errors from unrelated Bun/Convex test-runner limits; draft-PR creation is blocked by the expired GitHub CLI authentication token.
+- 2026-08-17 [CODE] Now: draft PR #63 contains the validated layout and hover interaction; full-suite baseline remains 1282 pass, 161 fail, and 112 errors from unrelated Bun/Convex test-runner limits.
 - 2026-08-17 [USER] Goal: default the Agent Overview homepage analytics range to Last 30 days with 1d, 7d, 30d, and 90d shortcuts, compact content-sized metrics, right-aligned date plus Daily/Cumulative controls, and contextual graph and lower-panel subtitles.
 - 2026-08-16 [CODE] Now: calendar booking availability is deployed with source indicators, Google Meet booking links, diagnostics, and personal-service assignment repair.
 - 2026-08-16 [CODE] Now: manual and CSV customer creation persist the active agent scope; personal entries retain owner scope, and the safe legacy personal-customer backfill has completed.
@@ -58,7 +58,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
-- 2026-08-17 [CODE] Common Topics now grows beyond its 340px minimum to keep every topic row and bottom padding visible; hovering a row expands its matching donut segment. The work is local on `codex/overview-topic-panel-interaction` pending GitHub re-authentication for PR creation.
+- 2026-08-17 [CODE] Common Topics now grows beyond its 340px minimum to keep every topic row and bottom padding visible; hovering a row expands its matching donut segment. Draft PR #63 tracks `c9f6cff`.
 - 2026-08-17 [CODE] Overview range controls now use the supported ToggleGroup variant, and the page safely renders completed analytics responses with no credit-usage record.
 - 2026-08-17 [CODE] Common Topics and Customer Sentiment sample preview now presents a lower-left Upgrade now action inside each panel; PR #62 tracks commit `2e37752a`.
 - 2026-08-17 [CODE] Overview Daily/Cumulative now uses an outline-only Select surface without a background or shadow; PR #62 tracks commit `83ace30b`.
@@ -86,6 +86,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Branch `codex/overview-topic-panel-interaction` was pushed and draft PR #63 was created against `main`; the GitHub plugin endpoint returned a 403 integration-permission error, and the authorized GitHub CLI fallback created the PR.
 - 2026-08-17 [TOOL] Full Node v22 `bun test` repeated the unrelated baseline: 1282 pass, 161 fail, and 112 errors, chiefly absent Stripe test variables, unsupported `import.meta.glob`, and unavailable `vi.advanceTimersByTimeAsync`; the new Common Topics regression passed within that run.
 - 2026-08-17 [TOOL] Common Topics minimum-height and active-sector regression passed 5 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; PR creation awaits GitHub CLI re-authentication.
 - 2026-08-17 [TOOL] Overview TypeScript correction passed 7 focused tests, the app TypeScript check, the Node v22.22.0 production build, and `git diff --check`; commit pending.
