@@ -1,6 +1,8 @@
 # CONTINUITY.md
 
 # Snapshot
+- 2026-08-17 [USER] Goal: expose browser-only Common Topics and Customer Sentiment test data with `?dummyData=true` in local development, then remove the flag before merge.
+- 2026-08-17 [CODE] Now: browser-only dummy panel data is validated in the detached managed worktree; fast-forward publication to the user’s local feature checkout remains.
 - 2026-08-17 [USER] Goal: fix the cramped Agent Overview Common Topics container, activate the matching donut segment on topic-row hover, and publish a draft PR for approval.
 - 2026-08-17 [CODE] Now: draft PR #63 contains the validated layout and hover interaction; full-suite baseline remains 1282 pass, 161 fail, and 112 errors from unrelated Bun/Convex test-runner limits.
 - 2026-08-17 [USER] Goal: default the Agent Overview homepage analytics range to Last 30 days with 1d, 7d, 30d, and 90d shortcuts, compact content-sized metrics, right-aligned date plus Daily/Cumulative controls, and contextual graph and lower-panel subtitles.
@@ -30,6 +32,7 @@
 - 2026-08-16 [TOOL] Investigation: `service_not_assigned` compares service assignee WorkOS IDs with each roster schedule’s WorkOS ID. The inspected service was created after the personal-assignment migration and already belongs to the agent owner; its logged candidate is a distinct user’s schedule, so the migration is not the proven cause of that log.
 
 # Decisions
+- 2026-08-17 [USER] D720 ACTIVE: `?dummyData=true` overrides only the overview’s Common Topics and Customer Sentiment inputs in local development; it makes no backend writes and will be removed before PR #63 merges.
 - 2026-08-17 [USER] D719 ACTIVE: Common Topics uses a 340px minimum height rather than a fixed height, and hovering a topic row expands its matching donut segment by 10px.
 - 2026-08-17 [USER] D701 ACTIVE: Overview defaults to the rolling Last 30 days; dedicated usage pages retain their existing defaults.
 - 2026-08-17 [USER] D702 ACTIVE: Overview metric cards are compact, text-only, content-sized selectable controls with a 12px label/value gap and 24px value type; the selected chart is 400px tall and uses `AI conversations`.
@@ -86,6 +89,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Browser-only `dummyData=true` mode passed 11 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; publication to the user’s local feature branch remains.
 - 2026-08-17 [TOOL] Branch `codex/overview-topic-panel-interaction` was pushed and draft PR #63 was created against `main`; the GitHub plugin endpoint returned a 403 integration-permission error, and the authorized GitHub CLI fallback created the PR.
 - 2026-08-17 [TOOL] Full Node v22 `bun test` repeated the unrelated baseline: 1282 pass, 161 fail, and 112 errors, chiefly absent Stripe test variables, unsupported `import.meta.glob`, and unavailable `vi.advanceTimersByTimeAsync`; the new Common Topics regression passed within that run.
 - 2026-08-17 [TOOL] Common Topics minimum-height and active-sector regression passed 5 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; PR creation awaits GitHub CLI re-authentication.
