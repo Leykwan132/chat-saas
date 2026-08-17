@@ -44,7 +44,7 @@
 - 2026-08-17 [USER] D714 ACTIVE: Common Topics and Customer Sentiment use the existing `topic_analytics` entitlement: Free and Starter receive an explicitly labelled local sample preview with Preview and Upgrade actions, while Growth and Business receive live data.
 - 2026-08-17 [USER] D715 SUPERSEDED by D717: The Overview data-mode label was centered independently of its chevron.
 - 2026-08-17 [USER] D716 ACTIVE: Knowledge Base Q&A shows one compact row of five universal support-question presets above Add Q&A; selecting one fills the first blank question or adds a new prefilled row, replacing Add more.
-- 2026-08-17 [USER] D717 ACTIVE: Daily/Cumulative retains its prior clearly interactive Select treatment with normal label-chevon spacing; forced visual centering is removed.
+- 2026-08-17 [USER] D717 ACTIVE: Daily/Cumulative retains normal label-chevron spacing and uses a distinct outlined Select surface, visually separate from the date-range shortcuts.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
@@ -54,6 +54,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
+- 2026-08-17 [CODE] Overview Daily/Cumulative now has a distinct outlined Select surface, separating it from date-range filters; PR #62 tracks commit `e7058e6c`.
 - 2026-08-17 [CODE] Overview Daily/Cumulative control again uses its earlier clickable Select presentation with a visible chevron; PR #62 tracks commit `0498d594`.
 - 2026-08-17 [CODE] Knowledge Base Q&A now offers five reusable support-question presets for refund policy, shipping, pricing, payment methods, and opening hours; PR #62 tracks commit `74dfc6d7`.
 - 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, retains its last complete dashboard during later range refreshes, shows concise range tooltips and a non-blocking busy state, gives Daily/Cumulative the same 32px rounded text-sm control styling with a centered label, and restricts live topic/sentiment analytics to entitled plans with sample previews and persistent Upgrade actions for Free and Starter; PR #62 tracks commit `535fce13`.
@@ -77,6 +78,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Distinct Overview Daily/Cumulative Select styling passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `e7058e6c` was pushed to PR #62.
 - 2026-08-17 [TOOL] Five-option Q&A picker passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `74dfc6d7` was pushed to PR #62.
 - 2026-08-17 [TOOL] Restored Overview Daily/Cumulative Select treatment passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `0498d594` was pushed to PR #62.
 - 2026-08-17 [TOOL] Q&A presets passed 4 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `8c10b40a` was pushed to PR #62. The full suite repeated the known baseline: 1280 pass, 161 fail, 112 errors from missing Stripe environment variables, unsupported `import.meta.glob`, and unavailable `vi.advanceTimersByTimeAsync`.
