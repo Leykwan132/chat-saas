@@ -76,6 +76,20 @@ test('opens Overview with last 30 days and the shortened AI label', () => {
   expect(markup).not.toContain('>Billing period</button>');
 });
 
+test('renders browser dummy topic and sentiment data from the URL flag', () => {
+  const markup = renderToStaticMarkup(
+    <MemoryRouter initialEntries={['/dashboard/agent-1/overview?dummyData=true']}>
+      <Routes>
+        <Route path="/dashboard/:agentId/overview" element={<AgentOverviewPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  expect(markup).toContain('Identity confusion');
+  expect(markup).toContain('Request for Type A layout');
+  expect(markup).toContain('60%');
+});
+
 test('renders compact metric cards with labels above values and no previews', () => {
   const markup = renderToStaticMarkup(
     <AgentOverviewMetrics
