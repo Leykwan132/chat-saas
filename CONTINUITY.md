@@ -11,7 +11,7 @@
 - 2026-08-17 [USER] D724 ACTIVE: hovering an overview distribution row expands its matching donut slice and renders the selected label and customer count inside the donut center.
 - 2026-08-17 [USER] D720 ACTIVE: `?dummyData=true` supplies browser-only Common Topics and Customer Sentiment data in local development and must be removed before PR #63 merges.
 - 2026-08-17 [USER] D701–D718 ACTIVE: Agent Overview uses the 30-day range and contextual compact controls; Q&A includes reusable support-question presets; topic analytics are plan-entitled with an upgrade path.
-- 2026-08-17 [USER] D725 ACTIVE: landing benefit cards use the supplied revised portrait images at full grid-column width above customer-outcome copy on a zinc-gray section background.
+- 2026-08-17 [USER] D725 ACTIVE: landing benefit cards use the supplied revised portrait images at full grid-column width above customer-outcome copy on a zinc-gray section background; the booking card retains “Turn Enquiries Into Bookings” and makes KiloBot’s booking lifecycle automation explicit.
 - 2026-08-16 [USER] D637–D700 ACTIVE: Google Calendar remains individual and primary-calendar-only; connected writes fail closed and manual/CSV customers retain active-agent scope.
 
 # Done (recent)
@@ -38,3 +38,4 @@
 - 2026-08-17 [TOOL] PR #63’s focused tests, Node v22 TypeScript check, Vite build, and `git diff --check` passed before its merge to `main`.
 - 2026-08-17 [TOOL] PR #64 merge resolution passed 13 focused landing-and-overview tests, the Node v22.22.0 production build, and `git diff --check`; `origin/main` is an ancestor of the branch.
 - 2026-08-17 [TOOL] The landing full-width regression failed against the 320px cap, then passed with the Node v22.22.0 production build and `git diff --check`.
+- 2026-08-17 [TOOL] The booking-copy regression failed before the AI-led lifecycle wording was implemented, then passed with the Node v22.22.0 production build and `git diff --check`.

@@ -151,7 +151,7 @@ export function FeaturesSection() {
           />
           <FeatureCard
             title="Turn Enquiries Into Bookings"
-            description="Guide customers naturally from their first question to a confirmed booking, right inside the conversation."
+            description="Let KiloBot book customers for you, then handle confirmations, updates, and cancellations in the conversation."
             image={FEATURE_BOOKING_IMAGE}
             alt="Customer booking confirmation conversation"
           />

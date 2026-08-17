@@ -16,6 +16,6 @@ test('renders portrait benefit cards before each benefit description', () => {
     /customs-updated\.png[^>]*\/><div[^>]*><h3[^>]*>Tailored to Your Business<\/h3><p[^>]*>Train KiloBot on your content and customize how it responds, behaves, and represents your business\.<\/p>/,
   );
   expect(markup).toMatch(
-    /booking-updated\.png[^>]*\/><div[^>]*><h3[^>]*>Turn Enquiries Into Bookings<\/h3><p[^>]*>Guide customers naturally from their first question to a confirmed booking, right inside the conversation\.<\/p>/,
+    /booking-updated\.png[^>]*\/><div[^>]*><h3[^>]*>Turn Enquiries Into Bookings<\/h3><p[^>]*>Let KiloBot book customers for you, then handle confirmations, updates, and cancellations in the conversation\.<\/p>/,
   );
 });
