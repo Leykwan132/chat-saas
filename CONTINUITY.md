@@ -1,8 +1,8 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-17 [USER] Goal: attach the overview donut tooltip to its active slice and remove its shadow.
-- 2026-08-17 [CODE] Now: the slice-anchored tooltip implementation is validated locally and awaits commit, publication to draft PR #63, and a local-checkout fast-forward.
+- 2026-08-17 [USER] Goal: show the active overview donut label and customer count in the donut center.
+- 2026-08-17 [CODE] Now: the centered-detail implementation is validated locally and awaits commit, publication to draft PR #63, and a local-checkout fast-forward.
 - 2026-08-17 [USER] Goal: expose browser-only Common Topics and Customer Sentiment test data with `?dummyData=true` in local development, then remove the flag before merge.
 - 2026-08-17 [CODE] Now: draft PR #63 and the user’s local feature checkout include browser-only `?dummyData=true` panel data for testing.
 - 2026-08-17 [USER] Goal: fix the cramped Agent Overview Common Topics container, activate the matching donut segment on topic-row hover, and publish a draft PR for approval.
@@ -34,7 +34,8 @@
 - 2026-08-16 [TOOL] Investigation: `service_not_assigned` compares service assignee WorkOS IDs with each roster schedule’s WorkOS ID. The inspected service was created after the personal-assignment migration and already belongs to the agent owner; its logged candidate is a distinct user’s schedule, so the migration is not the proven cause of that log.
 
 # Decisions
-- 2026-08-17 [USER] D723 ACTIVE: Hovering either overview distribution row expands its matching donut slice and renders the two-line, shadow-free tooltip just beyond that slice's radial midpoint.
+- 2026-08-17 [USER] D724 ACTIVE: Hovering either overview distribution row expands its matching donut slice and renders the selected title above its customer count inside the donut center.
+- 2026-08-17 [USER] D723 SUPERSEDED by D724: Hovering either overview distribution row expanded its matching donut slice and rendered a shadow-free tooltip beyond that slice's radial midpoint.
 - 2026-08-17 [USER] D722 SUPERSEDED by D723: Hovering either overview distribution row expanded its matching donut slice and showed its title above its customer count in a static tooltip above the donut.
 - 2026-08-17 [USER] D721 SUPERSEDED by D722: Hovering either overview distribution row expanded its matching donut slice and showed its wrapped title plus customer count in the donut center.
 - 2026-08-17 [USER] D720 ACTIVE: `?dummyData=true` overrides only the overview’s Common Topics and Customer Sentiment inputs in local development; it makes no backend writes and will be removed before PR #63 merges.
@@ -66,6 +67,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
+- 2026-08-17 [CODE] Active overview donut details now render in the donut center as a two-line label/count overlay; commit pending for PR #63.
 - 2026-08-17 [CODE] Active overview donut tooltips now calculate their position from the selected sector's radial midpoint and render shadow-free beside that sector; commit pending for PR #63.
 - 2026-08-17 [CODE] Active overview donut details now display in a two-line tooltip above the chart, and direct slice tooltips use the same two-line label/count order; commit pending for PR #63.
 - 2026-08-17 [CODE] Common Topics and Customer Sentiment now share a dedicated active donut renderer, display the hovered label and count in the donut center, and avoid duplicate inner bottom padding; the committed iteration awaits publication to PR #63.
@@ -98,6 +100,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Centered-detail work passed 14 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
 - 2026-08-17 [TOOL] Slice-anchored tooltip work passed 15 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
 - 2026-08-17 [TOOL] Active-tooltip regression work passed 14 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
 - 2026-08-17 [TOOL] Active-donut regression work passed 14 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
