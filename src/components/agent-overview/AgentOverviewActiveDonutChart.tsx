@@ -52,9 +52,12 @@ export function AgentOverviewActiveDonutChart({
                   const datum = item.payload as AgentOverviewActiveDonutDatum;
 
                   return (
-                    <span className="font-medium text-foreground">
-                      {datum.label}: {formatCustomerCount(Number(value))}
-                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium text-foreground">{datum.label}</span>
+                      <span className="text-muted-foreground">
+                        {formatCustomerCount(Number(value))}
+                      </span>
+                    </div>
                   );
                 }}
               />
@@ -77,22 +80,23 @@ export function AgentOverviewActiveDonutChart({
           />
         </PieChart>
       </ChartContainer>
-      <div
-        aria-atomic="true"
-        aria-live="polite"
-        className="pointer-events-none absolute inset-[28%] flex flex-col items-center justify-center text-center"
-      >
-        {activeDatum ? (
-          <>
-            <span className="max-w-full break-words text-xs leading-tight font-medium text-foreground">
+      {activeDatum ? (
+        <div
+          role="tooltip"
+          aria-atomic="true"
+          aria-live="polite"
+          className="pointer-events-none absolute inset-x-0 -top-2 z-10 flex -translate-y-full justify-center"
+        >
+          <div className="max-w-full rounded-lg border bg-background px-3 py-2 text-center shadow-sm">
+            <span className="block text-xs leading-tight font-medium text-foreground">
               {activeDatum.label}
             </span>
-            <span className="mt-1 text-xs leading-tight text-muted-foreground">
+            <span className="mt-0.5 block text-xs leading-tight text-muted-foreground">
               {formatCustomerCount(activeDatum.customerCount)}
             </span>
-          </>
-        ) : null}
-      </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -80,7 +80,7 @@ test('keeps customer counts with customer-sentiment donut data', () => {
   ]);
 });
 
-test('renders the active donut label above its customer count', () => {
+test('renders the active donut label and customer count in a tooltip', () => {
   const markup = renderToStaticMarkup(
     createElement(AgentOverviewActiveDonutChart, {
       data: [{ key: 'pricing', label: 'Pricing', customerCount: 4, fill: '#7cb4f4' }],
@@ -88,11 +88,13 @@ test('renders the active donut label above its customer count', () => {
     }),
   );
 
+  expect(markup).toContain('role="tooltip"');
   expect(markup).toContain('Pricing');
   expect(markup).toContain('4 customers');
+  expect(markup).toContain('block text-xs');
 });
 
-test('renders active-detail regions for both donut charts', () => {
+test('does not render an active donut tooltip without a hovered row', () => {
   const markup = renderToStaticMarkup(
     createElement(AgentOverviewTopicsAndSentiment, {
       topics: [{ topicId: 'pricing', topic: 'Pricing', count: 4, description: null }],
@@ -100,7 +102,7 @@ test('renders active-detail regions for both donut charts', () => {
     }),
   );
 
-  expect(markup.match(/aria-live="polite"/g)).toHaveLength(2);
+  expect(markup).not.toContain('role="tooltip"');
 });
 
 test('shows Preview and Upgrade actions for plans without topic analytics', () => {
