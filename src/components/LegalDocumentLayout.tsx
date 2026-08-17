@@ -18,7 +18,9 @@ export function LegalDocumentLayout({ title, lastUpdated, children }: LegalDocum
   const returnTo = { state: { returnTo: POST_LOGIN_REDIRECT } };
 
   const onSignIn = () => void signIn(returnTo);
-  const onSignUp = () => void signUp(returnTo);
+  const onSignUp = () => {
+    void signUp(returnTo);
+  };
 
   return (
     <div className="flex min-h-[100svh] flex-col justify-between bg-zinc-50 font-sans text-zinc-900 antialiased selection:bg-black/10 selection:text-zinc-950 dark:bg-[#060606] dark:text-zinc-100 dark:selection:bg-white/20 dark:selection:text-white">
