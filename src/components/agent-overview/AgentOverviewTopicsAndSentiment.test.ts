@@ -77,12 +77,12 @@ test('shows Preview and Upgrade actions for plans without topic analytics', () =
   expect(markup).toContain('Upgrade');
 });
 
-test('renders one lower-left upgrade action for analytics preview', () => {
+test('renders a lower-left upgrade action inside an analytics panel', () => {
   const markup = renderToStaticMarkup(
     createElement(AgentOverviewPreviewUpgradeAction, { onUpgrade: () => undefined }),
   );
 
   expect(markup).toContain('Upgrade now');
-  expect(markup).toContain('col-span-full flex justify-start');
+  expect(markup).toContain('flex justify-start px-5 pb-5');
   expect(markup).not.toContain('justify-end');
 });

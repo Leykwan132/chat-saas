@@ -190,7 +190,7 @@ export function AgentOverviewPreviewUpgradeAction({
   onUpgrade?: () => void;
 }) {
   return (
-    <div className="col-span-full flex justify-start">
+    <div className="flex justify-start px-5 pb-5">
       <Button type="button" onClick={onUpgrade}>Upgrade now</Button>
     </div>
   );
@@ -242,41 +242,44 @@ export function AgentOverviewTopicsAndSentiment({
         emptyMessage="Nothing available yet."
         shellStyle={{ height: COMMON_TOPICS_SHELL_HEIGHT }}
       >
-        <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pb-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
-          <DistributionList items={topicChartData} />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pb-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
+            <DistributionList items={topicChartData} />
 
-          <ChartContainer
-            config={topicChartConfig}
-            className="mx-auto aspect-square size-full max-h-[230px] max-w-[230px]"
-          >
-            <PieChart>
-              <ChartTooltip
-                cursor={false}
-                content={(
-                  <ChartTooltipContent
-                    hideLabel
-                    formatter={(value, _name, item) => {
-                      const topic = item.payload as AgentOverviewTopicChartDatum;
-                      return (
-                        <span className="font-medium text-foreground">
-                          {topic.label}: {formatCustomerCount(Number(value))}
-                        </span>
-                      );
-                    }}
-                  />
-                )}
-              />
-              <Pie
-                data={topicChartData}
-                dataKey="customerCount"
-                nameKey="label"
-                innerRadius="48%"
-                outerRadius="86%"
-                strokeWidth={3}
-                stroke="var(--background)"
-              />
-            </PieChart>
-          </ChartContainer>
+            <ChartContainer
+              config={topicChartConfig}
+              className="mx-auto aspect-square size-full max-h-[230px] max-w-[230px]"
+            >
+              <PieChart>
+                <ChartTooltip
+                  cursor={false}
+                  content={(
+                    <ChartTooltipContent
+                      hideLabel
+                      formatter={(value, _name, item) => {
+                        const topic = item.payload as AgentOverviewTopicChartDatum;
+                        return (
+                          <span className="font-medium text-foreground">
+                            {topic.label}: {formatCustomerCount(Number(value))}
+                          </span>
+                        );
+                      }}
+                    />
+                  )}
+                />
+                <Pie
+                  data={topicChartData}
+                  dataKey="customerCount"
+                  nameKey="label"
+                  innerRadius="48%"
+                  outerRadius="86%"
+                  strokeWidth={3}
+                  stroke="var(--background)"
+                />
+              </PieChart>
+            </ChartContainer>
+          </div>
+          {previewing ? <AgentOverviewPreviewUpgradeAction onUpgrade={onUpgrade} /> : null}
         </div>
       </AnalyticsChartShell>
 
@@ -292,17 +295,19 @@ export function AgentOverviewTopicsAndSentiment({
         headerClassName="px-5"
         shellStyle={{ height: COMMON_TOPICS_SHELL_HEIGHT }}
       >
-        <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pb-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
-          <DistributionList items={sentimentChartData} />
-          <div className="flex min-h-0 flex-1 items-start justify-center [&_[data-slot=chart]]:!size-[min(230px,100%)]">
-            <AnalyticsCustomerSentimentPieChart
-              distribution={displayedSentiment}
-              showLegend={false}
-            />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pb-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
+            <DistributionList items={sentimentChartData} />
+            <div className="flex min-h-0 flex-1 items-start justify-center [&_[data-slot=chart]]:!size-[min(230px,100%)]">
+              <AnalyticsCustomerSentimentPieChart
+                distribution={displayedSentiment}
+                showLegend={false}
+              />
+            </div>
           </div>
+          {previewing ? <AgentOverviewPreviewUpgradeAction onUpgrade={onUpgrade} /> : null}
         </div>
       </AnalyticsChartShell>
-      {previewing ? <AgentOverviewPreviewUpgradeAction onUpgrade={onUpgrade} /> : null}
     </div>
   );
 }

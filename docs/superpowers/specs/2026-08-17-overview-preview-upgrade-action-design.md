@@ -6,7 +6,7 @@ Make the upgrade path clear while a Free or Starter user previews sample Common 
 
 ## Layout
 
-When the user selects Preview, render both sample analytics panels as today. Render one primary `Upgrade now` button below the two-panel grid, aligned to the left edge of the preview area. Do not render an additional preview-level Upgrade button above the panels.
+When the user selects Preview, render both sample analytics panels as today. Each panel renders one primary `Upgrade now` button inside its lower-left edge. Do not render an additional preview-level Upgrade button outside or above the panels.
 
 ## Behavior
 
