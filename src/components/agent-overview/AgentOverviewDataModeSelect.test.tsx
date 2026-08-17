@@ -8,6 +8,6 @@ test('uses the same rounded size and type scale as the range controls', () => {
   );
 
   expect(markup).toContain('aria-label="Overview data mode"');
-  expect(markup).toContain('relative h-8 justify-center rounded-full px-3 text-sm');
-  expect(markup).toContain('[&amp;&gt;svg]:absolute [&amp;&gt;svg]:right-3');
+  expect(markup).toContain('h-8 rounded-full px-3 text-sm');
+  expect(markup).not.toContain('justify-center');
 });
