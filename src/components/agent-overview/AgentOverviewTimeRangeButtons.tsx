@@ -47,9 +47,11 @@ export function AgentOverviewTimeRangeButtons({
         {OVERVIEW_TIME_RANGE_OPTIONS.map((option) => (
           <Tooltip key={option.value}>
             <TooltipTrigger asChild>
-              <ToggleGroupItem value={option.value} aria-label={option.tooltip}>
-                {option.label}
-              </ToggleGroupItem>
+              <span className="inline-flex">
+                <ToggleGroupItem value={option.value} aria-label={option.tooltip}>
+                  {option.label}
+                </ToggleGroupItem>
+              </span>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={6}>
               {option.tooltip}

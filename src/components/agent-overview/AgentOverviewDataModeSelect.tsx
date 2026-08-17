@@ -25,7 +25,11 @@ export function AgentOverviewDataModeSelect({
       value={value}
       onValueChange={(nextValue) => onChange(nextValue as OverviewTrendDataMode)}
     >
-      <SelectTrigger aria-label="Overview data mode" size="sm">
+      <SelectTrigger
+        aria-label="Overview data mode"
+        size="sm"
+        className="h-8 rounded-full px-3 text-sm"
+      >
         <SelectValue placeholder="Data mode" />
       </SelectTrigger>
       <SelectContent align="end">
