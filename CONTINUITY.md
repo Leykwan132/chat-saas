@@ -68,6 +68,7 @@
 - `docs/superpowers/specs/2026-08-17-overview-range-loading-and-controls-design.md`
 - `docs/superpowers/plans/2026-08-17-overview-date-range-and-metric-layout.md`
 - `docs/superpowers/plans/2026-08-17-overview-control-alignment.md`
+- `docs/superpowers/plans/2026-08-17-overview-range-loading-and-controls.md`
 - `CONTINUITY.md`
 
 # Receipts
