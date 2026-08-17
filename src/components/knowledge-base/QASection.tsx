@@ -3,7 +3,6 @@ import { useAction } from 'convex/react';
 import {
   Trash2,
   Check,
-  Plus,
 } from 'lucide-react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -29,6 +28,7 @@ import {
   type OpenDeleteDialog,
 } from './helpers';
 import { QAEntry } from './QAEntry';
+import { addQAPreset, qaQuestionPresets, type QAPairDraft } from './qaQuestionPresets';
 
 interface QASectionProps {
   entries: any[] | undefined;
@@ -41,7 +41,7 @@ export function QASection({ entries, agentId, openDeleteDialog, canManage = true
   const enqueueQAUpload = useAction(api.cloudflare.enqueueQAUpload);
   const updateQAEntry = useAction(api.cloudflare.updateQAEntry);
 
-  const [qaPairs, setQAPairs] = useState<{ question: string; answer: string }[]>([{ question: "", answer: "" }]);
+  const [qaPairs, setQAPairs] = useState<QAPairDraft[]>([{ question: "", answer: "" }]);
   const [isSavingQA, setIsSavingQA] = useState(false);
 
   const [editingQAEntry, setEditingQAEntry] = useState<any | null>(null);
@@ -59,7 +59,10 @@ export function QASection({ entries, agentId, openDeleteDialog, canManage = true
     } catch { toast.error("Failed to save Q&A entry"); } finally { setIsSavingQA(false); }
   };
 
-  const addQAPair = () => setQAPairs((prev) => [...prev, { question: "", answer: "" }]);
+  const selectQAPreset = (question: string) => {
+    setQAPairs((pairs) => addQAPreset(pairs, question));
+  };
+
   const updateQAPair = (index: number, field: "question" | "answer", value: string) => {
     setQAPairs((prev) => prev.map((pair, i) => (i === index ? { ...pair, [field]: value } : pair)));
   };
@@ -96,7 +99,21 @@ export function QASection({ entries, agentId, openDeleteDialog, canManage = true
   return (
     <>
       {canManage ? (
-      <QAEntry>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2">
+          {qaQuestionPresets.map((preset) => (
+            <Button
+              key={preset.label}
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => selectQAPreset(preset.question)}
+            >
+              {preset.label}
+            </Button>
+          ))}
+        </div>
+        <QAEntry>
           <div className="space-y-3">
             {qaPairs.map((pair, index) => (
               <div key={index} className="space-y-2">
@@ -111,11 +128,11 @@ export function QASection({ entries, agentId, openDeleteDialog, canManage = true
               </div>
             ))}
           </div>
-          <div className="flex justify-between">
-            <Button type="button" variant="outline" size="sm" onClick={addQAPair}><Plus className="size-3 mr-1" />Add more</Button>
+          <div className="flex justify-end">
             <Button type="button" onClick={handleSaveQA} disabled={isSavingQA || !qaPairs.some((p) => p.question.trim() && p.answer.trim())}>{isSavingQA ? <Spinner className="size-4" /> : "Save"}</Button>
           </div>
-      </QAEntry>
+        </QAEntry>
+      </div>
       ) : null}
 
       {hasEntries && (
