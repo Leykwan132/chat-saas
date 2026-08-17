@@ -60,11 +60,9 @@ export type QAPairDraft = { question: string; answer: string };
 export const qaQuestionPresets = [
   { label: 'Refund policy', question: 'What is your refund policy?' },
   { label: 'Shipping & delivery', question: 'What are your shipping and delivery options?' },
-  { label: 'Returns & exchanges', question: 'What is your returns and exchanges policy?' },
   { label: 'Pricing', question: 'How much does it cost?' },
   { label: 'Payment methods', question: 'What payment methods do you accept?' },
   { label: 'Opening hours', question: 'What are your opening hours?' },
-  { label: 'Contact support', question: 'How can I contact support?' },
 ] as const;
 
 export function addQAPreset(pairs: QAPairDraft[], question: string): QAPairDraft[] {
@@ -108,7 +106,9 @@ test('renders common-question presets above the Q&A form', () => {
   );
 
   expect(markup).toContain('Refund policy');
-  expect(markup).toContain('Contact support');
+  expect(markup).toContain('Opening hours');
+  expect(markup).not.toContain('Returns &amp; exchanges');
+  expect(markup).not.toContain('Contact support');
   expect(markup.indexOf('Refund policy')).toBeLessThan(markup.indexOf('Add Q&amp;A'));
   expect(markup).not.toContain('Add more');
 });
