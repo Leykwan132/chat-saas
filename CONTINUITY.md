@@ -42,6 +42,7 @@
 - 2026-08-17 [USER] D712 ACTIVE: After initial Overview load, date-range changes retain the last completed dashboard content and show only a subtle busy state on the range controls; Daily/Cumulative changes remain immediate.
 - 2026-08-17 [USER] D713 ACTIVE: Overview range buttons have concise top tooltips, and only the Overview Daily/Cumulative selector matches their fully rounded 32px text-sm styling.
 - 2026-08-17 [USER] D714 ACTIVE: Common Topics and Customer Sentiment use the existing `topic_analytics` entitlement: Free and Starter receive an explicitly labelled local sample preview with Preview and Upgrade actions, while Growth and Business receive live data.
+- 2026-08-17 [USER] D715 ACTIVE: The Overview data-mode label stays visually centered with its chevron independently positioned; sample preview retains a compact Upgrade action without a long disclosure sentence.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
@@ -51,7 +52,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
-- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, retains its last complete dashboard during later range refreshes, shows concise range tooltips and a non-blocking busy state, gives Daily/Cumulative the same 32px rounded text-sm control styling, and restricts live topic/sentiment analytics to entitled plans with an explicitly labelled sample preview for Free and Starter; PR #62 tracks commit `94e21d2e`.
+- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, retains its last complete dashboard during later range refreshes, shows concise range tooltips and a non-blocking busy state, gives Daily/Cumulative the same 32px rounded text-sm control styling with a centered label, and restricts live topic/sentiment analytics to entitled plans with sample previews and persistent Upgrade actions for Free and Starter; PR #62 tracks commit `535fce13`.
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
 - 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the fully rounded availability time combobox with a start–end separator.
 - 2026-08-16 [CODE] Google health now blocks only Meet availability; daily maintenance renews watches and no longer sweeps stale syncs.
@@ -74,6 +75,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Centered Daily/Cumulative control and persistent sample-preview Upgrade action passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `535fce13` was pushed to PR #62.
 - 2026-08-17 [TOOL] Topic-analytics entitlement and preview passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `94e21d2e` was pushed to PR #62.
 - 2026-08-17 [TOOL] Overview range retention, tooltip, busy-state, and Daily/Cumulative control regressions passed 8 focused tests; the Node v22.22.0 production build and `git diff --check` passed. Commits `85088d92`, `63b7b904`, and `e607ed52` await push to PR #62.
 - 2026-08-17 [TOOL] Title-date spacing refinement passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit `0d66102d` was pushed to PR #62.
