@@ -7,6 +7,8 @@ test('renders portrait benefit cards before each benefit description', () => {
 
   expect(markup).toContain('Built for real customer conversations');
   expect(markup).toContain('<section class="bg-zinc-100');
+  expect(markup).toContain('class="h-auto w-full object-contain"');
+  expect(markup).not.toContain('max-w-[320px]');
   expect(markup).toMatch(
     /questions-updated\.png[^>]*\/><div[^>]*><h3[^>]*>Handle Complex Questions<\/h3><p[^>]*>Give accurate, contextual answers to even your customers’ most detailed questions\.<\/p>/,
   );

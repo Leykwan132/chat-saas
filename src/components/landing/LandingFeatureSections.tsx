@@ -117,7 +117,7 @@ function FeatureCard({
 }) {
   return (
     <div className="flex flex-col">
-      <img src={image} alt={alt} className="mx-auto h-auto w-full max-w-[320px] object-contain" />
+      <img src={image} alt={alt} className="h-auto w-full object-contain" />
       <div className="pt-6 sm:pt-8">
         <h3 className="mb-2 text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">{title}</h3>
         <p className="max-w-sm text-base leading-relaxed text-zinc-500 dark:text-zinc-400">{description}</p>
