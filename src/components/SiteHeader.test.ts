@@ -5,6 +5,8 @@ const siteHeaderSource = readFileSync(new URL('./SiteHeader.tsx', import.meta.ur
 const brandSource = readFileSync(new URL('./site-header/SiteHeaderBrand.tsx', import.meta.url), 'utf8');
 const navigationSource = readFileSync(new URL('./site-header/SiteHeaderNavigation.tsx', import.meta.url), 'utf8');
 const actionsSource = readFileSync(new URL('./site-header/SiteHeaderActions.tsx', import.meta.url), 'utf8');
+const blogLayoutSource = readFileSync(new URL('./BlogPostLayout.tsx', import.meta.url), 'utf8');
+const legalLayoutSource = readFileSync(new URL('./LegalDocumentLayout.tsx', import.meta.url), 'utf8');
 
 test('site header keeps horizontal padding across desktop sizes', () => {
   expect(siteHeaderSource).toContain('px-5 sm:px-6 md:px-8 lg:px-10');
@@ -27,4 +29,10 @@ test('site header balances the brand icon with the wordmark', () => {
   expect(brandSource).toContain("'size-6 transition-all duration-300'");
   expect(brandSource).toContain('font-title font-semibold text-[20px]');
   expect(brandSource).not.toContain("'size-7 transition-all duration-300'");
+});
+
+test('public Start for free handlers report the Google Ads conversion', () => {
+  expect(siteHeaderSource).toContain("reportGoogleAdsConversion(() => {");
+  expect(blogLayoutSource).toContain("reportGoogleAdsConversion(() => {");
+  expect(legalLayoutSource).toContain("reportGoogleAdsConversion(() => {");
 });

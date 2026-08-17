@@ -21,3 +21,12 @@ test('home page does not show a spinner while landing auth state loads', () => {
   expect(homeSource).not.toContain('<Spinner');
   expect(homeSource).toContain('landing-page');
 });
+
+test('landing sign-up CTAs load and report the Google Ads conversion', () => {
+  const landingSource = readFileSync(new URL('./LandingPage.tsx', import.meta.url), 'utf8');
+  const htmlSource = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+
+  expect(htmlSource).toContain('https://www.googletagmanager.com/gtag/js?id=AW-17745887902');
+  expect(htmlSource).toContain("gtag('config', 'AW-17745887902')");
+  expect(landingSource).toContain("reportGoogleAdsConversion(() => {");
+});
