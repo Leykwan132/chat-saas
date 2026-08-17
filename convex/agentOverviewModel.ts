@@ -23,6 +23,10 @@ import { getAgentOverviewSentimentDistribution } from "./agentOverviewSentiment"
 import { getAgentOverviewTrendingTopics } from "./agentOverviewTopics";
 import { getAuthContext } from "./authUtils";
 import { getBillingEntityForUser } from "./plans";
+import { checkAiFeature } from "./plans";
+import { getBillingPlanFromStripe } from "./billingScope";
+import { resolveTopicAnalyticsSummary } from "./agentOverviewTopicAnalytics";
+import { emptyCustomerSentimentCounts } from "../shared/customerSentiment";
 import { getActiveTeamForUser, normalizeTimeZone } from "./teamHelpers";
 import { getDateKeysInTimeZoneRange } from "./timeZoneDateKeys";
 
@@ -109,6 +113,8 @@ export async function getAgentOverviewSummary(
   timeRange: OverviewTimeRange = "period",
 ) {
   const agent = await assertAgentAccess(ctx, agentId);
+  const stripeInfo = await getBillingPlanFromStripe(ctx);
+  const topicAnalyticsEnabled = checkAiFeature(stripeInfo.plan, "topic_analytics");
   const { periodStartMs, periodEndMs, timeZone } = await getBillingPeriod(ctx);
   const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
     timeRange,
@@ -207,6 +213,18 @@ export async function getAgentOverviewSummary(
     conversations,
     bookings,
   );
+  const topicAnalytics = topicAnalyticsEnabled
+    ? resolveTopicAnalyticsSummary(
+      true,
+      await getAgentOverviewTrendingTopics(
+        ctx,
+        conversations,
+        rangeStartMs,
+        rangeEndMs,
+      ),
+      getAgentOverviewSentimentDistribution(conversations),
+    )
+    : resolveTopicAnalyticsSummary(false, [], emptyCustomerSentimentCounts());
   for (const conversation of abandonedConversations) {
     incrementDaily(
       rowsByDate,
@@ -232,13 +250,7 @@ export async function getAgentOverviewSummary(
         : bookedAppointments / aiAssistedConversationCount,
     escalations: humanEscalations,
     avgMessagesToClose: closeStats.avgMessagesToClose,
-    sentimentDistribution: getAgentOverviewSentimentDistribution(conversations),
+    ...topicAnalytics,
     daily,
-    trendingTopics: await getAgentOverviewTrendingTopics(
-      ctx,
-      conversations,
-      rangeStartMs,
-      rangeEndMs,
-    ),
   };
 }

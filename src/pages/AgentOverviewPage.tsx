@@ -31,6 +31,7 @@ import {
 } from '@/components/agent-overview/agentOverviewFormat';
 import { Permission } from '../../shared/permissions';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useUpgradeModal } from '@/components/upgradeModalContext';
 
 function AccessDenied() {
   return (
@@ -48,6 +49,7 @@ export default function AgentOverviewPage() {
   const { agentId } = useParams();
   const selectedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading: permissionsLoading } = usePermissions();
+  const { openUpgradeModal } = useUpgradeModal();
   const [chartMode, setChartMode] = useState<OverviewChartMode>('aiAssistedConversations');
   const [timeRange, setTimeRange] = useState<CreditTimeRange>('30d');
   const [trendDataMode, setTrendDataMode] = useState<OverviewTrendDataMode>('daily');
@@ -153,6 +155,8 @@ export default function AgentOverviewPage() {
       <AgentOverviewTopicsAndSentiment
         topics={resolvedSummary.trendingTopics}
         sentimentDistribution={resolvedSummary.sentimentDistribution}
+        topicAnalyticsEnabled={resolvedSummary.topicAnalyticsEnabled}
+        onUpgrade={openUpgradeModal}
       />
     </div>
   );

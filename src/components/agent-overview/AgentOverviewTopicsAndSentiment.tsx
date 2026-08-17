@@ -1,4 +1,5 @@
-import { Fragment, useMemo } from 'react';
+import { Fragment, useMemo, useState } from 'react';
+import { Lock } from 'lucide-react';
 import { Pie, PieChart } from 'recharts';
 import {
   ChartContainer,
@@ -7,6 +8,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import {
   AnalyticsChartShell,
   AnalyticsChartShellSkeleton,
@@ -29,6 +31,12 @@ const TOPIC_CHART_COLORS = [
   '#c7a4f5',
   '#f8b5bd',
 ] as const;
+const SAMPLE_TOPICS: AgentOverviewCommonTopic[] = [
+  { topicId: 'booking', topic: 'Appointment booking', count: 14, description: null },
+  { topicId: 'pricing', topic: 'Pricing questions', count: 9, description: null },
+  { topicId: 'support', topic: 'Product support', count: 6, description: null },
+];
+const SAMPLE_SENTIMENT = { positive: 14, neutral: 7, negative: 3 };
 
 const topicChartConfig = {
   customers: { label: 'Customers' },
@@ -134,15 +142,43 @@ function DistributionList({
 function OverviewPanelTitle({
   title,
   description,
+  sample = false,
 }: {
   title: string;
   description: string;
+  sample?: boolean;
 }) {
   return (
     <div>
-      <div className="font-sans font-medium leading-tight">{title}</div>
+      <div className="flex items-center gap-2 font-sans font-medium leading-tight">
+        {title}
+        {sample ? <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">Sample data</span> : null}
+      </div>
       <div className="mt-0.5 text-sm font-normal leading-tight text-muted-foreground">
         {description}
+      </div>
+    </div>
+  );
+}
+
+function LockedTopicAnalyticsPanel({
+  title,
+  onPreview,
+  onUpgrade,
+}: {
+  title: string;
+  onPreview: () => void;
+  onUpgrade?: () => void;
+}) {
+  return (
+    <div className="group relative flex h-[340px] flex-col overflow-hidden rounded-lg border border-border/70 bg-background px-5 py-5">
+      <OverviewPanelTitle title={title} description="Available on Growth and Business." />
+      <div className="flex flex-1 items-center justify-center">
+        <Lock className="size-8 text-muted-foreground/40" />
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-background/90 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        <Button type="button" variant="outline" onClick={onPreview}>Preview</Button>
+        <Button type="button" onClick={onUpgrade}>Upgrade</Button>
       </div>
     </div>
   );
@@ -151,15 +187,32 @@ function OverviewPanelTitle({
 export function AgentOverviewTopicsAndSentiment({
   topics,
   sentimentDistribution,
+  topicAnalyticsEnabled = true,
+  onUpgrade,
 }: {
   topics: AgentOverviewCommonTopic[];
   sentimentDistribution: CustomerSentimentCounts;
+  topicAnalyticsEnabled?: boolean;
+  onUpgrade?: () => void;
 }) {
-  const topicChartData = useMemo(() => buildTopicChartData(topics), [topics]);
+  const [showPreview, setShowPreview] = useState(false);
+  const previewing = !topicAnalyticsEnabled && showPreview;
+  const displayedTopics = previewing ? SAMPLE_TOPICS : topics;
+  const displayedSentiment = previewing ? SAMPLE_SENTIMENT : sentimentDistribution;
+  const topicChartData = useMemo(() => buildTopicChartData(displayedTopics), [displayedTopics]);
   const sentimentChartData = useMemo(
-    () => buildSentimentChartData(sentimentDistribution),
-    [sentimentDistribution],
+    () => buildSentimentChartData(displayedSentiment),
+    [displayedSentiment],
   );
+
+  if (!topicAnalyticsEnabled && !showPreview) {
+    return (
+      <div className={analyticsAdvancedOverviewGridClass}>
+        <LockedTopicAnalyticsPanel title="Common Topics" onPreview={() => setShowPreview(true)} onUpgrade={onUpgrade} />
+        <LockedTopicAnalyticsPanel title="Customer Sentiment" onPreview={() => setShowPreview(true)} onUpgrade={onUpgrade} />
+      </div>
+    );
+  }
 
   return (
     <div className={analyticsAdvancedOverviewGridClass}>
@@ -168,6 +221,7 @@ export function AgentOverviewTopicsAndSentiment({
           <OverviewPanelTitle
             title="Common Topics"
             description="Most discussed topics."
+            sample={previewing}
           />
         )}
         className="bg-background"
@@ -176,6 +230,7 @@ export function AgentOverviewTopicsAndSentiment({
         emptyMessage="Nothing available yet."
         shellStyle={{ height: COMMON_TOPICS_SHELL_HEIGHT }}
       >
+        {previewing ? <p className="px-5 pt-2 text-sm text-muted-foreground">Sample data — not from your conversations.</p> : null}
         <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pb-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
           <DistributionList items={topicChartData} />
 
@@ -219,6 +274,7 @@ export function AgentOverviewTopicsAndSentiment({
           <OverviewPanelTitle
             title="Customer Sentiment"
             description="Conversation sentiment."
+            sample={previewing}
           />
         )}
         className="bg-background"
@@ -229,7 +285,7 @@ export function AgentOverviewTopicsAndSentiment({
           <DistributionList items={sentimentChartData} />
           <div className="flex min-h-0 flex-1 items-start justify-center [&_[data-slot=chart]]:!size-[min(230px,100%)]">
             <AnalyticsCustomerSentimentPieChart
-              distribution={sentimentDistribution}
+              distribution={displayedSentiment}
               showLegend={false}
             />
           </div>

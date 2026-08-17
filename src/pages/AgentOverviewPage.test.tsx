@@ -18,6 +18,10 @@ vi.mock('@/hooks/usePermissions', () => ({
   usePermissions: () => ({ can: () => true, isLoading: false }),
 }));
 
+vi.mock('@/components/upgradeModalContext', () => ({
+  useUpgradeModal: () => ({ openUpgradeModal: vi.fn() }),
+}));
+
 const summary = {
   periodStartMs: Date.UTC(2026, 6, 19),
   periodEndMs: Date.UTC(2026, 7, 17),
@@ -28,6 +32,7 @@ const summary = {
   daily: [],
   trendingTopics: [],
   sentimentDistribution: { positive: 0, neutral: 0, negative: 0 },
+  topicAnalyticsEnabled: true,
 };
 
 const creditUsage = {
