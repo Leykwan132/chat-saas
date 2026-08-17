@@ -3,9 +3,9 @@ import { motion } from 'motion/react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { cn } from '@/lib/utils';
 
-const FEATURE_AI_AGENT_IMAGE = 'https://storage.kilobot.app/AI%20Agent-3.png';
-const FEATURE_KB_IMAGE = 'https://storage.kilobot.app/KB-3.png';
-const FEATURE_MODELS_IMAGE = 'https://storage.kilobot.app/Models-3.png';
+const FEATURE_ANSWER_IMAGE = 'https://storage.kilobot.app/Landing/questions-updated.png';
+const FEATURE_BOOKING_IMAGE = 'https://storage.kilobot.app/Landing/booking-updated.png';
+const FEATURE_CUSTOM_IMAGE = 'https://storage.kilobot.app/Landing/customs-updated.png';
 
 const FEATURE_SHOWCASE_IMAGES = {
   appointmentBooking: 'https://storage.kilobot.app/AB.png',
@@ -116,45 +116,44 @@ function FeatureCard({
   alt: string;
 }) {
   return (
-    <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40">
-      <div className="px-8 pb-4 pt-8">
-        <h3 className="mb-2 text-lg font-semibold text-zinc-950 dark:text-white">{title}</h3>
-        <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{description}</p>
+    <div className="flex flex-col">
+      <img src={image} alt={alt} className="h-auto w-full object-contain" />
+      <div className="pt-6 sm:pt-8">
+        <h3 className="mb-2 text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">{title}</h3>
+        <p className="max-w-sm text-base leading-relaxed text-zinc-500 dark:text-zinc-400">{description}</p>
       </div>
-      <img src={image} alt={alt} className="h-auto w-full" />
     </div>
   );
 }
 
 export function FeaturesSection() {
   return (
-    <section className="bg-white px-6 py-24 sm:px-8 sm:py-32 dark:bg-[#060606]">
+    <section className="bg-zinc-100 px-6 py-24 sm:px-8 sm:py-32 dark:bg-[#060606]">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto mb-16 max-w-3xl text-center sm:mb-20">
           <SectionHeading
-            title="Multiply your sales with Kilobot"
+            title="Built for real customer conversations"
             className="mx-auto items-center text-center max-w-none"
-            titleClassName="sm:whitespace-nowrap"
           />
         </div>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-8">
           <FeatureCard
-            title="Agentic AI"
-            description="Auto lead labeling, summaries, services with date and lead assignment."
-            image={FEATURE_AI_AGENT_IMAGE}
-            alt="AI Agent feature"
+            title="Handle Complex Questions"
+            description="Give accurate, contextual answers to even your customers’ most detailed questions."
+            image={FEATURE_ANSWER_IMAGE}
+            alt="Conversation with an accurate customer answer"
           />
           <FeatureCard
-            title="Knowledge Base"
-            description="Sync PDFs, websites, or any text info."
-            image={FEATURE_KB_IMAGE}
-            alt="Knowledge base feature"
+            title="Tailored to Your Business"
+            description="Train KiloBot on your content and customize how it responds, behaves, and represents your business."
+            image={FEATURE_CUSTOM_IMAGE}
+            alt="Business-specific Kilobot customization"
           />
           <FeatureCard
-            title="Custom Models"
-            description="Choose and deploy custom models on your own."
-            image={FEATURE_MODELS_IMAGE}
-            alt="Custom models feature"
+            title="Turn Enquiries Into Bookings"
+            description="Let KiloBot book customers for you, then handle confirmations, updates, and cancellations in the conversation."
+            image={FEATURE_BOOKING_IMAGE}
+            alt="Customer booking confirmation conversation"
           />
         </div>
       </div>
