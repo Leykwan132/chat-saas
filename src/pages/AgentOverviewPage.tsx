@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from 'convex/react';
-import { Navigate, useParams } from 'react-router';
+import { Navigate, useParams, useSearchParams } from 'react-router';
 import { ShieldAlert } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -16,6 +16,7 @@ import { AgentOverviewDataModeSelect } from '@/components/agent-overview/AgentOv
 import { AgentOverviewSkeleton } from '@/components/agent-overview/AgentOverviewSkeleton';
 import { AgentOverviewTimeRangeButtons } from '@/components/agent-overview/AgentOverviewTimeRangeButtons';
 import { AgentOverviewTopicsAndSentiment } from '@/components/agent-overview/AgentOverviewTopicsAndSentiment';
+import { resolveAgentOverviewPanelData } from '@/components/agent-overview/agentOverviewDummyData';
 import { useRetainedOverviewData } from '@/components/agent-overview/useRetainedOverviewData';
 import {
   AgentOverviewTrendChart,
@@ -47,12 +48,14 @@ function AccessDenied() {
 
 export default function AgentOverviewPage() {
   const { agentId } = useParams();
+  const [searchParams] = useSearchParams();
   const selectedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading: permissionsLoading } = usePermissions();
   const { openUpgradeModal } = useUpgradeModal();
   const [chartMode, setChartMode] = useState<OverviewChartMode>('aiAssistedConversations');
   const [timeRange, setTimeRange] = useState<CreditTimeRange>('30d');
   const [trendDataMode, setTrendDataMode] = useState<OverviewTrendDataMode>('daily');
+  const dummyData = import.meta.env.DEV && searchParams.get('dummyData') === 'true';
   const canReadAnalytics = !permissionsLoading && can(Permission.ANALYTICS_READ);
   const summary = useQuery(
     api.agentOverview.getSummary,
@@ -92,6 +95,12 @@ export default function AgentOverviewPage() {
   }
 
   const { summary: resolvedSummary, creditUsage: resolvedCreditUsage } = overviewData.data;
+  const panelData = resolveAgentOverviewPanelData({
+    dummyData,
+    topics: resolvedSummary.trendingTopics,
+    sentimentDistribution: resolvedSummary.sentimentDistribution,
+    topicAnalyticsEnabled: resolvedSummary.topicAnalyticsEnabled,
+  });
 
   const primaryMetrics = [
     {
@@ -153,9 +162,9 @@ export default function AgentOverviewPage() {
         dataMode={trendDataMode}
       />
       <AgentOverviewTopicsAndSentiment
-        topics={resolvedSummary.trendingTopics}
-        sentimentDistribution={resolvedSummary.sentimentDistribution}
-        topicAnalyticsEnabled={resolvedSummary.topicAnalyticsEnabled}
+        topics={panelData.topics}
+        sentimentDistribution={panelData.sentimentDistribution}
+        topicAnalyticsEnabled={panelData.topicAnalyticsEnabled}
         onUpgrade={openUpgradeModal}
       />
     </div>

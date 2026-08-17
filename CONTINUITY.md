@@ -1,6 +1,12 @@
 # CONTINUITY.md
 
 # Snapshot
+- 2026-08-17 [USER] Goal: show the active overview donut label and customer count in the donut center.
+- 2026-08-17 [CODE] Now: the centered-detail implementation is validated locally and awaits commit, publication to draft PR #63, and a local-checkout fast-forward.
+- 2026-08-17 [USER] Goal: expose browser-only Common Topics and Customer Sentiment test data with `?dummyData=true` in local development, then remove the flag before merge.
+- 2026-08-17 [CODE] Now: draft PR #63 and the user’s local feature checkout include browser-only `?dummyData=true` panel data for testing.
+- 2026-08-17 [USER] Goal: fix the cramped Agent Overview Common Topics container, activate the matching donut segment on topic-row hover, and publish a draft PR for approval.
+- 2026-08-17 [CODE] Now: draft PR #63 contains the validated layout and hover interaction; full-suite baseline remains 1282 pass, 161 fail, and 112 errors from unrelated Bun/Convex test-runner limits.
 - 2026-08-17 [USER] Goal: default the Agent Overview homepage analytics range to Last 30 days with 1d, 7d, 30d, and 90d shortcuts, compact content-sized metrics, right-aligned date plus Daily/Cumulative controls, and contextual graph and lower-panel subtitles.
 - 2026-08-16 [CODE] Now: calendar booking availability is deployed with source indicators, Google Meet booking links, diagnostics, and personal-service assignment repair.
 - 2026-08-16 [CODE] Now: manual and CSV customer creation persist the active agent scope; personal entries retain owner scope, and the safe legacy personal-customer backfill has completed.
@@ -28,6 +34,12 @@
 - 2026-08-16 [TOOL] Investigation: `service_not_assigned` compares service assignee WorkOS IDs with each roster schedule’s WorkOS ID. The inspected service was created after the personal-assignment migration and already belongs to the agent owner; its logged candidate is a distinct user’s schedule, so the migration is not the proven cause of that log.
 
 # Decisions
+- 2026-08-17 [USER] D724 ACTIVE: Hovering either overview distribution row expands its matching donut slice and renders the selected title above its customer count inside the donut center.
+- 2026-08-17 [USER] D723 SUPERSEDED by D724: Hovering either overview distribution row expanded its matching donut slice and rendered a shadow-free tooltip beyond that slice's radial midpoint.
+- 2026-08-17 [USER] D722 SUPERSEDED by D723: Hovering either overview distribution row expanded its matching donut slice and showed its title above its customer count in a static tooltip above the donut.
+- 2026-08-17 [USER] D721 SUPERSEDED by D722: Hovering either overview distribution row expanded its matching donut slice and showed its wrapped title plus customer count in the donut center.
+- 2026-08-17 [USER] D720 ACTIVE: `?dummyData=true` overrides only the overview’s Common Topics and Customer Sentiment inputs in local development; it makes no backend writes and will be removed before PR #63 merges.
+- 2026-08-17 [USER] D719 ACTIVE: Common Topics uses a 340px minimum height rather than a fixed height, and hovering a topic row expands its matching donut segment by 10px.
 - 2026-08-17 [USER] D701 ACTIVE: Overview defaults to the rolling Last 30 days; dedicated usage pages retain their existing defaults.
 - 2026-08-17 [USER] D702 ACTIVE: Overview metric cards are compact, text-only, content-sized selectable controls with a 12px label/value gap and 24px value type; the selected chart is 400px tall and uses `AI conversations`.
 - 2026-08-17 [USER] D703 SUPERSEDED by D704: Overview date controls previously included Billing period.
@@ -55,6 +67,12 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
+- 2026-08-17 [CODE] Active overview donut details now render in the donut center as a two-line label/count overlay; commit pending for PR #63.
+- 2026-08-17 [CODE] Active overview donut tooltips now calculate their position from the selected sector's radial midpoint and render shadow-free beside that sector; commit pending for PR #63.
+- 2026-08-17 [CODE] Active overview donut details now display in a two-line tooltip above the chart, and direct slice tooltips use the same two-line label/count order; commit pending for PR #63.
+- 2026-08-17 [CODE] Common Topics and Customer Sentiment now share a dedicated active donut renderer, display the hovered label and count in the donut center, and avoid duplicate inner bottom padding; the committed iteration awaits publication to PR #63.
+- 2026-08-17 [CODE] Local-development Agent Overview URLs with `?dummyData=true` now render browser-only seven-topic and 60/30/10 sentiment data without Convex writes; draft PR #63 tracks commit `c4f64af`.
+- 2026-08-17 [CODE] Common Topics now grows beyond its 340px minimum to keep every topic row and bottom padding visible; hovering a row expands its matching donut segment. Draft PR #63 tracks `c9f6cff`.
 - 2026-08-17 [CODE] Overview range controls now use the supported ToggleGroup variant, and the page safely renders completed analytics responses with no credit-usage record.
 - 2026-08-17 [CODE] Common Topics and Customer Sentiment sample preview now presents a lower-left Upgrade now action inside each panel; PR #62 tracks commit `2e37752a`.
 - 2026-08-17 [CODE] Overview Daily/Cumulative now uses an outline-only Select surface without a background or shadow; PR #62 tracks commit `83ace30b`.
@@ -82,6 +100,16 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Centered-detail work passed 14 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
+- 2026-08-17 [TOOL] Slice-anchored tooltip work passed 15 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
+- 2026-08-17 [TOOL] Active-tooltip regression work passed 14 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
+- 2026-08-17 [TOOL] Active-donut regression work passed 14 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; known build warnings were limited to `%VITE_META_APP_ID%` and chunk-size guidance.
+- 2026-08-17 [TOOL] Recharts 3.8 `Pie` does not expose the legacy `activeIndex` prop; removing it retained the state-driven custom sector behavior and passed the focused topic-panel test, Node v22 TypeScript check, and `git diff --check`.
+- 2026-08-17 [TOOL] Commit `c4f64af` was pushed to `codex/overview-topic-panel-interaction`, and the user’s main local checkout fast-forwarded cleanly to that commit for testing.
+- 2026-08-17 [TOOL] Browser-only `dummyData=true` mode passed 11 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; publication to the user’s local feature branch remains.
+- 2026-08-17 [TOOL] Branch `codex/overview-topic-panel-interaction` was pushed and draft PR #63 was created against `main`; the GitHub plugin endpoint returned a 403 integration-permission error, and the authorized GitHub CLI fallback created the PR.
+- 2026-08-17 [TOOL] Full Node v22 `bun test` repeated the unrelated baseline: 1282 pass, 161 fail, and 112 errors, chiefly absent Stripe test variables, unsupported `import.meta.glob`, and unavailable `vi.advanceTimersByTimeAsync`; the new Common Topics regression passed within that run.
+- 2026-08-17 [TOOL] Common Topics minimum-height and active-sector regression passed 5 focused tests, Node v22 TypeScript checking, the Vite production build, and `git diff --check`; PR creation awaits GitHub CLI re-authentication.
 - 2026-08-17 [TOOL] Overview TypeScript correction passed 7 focused tests, the app TypeScript check, the Node v22.22.0 production build, and `git diff --check`; commit pending.
 - 2026-08-17 [TOOL] In-panel analytics-preview Upgrade now actions passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `2e37752a` was pushed to PR #62.
 - 2026-08-17 [TOOL] Lower-left analytics-preview Upgrade now funnel passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `93e7142b` was pushed to PR #62.
