@@ -910,6 +910,7 @@ export default defineSchema({
         question: v.string(),
         context: v.string(),
         escalatedAt: v.number(),
+        sourceMessageId: v.optional(v.id("messages")),
       })
     ),
     tags: v.optional(v.array(v.string())),

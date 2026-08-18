@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { usePaginatedQuery } from 'convex-helpers/react';
 import {
@@ -105,6 +105,11 @@ import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
 import { ConversationWindowBanner } from '@/components/inbox/ConversationWindowBanner';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
 import { AvatarConversationTag } from '@/components/inbox/AvatarConversationTag';
+import {
+  buildDummyInboxEscalationMarker,
+  buildInboxEscalationMarkers,
+  getEscalationMetadata,
+} from '@/components/inbox/inboxEscalationMarkers';
 import {
   formatConversationActionHistoryText,
   getConversationActionHistoryStyle,
@@ -279,6 +284,7 @@ function DetailsPanelSkeleton() {
 
 export default function ChatsPage() {
   const { agentId } = useParams();
+  const [searchParams] = useSearchParams();
   const typedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading } = usePermissions();
   const connectedChannels = useQuery(
@@ -415,7 +421,7 @@ export default function ChatsPage() {
   const reactToMessage = useAction(api.chat.inboxActions.reactToMessage);
   const removeReactionFromMessage = useAction(api.chat.inboxActions.removeReactionFromMessage);
 
-  const { results: threadMessages, status: threadMessagesStatus } = usePaginatedQuery(
+  const { results: threadMessages, status: threadMessagesStatus, loadMore: loadMoreThreadMessages } = usePaginatedQuery(
     api.chat.inbox.listThreadMessagesForInbox,
     threadId && selectedConversationId
       ? { threadId, conversationId: selectedConversationId }
@@ -812,6 +818,43 @@ export default function ChatsPage() {
     }));
     return [...fromServer, ...pendingUi];
   }, [threadMessages, pendingOutbound]);
+  const inboxDummyData = import.meta.env.DEV && searchParams.get('dummyData') === 'true';
+  const escalationMarkers = useMemo(() => {
+    const markers = buildInboxEscalationMarkers(conversationLogs);
+    const dummyMarker = inboxDummyData
+      ? buildDummyInboxEscalationMarker(visibleThreadMessages)
+      : null;
+    return dummyMarker ? [...markers, dummyMarker] : markers;
+  }, [conversationLogs, inboxDummyData, visibleThreadMessages]);
+  const [pendingEscalationFocusId, setPendingEscalationFocusId] = useState<string | null>(null);
+
+  const focusEscalation = useCallback((escalationId: string) => {
+    const marker = document.getElementById(`inbox-escalation-${escalationId}`);
+    if (!marker) {
+      setPendingEscalationFocusId(escalationId);
+      return;
+    }
+    marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    marker.focus({ preventScroll: true });
+  }, []);
+
+  useEffect(() => {
+    if (!pendingEscalationFocusId) return;
+    const marker = document.getElementById(`inbox-escalation-${pendingEscalationFocusId}`);
+    if (marker) {
+      marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      marker.focus({ preventScroll: true });
+      setPendingEscalationFocusId(null);
+      return;
+    }
+    if (threadMessagesStatus === 'CanLoadMore') {
+      void loadMoreThreadMessages(80);
+      return;
+    }
+    if (threadMessagesStatus !== 'LoadingMore' && threadMessagesStatus !== 'LoadingFirstPage') {
+      setPendingEscalationFocusId(null);
+    }
+  }, [loadMoreThreadMessages, pendingEscalationFocusId, threadMessagesStatus, visibleThreadMessages]);
 
 
 
@@ -1273,6 +1316,7 @@ export default function ChatsPage() {
                   ) : (
                     <InboxThreadMessages
                       messages={visibleThreadMessages}
+                      escalationMarkers={escalationMarkers}
                       emptyTitle="No messages in this conversation yet."
                       emptyDescription="When customers message you, the thread appears here."
                       onReact={handleReactToMessage}
@@ -2017,6 +2061,15 @@ export default function ChatsPage() {
                                         </span>
                                       )}
                                     </div>
+                                    {log.action === 'escalation_raised' && getEscalationMetadata(log.metadata) ? (
+                                      <button
+                                        type="button"
+                                        className="mt-2 text-xs font-medium text-primary hover:underline"
+                                        onClick={() => focusEscalation(log._id)}
+                                      >
+                                        View in chat
+                                      </button>
+                                    ) : null}
                                   </div>
                                 </div>
                               ))}

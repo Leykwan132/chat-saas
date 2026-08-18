@@ -49,6 +49,7 @@ import { Message, MessageContent } from '@/components/ai-elements/message';
 import {
   buildInboxThreadItems,
   formatMessageTime,
+  type InboxEscalationMarker,
 } from '@/lib/formatMessageTime';
 import type { InboxUIMessage } from '@/lib/inboxOptimistic';
 import { inboxMessageFrom } from '@/lib/inboxOptimistic';
@@ -67,6 +68,7 @@ import { splitWhatsAppText } from '@/lib/whatsappText';
 import { InboxAudioTranscript } from './InboxAudioTranscript';
 import { InboxBroadcastMessage } from './InboxBroadcastMessage';
 import { InboxWorkflowAutomationMessage } from './InboxWorkflowAutomationMessage';
+import { InboxEscalationDivider } from './InboxEscalationDivider';
 
 function getInboxMessageFileParts(
   message: InboxUIMessage,
@@ -143,6 +145,7 @@ export type InboxThreadMessagesProps = {
   loading?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
+  escalationMarkers?: InboxEscalationMarker[];
   onReact?: (message: InboxUIMessage, emoji: string) => void | Promise<void>;
   onRemoveReaction?: (message: InboxUIMessage) => void | Promise<void>;
 };
@@ -600,10 +603,14 @@ export function InboxThreadMessages({
   loading = false,
   emptyTitle = 'No messages yet',
   emptyDescription = 'Messages in this conversation will appear here.',
+  escalationMarkers = [],
   onReact,
   onRemoveReaction,
 }: InboxThreadMessagesProps) {
-  const threadItems = useMemo(() => buildInboxThreadItems(messages), [messages]);
+  const threadItems = useMemo(
+    () => buildInboxThreadItems(messages, escalationMarkers),
+    [escalationMarkers, messages],
+  );
   const [selectedReaction, setSelectedReaction] = useState<SelectedReaction | null>(null);
   const [pendingReaction, setPendingReaction] = useState<PendingReaction | null>(null);
   const [animatingReaction, setAnimatingReaction] = useState<AnimatingReaction | null>(null);
@@ -685,6 +692,10 @@ export function InboxThreadMessages({
           threadItems.map((item) => {
             if (item.type === 'day') {
               return <DayDivider key={item.key} label={item.label} />;
+            }
+
+            if (item.type === 'escalation') {
+              return <InboxEscalationDivider key={item.key} escalation={item.escalation} />;
             }
 
             const m = item.message;

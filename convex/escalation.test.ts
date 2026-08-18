@@ -163,6 +163,7 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
     conversationId,
     question: "How do I request a refund?",
     context: "User wants a refund, refund policies not in knowledge base.",
+    sourceAgentMessageId: ingestResult.agentMessageId,
   });
 
   conv = await t.run(async (ctx) => {
@@ -174,6 +175,7 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
     question: "How do I request a refund?",
     context: "User wants a refund, refund policies not in knowledge base.",
     escalatedAt: expect.any(Number),
+    sourceMessageId: ingestResult.messageIds[0],
   });
 
   // 3. Resolve Escalation Manually
@@ -193,6 +195,7 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
     conversationId,
     question: "Another unsure query?",
     context: "Testing auto-resolve on human reply.",
+    sourceAgentMessageId: ingestResult.agentMessageId,
   });
 
   conv = await t.run(async (ctx) => {
@@ -219,6 +222,7 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
     conversationId,
     question: "Third unsure query?",
     context: "Testing clear on AI replies enabled.",
+    sourceAgentMessageId: ingestResult.agentMessageId,
   });
 
   conv = await t.run(async (ctx) => {
@@ -346,6 +350,7 @@ test("escalates without sending a customer message when escalationMessage is uns
     direction: "incoming",
     content: "Can you help me?",
     contentType: "text",
+    images: [{ url: "https://example.com/problem.png", mimeType: "image/png" }],
     timestampMs: Date.now(),
     isHistorical: true,
   });
@@ -354,6 +359,7 @@ test("escalates without sending a customer message when escalationMessage is uns
     conversationId: ingestResult.conversationId,
     question: "Can you help me?",
     context: "No knowledge base coverage for this request.",
+    sourceAgentMessageId: ingestResult.agentMessageId,
   });
 
   const conv = await t.run(async (ctx) => {
@@ -366,5 +372,6 @@ test("escalates without sending a customer message when escalationMessage is uns
     question: "Can you help me?",
     context: "No knowledge base coverage for this request.",
     escalatedAt: expect.any(Number),
+    sourceMessageId: ingestResult.messageIds.at(-1),
   });
 });

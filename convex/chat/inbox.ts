@@ -534,6 +534,7 @@ export const internalEscalateConversation = internalMutation({
     conversationId: v.id("conversations"),
     question: v.string(),
     context: v.string(),
+    sourceAgentMessageId: v.string(),
   },
   handler: async (ctx, args) => {
     const conv = await ctx.db.get(args.conversationId);
@@ -548,6 +549,19 @@ export const internalEscalateConversation = internalMutation({
     if (!escalationAvailable) {
       return;
     }
+    const sourceMessage = await ctx.db
+      .query("messages")
+      .withIndex("by_agentMessageId", (q) => q.eq("agentMessageId", args.sourceAgentMessageId))
+      .order("desc")
+      .first();
+    if (
+      sourceMessage === null ||
+      sourceMessage.conversationId !== args.conversationId ||
+      sourceMessage.direction !== "incoming"
+    ) {
+      throw new Error("Escalation source message was not found");
+    }
+    const sourceMessageId = sourceMessage._id;
     const now = Date.now();
     await ctx.db.patch(args.conversationId, {
       status: "requires_user_input",
@@ -556,6 +570,7 @@ export const internalEscalateConversation = internalMutation({
         question: args.question,
         context: args.context,
         escalatedAt: now,
+        sourceMessageId,
       },
       updatedAt: now,
     });
@@ -569,6 +584,8 @@ export const internalEscalateConversation = internalMutation({
       },
       metadata: {
         question: args.question,
+        context: args.context,
+        sourceMessageId,
       },
     });
     await markConversationAnalyticsDirty(ctx, {
@@ -659,6 +676,7 @@ export const generateAiReplyWorker = internalAction({
       conv._id,
       activeBooking.services,
       workflowRuntimeContext,
+      args.promptMessageId,
     );
 
     let typingActive = false;
