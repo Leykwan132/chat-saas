@@ -195,6 +195,7 @@ export const generatePlaygroundResponseAsync = internalAction({
       conv?._id ?? undefined,
       activeBooking.services,
       workflowRuntimeContext,
+      args.promptMessageId,
     );
     const result = await configuredAgent.streamText(
       ctx,

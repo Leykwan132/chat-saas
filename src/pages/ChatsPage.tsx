@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { usePaginatedQuery } from 'convex-helpers/react';
@@ -104,11 +104,11 @@ import {
 import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
 import { ConversationWindowBanner } from '@/components/inbox/ConversationWindowBanner';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
+import { InboxActionHistory } from '@/components/inbox/InboxActionHistory';
 import { AvatarConversationTag } from '@/components/inbox/AvatarConversationTag';
 import {
-  formatConversationActionHistoryText,
-  getConversationActionHistoryStyle,
-} from '@/components/inbox/conversationActionHistoryPresentation';
+  buildInboxEscalationMarkers,
+} from '@/components/inbox/inboxEscalationMarkers';
 import { type PromptInputMessage } from '@/components/ai-elements/prompt-input';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
@@ -160,20 +160,6 @@ function formatRelative(timestamp: number): string {
   const day = Math.floor(hr / 24);
   if (day < 30) return `${day}d ago`;
   return new Date(timestamp).toLocaleDateString();
-}
-
-function formatTimelineRelative(timestamp: number): string {
-  const diffMs = Date.now() - timestamp;
-  if (diffMs < 60000) return 'now';
-  const sec = Math.floor(diffMs / 1000);
-  const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}m`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h`;
-  const day = Math.floor(hr / 24);
-  if (day < 30) return `${day}d`;
-  const d = new Date(timestamp);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 function formatOrgMemberDisplayName(user: Doc<'users'>): string {
@@ -415,7 +401,7 @@ export default function ChatsPage() {
   const reactToMessage = useAction(api.chat.inboxActions.reactToMessage);
   const removeReactionFromMessage = useAction(api.chat.inboxActions.removeReactionFromMessage);
 
-  const { results: threadMessages, status: threadMessagesStatus } = usePaginatedQuery(
+  const { results: threadMessages, status: threadMessagesStatus, loadMore: loadMoreThreadMessages } = usePaginatedQuery(
     api.chat.inbox.listThreadMessagesForInbox,
     threadId && selectedConversationId
       ? { threadId, conversationId: selectedConversationId }
@@ -812,6 +798,38 @@ export default function ChatsPage() {
     }));
     return [...fromServer, ...pendingUi];
   }, [threadMessages, pendingOutbound]);
+  const escalationMarkers = useMemo(() => {
+    return buildInboxEscalationMarkers(conversationLogs);
+  }, [conversationLogs]);
+  const [pendingEscalationFocusId, setPendingEscalationFocusId] = useState<string | null>(null);
+
+  const focusEscalation = useCallback((escalationId: string) => {
+    const marker = document.getElementById(`inbox-escalation-${escalationId}`);
+    if (!marker) {
+      setPendingEscalationFocusId(escalationId);
+      return;
+    }
+    marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    marker.focus({ preventScroll: true });
+  }, []);
+
+  useEffect(() => {
+    if (!pendingEscalationFocusId) return;
+    const marker = document.getElementById(`inbox-escalation-${pendingEscalationFocusId}`);
+    if (marker) {
+      marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      marker.focus({ preventScroll: true });
+      setPendingEscalationFocusId(null);
+      return;
+    }
+    if (threadMessagesStatus === 'CanLoadMore') {
+      void loadMoreThreadMessages(80);
+      return;
+    }
+    if (threadMessagesStatus !== 'LoadingMore' && threadMessagesStatus !== 'LoadingFirstPage') {
+      setPendingEscalationFocusId(null);
+    }
+  }, [loadMoreThreadMessages, pendingEscalationFocusId, threadMessagesStatus, visibleThreadMessages]);
 
 
 
@@ -1273,6 +1291,7 @@ export default function ChatsPage() {
                   ) : (
                     <InboxThreadMessages
                       messages={visibleThreadMessages}
+                      escalationMarkers={escalationMarkers}
                       emptyTitle="No messages in this conversation yet."
                       emptyDescription="When customers message you, the thread appears here."
                       onReact={handleReactToMessage}
@@ -1939,92 +1958,19 @@ export default function ChatsPage() {
 
                     <Separator />
 
-                    <div className="flex flex-col">
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
-                        onClick={() => setLogSectionOpen((o) => !o)}
-                        aria-expanded={logSectionOpen}
-                      >
-                        <Clock className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                        <span className="text-sm font-semibold text-foreground">
-                          Action History
-                        </span>
-                        <div className="flex-1" />
-                        <ChevronDown
-                          className={cn(
-                            'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                            !logSectionOpen && '-rotate-90',
-                          )}
-                        />
-                      </button>
-                      {logSectionOpen ? (
-                        <div className="px-4 pb-3">
-                          {conversationLogs === undefined ? (
-                            <div className="text-xs text-muted-foreground py-2 pl-4 border-l border-zinc-200 dark:border-zinc-800">
-                              Loading action history…
-                            </div>
-                          ) : conversationLogs.length === 0 ? (
-                            <div className="text-xs text-muted-foreground py-2 pl-4 border-l border-zinc-200 dark:border-zinc-800">
-                              No action history logged yet.
-                            </div>
-                          ) : (
-                            <div className="pl-2 pr-1 space-y-0">
-                              {conversationLogs.map((log, index) => (
-                                <div key={log._id} className="flex gap-3 text-xs">
-                                  {/* Left: Time */}
-                                  <div className="w-8 text-right text-muted-foreground/80 select-none shrink-0 pt-0.5 font-medium tabular-nums text-[11px]">
-                                    {formatTimelineRelative(log.performedAt)}
-                                  </div>
-
-                                  {/* Middle: Dot and Connecting Line */}
-                                  {(() => {
-                                    const styleInfo = getConversationActionHistoryStyle(log.action);
-                                    return (
-                                      <div className="flex flex-col items-center shrink-0">
-                                        <div className={cn(
-                                          "size-6 rounded-full border flex items-center justify-center shrink-0 mt-0.5 shadow-none",
-                                          styleInfo.classes
-                                        )}>
-                                          <styleInfo.icon className="size-3 shrink-0" />
-                                        </div>
-                                        {index < conversationLogs.length - 1 && (
-                                          <div className="w-[1px] flex-1 bg-zinc-200 dark:bg-zinc-800 my-1" />
-                                        )}
-                                      </div>
-                                    );
-                                  })()}
-
-                                  {/* Right: Content */}
-                                  <div className="flex-1 pb-4 pt-0.5">
-                                    <div className="font-normal text-muted-foreground text-[13px] leading-snug">
-                                      {formatConversationActionHistoryText(log.action, log.metadata)}
-                                    </div>
-                                    <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
-                                      <span>by</span>
-                                      {log.actorType === 'user' ? (
-                                        <span className="inline-flex items-center gap-1 rounded bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-700 dark:text-zinc-300">
-                                          <User className="size-2.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
-                                          <span>{log.actorName ?? 'User'}</span>
-                                        </span>
-                                      ) : log.actorType === 'ai' ? (
-                                        <span className="font-semibold text-violet-600 dark:text-violet-400">
-                                          {log.actorName ?? 'AI'}
-                                        </span>
-                                      ) : (
-                                        <span className="font-semibold text-muted-foreground">
-                                          System
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
+                    <InboxActionHistory
+                      open={logSectionOpen}
+                      logs={conversationLogs?.map((log) => ({
+                        id: log._id,
+                        action: log.action,
+                        metadata: log.metadata,
+                        performedAt: log.performedAt,
+                        actorType: log.actorType,
+                        actorName: log.actorName,
+                      }))}
+                      onOpenChange={setLogSectionOpen}
+                      onFocusEscalation={focusEscalation}
+                    />
 
                     <Separator />
 

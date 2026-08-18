@@ -48,11 +48,34 @@ function startOfDayMs(timestamp: number): number {
 
 export type InboxThreadItem =
   | { type: 'day'; key: string; label: string }
-  | { type: 'message'; message: InboxUIMessage };
+  | { type: 'message'; message: InboxUIMessage }
+  | { type: 'escalation'; key: string; escalation: InboxEscalationMarker };
 
-export function buildInboxThreadItems(messages: InboxUIMessage[]): InboxThreadItem[] {
+export type InboxEscalationMarker = {
+  id: string;
+  sourceMessageId: string;
+  question: string;
+  context: string;
+  escalatedAt: number;
+};
+
+export function buildInboxThreadItems(
+  messages: InboxUIMessage[],
+  escalationMarkers: InboxEscalationMarker[] = [],
+): InboxThreadItem[] {
   const items: InboxThreadItem[] = [];
   let lastDay: number | null = null;
+  const markersBySourceMessageId = new Map<string, InboxEscalationMarker[]>();
+
+  for (const marker of escalationMarkers) {
+    const markers = markersBySourceMessageId.get(marker.sourceMessageId) ?? [];
+    markers.push(marker);
+    markersBySourceMessageId.set(marker.sourceMessageId, markers);
+  }
+
+  for (const markers of markersBySourceMessageId.values()) {
+    markers.sort((a, b) => a.escalatedAt - b.escalatedAt);
+  }
 
   for (const message of messages) {
     const day = startOfDayMs(message._creationTime);
@@ -65,6 +88,15 @@ export function buildInboxThreadItems(messages: InboxUIMessage[]): InboxThreadIt
       lastDay = day;
     }
     items.push({ type: 'message', message });
+    if (message.ledgerMessageId) {
+      for (const escalation of markersBySourceMessageId.get(message.ledgerMessageId) ?? []) {
+        items.push({
+          type: 'escalation',
+          key: `escalation-${escalation.id}`,
+          escalation,
+        });
+      }
+    }
   }
 
   return items;

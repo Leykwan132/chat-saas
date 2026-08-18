@@ -505,6 +505,7 @@ export function buildAgent(
   conversationId?: Id<"conversations">,
   activeBookingServices: ActiveBookingServiceForPrompt[] = [],
   workflowRuntimeContext: WorkflowRuntimeContextForPrompt = null,
+  sourceAgentMessageId?: string,
 ) {
   const appointmentBookingEnabled = conversationId !== undefined && activeBookingServices.length > 0;
   const defaultBookingTimeZone = normalizeTimeZone(activeBookingServices[0]?.timeZone);
@@ -550,10 +551,14 @@ export function buildAgent(
           throw new Error("Human escalation node is not available in the active workflow");
         }
         if (conversationId) {
+          if (!sourceAgentMessageId) {
+            throw new Error("Human escalation requires a source customer message");
+          }
           await ctx.runMutation(internal.chat.inbox.internalEscalateConversation, {
             conversationId,
             question,
             context,
+            sourceAgentMessageId,
           });
         }
         return { success: true, message: "Escalated to human. Automated responses are paused." };

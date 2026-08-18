@@ -16,10 +16,12 @@ test('formats distinct Reminder and Follow-up Action History entries', () => {
   expect(presentation).toContain('Clock3');
 });
 
-test('keeps Action History presentation out of the Chats page', () => {
+test('keeps Action History presentation in the shared inbox component', () => {
   const chatsPage = source('../../pages/ChatsPage.tsx');
-  expect(chatsPage).toContain('formatConversationActionHistoryText');
-  expect(chatsPage).toContain('getConversationActionHistoryStyle');
+  const actionHistory = source('./InboxActionHistory.tsx');
+  expect(chatsPage).toContain('InboxActionHistory');
+  expect(actionHistory).toContain('formatConversationActionHistoryText');
+  expect(actionHistory).toContain('getConversationActionHistoryStyle');
   expect(chatsPage).not.toContain('const formatLogActionText');
   expect(chatsPage).not.toContain('const getLogActionStyle');
   expect(chatsPage).toContain('function formatOrgMemberDisplayName');
