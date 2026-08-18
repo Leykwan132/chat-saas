@@ -104,9 +104,9 @@ import {
 import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
 import { ConversationWindowBanner } from '@/components/inbox/ConversationWindowBanner';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
+import { InboxEscalationPreview } from '@/components/inbox/InboxEscalationPreview';
 import { AvatarConversationTag } from '@/components/inbox/AvatarConversationTag';
 import {
-  buildDummyInboxEscalationMarker,
   buildInboxEscalationMarkers,
   getEscalationMetadata,
 } from '@/components/inbox/inboxEscalationMarkers';
@@ -285,6 +285,7 @@ function DetailsPanelSkeleton() {
 export default function ChatsPage() {
   const { agentId } = useParams();
   const [searchParams] = useSearchParams();
+  const inboxDummyData = import.meta.env.DEV && searchParams.get('dummyData') === 'true';
   const typedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading } = usePermissions();
   const connectedChannels = useQuery(
@@ -818,14 +819,9 @@ export default function ChatsPage() {
     }));
     return [...fromServer, ...pendingUi];
   }, [threadMessages, pendingOutbound]);
-  const inboxDummyData = import.meta.env.DEV && searchParams.get('dummyData') === 'true';
   const escalationMarkers = useMemo(() => {
-    const markers = buildInboxEscalationMarkers(conversationLogs);
-    const dummyMarker = inboxDummyData
-      ? buildDummyInboxEscalationMarker(visibleThreadMessages)
-      : null;
-    return dummyMarker ? [...markers, dummyMarker] : markers;
-  }, [conversationLogs, inboxDummyData, visibleThreadMessages]);
+    return buildInboxEscalationMarkers(conversationLogs);
+  }, [conversationLogs]);
   const [pendingEscalationFocusId, setPendingEscalationFocusId] = useState<string | null>(null);
 
   const focusEscalation = useCallback((escalationId: string) => {
@@ -1147,6 +1143,10 @@ export default function ChatsPage() {
     }
     return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
   }, [allExistingTags, kbTagTitles]);
+
+  if (inboxDummyData) {
+    return <InboxEscalationPreview />;
+  }
 
   if (isLoading || connectedChannels === undefined) {
     return <InboxPageSkeleton />;
