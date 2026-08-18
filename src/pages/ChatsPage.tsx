@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { usePaginatedQuery } from 'convex-helpers/react';
 import {
@@ -104,7 +104,6 @@ import {
 import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
 import { ConversationWindowBanner } from '@/components/inbox/ConversationWindowBanner';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
-import { InboxEscalationPreview } from '@/components/inbox/InboxEscalationPreview';
 import { InboxActionHistory } from '@/components/inbox/InboxActionHistory';
 import { AvatarConversationTag } from '@/components/inbox/AvatarConversationTag';
 import {
@@ -266,8 +265,6 @@ function DetailsPanelSkeleton() {
 
 export default function ChatsPage() {
   const { agentId } = useParams();
-  const [searchParams] = useSearchParams();
-  const inboxDummyData = import.meta.env.DEV && searchParams.get('dummyData') === 'true';
   const typedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading } = usePermissions();
   const connectedChannels = useQuery(
@@ -1125,10 +1122,6 @@ export default function ChatsPage() {
     }
     return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
   }, [allExistingTags, kbTagTitles]);
-
-  if (inboxDummyData) {
-    return <InboxEscalationPreview />;
-  }
 
   if (isLoading || connectedChannels === undefined) {
     return <InboxPageSkeleton />;

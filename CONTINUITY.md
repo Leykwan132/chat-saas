@@ -2,14 +2,15 @@
 
 # Snapshot
 - 2026-08-18 [USER] Goal: make each AI-to-human escalation traceable to the exact triggering customer message in the inbox and action history.
-- 2026-08-18 [CODE] Now: source-message metadata, a neutral expandable inbox divider with readable escalation details, shared production Action History rendering with a neutral View in chat pill, and a long self-contained development dummy Inbox preview with an early escalation are implemented and verified locally.
-- 2026-08-18 [CODE] Next: push the neutral View in chat control update, fast-forward the Desktop checkout, then restore GitHub CLI or GitHub-app PR-create permission to open a draft PR.
+- 2026-08-18 [CODE] Now: source-message metadata, a neutral expandable inbox divider with readable escalation details, and shared production Action History rendering with a neutral View in chat pill are implemented and verified locally.
+- 2026-08-18 [CODE] Next: push the Inbox-preview removal, fast-forward the Desktop checkout, and open a draft PR.
 - 2026-08-18 [ASSUMPTION] The removal is unshipped; do not add a release changelog entry until production availability is confirmed.
 
 # Decisions
 - 2026-08-18 [USER] D727 ACTIVE: the app does not send Google Ads conversion events; the installed Google tag measures the configured onboarding conversion.
 - 2026-08-18 [USER] D728 ACTIVE: an AI escalation links to the exact incoming message used as the AI turn prompt; action history jumps to that marker in the conversation.
-- 2026-08-18 [USER] D729 ACTIVE: escalation dividers use neutral styling and disclose the stored customer request plus AI handoff context on click; the dummy preview reuses the production Action History component.
+- 2026-08-18 [USER] D733 ACTIVE: Inbox-only dummy preview code is removed; escalation dividers use neutral styling and disclose the stored customer request plus AI handoff context on click.
+- 2026-08-18 [USER] D729 SUPERSEDED by D733: the dummy preview no longer exists.
 - 2026-08-18 [USER] D730 ACTIVE: the neutral escalation divider uses the escalation-triangle icon rather than a question-mark icon.
 - 2026-08-18 [USER] D731 ACTIVE: expanded escalation details use readable text and label the AI-provided rationale “Why it needs a human.”
 - 2026-08-18 [USER] D732 ACTIVE: Action History’s View in chat control uses a neutral fully rounded background.
@@ -23,9 +24,8 @@
 # Done (recent)
 - 2026-08-18 [CODE] Removed the custom CTA conversion helper and all four public CTA calls; WorkOS sign-up starts immediately while the Google tag remains installed.
 - 2026-08-18 [CODE] AI-to-human escalations now persist their source message, render an inbox divider immediately after it, and expose a View in chat action-history link; `?dummyData=true` previews the divider in development.
-- 2026-08-18 [CODE] `?dummyData=true` now renders its own selectable Inbox conversation, message timeline, escalation divider, and action-history link without relying on connected channels or production data.
-- 2026-08-18 [CODE] The dummy Inbox conversation has 16 messages; the escalation source is the third message, leaving 13 messages below the divider for a realistic long-thread preview.
-- 2026-08-18 [CODE] Escalation dividers now expand to show their stored reason, and Action History is a shared component used by production and the dummy Inbox preview.
+- 2026-08-18 [CODE] Escalation dividers now expand to show their stored reason, and Action History is rendered by a shared production component.
+- 2026-08-18 [CODE] Removed the Inbox-only dummy conversation, message timeline, marker generator, and `?dummyData=true` render path.
 - 2026-08-18 [CODE] Removed the obsolete helper test and implementation design/plan documentation; retained the incoming global-tag loader test.
 - 2026-08-18 [TOOL] Focused landing/header regression tests pass: 7 tests across 2 files; the loader test passes; the Node 22 production build passed after resolving latest `origin/main`.
 - 2026-08-18 [CODE] `origin/main` includes merged PR #66’s prior conversion implementation; this follow-up removes it.
@@ -68,3 +68,4 @@
 - 2026-08-18 [TOOL] Escalation-triangle divider regression test and Node v22.22.0 production build pass.
 - 2026-08-18 [TOOL] Readable-detail divider regression test and Node v22.22.0 production build pass.
 - 2026-08-18 [TOOL] Neutral View in chat regression test and Node v22.22.0 production build pass.
+- 2026-08-18 [TOOL] Inbox dummy-preview removal passed 8 relevant tests and the Node v22.22.0 production build; the lifecycle fixture retains its known missing aggregate-component warning.

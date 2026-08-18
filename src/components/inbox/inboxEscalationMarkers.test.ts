@@ -1,8 +1,5 @@
 import { expect, test } from 'vitest';
-import {
-  buildDummyInboxEscalationMarker,
-  buildInboxEscalationMarkers,
-} from './inboxEscalationMarkers';
+import { buildInboxEscalationMarkers } from './inboxEscalationMarkers';
 
 test('keeps an escalation marker linked to the source message recorded by action history', () => {
   const markers = buildInboxEscalationMarkers([
@@ -27,14 +24,4 @@ test('keeps an escalation marker linked to the source message recorded by action
       escalatedAt: 1_720_000_030_000,
     },
   ]);
-});
-
-test('creates a dummy escalation marker without a real inbox message', () => {
-  expect(buildDummyInboxEscalationMarker([])).toEqual({
-    id: 'dummy-inbox-escalation',
-    sourceMessageId: 'dummy-inbox-escalation-message',
-    question: 'Can I speak with a person?',
-    context: 'Preview of an AI-to-human escalation.',
-    escalatedAt: expect.any(Number),
-  });
 });

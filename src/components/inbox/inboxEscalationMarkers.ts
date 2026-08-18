@@ -1,7 +1,4 @@
 import type { InboxEscalationMarker } from '@/lib/formatMessageTime';
-import type { InboxUIMessage } from '@/lib/inboxOptimistic';
-
-export const DUMMY_INBOX_ESCALATION_SOURCE_MESSAGE_ID = 'dummy-inbox-escalation-message';
 
 type ConversationLog = {
   _id: string;
@@ -40,16 +37,4 @@ export function buildInboxEscalationMarkers(logs: ConversationLog[] | undefined)
       escalatedAt: log.performedAt,
     }];
   });
-}
-
-export function buildDummyInboxEscalationMarker(
-  _messages: InboxUIMessage[],
-): InboxEscalationMarker {
-  return {
-    id: 'dummy-inbox-escalation',
-    sourceMessageId: DUMMY_INBOX_ESCALATION_SOURCE_MESSAGE_ID,
-    question: 'Can I speak with a person?',
-    context: 'Preview of an AI-to-human escalation.',
-    escalatedAt: Date.now(),
-  };
 }
