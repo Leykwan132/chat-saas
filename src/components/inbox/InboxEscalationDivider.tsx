@@ -1,4 +1,4 @@
-import { ChevronDown, CircleHelp } from 'lucide-react';
+import { AlertTriangle, ChevronDown } from 'lucide-react';
 import type { InboxEscalationMarker } from '@/lib/formatMessageTime';
 
 export function InboxEscalationDivider({ escalation }: { escalation: InboxEscalationMarker }) {
@@ -11,7 +11,7 @@ export function InboxEscalationDivider({ escalation }: { escalation: InboxEscala
       <summary className="flex cursor-pointer list-none items-center gap-3 text-muted-foreground [&::-webkit-details-marker]:hidden">
         <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
         <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-foreground dark:border-zinc-800 dark:bg-zinc-900">
-          <CircleHelp className="size-3.5" aria-hidden />
+          <AlertTriangle className="size-3.5" aria-hidden />
           AI escalated to human
           <ChevronDown className="size-3.5 transition-transform group-open:rotate-180" aria-hidden />
         </span>
