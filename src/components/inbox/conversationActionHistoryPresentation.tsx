@@ -20,7 +20,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-type ConversationActionHistoryMetadata = {
+export type ConversationActionHistoryMetadata = {
   service?: string;
   templateName?: string;
   message?: string;
@@ -35,6 +35,9 @@ type ConversationActionHistoryMetadata = {
   eventTitle?: string;
   from?: string;
   to?: string;
+  question?: string;
+  context?: string;
+  sourceMessageId?: string;
 };
 
 export function formatConversationActionHistoryText(

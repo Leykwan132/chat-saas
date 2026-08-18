@@ -1,21 +1,36 @@
-import { AlertTriangle } from 'lucide-react';
+import { ChevronDown, CircleHelp } from 'lucide-react';
 import type { InboxEscalationMarker } from '@/lib/formatMessageTime';
 
 export function InboxEscalationDivider({ escalation }: { escalation: InboxEscalationMarker }) {
   return (
-    <div
+    <details
       id={`inbox-escalation-${escalation.id}`}
       tabIndex={-1}
-      className="my-3 flex w-full items-center gap-3 text-amber-700 outline-none dark:text-amber-400"
-      role="separator"
-      aria-label="AI escalated to human"
+      className="group my-3 w-full outline-none"
     >
-      <div className="h-px flex-1 bg-amber-200 dark:bg-amber-900/70" />
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold dark:border-amber-900/70 dark:bg-amber-950/40">
-        <AlertTriangle className="size-3.5" aria-hidden />
-        AI escalated to human
-      </span>
-      <div className="h-px flex-1 bg-amber-200 dark:bg-amber-900/70" />
-    </div>
+      <summary className="flex cursor-pointer list-none items-center gap-3 text-muted-foreground [&::-webkit-details-marker]:hidden">
+        <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs font-semibold text-foreground dark:border-zinc-800 dark:bg-zinc-900">
+          <CircleHelp className="size-3.5" aria-hidden />
+          AI escalated to human
+          <ChevronDown className="size-3.5 transition-transform group-open:rotate-180" aria-hidden />
+        </span>
+        <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+      </summary>
+      <div className="mx-auto mt-2 max-w-md rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-xs text-muted-foreground dark:border-zinc-800 dark:bg-zinc-900">
+        <dl className="grid gap-2">
+          <div>
+            <dt className="font-medium text-foreground">Customer request</dt>
+            <dd className="mt-0.5">{escalation.question}</dd>
+          </div>
+          {escalation.context ? (
+            <div>
+              <dt className="font-medium text-foreground">AI handoff context</dt>
+              <dd className="mt-0.5">{escalation.context}</dd>
+            </div>
+          ) : null}
+        </dl>
+      </div>
+    </details>
   );
 }

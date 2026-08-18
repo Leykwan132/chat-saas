@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Conversation } from '@/components/ai-elements/conversation';
 import type { Chat } from '@/components/ChatRow';
 import { InboxConversationList } from '@/components/inbox/InboxConversationList';
+import { InboxActionHistory } from '@/components/inbox/InboxActionHistory';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
-import { Button } from '@/components/ui/button';
 import type { Id } from '../../../convex/_generated/dataModel';
 import {
   buildDummyInboxEscalationMarker,
@@ -35,6 +35,7 @@ export function InboxEscalationPreview() {
   const [selectedConversationId, setSelectedConversationId] = useState<Id<'conversations'>>(
     previewConversationId,
   );
+  const [actionHistoryOpen, setActionHistoryOpen] = useState(false);
 
   const scrollToEscalation = () => {
     const marker = document.getElementById(`inbox-escalation-${previewEscalation.id}`);
@@ -77,15 +78,24 @@ export function InboxEscalationPreview() {
           />
         </Conversation>
       </div>
-      <aside className="w-72 shrink-0 border-l border-border bg-background p-4">
-        <h3 className="m-0 text-sm font-semibold text-foreground">Action History</h3>
-        <div className="mt-4 rounded-lg border border-border bg-muted/30 p-3">
-          <p className="m-0 text-sm text-foreground">Human escalation raised</p>
-          <p className="mt-1 text-xs text-muted-foreground">AI needs a teammate to review the refund request.</p>
-          <Button type="button" variant="link" className="mt-1 h-auto px-0 text-xs" onClick={scrollToEscalation}>
-            View in chat
-          </Button>
-        </div>
+      <aside className="w-72 shrink-0 border-l border-border bg-background">
+        <InboxActionHistory
+          open={actionHistoryOpen}
+          logs={[{
+            id: previewEscalation.id,
+            action: 'escalation_raised',
+            metadata: {
+              question: previewEscalation.question,
+              context: previewEscalation.context,
+              sourceMessageId: previewEscalation.sourceMessageId,
+            },
+            performedAt: previewEscalation.escalatedAt,
+            actorType: 'ai',
+            actorName: 'AI',
+          }]}
+          onOpenChange={setActionHistoryOpen}
+          onFocusEscalation={scrollToEscalation}
+        />
       </aside>
     </div>
   );
