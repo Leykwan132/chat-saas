@@ -29,4 +29,5 @@ test('renders an escalation with the production action-history timeline', () => 
   expect(markup).toContain('by');
   expect(markup).toContain('AI');
   expect(markup).toContain('View in chat');
+  expect(markup).toContain('rounded-full border border-zinc-200 bg-zinc-100');
 });

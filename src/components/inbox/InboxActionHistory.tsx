@@ -107,7 +107,7 @@ export function InboxActionHistory({
                       {isEscalation ? (
                         <button
                           type="button"
-                          className="mt-2 text-xs font-medium text-primary hover:underline"
+                          className="mt-2 inline-flex rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-xs font-medium text-foreground hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700"
                           onClick={() => onFocusEscalation(log.id)}
                         >
                           View in chat
