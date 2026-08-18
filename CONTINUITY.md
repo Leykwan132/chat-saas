@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-18 [USER] Goal: make each AI-to-human escalation traceable to the exact triggering customer message in the inbox and action history.
 - 2026-08-18 [CODE] Now: source-message metadata, a neutral expandable inbox divider with readable escalation details, and shared production Action History rendering with a neutral View in chat pill are implemented and verified locally.
-- 2026-08-18 [CODE] Next: push the Inbox-preview removal, fast-forward the Desktop checkout, and open a draft PR.
+- 2026-08-18 [CODE] Next: review draft PR #68; do not add a release changelog entry until production availability is confirmed.
 - 2026-08-18 [ASSUMPTION] The removal is unshipped; do not add a release changelog entry until production availability is confirmed.
 
 # Decisions
@@ -69,3 +69,4 @@
 - 2026-08-18 [TOOL] Readable-detail divider regression test and Node v22.22.0 production build pass.
 - 2026-08-18 [TOOL] Neutral View in chat regression test and Node v22.22.0 production build pass.
 - 2026-08-18 [TOOL] Inbox dummy-preview removal passed 8 relevant tests and the Node v22.22.0 production build; the lifecycle fixture retains its known missing aggregate-component warning.
+- 2026-08-18 [TOOL] Draft PR #68 was created from `codex/inbox-escalation-trace` into `main` via authenticated GitHub CLI after the connector returned 403.
