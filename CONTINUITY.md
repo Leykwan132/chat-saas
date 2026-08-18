@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-18 [USER] Goal: make each AI-to-human escalation traceable to the exact triggering customer message in the inbox and action history.
-- 2026-08-18 [CODE] Now: source-message metadata, a neutral expandable inbox divider, shared production Action History rendering, and a long self-contained development dummy Inbox preview with an early escalation are implemented and verified locally.
-- 2026-08-18 [CODE] Next: push the neutral-divider icon correction, fast-forward the Desktop checkout, then restore GitHub CLI or GitHub-app PR-create permission to open a draft PR.
+- 2026-08-18 [CODE] Now: source-message metadata, a neutral expandable inbox divider with readable escalation details, shared production Action History rendering, and a long self-contained development dummy Inbox preview with an early escalation are implemented and verified locally.
+- 2026-08-18 [CODE] Next: push the larger escalation-detail copy update, fast-forward the Desktop checkout, then restore GitHub CLI or GitHub-app PR-create permission to open a draft PR.
 - 2026-08-18 [ASSUMPTION] The removal is unshipped; do not add a release changelog entry until production availability is confirmed.
 
 # Decisions
@@ -11,6 +11,7 @@
 - 2026-08-18 [USER] D728 ACTIVE: an AI escalation links to the exact incoming message used as the AI turn prompt; action history jumps to that marker in the conversation.
 - 2026-08-18 [USER] D729 ACTIVE: escalation dividers use neutral styling and disclose the stored customer request plus AI handoff context on click; the dummy preview reuses the production Action History component.
 - 2026-08-18 [USER] D730 ACTIVE: the neutral escalation divider uses the escalation-triangle icon rather than a question-mark icon.
+- 2026-08-18 [USER] D731 ACTIVE: expanded escalation details use readable text and label the AI-provided rationale “Why it needs a human.”
 - 2026-08-18 [USER] D726 SUPERSEDED by D727: unauthenticated “Start for free” CTAs do not use an app conversion helper.
 - 2026-08-17 [USER] D724 ACTIVE: hovering an overview distribution row expands its matching donut slice and renders the selected label and customer count inside the donut center.
 - 2026-08-17 [USER] D720 ACTIVE: `?dummyData=true` supplies browser-only Common Topics and Customer Sentiment data in local development and must be removed before PR #63 merges.
@@ -64,3 +65,4 @@
 - 2026-08-18 [TOOL] Long-thread dummy preview regression test plus focused escalation and inbox tests pass; the Node v22.22.0 production build passes with the existing aggregate-component fixture warning.
 - 2026-08-18 [TOOL] Shared Action History and neutral expandable-divider tests, the focused Inbox suite, and the Node v22.22.0 production build pass.
 - 2026-08-18 [TOOL] Escalation-triangle divider regression test and Node v22.22.0 production build pass.
+- 2026-08-18 [TOOL] Readable-detail divider regression test and Node v22.22.0 production build pass.

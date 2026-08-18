@@ -17,16 +17,16 @@ export function InboxEscalationDivider({ escalation }: { escalation: InboxEscala
         </span>
         <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
       </summary>
-      <div className="mx-auto mt-2 max-w-md rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-xs text-muted-foreground dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mx-auto mt-2 max-w-md rounded-md border border-zinc-200 bg-zinc-50 px-3 py-3 text-sm text-muted-foreground dark:border-zinc-800 dark:bg-zinc-900">
         <dl className="grid gap-2">
           <div>
-            <dt className="font-medium text-foreground">Customer request</dt>
-            <dd className="mt-0.5">{escalation.question}</dd>
+            <dt className="font-semibold text-foreground">Customer request</dt>
+            <dd className="mt-1 leading-relaxed text-foreground">{escalation.question}</dd>
           </div>
           {escalation.context ? (
             <div>
-              <dt className="font-medium text-foreground">AI handoff context</dt>
-              <dd className="mt-0.5">{escalation.context}</dd>
+              <dt className="font-semibold text-foreground">Why it needs a human</dt>
+              <dd className="mt-1 leading-relaxed text-foreground">{escalation.context}</dd>
             </div>
           ) : null}
         </dl>
