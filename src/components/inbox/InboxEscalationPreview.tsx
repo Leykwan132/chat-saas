@@ -5,14 +5,12 @@ import { InboxConversationList } from '@/components/inbox/InboxConversationList'
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
 import { Button } from '@/components/ui/button';
 import type { Id } from '../../../convex/_generated/dataModel';
-import type { InboxUIMessage } from '@/lib/inboxOptimistic';
 import {
   buildDummyInboxEscalationMarker,
-  DUMMY_INBOX_ESCALATION_SOURCE_MESSAGE_ID,
 } from './inboxEscalationMarkers';
+import { buildInboxEscalationPreviewMessages } from './inboxEscalationPreviewData';
 
 const previewConversationId = 'dummy-inbox-escalation-conversation' as Id<'conversations'>;
-const previewTimestamp = new Date('2026-08-18T09:30:00.000Z').getTime();
 const previewEscalation = buildDummyInboxEscalationMarker([]);
 
 const previewConversation: Chat = {
@@ -31,32 +29,7 @@ const previewConversation: Chat = {
   },
 };
 
-const previewMessages: InboxUIMessage[] = [
-  {
-    id: DUMMY_INBOX_ESCALATION_SOURCE_MESSAGE_ID,
-    key: DUMMY_INBOX_ESCALATION_SOURCE_MESSAGE_ID,
-    order: 0,
-    stepOrder: 0,
-    status: 'complete',
-    role: 'user',
-    text: 'I need to speak with someone about a refund.',
-    parts: [{ type: 'text', text: 'I need to speak with someone about a refund.' }],
-    _creationTime: previewTimestamp,
-    ledgerMessageId: DUMMY_INBOX_ESCALATION_SOURCE_MESSAGE_ID,
-  },
-  {
-    id: 'dummy-inbox-follow-up',
-    key: 'dummy-inbox-follow-up',
-    order: 1,
-    stepOrder: 0,
-    status: 'complete',
-    role: 'assistant',
-    text: 'A teammate will take over from here.',
-    parts: [{ type: 'text', text: 'A teammate will take over from here.' }],
-    _creationTime: previewTimestamp + 60_000,
-    sentByAi: true,
-  },
-];
+const previewMessages = buildInboxEscalationPreviewMessages();
 
 export function InboxEscalationPreview() {
   const [selectedConversationId, setSelectedConversationId] = useState<Id<'conversations'>>(

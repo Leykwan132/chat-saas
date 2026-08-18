@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-18 [USER] Goal: make each AI-to-human escalation traceable to the exact triggering customer message in the inbox and action history.
-- 2026-08-18 [CODE] Now: source-message metadata, inbox divider rendering, action-history navigation, and a self-contained development dummy Inbox preview are implemented and verified locally.
-- 2026-08-18 [CODE] Next: push the dummy-preview repair, fast-forward the Desktop checkout, then restore GitHub CLI or GitHub-app PR-create permission to open a draft PR.
+- 2026-08-18 [CODE] Now: source-message metadata, inbox divider rendering, action-history navigation, and a long self-contained development dummy Inbox preview with an early escalation are implemented and verified locally.
+- 2026-08-18 [CODE] Next: push the longer dummy-preview repair, fast-forward the Desktop checkout, then restore GitHub CLI or GitHub-app PR-create permission to open a draft PR.
 - 2026-08-18 [ASSUMPTION] The removal is unshipped; do not add a release changelog entry until production availability is confirmed.
 
 # Decisions
@@ -20,6 +20,7 @@
 - 2026-08-18 [CODE] Removed the custom CTA conversion helper and all four public CTA calls; WorkOS sign-up starts immediately while the Google tag remains installed.
 - 2026-08-18 [CODE] AI-to-human escalations now persist their source message, render an inbox divider immediately after it, and expose a View in chat action-history link; `?dummyData=true` previews the divider in development.
 - 2026-08-18 [CODE] `?dummyData=true` now renders its own selectable Inbox conversation, message timeline, escalation divider, and action-history link without relying on connected channels or production data.
+- 2026-08-18 [CODE] The dummy Inbox conversation has 16 messages; the escalation source is the third message, leaving 13 messages below the divider for a realistic long-thread preview.
 - 2026-08-18 [CODE] Removed the obsolete helper test and implementation design/plan documentation; retained the incoming global-tag loader test.
 - 2026-08-18 [TOOL] Focused landing/header regression tests pass: 7 tests across 2 files; the loader test passes; the Node 22 production build passed after resolving latest `origin/main`.
 - 2026-08-18 [CODE] `origin/main` includes merged PR #66’s prior conversion implementation; this follow-up removes it.
@@ -57,3 +58,4 @@
 - 2026-08-18 [TOOL] Branch `codex/inbox-escalation-trace` was pushed at `5db1b2c`; GitHub plugin PR creation returned 403 `Resource not accessible by integration`.
 - 2026-08-18 [TOOL] Primary checkout `/Users/leykwanchoo/Desktop/Projects/chat-saas` is clean on local tracking branch `review/inbox-escalation-trace` at `d2ce093`, matching `origin/codex/inbox-escalation-trace`.
 - 2026-08-18 [TOOL] Dummy preview regression test, escalation lifecycle tests, inbox timeline tests, and the Node v22.22.0 production build pass; the lifecycle fixture retains its pre-existing missing aggregate-component warning.
+- 2026-08-18 [TOOL] Long-thread dummy preview regression test plus focused escalation and inbox tests pass; the Node v22.22.0 production build passes with the existing aggregate-component fixture warning.
