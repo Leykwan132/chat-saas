@@ -214,6 +214,41 @@ const appointmentBookingSlotValidator = v.object({
   assignedDisplayName: v.optional(v.string()),
 });
 
+const whiteLabelPlanKeyValidator = v.union(
+  v.literal("free"),
+  v.literal("starter"),
+  v.literal("growth"),
+  v.literal("business"),
+);
+
+const whiteLabelPartnerStatusValidator = v.union(
+  v.literal("active"),
+  v.literal("suspended"),
+);
+
+const whiteLabelPartnerAccessStatusValidator = v.union(
+  v.literal("active"),
+  v.literal("revoked"),
+);
+
+const whiteLabelOrganizationStatusValidator = v.union(
+  v.literal("active"),
+  v.literal("suspended"),
+);
+
+const whiteLabelDomainStatusValidator = v.union(
+  v.literal("pending"),
+  v.literal("active"),
+  v.literal("suspended"),
+  v.literal("failed"),
+);
+
+const whiteLabelCreditLedgerEventValidator = v.union(
+  v.literal("monthly_allowance"),
+  v.literal("manual_grant"),
+  v.literal("usage_deduction"),
+);
+
 export default defineSchema({
   users: defineTable({
     workosUserId: v.string(),
@@ -385,6 +420,107 @@ export default defineSchema({
     expiresAt: v.number(),
     createdAt: v.number(),
   }).index("by_token", ["token"]),
+  whiteLabelPartners: defineTable({
+    controlTeamId: v.id("teams"),
+    name: v.string(),
+    logoStorageId: v.optional(v.id("_storage")),
+    status: whiteLabelPartnerStatusValidator,
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_controlTeamId", ["controlTeamId"])
+    .index("by_status", ["status"]),
+  whiteLabelPartnerAccess: defineTable({
+    partnerId: v.id("whiteLabelPartners"),
+    workosUserId: v.string(),
+    role: v.literal("owner"),
+    status: whiteLabelPartnerAccessStatusValidator,
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_partnerId", ["partnerId"])
+    .index("by_workosUserId", ["workosUserId"])
+    .index("by_partnerId_and_workosUserId", ["partnerId", "workosUserId"]),
+  whiteLabelPartnerOrganizations: defineTable({
+    partnerId: v.id("whiteLabelPartners"),
+    teamId: v.id("teams"),
+    status: whiteLabelOrganizationStatusValidator,
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_partnerId_and_status", ["partnerId", "status"])
+    .index("by_teamId", ["teamId"])
+    .index("by_partnerId_and_teamId", ["partnerId", "teamId"]),
+  whiteLabelPartnerOrganizationPlans: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    activePlanKey: whiteLabelPlanKeyValidator,
+    creditPlanKey: whiteLabelPlanKeyValidator,
+    pendingCreditPlanKey: v.optional(whiteLabelPlanKeyValidator),
+    pendingCreditPlanEffectiveAt: v.optional(v.number()),
+    updatedByUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_partnerOrganizationId", ["partnerOrganizationId"]),
+  whiteLabelPartnerOrganizationPlanAssignments: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    planKey: whiteLabelPlanKeyValidator,
+    appliesAt: v.number(),
+    assignedByUserId: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_partnerOrganizationId_and_createdAt", ["partnerOrganizationId", "createdAt"]),
+  whiteLabelPartnerOrganizationCreditPeriods: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    planKey: whiteLabelPlanKeyValidator,
+    periodStart: v.number(),
+    periodEnd: v.number(),
+    grantedCredits: v.number(),
+    usedCredits: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_partnerOrganizationId_and_periodStart", ["partnerOrganizationId", "periodStart"]),
+  whiteLabelPartnerOrganizationCreditGrants: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    grantedCredits: v.number(),
+    usedCredits: v.number(),
+    grantedByUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_partnerOrganizationId_and_createdAt", ["partnerOrganizationId", "createdAt"]),
+  whiteLabelPartnerOrganizationCreditBalances: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    manualGrantedCredits: v.number(),
+    manualUsedCredits: v.number(),
+    grantCount: v.number(),
+    lastGrantAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_partnerOrganizationId", ["partnerOrganizationId"]),
+  whiteLabelPartnerOrganizationCreditLedger: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    event: whiteLabelCreditLedgerEventValidator,
+    credits: v.number(),
+    actorUserId: v.optional(v.id("users")),
+    createdAt: v.number(),
+  }).index("by_partnerOrganizationId_and_createdAt", ["partnerOrganizationId", "createdAt"]),
+  whiteLabelPartnerDomains: defineTable({
+    partnerId: v.id("whiteLabelPartners"),
+    hostname: v.string(),
+    cloudflareHostnameId: v.optional(v.string()),
+    dnsTarget: v.optional(v.string()),
+    status: whiteLabelDomainStatusValidator,
+    validationError: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_partnerId", ["partnerId"])
+    .index("by_hostname", ["hostname"]),
+  whiteLabelPartnerUsageTotals: defineTable({
+    partnerId: v.id("whiteLabelPartners"),
+    totalTokens: v.number(),
+    totalCostUsd: v.number(),
+    requestCount: v.number(),
+    updatedAt: v.number(),
+  }).index("by_partnerId", ["partnerId"]),
   agents: defineTable({
     name: v.string(),
     provider: v.union(

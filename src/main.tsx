@@ -51,6 +51,7 @@ import PricingPage from './pages/PricingPage.tsx'
 import ContactPage from './pages/ContactPage.tsx'
 import EarlyAdopterProgramPage from './pages/EarlyUserPage.tsx'
 import AdminPage from './pages/AdminPage.tsx'
+import PartnerPage from './pages/PartnerPage.tsx'
 import PrivacyPage from './pages/PrivacyPage.tsx'
 import PrivacyDeletionPage from './pages/PrivacyDeletionPage.tsx'
 import TermsPage from './pages/TermsPage.tsx'
@@ -124,6 +125,7 @@ const router = createBrowserRouter(
         <Route path="invitations" element={<InvitationsPage />} />
         <Route path="usage" element={<WorkspaceUsagePage />} />
         <Route path="referrals" element={<ReferralFeatureRoute />} />
+        <Route path="partner" element={<PartnerPage />} />
         <Route path="account" element={<Navigate to="../settings" replace />} />
       </Route>
       <Route path="/create-agent" element={<CreateAgentPage />} />

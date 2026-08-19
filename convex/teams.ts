@@ -14,6 +14,7 @@ import {
   setActiveTeamForUser,
   teamToOrgId,
 } from "./teamHelpers";
+import { getWhiteLabelPlanForTeam } from "./whiteLabel/planResolver";
 
 export type TeamListItem = {
   _id: string;
@@ -37,8 +38,10 @@ export type TeamListItem = {
 
 async function resolveOrgPlan(
   ctx: QueryCtx | MutationCtx,
-  team: { ownerId?: Id<"users"> },
+  team: { _id: Id<"teams">; ownerId?: Id<"users"> },
 ): Promise<PlanKey> {
+  const whiteLabelPlan = await getWhiteLabelPlanForTeam(ctx, team._id);
+  if (whiteLabelPlan !== null) return whiteLabelPlan;
   if (!team.ownerId) return "free";
   const owner = await ctx.db.get(team.ownerId);
   if (!owner) return "free";

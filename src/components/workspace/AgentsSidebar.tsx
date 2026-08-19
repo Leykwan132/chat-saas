@@ -1,8 +1,10 @@
 import { Link, useLocation } from 'react-router';
+import { useQuery } from 'convex/react';
 import {
   BarChart3,
   Bot,
   Gift,
+  Handshake,
   Mail,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -31,6 +33,7 @@ import {
 } from '@/lib/posthogFeatureFlags';
 import { cn } from '@/lib/utils';
 import { Permission } from '../../../shared/permissions';
+import { whiteLabelApi } from '@/lib/whiteLabelApi';
 
 export function AgentsSidebar() {
   const { pathname } = useLocation();
@@ -38,12 +41,14 @@ export function AgentsSidebar() {
   const isInvitationsRoute = pathname === '/workspace/invitations';
   const isUsageRoute = pathname === '/workspace/usage';
   const isReferralsRoute = pathname === '/workspace/referrals';
+  const isPartnerRoute = pathname === '/workspace/partner';
   const { state, toggleSidebar } = useSidebar();
   const { count: pendingInvitationCount } = usePendingTeamInvitations();
   const { can } = usePermissions();
   const referralProgramState = useEnableReferralProgram();
   const referralProgramEnabled =
     isProductFeatureEnabled(referralProgramState);
+  const partner = useQuery(whiteLabelApi.portal.getCurrentPartner);
 
   return (
     <Sidebar collapsible="icon">
@@ -112,6 +117,16 @@ export function AgentsSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {partner ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isPartnerRoute} tooltip="Partner">
+                    <Link to="/workspace/partner">
+                      <Handshake />
+                      <span>Partner</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
               {referralProgramEnabled ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton
