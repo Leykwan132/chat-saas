@@ -51,3 +51,4 @@
 - 2026-08-19 [TOOL] Managed-workspace detection and customer invitation-block tests pass; app TypeScript, focused ESLint, and `git diff --check` pass; Convex dev deployment `outstanding-rabbit-215` reports functions ready.
 - 2026-08-19 [TOOL] Live access check: `kwanrealtyofficial@gmail.com` has active partner access and passes the active PostHog rollout for both linked WorkOS identities; `leykwan132@gmail.com` has the rollout flag but no active partner access.
 - 2026-08-19 [TOOL] Normal Desktop checkout merge artifacts were reconciled; local TypeScript and focused partner tests pass, and Convex dev deployment `outstanding-rabbit-215` reports functions ready.
+- 2026-08-19 [TOOL] Local handoff is clean: `codex/white-label-partner-portal` is assigned only to `/Users/leykwanchoo/Desktop/Projects/chat-saas`; incoming worktree-only formatting/logging changes were reconciled without feature loss, and Convex deployment reports functions ready.
