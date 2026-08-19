@@ -18,12 +18,18 @@ function validateOrganizationName(name: string) {
   return value;
 }
 
+function getAuthenticatedEmail(email: string | undefined) {
+  const normalizedEmail = email?.trim().toLowerCase();
+  if (!normalizedEmail) throw new Error("Partner access requires an email address.");
+  return normalizedEmail;
+}
+
 export const createOrganization = action({
   args: { name: v.string(), planKey: planKeyValidator },
   returns: v.object({ partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"), teamId: v.id("teams") }),
   handler: async (ctx, args): Promise<{ partnerOrganizationId: Id<"whiteLabelPartnerOrganizations">; teamId: Id<"teams"> }> => {
     const auth = await getAuthContext(ctx);
-    const access: { partnerId: Id<"whiteLabelPartners"> } = await ctx.runQuery(internal.whiteLabel.portalAuthorization.assertPartnerOwner, { workosUserId: auth.userId, controlTeamId: auth.activeTeamId });
+    const access: { partnerId: Id<"whiteLabelPartners"> } = await ctx.runQuery(internal.whiteLabel.portalAuthorization.assertPartnerOwner, { email: getAuthenticatedEmail(auth.identity.email), workosUserId: auth.userId });
     const name = validateOrganizationName(args.name);
     const organization = await workosRequest<WorkOSOrganization>("/organizations", { method: "POST", body: JSON.stringify({ name }) });
     await provisionOrganizationRoles(organization.id);
@@ -40,7 +46,7 @@ export const inviteOrganizationAccount = action({
   returns: v.any(),
   handler: async (ctx, args): Promise<unknown> => {
     const auth = await getAuthContext(ctx);
-    const organization: { workosOrgId: string } = await ctx.runQuery(internal.whiteLabel.portalAuthorization.getInvitableOrganization, { workosUserId: auth.userId, controlTeamId: auth.activeTeamId, partnerOrganizationId: args.partnerOrganizationId });
+    const organization: { workosOrgId: string } = await ctx.runQuery(internal.whiteLabel.portalAuthorization.getInvitableOrganization, { email: getAuthenticatedEmail(auth.identity.email), workosUserId: auth.userId, partnerOrganizationId: args.partnerOrganizationId });
     const roleSlug = args.role === "owner" ? WORKOS_OWNER_ROLE_SLUG : args.role === "admin" ? WORKOS_ADMIN_ROLE_SLUG : WORKOS_MEMBER_ROLE_SLUG;
     return await workosRequest("/user_management/invitations", { method: "POST", body: JSON.stringify({ email: args.email.trim().toLowerCase(), organization_id: organization.workosOrgId, role_slug: roleSlug }) });
   },

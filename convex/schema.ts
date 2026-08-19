@@ -422,7 +422,7 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_token", ["token"]),
   whiteLabelPartners: defineTable({
-    controlTeamId: v.id("teams"),
+    controlTeamId: v.optional(v.id("teams")),
     name: v.string(),
     logoStorageId: v.optional(v.id("_storage")),
     status: whiteLabelPartnerStatusValidator,
@@ -433,7 +433,8 @@ export default defineSchema({
     .index("by_status", ["status"]),
   whiteLabelPartnerAccess: defineTable({
     partnerId: v.id("whiteLabelPartners"),
-    workosUserId: v.string(),
+    email: v.optional(v.string()),
+    workosUserId: v.optional(v.string()),
     role: v.literal("owner"),
     status: whiteLabelPartnerAccessStatusValidator,
     createdAt: v.number(),
@@ -442,6 +443,7 @@ export default defineSchema({
     .index("by_partnerId", ["partnerId"])
     .index("by_workosUserId", ["workosUserId"])
     .index("by_workosUserId_and_status", ["workosUserId", "status"])
+    .index("by_email_and_status", ["email", "status"])
     .index("by_partnerId_and_workosUserId", ["partnerId", "workosUserId"]),
   whiteLabelPartnerOrganizations: defineTable({
     partnerId: v.id("whiteLabelPartners"),

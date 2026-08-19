@@ -29,6 +29,7 @@ import { usePendingTeamInvitations } from '@/hooks/usePendingTeamInvitations';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
   isProductFeatureEnabled,
+  useEnablePartnerPortal,
   useEnableReferralProgram,
 } from '@/lib/posthogFeatureFlags';
 import { cn } from '@/lib/utils';
@@ -48,6 +49,8 @@ export function AgentsSidebar() {
   const referralProgramState = useEnableReferralProgram();
   const referralProgramEnabled =
     isProductFeatureEnabled(referralProgramState);
+  const partnerPortalState = useEnablePartnerPortal();
+  const partnerPortalEnabled = isProductFeatureEnabled(partnerPortalState);
   const partner = useQuery(whiteLabelApi.portal.getCurrentPartner);
 
   return (
@@ -117,7 +120,7 @@ export function AgentsSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {partner ? (
+              {partnerPortalEnabled && partner ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={isPartnerRoute} tooltip="Partner">
                     <Link to="/workspace/partner">

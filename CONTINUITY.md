@@ -12,6 +12,7 @@
 - 2026-08-19 [USER] D736 ACTIVE: partner-created workspaces consume an organization wallet monthly allowance first, then durable manual grants; Stripe payment/top-up paths are blocked.
 - 2026-08-19 [USER] D737 ACTIVE: partner managers retain WorkOS owner membership in each customer organization; default WorkOS invitation/reset emails remain the intentional v1 non-branded exception.
 - 2026-08-19 [USER] D738 ACTIVE: Admin reports tokens, estimated USD AI cost, requests, and assigned-agent count for each partner from its customer organizations.
+- 2026-08-19 [USER] D739 ACTIVE: partner authorization is account-level by normalized email, independent of the active workspace; PostHog controls portal visibility and direct-route rollout.
 
 # Done (recent)
 - 2026-08-19 [CODE] Added isolated partners, access, organization mapping, append-only plan assignments, credit periods/grants/ledger/balances, and domain lifecycle tables.
@@ -19,6 +20,7 @@
 - 2026-08-19 [CODE] Partner plans bypass Stripe in central team-plan resolution; partner credit deductions and workspace plan/usage queries are isolated by organization.
 - 2026-08-19 [CODE] Partner workspaces reject Stripe checkout and billing-portal requests; the pricing page displays the partner-managed billing state.
 - 2026-08-19 [CODE] Partner AI usage now records isolated cumulative token, cost, and request totals for the Admin Partners table.
+- 2026-08-19 [CODE] Simplified partner whitelisting to an email-only Admin action and applied the `enable_partner_portal` PostHog guard to the sidebar and direct route.
 - 2026-08-19 [CODE] Split Node-only WorkOS actions from V8 authorization and persistence functions so Convex can deploy the partner provisioning flow.
 - 2026-08-19 [CODE] Admin partner-owner lookup now handles duplicate user rows for the same email and returns each matching owner workspace.
 - 2026-08-18 [CODE] Prior inbox escalation trace work remains unshipped in draft PR #68.
@@ -40,5 +42,6 @@
 - 2026-08-19 [TOOL] `bunx convex codegen` cannot run in this checkout because `CONVEX_DEPLOYMENT` is not set; the frontend uses explicit function references pending deployment code generation.
 - 2026-08-19 [TOOL] `bun run build` began successfully through `tsc -b`, but the local command runner did not return a Vite completion result before its execution window closed.
 - 2026-08-19 [TOOL] Node v22.22.0 partner usage and credit tests pass (3 tests); TypeScript, focused ESLint, and `git diff --check` pass.
+- 2026-08-19 [TOOL] Account-level partner access and PostHog route-guard tests pass; app TypeScript, focused ESLint, and `git diff --check` pass; Convex dev deployment `outstanding-rabbit-215` reports functions ready.
 - 2026-08-19 [TOOL] `bunx convex dev --once --typecheck=disable` successfully deployed the corrected partner modules; unrelated pre-existing Convex TypeScript errors remain in analytics/media modules.
 - 2026-08-19 [TOOL] Duplicate-email owner-workspace regression test and deployment pass; deployment continues to bypass unrelated pre-existing Convex TypeScript errors.

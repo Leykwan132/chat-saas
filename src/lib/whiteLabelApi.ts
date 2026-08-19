@@ -38,7 +38,7 @@ export const whiteLabelApi = {
   },
   admin: {
     getOwnerWorkspaces: makeFunctionReference<'query', { sessionToken: string; ownerEmail: string }, Array<{ teamId: string; name: string; type: string; workosUserId: string }>>('whiteLabel/admin:getOwnerWorkspaces'),
-    listPartners: makeFunctionReference<'query', { sessionToken: string }, Array<{ partnerId: string; name: string; status: string; controlWorkspace: string; ownerWorkosUserId: string; totalTokens: number; totalCostUsd: number; requestCount: number; assignedAgentCount: number }>>('whiteLabel/admin:listPartners'),
-    createPartner: makeFunctionReference<'mutation', { sessionToken: string; name: string; controlTeamId: string; ownerWorkosUserId: string }, string>('whiteLabel/admin:createPartner'),
+    listPartners: makeFunctionReference<'query', { sessionToken: string }, Array<{ partnerId: string; name: string; status: string; ownerEmail: string; totalTokens: number; totalCostUsd: number; requestCount: number; assignedAgentCount: number }>>('whiteLabel/admin:listPartners'),
+    createPartner: makeFunctionReference<'mutation', { sessionToken: string; ownerEmail: string }, string>('whiteLabel/admin:createPartner'),
   },
 };

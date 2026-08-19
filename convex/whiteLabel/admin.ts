@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { assertAdminSession } from "../contactAdminAuth";
-import { getUserByWorkosId } from "../teamHelpers";
+import { assertValidEmailFormat, normalizeEmailInput } from "../../shared/emailValidation";
 
 export const getOwnerWorkspaces = query({
   args: { sessionToken: v.string(), ownerEmail: v.string() },
@@ -40,11 +40,8 @@ export const listPartners = query({
     await assertAdminSession(ctx, args.sessionToken);
     const partners = await ctx.db.query("whiteLabelPartners").withIndex("by_status", (q) => q.eq("status", "active")).take(100);
     return await Promise.all(partners.map(async (partner) => {
-      const [team, owner] = await Promise.all([
-        ctx.db.get(partner.controlTeamId),
+      const [owner, usage, customerOrganizations] = await Promise.all([
         ctx.db.query("whiteLabelPartnerAccess").withIndex("by_partnerId", (q) => q.eq("partnerId", partner._id)).first(),
-      ]);
-      const [usage, customerOrganizations] = await Promise.all([
         ctx.db.query("whiteLabelPartnerUsageTotals").withIndex("by_partnerId", (q) => q.eq("partnerId", partner._id)).unique(),
         ctx.db.query("whiteLabelPartnerOrganizations").withIndex("by_partnerId_and_status", (q) => q.eq("partnerId", partner._id).eq("status", "active")).take(100),
       ]);
@@ -54,8 +51,7 @@ export const listPartners = query({
         partnerId: partner._id,
         name: partner.name,
         status: partner.status,
-        controlWorkspace: team?.name ?? "Unknown",
-        ownerWorkosUserId: owner?.workosUserId ?? "",
+        ownerEmail: owner?.email ?? "Legacy account",
         totalTokens: usage?.totalTokens ?? 0,
         totalCostUsd: usage?.totalCostUsd ?? 0,
         requestCount: usage?.requestCount ?? 0,
@@ -66,20 +62,20 @@ export const listPartners = query({
 });
 
 export const createPartner = mutation({
-  args: { sessionToken: v.string(), name: v.string(), controlTeamId: v.id("teams"), ownerWorkosUserId: v.string() },
+  args: { sessionToken: v.string(), ownerEmail: v.string() },
   handler: async (ctx, args) => {
     await assertAdminSession(ctx, args.sessionToken);
-    const name = args.name.trim();
-    if (!name) throw new Error("Partner name is required.");
-    const existing = await ctx.db.query("whiteLabelPartners").withIndex("by_controlTeamId", (q) => q.eq("controlTeamId", args.controlTeamId)).unique();
-    if (existing !== null) throw new Error("This workspace is already a partner control workspace.");
-    const owner = await getUserByWorkosId(ctx, args.ownerWorkosUserId);
-    if (owner === null) throw new Error("Partner owner not found.");
-    const membership = await ctx.db.query("teamMemberships").withIndex("by_userId_and_teamId", (q) => q.eq("userId", owner._id).eq("teamId", args.controlTeamId)).unique();
-    if (membership?.role !== "owner") throw new Error("The selected partner owner must own the control workspace.");
+    const ownerEmail = normalizeEmailInput(assertValidEmailFormat(args.ownerEmail, "Partner owner email"));
+    const existing = await ctx.db
+      .query("whiteLabelPartnerAccess")
+      .withIndex("by_email_and_status", (q) =>
+        q.eq("email", ownerEmail).eq("status", "active"),
+      )
+      .first();
+    if (existing !== null) throw new Error("This email already has active partner access.");
     const now = Date.now();
-    const partnerId = await ctx.db.insert("whiteLabelPartners", { controlTeamId: args.controlTeamId, name, status: "active", createdAt: now, updatedAt: now });
-    await ctx.db.insert("whiteLabelPartnerAccess", { partnerId, workosUserId: owner.workosUserId, role: "owner", status: "active", createdAt: now, updatedAt: now });
+    const partnerId = await ctx.db.insert("whiteLabelPartners", { name: ownerEmail, status: "active", createdAt: now, updatedAt: now });
+    await ctx.db.insert("whiteLabelPartnerAccess", { partnerId, email: ownerEmail, role: "owner", status: "active", createdAt: now, updatedAt: now });
     return partnerId;
   },
 });

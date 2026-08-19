@@ -14,7 +14,16 @@ export async function getCurrentPartnerAccess(
   ctx: DbCtx,
 ): Promise<PartnerAccessContext | null> {
   const auth = await getAuthContext(ctx);
-  const access = await ctx.db
+  const user = await ctx.db.get(auth.userDbId);
+  if (user === null) throw new Error("User not found");
+  const email = user.email.trim().toLowerCase();
+  const emailAccess = await ctx.db
+    .query("whiteLabelPartnerAccess")
+    .withIndex("by_email_and_status", (q) =>
+      q.eq("email", email).eq("status", "active"),
+    )
+    .first();
+  const access = emailAccess ?? await ctx.db
     .query("whiteLabelPartnerAccess")
     .withIndex("by_workosUserId_and_status", (q) =>
       q.eq("workosUserId", auth.userId).eq("status", "active"),
@@ -24,10 +33,6 @@ export async function getCurrentPartnerAccess(
 
   const partner = await ctx.db.get(access.partnerId);
   if (partner === null || partner.status !== "active") return null;
-  if (partner.controlTeamId !== auth.activeTeamId) return null;
-
-  const user = await ctx.db.get(auth.userDbId);
-  if (user === null) throw new Error("User not found");
   return { partner, user, activeTeamId: auth.activeTeamId };
 }
 
