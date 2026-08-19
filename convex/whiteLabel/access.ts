@@ -16,8 +16,9 @@ export async function getCurrentPartnerAccess(
   const auth = await getAuthContext(ctx);
   const access = await ctx.db
     .query("whiteLabelPartnerAccess")
-    .withIndex("by_workosUserId", (q) => q.eq("workosUserId", auth.userId))
-    .filter((q) => q.eq(q.field("status"), "active"))
+    .withIndex("by_workosUserId_and_status", (q) =>
+      q.eq("workosUserId", auth.userId).eq("status", "active"),
+    )
     .first();
   if (access === null) return null;
 

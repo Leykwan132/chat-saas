@@ -144,8 +144,8 @@ export async function deductPartnerOrganizationCreditBalance(
 ) {
   const balance = await getPartnerCreditBalance(ctx, args.partnerOrganizationId);
   const deduction = deductPartnerOrganizationCredits({
-    monthlyCredits: balance.monthlyCredits,
-    manualGrantCredits: balance.manualCredits,
+    monthlyRemaining: balance.monthlyCredits,
+    manualGrantRemaining: balance.manualCredits,
     credits: args.credits,
   });
   if (balance.period !== null && deduction.monthlyCredits > 0) {

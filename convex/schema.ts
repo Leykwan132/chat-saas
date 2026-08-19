@@ -440,6 +440,7 @@ export default defineSchema({
   })
     .index("by_partnerId", ["partnerId"])
     .index("by_workosUserId", ["workosUserId"])
+    .index("by_workosUserId_and_status", ["workosUserId", "status"])
     .index("by_partnerId_and_workosUserId", ["partnerId", "workosUserId"]),
   whiteLabelPartnerOrganizations: defineTable({
     partnerId: v.id("whiteLabelPartners"),
