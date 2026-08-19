@@ -14,6 +14,7 @@
 - 2026-08-19 [USER] D738 ACTIVE: Admin reports tokens, estimated USD AI cost, requests, and assigned-agent count for each partner from its customer organizations.
 - 2026-08-19 [USER] D739 ACTIVE: partner authorization is account-level by normalized email, independent of the active workspace; PostHog controls portal visibility and direct-route rollout.
 - 2026-08-19 [USER] D740 ACTIVE: partner-created customer workspaces are partner-managed; customer users cannot create teams, invite or remove members, or assign workspace roles through standard workspace controls.
+- 2026-08-19 [TOOL] D741 ACTIVE: `stash@{0}` is an obsolete duplicate of the original worktree changes; do not apply it to the normal local partner branch because its contents are already superseded by committed local work.
 
 # Done (recent)
 - 2026-08-19 [CODE] Added isolated partners, access, organization mapping, append-only plan assignments, credit periods/grants/ledger/balances, and domain lifecycle tables.
@@ -52,3 +53,4 @@
 - 2026-08-19 [TOOL] Live access check: `kwanrealtyofficial@gmail.com` has active partner access and passes the active PostHog rollout for both linked WorkOS identities; `leykwan132@gmail.com` has the rollout flag but no active partner access.
 - 2026-08-19 [TOOL] Normal Desktop checkout merge artifacts were reconciled; local TypeScript and focused partner tests pass, and Convex dev deployment `outstanding-rabbit-215` reports functions ready.
 - 2026-08-19 [TOOL] Local handoff is clean: `codex/white-label-partner-portal` is assigned only to `/Users/leykwanchoo/Desktop/Projects/chat-saas`; incoming worktree-only formatting/logging changes were reconciled without feature loss, and Convex deployment reports functions ready.
+- 2026-08-19 [TOOL] Reapplying the obsolete handoff stash recreated only duplicate partner code, a duplicate schema index, and temporary logs; these were reconciled, with focused partner tests and TypeScript passing from the normal checkout.
