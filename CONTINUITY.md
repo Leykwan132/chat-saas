@@ -43,5 +43,6 @@
 - 2026-08-19 [TOOL] `bun run build` began successfully through `tsc -b`, but the local command runner did not return a Vite completion result before its execution window closed.
 - 2026-08-19 [TOOL] Node v22.22.0 partner usage and credit tests pass (3 tests); TypeScript, focused ESLint, and `git diff --check` pass.
 - 2026-08-19 [TOOL] Account-level partner access and PostHog route-guard tests pass; app TypeScript, focused ESLint, and `git diff --check` pass; Convex dev deployment `outstanding-rabbit-215` reports functions ready.
+- 2026-08-19 [TOOL] PostHog project 500079 flag `enable_partner_portal` (ID 830764) is active with exact-email access for the two approved partner accounts.
 - 2026-08-19 [TOOL] `bunx convex dev --once --typecheck=disable` successfully deployed the corrected partner modules; unrelated pre-existing Convex TypeScript errors remain in analytics/media modules.
 - 2026-08-19 [TOOL] Duplicate-email owner-workspace regression test and deployment pass; deployment continues to bypass unrelated pre-existing Convex TypeScript errors.
