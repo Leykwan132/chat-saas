@@ -7,23 +7,30 @@ export const getOwnerWorkspaces = query({
   args: { sessionToken: v.string(), ownerEmail: v.string() },
   handler: async (ctx, args) => {
     await assertAdminSession(ctx, args.sessionToken);
-    const user = await ctx.db
+    const users = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.ownerEmail.trim().toLowerCase()))
-      .unique();
-    if (user === null) return [];
-    const memberships = await ctx.db
-      .query("teamMemberships")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .filter((q) => q.eq(q.field("role"), "owner"))
       .take(100);
-    const teams = await Promise.all(memberships.map((membership) => ctx.db.get(membership.teamId)));
-    return teams.filter((team): team is NonNullable<typeof team> => team !== null).map((team) => ({
-      teamId: team._id,
-      name: team.name,
-      type: team.type,
-      workosUserId: user.workosUserId,
-    }));
+    const membershipGroups = await Promise.all(users.map((user) =>
+      ctx.db
+        .query("teamMemberships")
+        .withIndex("by_userId_and_role", (q) =>
+          q.eq("userId", user._id).eq("role", "owner"),
+        )
+        .take(100),
+    ));
+    const workspaces = await Promise.all(users.flatMap((user, userIndex) =>
+      membershipGroups[userIndex]!.map(async (membership) => {
+        const team = await ctx.db.get(membership.teamId);
+        return team === null ? null : {
+          teamId: team._id,
+          name: team.name,
+          type: team.type,
+          workosUserId: user.workosUserId,
+        };
+      }),
+    ));
+    return [...new Map(workspaces.filter((workspace): workspace is NonNullable<typeof workspace> => workspace !== null).map((workspace) => [workspace.teamId, workspace])).values()];
   },
 });
 

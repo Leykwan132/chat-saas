@@ -342,6 +342,7 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_teamId", ["teamId"])
+    .index("by_userId_and_role", ["userId", "role"])
     .index("by_userId_and_teamId", ["userId", "teamId"]),
   workspaceSetupChecklistStates: defineTable({
     userId: v.id("users"),
