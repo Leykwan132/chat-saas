@@ -2,7 +2,7 @@
 
 # Snapshot
 - 2026-08-19 [USER] Goal: ship an isolated white-label partner reseller portal where approved partners manage customer organizations, shared plans, manual credits, branding, and a single hostname without pricing or Stripe controls.
-- 2026-08-19 [CODE] Now: isolated partner schema, backend authorization/plan/credit/billing logic, the Admin Partners tab, and Partner workspace line-tab portal are implemented locally.
+- 2026-08-19 [CODE] Now: isolated partner schema, backend authorization/plan/credit/billing logic, the Admin Partners tab, and Partner workspace line-tab portal are implemented in the normal Desktop checkout on `codex/white-label-partner-portal`.
 - 2026-08-19 [CODE] Next: configure Cloudflare Custom Hostnames and WorkOS custom-auth settings before activating a partner hostname.
 - 2026-08-19 [ASSUMPTION] This work is unshipped; no release changelog entry has been added.
 
@@ -50,3 +50,4 @@
 - 2026-08-19 [TOOL] Duplicate-email owner-workspace regression test and deployment pass; deployment continues to bypass unrelated pre-existing Convex TypeScript errors.
 - 2026-08-19 [TOOL] Managed-workspace detection and customer invitation-block tests pass; app TypeScript, focused ESLint, and `git diff --check` pass; Convex dev deployment `outstanding-rabbit-215` reports functions ready.
 - 2026-08-19 [TOOL] Live access check: `kwanrealtyofficial@gmail.com` has active partner access and passes the active PostHog rollout for both linked WorkOS identities; `leykwan132@gmail.com` has the rollout flag but no active partner access.
+- 2026-08-19 [TOOL] Normal Desktop checkout merge artifacts were reconciled; local TypeScript and focused partner tests pass, and Convex dev deployment `outstanding-rabbit-215` reports functions ready.
