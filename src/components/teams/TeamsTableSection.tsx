@@ -13,6 +13,7 @@ import {
 } from '@/lib/teamDisplay';
 import { handleCreateTeamGate } from '@/lib/teamCreationGate';
 import { useUpgradeModal } from '@/components/upgradeModalContext';
+import { usePartnerManagedWorkspace } from '@/hooks/usePartnerManagedWorkspace';
 
 type TeamsTableSectionProps = {
   settingsBasePath: string;
@@ -41,6 +42,7 @@ export function TeamsTableSection({ settingsBasePath, onOpenTeam }: TeamsTableSe
   const navigate = useNavigate();
   const teams = useQuery(api.teams.listForCurrentUser);
   const canCreateOrgTeam = useQuery(api.teams.canCreateOrgTeam);
+  const isPartnerManagedWorkspace = usePartnerManagedWorkspace();
   const { openUpgradeModal } = useUpgradeModal();
   const [search, setSearch] = useState('');
 
@@ -79,10 +81,12 @@ export function TeamsTableSection({ settingsBasePath, onOpenTeam }: TeamsTableSe
               className="pl-9"
             />
           </div>
-          <Button type="button" className="ml-auto shrink-0 gap-1.5" onClick={handleCreateTeam}>
-            <Plus className="size-4" />
-            Create team
-          </Button>
+          {isPartnerManagedWorkspace === false ? (
+            <Button type="button" className="ml-auto shrink-0 gap-1.5" onClick={handleCreateTeam}>
+              <Plus className="size-4" />
+              Create team
+            </Button>
+          ) : null}
         </div>
       </div>
 

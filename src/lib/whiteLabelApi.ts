@@ -31,6 +31,7 @@ export const whiteLabelApi = {
   },
   billing: {
     isBillingBlockedForCurrentWorkspace: makeFunctionReference<'query', Record<string, never>, boolean>('whiteLabel/billing:isBillingBlockedForCurrentWorkspace'),
+    isPartnerManagedCurrentWorkspace: makeFunctionReference<'query', Record<string, never>, boolean>('whiteLabel/billing:isPartnerManagedCurrentWorkspace'),
   },
   actions: {
     createOrganization: makeFunctionReference<'action', { name: string; planKey: PlanKey }, { partnerOrganizationId: string; teamId: string }>('whiteLabel/portalActions:createOrganization'),

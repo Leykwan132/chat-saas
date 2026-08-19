@@ -13,6 +13,7 @@
 - 2026-08-19 [USER] D737 ACTIVE: partner managers retain WorkOS owner membership in each customer organization; default WorkOS invitation/reset emails remain the intentional v1 non-branded exception.
 - 2026-08-19 [USER] D738 ACTIVE: Admin reports tokens, estimated USD AI cost, requests, and assigned-agent count for each partner from its customer organizations.
 - 2026-08-19 [USER] D739 ACTIVE: partner authorization is account-level by normalized email, independent of the active workspace; PostHog controls portal visibility and direct-route rollout.
+- 2026-08-19 [USER] D740 ACTIVE: partner-created customer workspaces are partner-managed; customer users cannot create teams, invite or remove members, or assign workspace roles through standard workspace controls.
 
 # Done (recent)
 - 2026-08-19 [CODE] Added isolated partners, access, organization mapping, append-only plan assignments, credit periods/grants/ledger/balances, and domain lifecycle tables.
@@ -23,6 +24,7 @@
 - 2026-08-19 [CODE] Simplified partner whitelisting to an email-only Admin action and applied the `enable_partner_portal` PostHog guard to the sidebar and direct route.
 - 2026-08-19 [CODE] Split Node-only WorkOS actions from V8 authorization and persistence functions so Convex can deploy the partner provisioning flow.
 - 2026-08-19 [CODE] Admin partner-owner lookup now handles duplicate user rows for the same email and returns each matching owner workspace.
+- 2026-08-19 [CODE] Customer workspace menus, team settings, and invitations hide team/account-management controls; backend gates preserve Partner portal as the only staffing path.
 - 2026-08-18 [CODE] Prior inbox escalation trace work remains unshipped in draft PR #68.
 
 # Working set
@@ -46,3 +48,4 @@
 - 2026-08-19 [TOOL] PostHog project 500079 flag `enable_partner_portal` (ID 830764) is active with exact-email access for the two approved partner accounts.
 - 2026-08-19 [TOOL] `bunx convex dev --once --typecheck=disable` successfully deployed the corrected partner modules; unrelated pre-existing Convex TypeScript errors remain in analytics/media modules.
 - 2026-08-19 [TOOL] Duplicate-email owner-workspace regression test and deployment pass; deployment continues to bypass unrelated pre-existing Convex TypeScript errors.
+- 2026-08-19 [TOOL] Managed-workspace detection and customer invitation-block tests pass; app TypeScript, focused ESLint, and `git diff --check` pass; Convex dev deployment `outstanding-rabbit-215` reports functions ready.

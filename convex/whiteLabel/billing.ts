@@ -15,3 +15,12 @@ export const isBillingBlockedForCurrentWorkspace = query({
     return await isWhiteLabelTeam(ctx, auth.activeTeamId);
   },
 });
+
+export const isPartnerManagedCurrentWorkspace = query({
+  args: {},
+  returns: v.boolean(),
+  handler: async (ctx) => {
+    const auth = await getAuthContext(ctx);
+    return await isWhiteLabelTeam(ctx, auth.activeTeamId);
+  },
+});

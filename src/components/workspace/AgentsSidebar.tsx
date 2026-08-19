@@ -26,6 +26,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { usePendingTeamInvitations } from '@/hooks/usePendingTeamInvitations';
+import { usePartnerManagedWorkspace } from '@/hooks/usePartnerManagedWorkspace';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
   isProductFeatureEnabled,
@@ -46,6 +47,7 @@ export function AgentsSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const { count: pendingInvitationCount } = usePendingTeamInvitations();
   const { can } = usePermissions();
+  const isPartnerManagedWorkspace = usePartnerManagedWorkspace();
   const referralProgramState = useEnableReferralProgram();
   const referralProgramEnabled =
     isProductFeatureEnabled(referralProgramState);
@@ -97,7 +99,7 @@ export function AgentsSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {can(Permission.TEAM_MANAGE) && (
+              {can(Permission.TEAM_MANAGE) && isPartnerManagedWorkspace === false && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={isInvitationsRoute} tooltip="Invitations">
                     <Link to="/workspace/invitations">

@@ -14,7 +14,7 @@ import {
   setActiveTeamForUser,
   teamToOrgId,
 } from "./teamHelpers";
-import { getWhiteLabelPlanForTeam } from "./whiteLabel/planResolver";
+import { getWhiteLabelPlanForTeam, isWhiteLabelTeam } from "./whiteLabel/planResolver";
 
 export type TeamListItem = {
   _id: string;
@@ -224,12 +224,20 @@ export const updateActiveTeamTimeZone = mutation({
 export const canCreateOrgTeam = query({
   args: {},
   handler: async (ctx) => {
-    const { userId } = await getAuthContext(ctx);
+    const { userId, activeTeamId } = await getAuthContext(ctx);
     const userRow = await getUserByWorkosId(ctx, userId);
     if (userRow === null) {
       return {
         allowed: false,
         reason: "User not found.",
+        requiresPlanUpgrade: false,
+      };
+    }
+
+    if (await isWhiteLabelTeam(ctx, activeTeamId)) {
+      return {
+        allowed: false,
+        reason: "Partner-managed workspaces can only be created from the Partner portal.",
         requiresPlanUpgrade: false,
       };
     }
@@ -271,6 +279,16 @@ export const canInviteMembers = query({
         reason: "Team not found.",
         requiresPlanUpgrade: false,
         memberCount: 0,
+        maxMembers: 0,
+      };
+    }
+
+    if (await isWhiteLabelTeam(ctx, team._id)) {
+      return {
+        allowed: false,
+        reason: "Partner-managed workspaces can only be staffed from the Partner portal.",
+        requiresPlanUpgrade: false,
+        memberCount: await countTeamMembers(ctx, team._id),
         maxMembers: 0,
       };
     }
