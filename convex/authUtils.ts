@@ -48,6 +48,7 @@ type WorkOSClaims = {
 export type AuthContext = {
   userId: string;
   userDbId: Id<"users">;
+  email: string;
   activeTeamId: Id<"teams">;
   orgId: string;
   role: string | null;
@@ -118,6 +119,7 @@ async function buildAuthContextFromDb(
   return {
     userId: identity.subject,
     userDbId: user._id,
+    email: user.email.trim().toLowerCase(),
     activeTeamId,
     orgId,
     role,
@@ -180,11 +182,10 @@ export async function getAuthContext(
           activeOrgIdOverride,
         });
         return retryResult;
-      } catch (upsertError) {
-        console.error("[getAuthContext] Action failed to auto-upsert user:", upsertError);
+      } catch {
+        throw error;
       }
     }
-    console.error("[getAuthContext] Action failed to resolve auth scope via query:", error);
     throw error;
   }
 }

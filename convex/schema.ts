@@ -243,6 +243,18 @@ const whiteLabelDomainStatusValidator = v.union(
   v.literal("failed"),
 );
 
+const whiteLabelCustomHostnameSetupStateValidator = v.union(
+  v.literal("draft"),
+  v.literal("ownership_pending"),
+  v.literal("ownership_checking"),
+  v.literal("dcv_pending"),
+  v.literal("certificate_checking"),
+  v.literal("cutover_pending"),
+  v.literal("connection_checking"),
+  v.literal("connected"),
+  v.literal("failed"),
+);
+
 const whiteLabelCreditLedgerEventValidator = v.union(
   v.literal("monthly_allowance"),
   v.literal("manual_grant"),
@@ -513,6 +525,21 @@ export default defineSchema({
     dnsTarget: v.optional(v.string()),
     status: whiteLabelDomainStatusValidator,
     validationError: v.optional(v.string()),
+    setupState: v.optional(whiteLabelCustomHostnameSetupStateValidator),
+    ownershipRecordName: v.optional(v.string()),
+    ownershipRecordType: v.optional(v.literal("TXT")),
+    ownershipRecordValue: v.optional(v.string()),
+    delegatedDcvRecordName: v.optional(v.string()),
+    delegatedDcvRecordTarget: v.optional(v.string()),
+    hostnameStatus: v.optional(v.string()),
+    certificateStatus: v.optional(v.string()),
+    pollGeneration: v.optional(v.number()),
+    pollAttempt: v.optional(v.number()),
+    lastCheckedAt: v.optional(v.number()),
+    ownershipConfirmedAt: v.optional(v.number()),
+    dcvConfirmedAt: v.optional(v.number()),
+    cutoverConfirmedAt: v.optional(v.number()),
+    connectedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

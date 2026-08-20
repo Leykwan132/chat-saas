@@ -12,6 +12,7 @@ describe('PostHog product feature flags', () => {
       enableAvatarFeature: 'enable_avatar_feature',
       enableReferralProgram: 'enable_referral_program',
       enableGoogleCalendarConnect: 'enable_google_calendar_connect',
+      enablePartnerPortal: 'enable_partner_portal',
     });
   });
 

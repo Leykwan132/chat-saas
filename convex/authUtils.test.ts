@@ -24,6 +24,7 @@ test("getAuthContext auto-upserts user in mutation context", async () => {
   });
 
   expect(authContext.userId).toBe(workosUserId);
+  expect(authContext.email).toBe("newuser@example.com");
   expect(authContext.identity.email).toBe("newuser@example.com");
 
   // Verify user and their personal team were created in DB

@@ -7,4 +7,6 @@ test("keeps the Node portal module action-only", async () => {
   expect(source).not.toContain("internalMutation");
   expect(source).toContain("portalAuthorization.assertPartnerOwner");
   expect(source).toContain("portalAuthorization.getInvitableOrganization");
+  expect(source).toContain("email: auth.email");
+  expect(source).not.toContain("auth.identity.email");
 });
