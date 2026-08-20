@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-20 [USER] Goal: remove Messenger diagnostics and pause Messenger plus Instagram channel setup.
 - 2026-08-20 [CODE] Now: Messenger OAuth and Page-list diagnostics are removed; Messenger and Instagram channel-card containers are hidden, including connected cards; Website/KiloBot remains visible.
-- 2026-08-20 [TOOL] Next: commit and push the corrected Messenger/Instagram pause scope if the user requests it.
+- 2026-08-20 [TOOL] Next: the updated branch is ready for review.
 - 2026-08-20 [CODE] Open question: the Page picker repeats the Page fetch after the backend connection completes; it remains out of scope for this PR.
 
 # Decisions
@@ -47,6 +47,7 @@
 - 2026-08-20 [CODE] `CONTINUITY.md`
 
 # Receipts
+- 2026-08-20 [TOOL] Merged `origin/main` into `codex/messenger-oauth-diagnostics`, resolved the logging conflicts in favor of the user-requested removal, then pushed merge commit `921e50d`.
 - 2026-08-20 [TOOL] Corrected pause scope: focused channel/logging tests pass (2), changed-file ESLint has zero errors and one pre-existing hook-dependency warning, and production build exits 0 with existing Meta app ID and large-chunk warnings.
 - 2026-08-20 [TOOL] Commit `145a52c` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused regression tests pass (2), production build exits 0, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
 - 2026-08-20 [TOOL] Commit `7a43730` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused Page-list token-log tests pass, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
