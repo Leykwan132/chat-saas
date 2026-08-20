@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-20 [USER] Goal: show clear Messenger connection progress and customer-safe failure feedback.
 - 2026-08-20 [CODE] Now: Messenger OAuth exchange and Facebook Page listing log safe request and response metadata; Page-list input logs the full user access token for debugging.
-- 2026-08-20 [TOOL] Next: create the PR from the pushed Messenger diagnostics branch using GitHub account permissions; the connected GitHub plugin cannot create PRs for this repository.
+- 2026-08-20 [CODE] Next: verify the merged Messenger diagnostics branch.
 - 2026-08-20 [CODE] Open question: the Page picker repeats the Page fetch after the backend connection completes; it remains out of scope for this PR.
 
 # Decisions
