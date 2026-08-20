@@ -1,10 +1,10 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-20 [USER] Goal: a new agent’s Channels page must not show a channel connected to another agent.
-- 2026-08-20 [CODE] Now: Channels requests the current route agent and the backend returns only that owned agent’s assigned channels.
-- 2026-08-20 [CODE] Next: review and merge draft PR #71; add a release changelog entry only when production availability is confirmed.
-- 2026-08-20 [ASSUMPTION] Existing channel ownership is represented by `defaultAgentId`; unassigned legacy channels are not displayed as belonging to an arbitrary agent.
+- 2026-08-20 [USER] Goal: create a PR that prevents an unscoped Messenger connection error from being masked by channels belonging to other agents.
+- 2026-08-20 [CODE] Now: unscoped errors resolve the connecting user's default agent and query the existing agent-and-service index; a new error row retains that agent assignment.
+- 2026-08-20 [CODE] Next: review and merge PR #72; add a release changelog entry only when production availability is confirmed.
+- 2026-08-20 [CODE] Open question: the redundant Messenger Page-picker fetch and absent intermediate spinner remain a separate follow-up.
 
 # Decisions
 - 2026-08-18 [USER] D727 ACTIVE: the app does not send Google Ads conversion events; the installed Google tag measures the configured onboarding conversion.
@@ -23,8 +23,8 @@
 - 2026-08-20 [USER] D734 ACTIVE: Channel management is agent-scoped; a channel assigned to one agent must not appear on another agent’s Channels page.
 
 # Done (recent)
-- 2026-08-20 [TOOL] Opened draft PR #71 from `codex/isolate-agent-channels` into `main` at commit `18ddff2`.
-- 2026-08-20 [CODE] Added authenticated agent-scoped channel retrieval and wired the Channels page to its route agent, preventing cross-agent channel cards.
+- 2026-08-20 [TOOL] PR #71 merged into `main`, isolating channel management by assigned agent.
+- 2026-08-20 [TOOL] Draft PR #72 contains the agent-scoped Messenger error fix and its regression test.
 - 2026-08-20 [TOOL] Opened PR #69 from `codex/persist-workflow-node-positions` into `main` at commit `8fe01b8`.
 - 2026-08-20 [CODE] Connected authenticated `WorkflowCanvas.onNodeMoved` to an immediate persisted position update; landing-preview dragging remains local-only.
 - 2026-08-20 [CODE] Added regression coverage for the page callback, exact position payload, and a real create-move-reload Convex workflow journey.
@@ -33,14 +33,10 @@
 
 # Working set
 - 2026-08-20 [CODE] `convex/channels.ts`
+- 2026-08-20 [CODE] `convex/channelErrorRecording.test.ts`
 - 2026-08-20 [CODE] `convex/channels.test.ts`
 - 2026-08-20 [CODE] `src/pages/ChannelsPage.tsx`
-- 2026-08-20 [CODE] `src/pages/WorkflowPage.tsx`
-- 2026-08-20 [CODE] `src/pages/useWorkflowMessageActions.ts`
-- 2026-08-20 [CODE] `src/pages/WorkflowPage.test.ts`
-- 2026-08-20 [CODE] `convex/workflows.ts`
-- 2026-08-20 [CODE] `convex/workflows.test.ts`
-- 2026-08-18 [CODE] `CONTINUITY.md`
+- 2026-08-20 [CODE] `CONTINUITY.md`
 
 # Receipts
 - 2026-08-20 [TOOL] New agent-channel isolation test passes under Node v22.22.0; production build exits 0, with existing Meta app ID and large-chunk warnings.
