@@ -5,6 +5,10 @@
 - 2026-08-21 [CODE] Now: iframe host, standalone React widget entry, normalized home/form configuration, public visitor-profile APIs, and HTTP compatibility endpoints are implemented.
 - 2026-08-21 [CODE] Next: reshape dashboard settings/preview to edit the new home/form fields and add widget interaction coverage.
 - 2026-08-21 [CODE] Open question: UNCONFIRMED whether the next slice should include dashboard controls before visual polish and mobile viewport work.
+- 2026-08-20 [USER] Goal: remove Messenger diagnostics and pause Messenger plus Instagram channel setup.
+- 2026-08-20 [CODE] Now: Messenger OAuth and Page-list diagnostics are removed; Messenger and Instagram channel-card containers are hidden, including connected cards; Website/KiloBot remains visible.
+- 2026-08-20 [TOOL] Next: the updated branch is ready for review.
+- 2026-08-20 [CODE] Open question: the Page picker repeats the Page fetch after the backend connection completes; it remains out of scope for this PR.
 
 # Decisions
 - 2026-08-18 [USER] D727 ACTIVE: the app does not send Google Ads conversion events; the installed Google tag measures the configured onboarding conversion.
@@ -23,15 +27,16 @@
 - 2026-08-20 [USER] D734 ACTIVE: Channel management is agent-scoped; a channel assigned to one agent must not appear on another agent’s Channels page.
 - 2026-08-20 [USER] D735 ACTIVE: Messenger’s backend wait is shown as a non-dismissible “Getting your Facebook Pages…” progress dialog until it succeeds, fails, or hands off to the Page picker.
 - 2026-08-20 [USER] D736 ACTIVE: Messenger connection failures never display raw Convex, Meta, or backend error details to customers; embedded signup, Page picking, and classic OAuth use generic retry feedback.
-- 2026-08-20 [USER] D737 ACTIVE: Messenger OAuth and Page-list diagnostics log request and response metadata plus the last four token characters when available, except Page-list input logs the full user access token; raw authorization codes, app secrets, and other access tokens remain excluded.
+- 2026-08-20 [USER] D737 SUPERSEDED by D739: temporary Messenger diagnostics were removed.
 - 2026-08-20 [USER] D738 ACTIVE: the diagnostics PR includes Messenger logging only; billing and unrelated test-suite repairs are excluded.
+- 2026-08-20 [USER] D739 ACTIVE: Messenger diagnostic logging is removed; Messenger and Instagram setup are paused by hiding their channel-card containers while Website/KiloBot remains visible.
 
 # Done (recent)
 - 2026-08-20 [TOOL] PR #71 merged into `main`, isolating channel management by assigned agent.
 - 2026-08-20 [TOOL] PR #72 merged into `main`, fixing agent-scoped Messenger error recording.
 - 2026-08-20 [TOOL] Draft PR #73 opened from `codex/show-messenger-connection-progress` at commit `6f8f571`.
 - 2026-08-20 [CODE] Added Messenger connecting feedback and customer-safe failure messaging across embedded signup, Page picking, and classic OAuth.
-- 2026-08-20 [CODE] Added safe Messenger OAuth and Page-list input/output diagnostics with token status, length, and a four-character suffix.
+- 2026-08-20 [CODE] Removed Messenger OAuth and Page-list diagnostic logging; paused Messenger and Instagram setup by hiding their channel-card containers, including connected cards; Website/KiloBot remains visible.
 - 2026-08-20 [TOOL] Opened PR #69 from `codex/persist-workflow-node-positions` into `main` at commit `8fe01b8`.
 - 2026-08-20 [CODE] Connected authenticated `WorkflowCanvas.onNodeMoved` to an immediate persisted position update; landing-preview dragging remains local-only.
 - 2026-08-20 [CODE] Added regression coverage for the page callback, exact position payload, and a real create-move-reload Convex workflow journey.
@@ -39,21 +44,16 @@
 - 2026-08-20 [TOOL] Targeted review found no critical or important defects; it noted only that coverage is split across page wiring, action payload, and Convex reload tests rather than one browser drag integration.
 
 # Working set
-- 2026-08-20 [CODE] `src/components/ConnectMessengerButton.tsx`
-- 2026-08-20 [CODE] `src/components/MessengerConnectionStatusDialog.tsx`
-- 2026-08-20 [CODE] `src/components/messengerConnectionDialogState.ts`
-- 2026-08-20 [CODE] `src/components/MessengerConnectionStatusDialog.test.tsx`
-- 2026-08-20 [CODE] `src/components/MessengerPagePickerDialog.tsx`
-- 2026-08-20 [CODE] `src/components/MessengerPagePickerDialog.test.tsx`
-- 2026-08-20 [CODE] `src/lib/messengerConnectionFeedback.ts`
-- 2026-08-20 [CODE] `src/lib/messengerConnectionFeedback.test.ts`
 - 2026-08-20 [CODE] `src/pages/ChannelsPage.tsx`
-- 2026-08-20 [CODE] `convex/http.ts`
+- 2026-08-20 [CODE] `src/components/channels/AvailableChannelCard.test.ts`
 - 2026-08-20 [CODE] `convex/messengerConnect.ts`
-- 2026-08-20 [CODE] `convex/messengerConnect.test.ts`
+- 2026-08-20 [CODE] `convex/messengerConnectLogging.test.ts`
 - 2026-08-20 [CODE] `CONTINUITY.md`
 
 # Receipts
+- 2026-08-20 [TOOL] Merged `origin/main` into `codex/messenger-oauth-diagnostics`, resolved the logging conflicts in favor of the user-requested removal, then pushed merge commit `921e50d`.
+- 2026-08-20 [TOOL] Corrected pause scope: focused channel/logging tests pass (2), changed-file ESLint has zero errors and one pre-existing hook-dependency warning, and production build exits 0 with existing Meta app ID and large-chunk warnings.
+- 2026-08-20 [TOOL] Commit `145a52c` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused regression tests pass (2), production build exits 0, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
 - 2026-08-20 [TOOL] Commit `7a43730` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused Page-list token-log tests pass, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
 - 2026-08-20 [TOOL] Fresh Node v22.22.0 focused Messenger diagnostics tests pass (2); changed-file ESLint and `git diff --check` exit 0.
 - 2026-08-20 [TOOL] Draft PR #73 created: `https://github.com/Leykwan132/chat-saas/pull/73`.
@@ -68,8 +68,5 @@
 - 2026-08-18 [TOOL] `origin/main` at `32a2ebe` contains merged PR #66; the removal branch is resolving that merge in favor of D727.
 - 2026-08-18 [TOOL] Post-merge focused Vitest checks (7), loader test (1), and Node v22.22.0 production build passed; only existing Meta app ID and large-chunk Vite warnings remain.
 - 2026-08-18 [TOOL] The incoming `src/googleAdsTag.test.mjs` verifies the Google Ads loader URL and config ID and remains intact.
-- 2026-08-18 [TOOL] Local `gh` authentication is invalid and GitHub connector writes previously returned 403; follow-up PR creation will be retried after pushing.
-- 2026-08-18 [TOOL] Follow-up branch `codex/google-ads-signup-conversion` was pushed at `0c1daac`; GitHub connector PR creation returned an internal error and `gh auth status` confirms its token is invalid.
-- 2026-08-17 [TOOL] PR #64 merge resolution passed focused landing-and-overview tests, the Node v22.22.0 production build, and `git diff --check`.
 - 2026-08-18 [TOOL] Escalation lifecycle (including a text-and-image inbound message) plus two inbox-marker tests pass; Node v22.22.0 production build passes. The lifecycle fixture emits pre-existing missing aggregate-component warnings after passing.
 - 2026-08-18 [TOOL] `gh auth status` confirms the active GitHub token is invalid, so the requested branch push and draft PR cannot be created until `gh auth login -h github.com` succeeds.
