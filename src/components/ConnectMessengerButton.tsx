@@ -1,20 +1,17 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useAction, useQuery } from 'convex/react';
 import { useSearchParams } from 'react-router';
-import { CheckCircle2, CircleAlert } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { MessengerPagePickerDialog } from '@/components/MessengerPagePickerDialog';
+import {
+  MessengerConnectionStatusDialog,
+} from '@/components/MessengerConnectionStatusDialog';
+import type { MessengerConnectionDialogState } from '@/components/messengerConnectionDialogState';
 import {
   waitForFacebookSdk,
   type FBLoginResponse,
@@ -34,11 +31,8 @@ export function ConnectMessengerButton({
   const completeSignup = useAction(api.messengerConnect.completeSignup);
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const [busy, setBusy] = useState(false);
-  const [dialogState, setDialogState] = useState<
-    | { kind: 'closed' }
-    | { kind: 'connecting' }
-    | { kind: 'error'; message: string }
-  >({ kind: 'closed' });
+  const [dialogState, setDialogState] =
+    useState<MessengerConnectionDialogState>({ kind: 'closed' });
 
   const appId = import.meta.env.VITE_META_APP_ID as string | undefined;
   const messengerConfigId = import.meta.env
@@ -130,9 +124,8 @@ export function ConnectMessengerButton({
               setDialogState({ kind: 'closed' });
               toast.success('Messenger account connected');
               onConnected?.();
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : String(err);
-              setDialogState({ kind: 'error', message: msg });
+            } catch {
+              setDialogState({ kind: 'error' });
             } finally {
               setBusy(false);
             }
@@ -196,22 +189,14 @@ export function ConnectMessengerButton({
           )}
         </button>
 
-        <Dialog
-          open={dialogState.kind === 'error'}
+        <MessengerConnectionStatusDialog
+          state={dialogState}
           onOpenChange={handleDialogOpenChange}
-        >
-          <DialogContent showCloseButton>
-            {dialogState.kind === 'error' ? (
-              <ErrorState
-                message={dialogState.message}
-                onRetry={() => {
-                  setDialogState({ kind: 'closed' });
-                  launchSignup();
-                }}
-              />
-            ) : null}
-          </DialogContent>
-        </Dialog>
+          onRetry={() => {
+            setDialogState({ kind: 'closed' });
+            launchSignup();
+          }}
+        />
 
         <MessengerPagePickerDialog onConnected={onConnected} />
       </>
@@ -236,54 +221,16 @@ export function ConnectMessengerButton({
         </Button>
       </div>
 
-      <Dialog
-        open={dialogState.kind === 'error'}
+      <MessengerConnectionStatusDialog
+        state={dialogState}
         onOpenChange={handleDialogOpenChange}
-      >
-        <DialogContent showCloseButton>
-          {dialogState.kind === 'error' ? (
-            <ErrorState
-              message={dialogState.message}
-              onRetry={() => {
-                setDialogState({ kind: 'closed' });
-                launchSignup();
-              }}
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+        onRetry={() => {
+          setDialogState({ kind: 'closed' });
+          launchSignup();
+        }}
+      />
 
       <MessengerPagePickerDialog onConnected={onConnected} />
     </>
-  );
-}
-
-function ErrorState({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
-  return (
-    <div className="flex flex-col gap-5 py-2">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
-          <CircleAlert className="size-6" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <DialogTitle className="text-base">Connection failed</DialogTitle>
-          <DialogDescription>{message}</DialogDescription>
-        </div>
-      </div>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <DialogClose asChild>
-          <Button variant="outline">Close</Button>
-        </DialogClose>
-        <Button type="button" onClick={onRetry}>
-          Try again
-        </Button>
-      </div>
-    </div>
   );
 }

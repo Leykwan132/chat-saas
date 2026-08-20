@@ -633,21 +633,14 @@ http.route({
 // `messengerAuth.start` and `exchangeCodeForUserToken` exactly:
 // `${CONVEX_SITE_URL}/auth/messenger/callback` (trim trailing slash on site).
 const messengerOAuthCallback = httpAction(async (ctx, req) => {
-  const { code, csrf, returnPath, oauthError, oauthErrorReason } =
-    parseCallbackUrl(req);
+  const { code, csrf, returnPath, oauthError } = parseCallbackUrl(req);
 
   if (oauthError) {
-    return redirectResponse(returnPath, {
-      messenger: "error",
-      message: oauthErrorReason ?? oauthError,
-    });
+    return redirectResponse(returnPath, { messenger: "error" });
   }
 
   if (!code || !csrf) {
-    return redirectResponse(returnPath, {
-      messenger: "error",
-      message: "Missing code or state from Messenger OAuth callback",
-    });
+    return redirectResponse(returnPath, { messenger: "error" });
   }
 
   const session = await ctx.runQuery(
@@ -660,18 +653,12 @@ const messengerOAuthCallback = httpAction(async (ctx, req) => {
     session.consumed ||
     session.expiresAt < Date.now()
   ) {
-    return redirectResponse(returnPath, {
-      messenger: "error",
-      message: "OAuth session expired or already used. Please try again.",
-    });
+    return redirectResponse(returnPath, { messenger: "error" });
   }
 
   const siteUrl = process.env.CONVEX_SITE_URL;
   if (!siteUrl) {
-    return redirectResponse(session.returnPath, {
-      messenger: "error",
-      message: "CONVEX_SITE_URL is not configured",
-    });
+    return redirectResponse(session.returnPath, { messenger: "error" });
   }
   const redirectUri = `${siteUrl.replace(/\/+$/, "")}/auth/messenger/callback`;
 
@@ -704,12 +691,8 @@ const messengerOAuthCallback = httpAction(async (ctx, req) => {
       csrf,
     });
     return redirectResponse(session.returnPath, { messenger: "connected" });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return redirectResponse(session.returnPath, {
-      messenger: "error",
-      message,
-    });
+  } catch {
+    return redirectResponse(session.returnPath, { messenger: "error" });
   }
 });
 

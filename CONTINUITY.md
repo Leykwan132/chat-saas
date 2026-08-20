@@ -1,10 +1,10 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-20 [USER] Goal: create a PR that prevents an unscoped Messenger connection error from being masked by channels belonging to other agents.
-- 2026-08-20 [CODE] Now: unscoped errors resolve the connecting user's default agent and query the existing agent-and-service index; a new error row retains that agent assignment.
-- 2026-08-20 [CODE] Next: review and merge PR #72; add a release changelog entry only when production availability is confirmed.
-- 2026-08-20 [CODE] Open question: the redundant Messenger Page-picker fetch and absent intermediate spinner remain a separate follow-up.
+- 2026-08-20 [USER] Goal: show clear Messenger connection progress and customer-safe failure feedback.
+- 2026-08-20 [CODE] Now: Messenger embedded signup, Page picking, and classic OAuth show progress or generic retry feedback without exposing backend error text.
+- 2026-08-20 [CODE] Next: review and merge draft PR #73; add a release changelog entry only when production availability is confirmed.
+- 2026-08-20 [CODE] Open question: the Page picker repeats the Page fetch after the backend connection completes; it remains out of scope for this PR.
 
 # Decisions
 - 2026-08-18 [USER] D727 ACTIVE: the app does not send Google Ads conversion events; the installed Google tag measures the configured onboarding conversion.
@@ -21,10 +21,14 @@
 - 2026-08-17 [USER] D725 ACTIVE: landing benefit cards use the supplied revised portrait images at full grid-column width above customer-outcome copy on a zinc-gray section background; the booking card retains “Turn Enquiries Into Bookings” and makes KiloBot’s booking lifecycle automation explicit.
 - 2026-08-16 [USER] D637–D700 ACTIVE: Google Calendar remains individual and primary-calendar-only; connected writes fail closed and manual/CSV customers retain active-agent scope.
 - 2026-08-20 [USER] D734 ACTIVE: Channel management is agent-scoped; a channel assigned to one agent must not appear on another agent’s Channels page.
+- 2026-08-20 [USER] D735 ACTIVE: Messenger’s backend wait is shown as a non-dismissible “Getting your Facebook Pages…” progress dialog until it succeeds, fails, or hands off to the Page picker.
+- 2026-08-20 [USER] D736 ACTIVE: Messenger connection failures never display raw Convex, Meta, or backend error details to customers; embedded signup, Page picking, and classic OAuth use generic retry feedback.
 
 # Done (recent)
 - 2026-08-20 [TOOL] PR #71 merged into `main`, isolating channel management by assigned agent.
-- 2026-08-20 [TOOL] Draft PR #72 contains the agent-scoped Messenger error fix and its regression test.
+- 2026-08-20 [TOOL] PR #72 merged into `main`, fixing agent-scoped Messenger error recording.
+- 2026-08-20 [TOOL] Draft PR #73 opened from `codex/show-messenger-connection-progress` at commit `6f8f571`.
+- 2026-08-20 [CODE] Added Messenger connecting feedback and customer-safe failure messaging across embedded signup, Page picking, and classic OAuth.
 - 2026-08-20 [TOOL] Opened PR #69 from `codex/persist-workflow-node-positions` into `main` at commit `8fe01b8`.
 - 2026-08-20 [CODE] Connected authenticated `WorkflowCanvas.onNodeMoved` to an immediate persisted position update; landing-preview dragging remains local-only.
 - 2026-08-20 [CODE] Added regression coverage for the page callback, exact position payload, and a real create-move-reload Convex workflow journey.
@@ -32,13 +36,25 @@
 - 2026-08-20 [TOOL] Targeted review found no critical or important defects; it noted only that coverage is split across page wiring, action payload, and Convex reload tests rather than one browser drag integration.
 
 # Working set
-- 2026-08-20 [CODE] `convex/channels.ts`
-- 2026-08-20 [CODE] `convex/channelErrorRecording.test.ts`
-- 2026-08-20 [CODE] `convex/channels.test.ts`
+- 2026-08-20 [CODE] `src/components/ConnectMessengerButton.tsx`
+- 2026-08-20 [CODE] `src/components/MessengerConnectionStatusDialog.tsx`
+- 2026-08-20 [CODE] `src/components/messengerConnectionDialogState.ts`
+- 2026-08-20 [CODE] `src/components/MessengerConnectionStatusDialog.test.tsx`
+- 2026-08-20 [CODE] `src/components/MessengerPagePickerDialog.tsx`
+- 2026-08-20 [CODE] `src/components/MessengerPagePickerDialog.test.tsx`
+- 2026-08-20 [CODE] `src/lib/messengerConnectionFeedback.ts`
+- 2026-08-20 [CODE] `src/lib/messengerConnectionFeedback.test.ts`
 - 2026-08-20 [CODE] `src/pages/ChannelsPage.tsx`
+- 2026-08-20 [CODE] `convex/http.ts`
 - 2026-08-20 [CODE] `CONTINUITY.md`
 
 # Receipts
+- 2026-08-20 [TOOL] Draft PR #73 created: `https://github.com/Leykwan132/chat-saas/pull/73`.
+- 2026-08-20 [TOOL] Final Node v22.22.0 focused Messenger feedback suite passes (8); changed-file ESLint has zero errors and one pre-existing `ChannelsPage` hook-dependency warning; production build exits 0 with existing Meta app ID and large-chunk warnings.
+- 2026-08-20 [TOOL] Re-review found no raw Convex, Meta, or backend error exposure across Messenger embedded signup, Page picking, or classic OAuth.
+- 2026-08-20 [TOOL] Node v22.22.0 Messenger feedback tests (6) and changed-file ESLint checks pass after adding the generic error-message regression case.
+- 2026-08-20 [TOOL] Node v22.22.0 focused Messenger feedback tests (5) and changed-file ESLint checks pass; production build exits 0 with existing missing Meta app ID and large-chunk warnings.
+- 2026-08-20 [TOOL] The Messenger progress regression test failed before implementation because the dialog state/content exports did not exist, then passed after the behavior was added.
 - 2026-08-20 [TOOL] New agent-channel isolation test passes under Node v22.22.0; production build exits 0, with existing Meta app ID and large-chunk warnings.
 - 2026-08-20 [TOOL] Full `bun run test` with mock Stripe prices fails in unrelated calendar and agent-overview suites (18 tests across 6 files); the new channel test passes.
 - 2026-08-20 [TOOL] `bunx convex codegen` is unavailable in this isolated worktree because `CONVEX_DEPLOYMENT` is unset.
@@ -54,8 +70,3 @@
 - 2026-08-18 [TOOL] Primary checkout `/Users/leykwanchoo/Desktop/Projects/chat-saas` is clean on local tracking branch `review/inbox-escalation-trace` at `d2ce093`, matching `origin/codex/inbox-escalation-trace`.
 - 2026-08-18 [TOOL] Dummy preview regression test, escalation lifecycle tests, inbox timeline tests, and the Node v22.22.0 production build pass; the lifecycle fixture retains its pre-existing missing aggregate-component warning.
 - 2026-08-18 [TOOL] Long-thread dummy preview regression test plus focused escalation and inbox tests pass; the Node v22.22.0 production build passes with the existing aggregate-component fixture warning.
-- 2026-08-18 [TOOL] Shared Action History and neutral expandable-divider tests, the focused Inbox suite, and the Node v22.22.0 production build pass.
-- 2026-08-18 [TOOL] Escalation-triangle divider regression test and Node v22.22.0 production build pass.
-- 2026-08-18 [TOOL] Readable-detail divider regression test and Node v22.22.0 production build pass.
-- 2026-08-18 [TOOL] Neutral View in chat regression test and Node v22.22.0 production build pass.
-- 2026-08-18 [TOOL] Inbox dummy-preview removal passed 8 relevant tests and the Node v22.22.0 production build; the lifecycle fixture retains its known missing aggregate-component warning.
