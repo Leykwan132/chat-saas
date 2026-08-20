@@ -350,6 +350,7 @@ import type * as webWidget from "../webWidget.js";
 import type * as webWidgetAccess from "../webWidgetAccess.js";
 import type * as webWidgetAdmin from "../webWidgetAdmin.js";
 import type * as webWidgetCore from "../webWidgetCore.js";
+import type * as webWidgetPublic from "../webWidgetPublic.js";
 import type * as webWidgetTraditional from "../webWidgetTraditional.js";
 import type * as webWidgetValidators from "../webWidgetValidators.js";
 import type * as whatsappBroadcast from "../whatsappBroadcast.js";
@@ -781,6 +782,7 @@ declare const fullApi: ApiFromModules<{
   webWidgetAccess: typeof webWidgetAccess;
   webWidgetAdmin: typeof webWidgetAdmin;
   webWidgetCore: typeof webWidgetCore;
+  webWidgetPublic: typeof webWidgetPublic;
   webWidgetTraditional: typeof webWidgetTraditional;
   webWidgetValidators: typeof webWidgetValidators;
   whatsappBroadcast: typeof whatsappBroadcast;

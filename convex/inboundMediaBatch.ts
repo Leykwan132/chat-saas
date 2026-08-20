@@ -1,7 +1,7 @@
 import type { WorkId } from "@convex-dev/workpool";
 import { v, type Infer } from "convex/values";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
   type MutationCtx,
@@ -11,6 +11,14 @@ import { checkAiFeature, getTeamStripePlanHelper } from "./plans";
 
 const QUIET_WINDOW_MS = 2_000;
 const MAX_BATCH_WAIT_MS = 5_000;
+
+type ClaimedInboundMediaBatch = {
+  batch: Doc<"inboundMediaBatches">;
+  items: Doc<"inboundMediaBatchItems">[];
+  conversation: Doc<"conversations">;
+  agent: Doc<"agents">;
+  accessToken: string | undefined;
+};
 
 export function inboundMediaProcessAfter(
   now: number,
@@ -157,7 +165,7 @@ export const claimBatch = internalMutation({
     batchId: v.id("inboundMediaBatches"),
     revision: v.number(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<ClaimedInboundMediaBatch | null> => {
     const batch = await ctx.db.get(args.batchId);
     if (
       !batch ||
