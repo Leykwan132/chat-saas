@@ -13,6 +13,7 @@ export type AvailabilityRejectionReason =
   | "calendar_conflict";
 
 function isWithinShift(startAt: number, endAt: number, schedule: Doc<"userSchedules">, shifts: Doc<"userShifts">[]) {
+  if (schedule.mode === "manual") return schedule.manualStatus === "available";
   const start = getZonedDayAndMinutes(startAt, schedule.timezone);
   const end = getZonedDayAndMinutes(Math.max(startAt, endAt - 1), schedule.timezone);
   if (start.dayOfWeek !== end.dayOfWeek) return false;

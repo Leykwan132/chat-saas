@@ -1,7 +1,9 @@
 import type { TestConvex } from "convex-test";
+import { components } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
+import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 
 type AppTestConvex = TestConvex<typeof schema>;
 
@@ -15,6 +17,11 @@ const aggregateModules = {
 };
 
 export function registerAgentOverviewAggregateComponents(t: AppTestConvex) {
+  t.registerComponent("stripe", stripeSchema, {
+    public: () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
+    private: () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
+  });
   t.registerComponent(
     "agentOverviewAiAssistedDaily",
     aggregateSchema,
@@ -97,4 +104,20 @@ export async function insertAgentOverviewConversation(
       updatedAt: args.now,
     }),
   );
+}
+
+export async function enableAgentOverviewTopicAnalytics(
+  t: AppTestConvex,
+  workosUserId = "overview-owner",
+) {
+  process.env.STRIPE_PRICE_GROWTH_MONTHLY = "price_growth_monthly";
+  await t.mutation(components.stripe.private.handleSubscriptionCreated, {
+    stripeSubscriptionId: `sub-${workosUserId}`,
+    stripeCustomerId: `cus-${workosUserId}`,
+    status: "active",
+    currentPeriodEnd: 1_900_000_000,
+    cancelAtPeriodEnd: false,
+    priceId: "price_growth_monthly",
+    metadata: { orgId: workosUserId },
+  });
 }

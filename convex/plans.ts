@@ -290,6 +290,6 @@ export const getTeamStripePlan = internalQuery({
 export const internalGetPlanFromStripe = internalQuery({
   args: { entityId: v.string() },
   handler: async (ctx, args) => {
-    return await getTeamStripePlanHelper(ctx, { workosOrgId: args.entityId });
+    return await getPlanFromStripe(ctx, args.entityId);
   },
 });
