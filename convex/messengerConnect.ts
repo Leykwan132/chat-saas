@@ -61,12 +61,6 @@ export async function exchangeCodeForUserToken(
   appSecret: string,
   redirectUri?: string,
 ): Promise<string> {
-  console.info("[messenger] OAuth code exchange input", {
-    appId,
-    appSecretConfigured: appSecret.length > 0,
-    codeLength: code.length,
-    redirectUri,
-  });
   const tokenUrl = new URL(`${fbGraphBase()}${"/oauth/access_token"}`);
   tokenUrl.searchParams.set("client_id", appId);
   tokenUrl.searchParams.set("client_secret", appSecret);
@@ -79,22 +73,10 @@ export async function exchangeCodeForUserToken(
     { method: "GET" },
     "Facebook code exchange",
   );
-  console.info("[messenger] OAuth code exchange output", {
-    accessTokenRetrieved: res.access_token.length > 0,
-    accessTokenLength: res.access_token.length,
-    accessTokenSuffix:
-      res.access_token.length >= 4 ? res.access_token.slice(-4) : undefined,
-    expiresInSeconds: res.expires_in,
-  });
   return res.access_token;
 }
 
 async function listUserPages(userAccessToken: string): Promise<PageEdge[]> {
-  console.info("[messenger] Page list input", {
-    userAccessTokenRetrieved: userAccessToken.length > 0,
-    userAccessTokenLength: userAccessToken.length,
-    userAccessToken,
-  });
   const url = new URL(`${fbGraphBase()}${"/me/accounts"}`);
   url.searchParams.set("fields", "id,name,access_token");
   url.searchParams.set("access_token", userAccessToken);
@@ -103,22 +85,7 @@ async function listUserPages(userAccessToken: string): Promise<PageEdge[]> {
     { method: "GET" },
     "Facebook page list",
   );
-  const pages = res.data ?? [];
-  console.info("[messenger] Page list output", {
-    pageCount: pages.length,
-    pages: pages.map((page) => ({
-      id: page.id,
-      name: page.name,
-      accessTokenRetrieved:
-        page.access_token != null && page.access_token.length > 0,
-      accessTokenLength: page.access_token?.length,
-      accessTokenSuffix:
-        page.access_token != null && page.access_token.length >= 4
-          ? page.access_token.slice(-4)
-          : undefined,
-    })),
-  });
-  return pages;
+  return res.data ?? [];
 }
 
 /** Public helper for messengerAuth.getPickerPages — re-fetches /me/accounts. */

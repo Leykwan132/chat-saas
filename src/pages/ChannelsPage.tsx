@@ -57,6 +57,11 @@ const CONNECTABLE_SERVICES: SupportedChannelService[] = [
   'messenger',
 ];
 
+const PAUSED_CHANNEL_SERVICES = new Set<SupportedChannelService>([
+  'instagram',
+  'messenger',
+]);
+
 type ChannelDoc = Doc<'channels'>;
 type ChannelWithConversationCount = ChannelDoc & { conversationCount?: number };
 type WhatsAppConnectionAttemptDoc = Doc<'whatsappConnectionAttempts'>;
@@ -333,9 +338,10 @@ export default function ChannelsPage() {
               return null;
             }
 
+            const shouldHideChannelCard = PAUSED_CHANNEL_SERVICES.has(service);
             const channel = connectedByService.get(service);
             if (channel) {
-              return (
+              const connectedChannelCard = (
                 <ConnectedChannelCard
                   key={channel._id}
                   agentId={agentId}
@@ -355,9 +361,15 @@ export default function ChannelsPage() {
                   onShowWebDetails={() => setWebDetailsOpen(true)}
                 />
               );
+
+              return shouldHideChannelCard ? (
+                <div className="hidden" key={service}>
+                  {connectedChannelCard}
+                </div>
+              ) : connectedChannelCard;
             }
 
-            return (
+            const availableChannelCard = (
               <AvailableChannelCard
                 key={service}
                 service={service}
@@ -368,6 +380,12 @@ export default function ChannelsPage() {
                 onLimitReached={openUpgradeModal}
               />
             );
+
+            return shouldHideChannelCard ? (
+              <div className="hidden" key={service}>
+                {availableChannelCard}
+              </div>
+            ) : availableChannelCard;
           })}
         </div>
       </section>
