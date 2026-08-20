@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-20 [USER] Goal: remove Messenger diagnostics and pause Instagram plus Website/KiloBot channel setup.
 - 2026-08-20 [CODE] Now: Messenger OAuth and Page-list diagnostics are removed; the Instagram and Website/KiloBot channel-card containers are hidden.
-- 2026-08-20 [CODE] Next: review and publish the branch when requested.
+- 2026-08-20 [TOOL] Next: create the review PR from the pushed branch using GitHub account permissions; the connected GitHub plugin cannot create PRs for this repository.
 - 2026-08-20 [CODE] Open question: the Page picker repeats the Page fetch after the backend connection completes; it remains out of scope for this PR.
 
 # Decisions
@@ -47,7 +47,7 @@
 - 2026-08-20 [CODE] `CONTINUITY.md`
 
 # Receipts
-- 2026-08-20 [TOOL] Node v22.22.0 regression tests for hidden paused channel cards and removed Messenger diagnostics pass (2); production build exits 0, and changed-file ESLint has no errors plus one existing `ChannelsPage` hook-dependency warning.
+- 2026-08-20 [TOOL] Commit `145a52c` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused regression tests pass (2), production build exits 0, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
 - 2026-08-20 [TOOL] Commit `7a43730` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused Page-list token-log tests pass, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
 - 2026-08-20 [TOOL] Fresh Node v22.22.0 focused Messenger diagnostics tests pass (2); changed-file ESLint and `git diff --check` exit 0.
 - 2026-08-20 [TOOL] Draft PR #73 created: `https://github.com/Leykwan132/chat-saas/pull/73`.
