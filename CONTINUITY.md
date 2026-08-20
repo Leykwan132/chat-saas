@@ -1,10 +1,10 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-20 [USER] Goal: show clear Messenger connection progress and customer-safe failure feedback.
-- 2026-08-20 [CODE] Now: Messenger OAuth exchange and Facebook Page listing log safe request and response metadata; Page-list input logs the full user access token for debugging.
-- 2026-08-20 [CODE] Next: verify the merged Messenger diagnostics branch.
-- 2026-08-20 [CODE] Open question: the Page picker repeats the Page fetch after the backend connection completes; it remains out of scope for this PR.
+- 2026-08-21 [USER] Goal: replace Kilobot’s AI widget with a Chatwoot-inspired right-side iframe home, optional visitor form, and normal conversation view; preserve the snippet and Traditional widget.
+- 2026-08-21 [CODE] Now: iframe host, standalone React widget entry, normalized home/form configuration, public visitor-profile APIs, and HTTP compatibility endpoints are implemented.
+- 2026-08-21 [CODE] Next: reshape dashboard settings/preview to edit the new home/form fields and add widget interaction coverage.
+- 2026-08-21 [CODE] Open question: UNCONFIRMED whether the next slice should include dashboard controls before visual polish and mobile viewport work.
 
 # Decisions
 - 2026-08-18 [USER] D727 ACTIVE: the app does not send Google Ads conversion events; the installed Google tag measures the configured onboarding conversion.

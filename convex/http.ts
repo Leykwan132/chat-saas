@@ -1,4 +1,5 @@
 import { httpRouter } from "convex/server";
+import type { FunctionReference } from "convex/server";
 import { httpAction, type ActionCtx } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { workosWebhook } from "./workosWebhook";
@@ -382,6 +383,21 @@ const widgetCorsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+type WidgetVisitorArgs = {
+  publicKey: string;
+  visitorId: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+};
+
+const widgetPublicApi = api as unknown as {
+  webWidgetPublic: {
+    getVisitorProfile: FunctionReference<"query", "public", Pick<WidgetVisitorArgs, "publicKey" | "visitorId">, unknown>;
+    submitVisitorProfile: FunctionReference<"mutation", "public", WidgetVisitorArgs, unknown>;
+  };
+};
+
 function widgetJsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -493,6 +509,46 @@ const widgetMessage = httpAction(async (ctx, req) => {
   }
 });
 
+const widgetVisitorProfile = httpAction(async (ctx, req) => {
+  const publicKey = getWidgetKey(req);
+  const visitorId = getWidgetVisitorId(req);
+  if (!publicKey || !visitorId) {
+    return widgetErrorResponse("Missing widget key or visitor ID", 400);
+  }
+  try {
+    return widgetJsonResponse({
+      profile: await ctx.runQuery(widgetPublicApi.webWidgetPublic.getVisitorProfile, { publicKey, visitorId }),
+    });
+  } catch (error) {
+    return widgetErrorResponse(error, 404);
+  }
+});
+
+const widgetSubmitVisitorProfile = httpAction(async (ctx, req) => {
+  let body: { publicKey?: unknown; visitorId?: unknown; name?: unknown; email?: unknown; phone?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return widgetErrorResponse("Invalid JSON", 400);
+  }
+  if (typeof body.publicKey !== "string" || typeof body.visitorId !== "string") {
+    return widgetErrorResponse("Missing widget key or visitor ID", 400);
+  }
+  try {
+    return widgetJsonResponse({
+      profile: await ctx.runMutation(widgetPublicApi.webWidgetPublic.submitVisitorProfile, {
+        publicKey: body.publicKey,
+        visitorId: body.visitorId,
+        name: typeof body.name === "string" ? body.name : undefined,
+        email: typeof body.email === "string" ? body.email : undefined,
+        phone: typeof body.phone === "string" ? body.phone : undefined,
+      }),
+    });
+  } catch (error) {
+    return widgetErrorResponse(error, 400);
+  }
+});
+
 http.route({
   path: "/widget/config",
   method: "GET",
@@ -522,6 +578,10 @@ http.route({
   method: "POST",
   handler: widgetMessage,
 });
+
+http.route({ path: "/widget/visitor", method: "GET", handler: widgetVisitorProfile });
+http.route({ path: "/widget/visitor", method: "POST", handler: widgetSubmitVisitorProfile });
+http.route({ path: "/widget/visitor", method: "OPTIONS", handler: httpAction(async () => widgetOptionsResponse()) });
 
 http.route({
   path: "/widget/message",

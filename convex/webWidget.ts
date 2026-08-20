@@ -31,6 +31,8 @@ import { inboxPromptContent } from "../shared/inboxAttachments";
 import { inboxAiReplyPool } from "./inboxPools";
 import {
   webWidgetLayoutValidator,
+  webWidgetHomeValidator,
+  webWidgetLeadFormValidator,
   webWidgetModeValidator,
   webWidgetThemeValidator,
 } from "./webWidgetValidators";
@@ -69,6 +71,8 @@ export const updateSettings = mutation({
     placeholder: v.optional(v.string()),
     layout: v.optional(webWidgetLayoutValidator),
     theme: v.optional(webWidgetThemeValidator),
+    home: v.optional(webWidgetHomeValidator),
+    leadForm: v.optional(webWidgetLeadFormValidator),
     hidePoweredBy: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {

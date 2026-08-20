@@ -2,7 +2,8 @@ import type { QueryCtx, MutationCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { getTeamStripePlanHelper } from "./plans";
 import { normalizeWebWidgetLayout } from "../shared/webWidgetLayouts";
-import { DEFAULT_WEB_WIDGET_THEME } from "../shared/webWidgetThemes";
+import { normalizeWebWidgetTheme } from "../shared/webWidgetThemes";
+import { normalizeWebWidgetExperience } from "../shared/webWidgetExperience";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
 import {
   DEFAULT_WEB_WIDGET_MODE,
@@ -122,16 +123,18 @@ export async function publicConfigForSettings(
   });
   const branding = resolveWebWidgetBranding(settings, planState.canUseCustomIcon);
   const iconUrl = await resolveWidgetIconUrl(ctx, settings, planState.canUseCustomIcon);
+  const experience = normalizeWebWidgetExperience(settings);
   return {
     mode: "ai_powered" as const,
     publicKey: settings.publicKey,
     agentDisplayName: settings.agentDisplayName,
     layout: normalizeWebWidgetLayout(settings.layout),
-    theme: DEFAULT_WEB_WIDGET_THEME,
+    theme: normalizeWebWidgetTheme(settings.theme),
     placeholder:
       settings.placeholder ?? defaultWebWidgetPlaceholder(settings.agentDisplayName),
     iconUrl,
     poweredBy: branding.poweredBy,
+    ...experience,
   };
 }
 

@@ -1,0 +1,31 @@
+:root { font-family: Inter, ui-sans-serif, system-ui; color: #f5f5f7; background: transparent; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, textarea { font: inherit; }
+button { cursor: pointer; }
+.launcher { width: 64px; height: 64px; border: 0; border-radius: 50%; background: #2f80ff; color: white; font-size: 30px; box-shadow: 0 12px 30px #0004; }
+.widget { width: min(390px, calc(100vw - 24px)); min-height: 510px; border-radius: 18px; overflow: hidden; background: #18181b; box-shadow: 0 20px 55px #0007; position: relative; }
+.widget.light { background: #fff; color: #18181b; }
+.home, .panel, .chat { min-height: 510px; padding: 24px; }
+.home h1, .panel h1 { font-size: 23px; margin: 18px 0 8px; }
+.home p, .panel p, .status span, header span { color: #b1b1bc; line-height: 1.5; display: block; }
+.orb { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; color: white; background: #2f80ff; }
+.close, .back { border: 0; background: transparent; color: inherit; font-size: 27px; }
+.close { position: absolute; right: 18px; top: 13px; }
+.status { display: grid; gap: 7px; width: 100%; border: 0; border-radius: 12px; margin-top: 32px; padding: 18px; text-align: left; background: #23232b; color: inherit; }
+.status b { color: #2f80ff; margin-top: 4px; }
+.panel form { display: grid; gap: 14px; margin-top: 22px; }
+label { display: grid; gap: 6px; text-transform: capitalize; font-size: 14px; }
+input, textarea { border: 1px solid #474751; border-radius: 9px; padding: 11px; color: inherit; background: transparent; }
+.panel form button, .composer button { border: 0; border-radius: 9px; padding: 11px 15px; color: white; background: #2f80ff; }
+.chat { padding: 0; display: grid; grid-template-rows: auto 1fr auto; }
+header { display: flex; align-items: center; gap: 10px; padding: 18px; border-bottom: 1px solid #3a3a42; }
+header .close { position: static; margin-left: auto; }
+header span { font-size: 12px; }
+.messages { padding: 18px; overflow: auto; display: grid; align-content: start; gap: 9px; }
+.messages p { max-width: 82%; padding: 11px 13px; margin: 0; border-radius: 16px; line-height: 1.4; background: #32323d; }
+.messages p.incoming { justify-self: end; color: white; background: #2f80ff; }
+.composer { display: flex; gap: 8px; padding: 14px; border-top: 1px solid #3a3a42; }
+.composer textarea { resize: none; min-height: 44px; max-height: 130px; flex: 1; }
+.error { position: absolute; bottom: 8px; left: 16px; right: 16px; color: #ffb4b4; font-size: 13px; }
+@media (max-width: 560px) { .widget { width: 100vw; min-height: 100dvh; border-radius: 0; } .home, .panel, .chat { min-height: 100dvh; } }
