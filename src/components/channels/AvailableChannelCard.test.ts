@@ -14,6 +14,12 @@ test('connected channels show per-platform cards with connect actions instead of
   expect(pageSource).not.toContain('Connect another channel');
   expect(pageSource).not.toContain('Add new channel');
   expect(pageSource).toContain('AvailableChannelCard');
+  expect(pageSource).toContain("import { WebsiteChannelCard }");
+  expect(pageSource).toContain('<WebsiteChannelCard');
+  expect(pageSource).toContain('<div className="hidden">');
+  expect(pageSource).toContain("const PAUSED_CHANNEL_SERVICES = new Set<SupportedChannelService>([");
+  expect(pageSource).toContain("'instagram',");
+  expect(pageSource).toContain('PAUSED_CHANNEL_SERVICES.has(service)');
   expect(pageSource).toContain("'whatsapp'");
   expect(pageSource).toContain("'instagram'");
   expect(pageSource).toContain("'messenger'");

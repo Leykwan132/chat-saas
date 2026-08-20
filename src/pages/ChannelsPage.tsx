@@ -57,6 +57,10 @@ const CONNECTABLE_SERVICES: SupportedChannelService[] = [
   'messenger',
 ];
 
+const PAUSED_CHANNEL_SERVICES = new Set<SupportedChannelService>([
+  'instagram',
+]);
+
 type ChannelDoc = Doc<'channels'>;
 type ChannelWithConversationCount = ChannelDoc & { conversationCount?: number };
 type WhatsAppConnectionAttemptDoc = Doc<'whatsappConnectionAttempts'>;
@@ -304,10 +308,12 @@ export default function ChannelsPage() {
 
       <section className="flex flex-col gap-4 animate-fade-in">
         <div className="flex flex-wrap gap-2">
-          <WebsiteChannelCard
-            agentId={agentId}
-            onShowDetails={() => setWebDetailsOpen(true)}
-          />
+          <div className="hidden">
+            <WebsiteChannelCard
+              agentId={agentId}
+              onShowDetails={() => setWebDetailsOpen(true)}
+            />
+          </div>
 
           {showPendingWhatsApp && openWhatsAppAttempt ? (
             <PendingWhatsAppConnectionCard
@@ -357,7 +363,7 @@ export default function ChannelsPage() {
               );
             }
 
-            return (
+            const availableChannelCard = (
               <AvailableChannelCard
                 key={service}
                 service={service}
@@ -368,6 +374,16 @@ export default function ChannelsPage() {
                 onLimitReached={openUpgradeModal}
               />
             );
+
+            if (PAUSED_CHANNEL_SERVICES.has(service)) {
+              return (
+                <div className="hidden" key={service}>
+                  {availableChannelCard}
+                </div>
+              );
+            }
+
+            return availableChannelCard;
           })}
         </div>
       </section>
