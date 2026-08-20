@@ -184,7 +184,10 @@ function useMetaChannelCallbackParams() {
 
 export default function ChannelsPage() {
   const { agentId } = useParams();
-  const channels = useQuery(api.channels.listForCurrentOrg, {});
+  const channels = useQuery(
+    api.channels.listForCurrentOrg,
+    agentId ? { agentId: agentId as Id<'agents'> } : {},
+  );
   const openWhatsAppAttempt = useQuery(
     api.whatsappEmbeddedSignup.getOpenConnectionAttempt,
     {},
