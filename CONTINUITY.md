@@ -1,10 +1,10 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-18 [USER] Goal: make each AI-to-human escalation traceable to the exact triggering customer message in the inbox and action history.
-- 2026-08-18 [CODE] Now: source-message metadata, a neutral expandable inbox divider with readable escalation details, and shared production Action History rendering with a neutral View in chat pill are implemented and verified locally.
-- 2026-08-18 [CODE] Next: review draft PR #68; do not add a release changelog entry until production availability is confirmed.
-- 2026-08-18 [ASSUMPTION] The removal is unshipped; do not add a release changelog entry until production availability is confirmed.
+- 2026-08-20 [USER] Goal: create one PR so workflow-node positions are automatically saved at creation and after every move, restoring the last placement on return.
+- 2026-08-20 [CODE] Now: the authenticated canvas saves each drag-end coordinate through the existing authorized node mutation; created nodes already persisted their generated coordinates.
+- 2026-08-20 [CODE] Next: push the reviewed feature branch and open one PR; do not add a release changelog entry until production availability is confirmed.
+- 2026-08-20 [ASSUMPTION] Persist the exact final React Flow drag position when the drag ends, without changing Cleanup/Arrange or the automation-only Save/Discard boundary.
 
 # Decisions
 - 2026-08-18 [USER] D727 ACTIVE: the app does not send Google Ads conversion events; the installed Google tag measures the configured onboarding conversion.
@@ -22,31 +22,25 @@
 - 2026-08-16 [USER] D637–D700 ACTIVE: Google Calendar remains individual and primary-calendar-only; connected writes fail closed and manual/CSV customers retain active-agent scope.
 
 # Done (recent)
+- 2026-08-20 [CODE] Connected authenticated `WorkflowCanvas.onNodeMoved` to an immediate persisted position update; landing-preview dragging remains local-only.
+- 2026-08-20 [CODE] Added regression coverage for the page callback, exact position payload, and a real create-move-reload Convex workflow journey.
+- 2026-08-20 [TOOL] Node v22.22.0 focused workflow suite passes: 16 tests in 3 files; production build exits successfully. ESLint has no errors and one pre-existing `WorkflowPage` exhaustive-deps warning.
+- 2026-08-20 [TOOL] Targeted review found no critical or important defects; it noted only that coverage is split across page wiring, action payload, and Convex reload tests rather than one browser drag integration.
+- 2026-08-20 [TOOL] Confirmed this is a linked isolated workspace at `/Users/leykwanchoo/.codex/worktrees/e0ef/chat-saas` in detached HEAD state; a feature branch will be created before committing.
+- 2026-08-20 [TOOL] Existing `workflows.addNodeAfter` writes generated node positions; `workflows.updateNode` already authorizes and validates individual position updates; `WorkflowPage` currently omits `onNodeMoved` by design.
 - 2026-08-18 [CODE] Removed the custom CTA conversion helper and all four public CTA calls; WorkOS sign-up starts immediately while the Google tag remains installed.
 - 2026-08-18 [CODE] AI-to-human escalations now persist their source message, render an inbox divider immediately after it, and expose a View in chat action-history link; `?dummyData=true` previews the divider in development.
 - 2026-08-18 [CODE] Escalation dividers now expand to show their stored reason, and Action History is rendered by a shared production component.
 - 2026-08-18 [CODE] Removed the Inbox-only dummy conversation, message timeline, marker generator, and `?dummyData=true` render path.
 - 2026-08-18 [CODE] Removed the obsolete helper test and implementation design/plan documentation; retained the incoming global-tag loader test.
 - 2026-08-18 [TOOL] Focused landing/header regression tests pass: 7 tests across 2 files; the loader test passes; the Node 22 production build passed after resolving latest `origin/main`.
-- 2026-08-18 [CODE] `origin/main` includes merged PR #66’s prior conversion implementation; this follow-up removes it.
-- 2026-08-17 [CODE] PR #63’s Common Topics layout, hover interaction, browser-only dummy data, and centered donut-detail work merged into `main`.
-- 2026-08-16 [CODE] Google Calendar booking, availability, customer scope, and remote-link milestones were deployed.
 
 # Working set
-- 2026-08-18 [CODE] `index.html`
-- 2026-08-18 [CODE] `src/googleAdsTag.test.mjs`
-- 2026-08-18 [CODE] `src/pages/LandingPage.tsx`
-- 2026-08-18 [CODE] `src/pages/LandingPage.test.ts`
-- 2026-08-18 [CODE] `src/components/SiteHeader.tsx`
-- 2026-08-18 [CODE] `src/components/SiteHeader.test.ts`
-- 2026-08-18 [CODE] `src/components/BlogPostLayout.tsx`
-- 2026-08-18 [CODE] `src/components/LegalDocumentLayout.tsx`
-- 2026-08-18 [CODE] `convex/chat/inbox.ts`
-- 2026-08-18 [CODE] `convex/chat/threads.ts`
-- 2026-08-18 [CODE] `convex/schema.ts`
-- 2026-08-18 [CODE] `src/components/inbox/InboxEscalationDivider.tsx`
-- 2026-08-18 [CODE] `src/components/inbox/inboxEscalationMarkers.ts`
-- 2026-08-18 [CODE] `src/lib/formatMessageTime.ts`
+- 2026-08-20 [CODE] `src/pages/WorkflowPage.tsx`
+- 2026-08-20 [CODE] `src/pages/useWorkflowMessageActions.ts`
+- 2026-08-20 [CODE] `src/pages/WorkflowPage.test.ts`
+- 2026-08-20 [CODE] `convex/workflows.ts`
+- 2026-08-20 [CODE] `convex/workflows.test.ts`
 - 2026-08-18 [CODE] `CONTINUITY.md`
 
 # Receipts

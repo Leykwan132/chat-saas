@@ -20,8 +20,10 @@ test("workflow page saves and discards only automation settings", () => {
   expect(source).toContain("automationDraft.reset()");
 });
 
-test("workflow page leaves manual node movement transient", () => {
-  expect(source).not.toContain("onNodeMoved=");
+test("workflow page saves the final position after a manual node move", () => {
+  expect(source).toContain(
+    "onNodeMoved={(nodeId, position) => void messageActions.moveNode(nodeId, position)}",
+  );
   expect(source).toContain("onCleanup={(measurements) => void handleCleanup(measurements)}");
   expect(source).toContain("onArrange={() => void handleArrange()}");
 });

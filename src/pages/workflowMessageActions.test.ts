@@ -23,6 +23,14 @@ test("direct actions use focused atomic mutations", () => {
   expect(source).toContain("api.workflows.removeEdge");
 });
 
+test("manual node movement saves the final canvas coordinates", () => {
+  expect(source).toContain("api.workflows.updateNode");
+  expect(source).toContain("const moveNode = useCallback(async (");
+  expect(source).toContain("positionX: position.x,");
+  expect(source).toContain("positionY: position.y,");
+  expect(source).toContain('"Could not save node position"');
+});
+
 test("Add uses one loading toast lifecycle", () => {
   expect(source).toContain("const toastId = toast.loading");
   expect(source).toContain("toast.success(");
