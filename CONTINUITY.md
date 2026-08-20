@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-19 [USER] Goal: ship an isolated white-label partner reseller portal where approved partners manage customer organizations, shared plans, manual credits, branding, and a single hostname without pricing or Stripe controls.
-- 2026-08-19 [CODE] Now: custom-hostname lifecycle, authorization gates, Cloudflare request helpers, and Branding's wide gated setup modal are implemented and test-covered; deployment configuration and final production verification remain.
-- 2026-08-19 [CODE] Next: execute the custom-hostname plan, then configure Cloudflare Custom Hostnames and WorkOS custom-auth settings before activation.
+- 2026-08-20 [CODE] Now: resolving the `origin/main` merge at `3f44e70`, then repairing the post-merge test baseline before publishing the partner branch.
+- 2026-08-20 [CODE] Next: reproduce the post-merge failure, trace its root cause, and add a focused regression before the fix.
 - 2026-08-19 [ASSUMPTION] This work is unshipped; no release changelog entry has been added.
 
 # Decisions
@@ -94,3 +94,4 @@
 - 2026-08-19 [CODE] Balanced the DNS record row by making Name and Value equal-width after the compact Type column. Focused Partner Programme tests, TypeScript, and diff validation pass.
 - 2026-08-19 [CODE] Added an inline spinner to the ownership DNS polling status. Focused Partner Programme tests, TypeScript, and diff validation pass.
 - 2026-08-20 [TOOL] Certificate issuance-status regression test, `tsc --noEmit`, and `git diff --check` pass on Node v22.22.0.
+- 2026-08-20 [TOOL] Incoming `origin/main` at `3f44e70` includes PR #69, which persists workflow node positions after drag; its application code merged automatically.
