@@ -54,7 +54,7 @@
 - 2026-08-20 [CODE] `CONTINUITY.md`
 
 # Receipts
-- 2026-08-20 [TOOL] Commit `076a053` was pushed to `origin/codex/messenger-oauth-diagnostics`; the GitHub plugin found no existing PR, then PR creation failed with `403 Resource not accessible by integration`.
+- 2026-08-20 [TOOL] Commit `7a43730` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused Page-list token-log tests pass, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
 - 2026-08-20 [TOOL] Fresh Node v22.22.0 focused Messenger diagnostics tests pass (2); changed-file ESLint and `git diff --check` exit 0.
 - 2026-08-20 [TOOL] Draft PR #73 created: `https://github.com/Leykwan132/chat-saas/pull/73`.
 - 2026-08-20 [TOOL] Final Node v22.22.0 focused Messenger feedback suite passes (8); changed-file ESLint has zero errors and one pre-existing `ChannelsPage` hook-dependency warning; production build exits 0 with existing Meta app ID and large-chunk warnings.
