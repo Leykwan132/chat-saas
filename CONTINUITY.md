@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-20 [USER] Goal: show clear Messenger connection progress and customer-safe failure feedback.
 - 2026-08-20 [CODE] Now: Messenger embedded signup, Page picking, and classic OAuth show progress or generic retry feedback without exposing backend error text.
-- 2026-08-20 [CODE] Next: publish a separate PR from `codex/show-messenger-connection-progress`; add a release changelog entry only when production availability is confirmed.
+- 2026-08-20 [CODE] Next: review and merge draft PR #73; add a release changelog entry only when production availability is confirmed.
 - 2026-08-20 [CODE] Open question: the Page picker repeats the Page fetch after the backend connection completes; it remains out of scope for this PR.
 
 # Decisions
@@ -27,6 +27,7 @@
 # Done (recent)
 - 2026-08-20 [TOOL] PR #71 merged into `main`, isolating channel management by assigned agent.
 - 2026-08-20 [TOOL] PR #72 merged into `main`, fixing agent-scoped Messenger error recording.
+- 2026-08-20 [TOOL] Draft PR #73 opened from `codex/show-messenger-connection-progress` at commit `6f8f571`.
 - 2026-08-20 [CODE] Added Messenger connecting feedback and customer-safe failure messaging across embedded signup, Page picking, and classic OAuth.
 - 2026-08-20 [TOOL] Opened PR #69 from `codex/persist-workflow-node-positions` into `main` at commit `8fe01b8`.
 - 2026-08-20 [CODE] Connected authenticated `WorkflowCanvas.onNodeMoved` to an immediate persisted position update; landing-preview dragging remains local-only.
@@ -48,6 +49,7 @@
 - 2026-08-20 [CODE] `CONTINUITY.md`
 
 # Receipts
+- 2026-08-20 [TOOL] Draft PR #73 created: `https://github.com/Leykwan132/chat-saas/pull/73`.
 - 2026-08-20 [TOOL] Final Node v22.22.0 focused Messenger feedback suite passes (8); changed-file ESLint has zero errors and one pre-existing `ChannelsPage` hook-dependency warning; production build exits 0 with existing Meta app ID and large-chunk warnings.
 - 2026-08-20 [TOOL] Re-review found no raw Convex, Meta, or backend error exposure across Messenger embedded signup, Page picking, or classic OAuth.
 - 2026-08-20 [TOOL] Node v22.22.0 Messenger feedback tests (6) and changed-file ESLint checks pass after adding the generic error-message regression case.
