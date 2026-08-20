@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-20 [USER] Goal: a new agent’s Channels page must not show a channel connected to another agent.
 - 2026-08-20 [CODE] Now: Channels requests the current route agent and the backend returns only that owned agent’s assigned channels.
-- 2026-08-20 [CODE] Next: publish `codex/isolate-agent-channels` as a PR; add a release changelog entry only when production availability is confirmed.
+- 2026-08-20 [CODE] Next: review and merge draft PR #71; add a release changelog entry only when production availability is confirmed.
 - 2026-08-20 [ASSUMPTION] Existing channel ownership is represented by `defaultAgentId`; unassigned legacy channels are not displayed as belonging to an arbitrary agent.
 
 # Decisions
@@ -23,13 +23,13 @@
 - 2026-08-20 [USER] D734 ACTIVE: Channel management is agent-scoped; a channel assigned to one agent must not appear on another agent’s Channels page.
 
 # Done (recent)
+- 2026-08-20 [TOOL] Opened draft PR #71 from `codex/isolate-agent-channels` into `main` at commit `18ddff2`.
 - 2026-08-20 [CODE] Added authenticated agent-scoped channel retrieval and wired the Channels page to its route agent, preventing cross-agent channel cards.
 - 2026-08-20 [TOOL] Opened PR #69 from `codex/persist-workflow-node-positions` into `main` at commit `8fe01b8`.
 - 2026-08-20 [CODE] Connected authenticated `WorkflowCanvas.onNodeMoved` to an immediate persisted position update; landing-preview dragging remains local-only.
 - 2026-08-20 [CODE] Added regression coverage for the page callback, exact position payload, and a real create-move-reload Convex workflow journey.
 - 2026-08-20 [TOOL] Node v22.22.0 focused workflow suite passes: 16 tests in 3 files; production build exits successfully. ESLint has no errors and one pre-existing `WorkflowPage` exhaustive-deps warning.
 - 2026-08-20 [TOOL] Targeted review found no critical or important defects; it noted only that coverage is split across page wiring, action payload, and Convex reload tests rather than one browser drag integration.
-- 2026-08-20 [TOOL] Confirmed this is a linked isolated workspace at `/Users/leykwanchoo/.codex/worktrees/e0ef/chat-saas` in detached HEAD state; a feature branch will be created before committing.
 
 # Working set
 - 2026-08-20 [CODE] `convex/channels.ts`
@@ -63,4 +63,3 @@
 - 2026-08-18 [TOOL] Readable-detail divider regression test and Node v22.22.0 production build pass.
 - 2026-08-18 [TOOL] Neutral View in chat regression test and Node v22.22.0 production build pass.
 - 2026-08-18 [TOOL] Inbox dummy-preview removal passed 8 relevant tests and the Node v22.22.0 production build; the lifecycle fixture retains its known missing aggregate-component warning.
-- 2026-08-18 [TOOL] Draft PR #68 was created from `codex/inbox-escalation-trace` into `main` via authenticated GitHub CLI after the connector returned 403.
