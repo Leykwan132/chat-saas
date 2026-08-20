@@ -1,9 +1,9 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-20 [USER] Goal: remove Messenger diagnostics and pause Instagram plus Website/KiloBot channel setup.
-- 2026-08-20 [CODE] Now: Messenger OAuth and Page-list diagnostics are removed; the Instagram and Website/KiloBot channel-card containers are hidden.
-- 2026-08-20 [TOOL] Next: create the review PR from the pushed branch using GitHub account permissions; the connected GitHub plugin cannot create PRs for this repository.
+- 2026-08-20 [USER] Goal: remove Messenger diagnostics and pause Messenger plus Instagram channel setup.
+- 2026-08-20 [CODE] Now: Messenger OAuth and Page-list diagnostics are removed; Messenger and Instagram channel-card containers are hidden, including connected cards; Website/KiloBot remains visible.
+- 2026-08-20 [TOOL] Next: commit and push the corrected Messenger/Instagram pause scope if the user requests it.
 - 2026-08-20 [CODE] Open question: the Page picker repeats the Page fetch after the backend connection completes; it remains out of scope for this PR.
 
 # Decisions
@@ -23,16 +23,16 @@
 - 2026-08-20 [USER] D734 ACTIVE: Channel management is agent-scoped; a channel assigned to one agent must not appear on another agent’s Channels page.
 - 2026-08-20 [USER] D735 ACTIVE: Messenger’s backend wait is shown as a non-dismissible “Getting your Facebook Pages…” progress dialog until it succeeds, fails, or hands off to the Page picker.
 - 2026-08-20 [USER] D736 ACTIVE: Messenger connection failures never display raw Convex, Meta, or backend error details to customers; embedded signup, Page picking, and classic OAuth use generic retry feedback.
-- 2026-08-20 [USER] D737 ACTIVE: Messenger OAuth and Page-list diagnostics log request and response metadata plus the last four token characters when available, except Page-list input logs the full user access token; raw authorization codes, app secrets, and other access tokens remain excluded.
+- 2026-08-20 [USER] D737 SUPERSEDED by D739: temporary Messenger diagnostics were removed.
 - 2026-08-20 [USER] D738 ACTIVE: the diagnostics PR includes Messenger logging only; billing and unrelated test-suite repairs are excluded.
-- 2026-08-20 [USER] D739 ACTIVE: Messenger diagnostic logging is removed; Instagram and Website/KiloBot setup are paused by hiding their channel-card containers.
+- 2026-08-20 [USER] D739 ACTIVE: Messenger diagnostic logging is removed; Messenger and Instagram setup are paused by hiding their channel-card containers while Website/KiloBot remains visible.
 
 # Done (recent)
 - 2026-08-20 [TOOL] PR #71 merged into `main`, isolating channel management by assigned agent.
 - 2026-08-20 [TOOL] PR #72 merged into `main`, fixing agent-scoped Messenger error recording.
 - 2026-08-20 [TOOL] Draft PR #73 opened from `codex/show-messenger-connection-progress` at commit `6f8f571`.
 - 2026-08-20 [CODE] Added Messenger connecting feedback and customer-safe failure messaging across embedded signup, Page picking, and classic OAuth.
-- 2026-08-20 [CODE] Removed Messenger OAuth and Page-list diagnostic logging; paused Instagram and Website/KiloBot setup by hiding their channel-card containers.
+- 2026-08-20 [CODE] Removed Messenger OAuth and Page-list diagnostic logging; paused Messenger and Instagram setup by hiding their channel-card containers, including connected cards; Website/KiloBot remains visible.
 - 2026-08-20 [TOOL] Opened PR #69 from `codex/persist-workflow-node-positions` into `main` at commit `8fe01b8`.
 - 2026-08-20 [CODE] Connected authenticated `WorkflowCanvas.onNodeMoved` to an immediate persisted position update; landing-preview dragging remains local-only.
 - 2026-08-20 [CODE] Added regression coverage for the page callback, exact position payload, and a real create-move-reload Convex workflow journey.
@@ -47,6 +47,7 @@
 - 2026-08-20 [CODE] `CONTINUITY.md`
 
 # Receipts
+- 2026-08-20 [TOOL] Corrected pause scope: focused channel/logging tests pass (2), changed-file ESLint has zero errors and one pre-existing hook-dependency warning, and production build exits 0 with existing Meta app ID and large-chunk warnings.
 - 2026-08-20 [TOOL] Commit `145a52c` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused regression tests pass (2), production build exits 0, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
 - 2026-08-20 [TOOL] Commit `7a43730` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused Page-list token-log tests pass, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
 - 2026-08-20 [TOOL] Fresh Node v22.22.0 focused Messenger diagnostics tests pass (2); changed-file ESLint and `git diff --check` exit 0.

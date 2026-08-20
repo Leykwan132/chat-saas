@@ -59,6 +59,7 @@ const CONNECTABLE_SERVICES: SupportedChannelService[] = [
 
 const PAUSED_CHANNEL_SERVICES = new Set<SupportedChannelService>([
   'instagram',
+  'messenger',
 ]);
 
 type ChannelDoc = Doc<'channels'>;
@@ -308,12 +309,10 @@ export default function ChannelsPage() {
 
       <section className="flex flex-col gap-4 animate-fade-in">
         <div className="flex flex-wrap gap-2">
-          <div className="hidden">
-            <WebsiteChannelCard
-              agentId={agentId}
-              onShowDetails={() => setWebDetailsOpen(true)}
-            />
-          </div>
+          <WebsiteChannelCard
+            agentId={agentId}
+            onShowDetails={() => setWebDetailsOpen(true)}
+          />
 
           {showPendingWhatsApp && openWhatsAppAttempt ? (
             <PendingWhatsAppConnectionCard
@@ -339,9 +338,10 @@ export default function ChannelsPage() {
               return null;
             }
 
+            const shouldHideChannelCard = PAUSED_CHANNEL_SERVICES.has(service);
             const channel = connectedByService.get(service);
             if (channel) {
-              return (
+              const connectedChannelCard = (
                 <ConnectedChannelCard
                   key={channel._id}
                   agentId={agentId}
@@ -361,6 +361,12 @@ export default function ChannelsPage() {
                   onShowWebDetails={() => setWebDetailsOpen(true)}
                 />
               );
+
+              return shouldHideChannelCard ? (
+                <div className="hidden" key={service}>
+                  {connectedChannelCard}
+                </div>
+              ) : connectedChannelCard;
             }
 
             const availableChannelCard = (
@@ -375,15 +381,11 @@ export default function ChannelsPage() {
               />
             );
 
-            if (PAUSED_CHANNEL_SERVICES.has(service)) {
-              return (
-                <div className="hidden" key={service}>
-                  {availableChannelCard}
-                </div>
-              );
-            }
-
-            return availableChannelCard;
+            return shouldHideChannelCard ? (
+              <div className="hidden" key={service}>
+                {availableChannelCard}
+              </div>
+            ) : availableChannelCard;
           })}
         </div>
       </section>
