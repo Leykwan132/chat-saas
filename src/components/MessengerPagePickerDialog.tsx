@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { Shimmer } from '@/components/ai-elements/shimmer';
+import { getCustomerSafeMessengerConnectionFailureMessage } from '@/lib/messengerConnectionFeedback';
 
 type MessengerPageOption = {
   id: string;
@@ -23,7 +24,7 @@ type MessengerPageOption = {
 type PagePickerState = {
   sessionId: Id<'oauthSessions'>;
   pages: MessengerPageOption[] | null;
-  loadError: string | null;
+  loadFailed: boolean;
 };
 
 export function MessengerPagePickerDialog({
@@ -44,6 +45,7 @@ export function MessengerPagePickerDialog({
   const [pagePickerState, setPagePickerState] =
     useState<PagePickerState | null>(null);
   const [pickingId, setPickingId] = useState<string | null>(null);
+  const [pageLoadAttempt, setPageLoadAttempt] = useState(0);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -55,22 +57,21 @@ export function MessengerPagePickerDialog({
         setPagePickerState({
           sessionId,
           pages: loaded,
-          loadError: null,
+          loadFailed: false,
         });
-      } catch (err) {
+      } catch {
         if (cancelled) return;
-        const message = err instanceof Error ? err.message : String(err);
         setPagePickerState({
           sessionId,
           pages: null,
-          loadError: message,
+          loadFailed: true,
         });
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [sessionId, getPickerPages]);
+  }, [sessionId, getPickerPages, pageLoadAttempt]);
 
   const clearPickerParams = useCallback(() => {
     const next = new URLSearchParams(searchParams);
@@ -79,6 +80,16 @@ export function MessengerPagePickerDialog({
     next.delete('message');
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
+
+  const retryPageLoad = useCallback(() => {
+    if (!sessionId) return;
+    setPagePickerState({
+      sessionId,
+      pages: null,
+      loadFailed: false,
+    });
+    setPageLoadAttempt((attempt) => attempt + 1);
+  }, [sessionId]);
 
   const handlePick = useCallback(
     (pageId: string) => {
@@ -90,9 +101,8 @@ export function MessengerPagePickerDialog({
           toast.success('Messenger account connected');
           clearPickerParams();
           onConnected?.();
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
-          toast.error(`Messenger connect failed: ${message}`);
+        } catch (error) {
+          toast.error(getCustomerSafeMessengerConnectionFailureMessage(error));
         } finally {
           setPickingId(null);
         }
@@ -105,7 +115,7 @@ export function MessengerPagePickerDialog({
   const activeState =
     pagePickerState?.sessionId === sessionId ? pagePickerState : null;
   const pages = activeState?.pages ?? null;
-  const loadError = activeState?.loadError ?? null;
+  const loadFailed = activeState?.loadFailed ?? false;
 
   return (
     <Dialog open={open} modal>
@@ -116,26 +126,11 @@ export function MessengerPagePickerDialog({
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        {loadError ? (
-          <div className="flex flex-col items-center gap-3 py-2 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
-              <CircleAlert className="size-6" />
-            </div>
-            <DialogTitle className="text-lg font-semibold sm:text-xl">
-              Could not load Pages
-            </DialogTitle>
-            <DialogDescription className="max-w-prose">
-              {loadError}
-            </DialogDescription>
-            <Button
-              type="button"
-              variant="outline"
-              className="mt-2"
-              onClick={() => clearPickerParams()}
-            >
-              Close
-            </Button>
-          </div>
+        {loadFailed ? (
+          <MessengerPageLoadErrorContent
+            onClose={clearPickerParams}
+            onRetry={retryPageLoad}
+          />
         ) : pages === null ? (
           <div className="flex flex-col items-center gap-4 py-8 text-center sm:py-10">
             <Spinner className="size-8 text-muted-foreground" />
@@ -194,5 +189,35 @@ export function MessengerPagePickerDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function MessengerPageLoadErrorContent({
+  onClose,
+  onRetry,
+}: {
+  onClose: () => void;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 py-2 text-center">
+      <div className="flex size-12 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+        <CircleAlert className="size-6" />
+      </div>
+      <DialogTitle className="text-lg font-semibold sm:text-xl">
+        Couldn’t load Facebook Pages
+      </DialogTitle>
+      <DialogDescription className="max-w-prose">
+        We couldn’t load your Facebook Pages. Please try again.
+      </DialogDescription>
+      <div className="mt-2 flex gap-2">
+        <Button type="button" variant="outline" onClick={onClose}>
+          Close
+        </Button>
+        <Button type="button" onClick={onRetry}>
+          Try again
+        </Button>
+      </div>
+    </div>
   );
 }
