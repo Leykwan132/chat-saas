@@ -15,6 +15,7 @@ import { checkPlatformSupport, getPlanFromStripe, getChannelLimitForOrg } from "
 import { deleteWhatsAppHistoryStagingForChannel } from "./whatsappSync";
 import { assertAgentCanConnectWhatsApp } from "./whatsappChannelGuard";
 import { deleteConversationAgentThread } from "./channelAgentThreadCleanup";
+import { getOwnedAgentForAuth } from "./agentAccess";
 
 async function enforceChannelLimit(
   ctx: MutationCtx,
@@ -72,9 +73,36 @@ function logWhatsAppChannel(
 }
 
 export const listForCurrentOrg = query({
-  args: {},
-  handler: async (ctx) => {
-    const { orgId, userId } = await getAuthContext(ctx);
+  args: {
+    agentId: v.optional(v.id("agents")),
+  },
+  handler: async (ctx, args) => {
+    const auth = await getAuthContext(ctx);
+    const { orgId, userId } = auth;
+    if (args.agentId !== undefined) {
+      const agent = await getOwnedAgentForAuth(ctx, auth, args.agentId);
+      if (agent === null) {
+        throw new Error("Agent not found");
+      }
+      const channels = await ctx.db
+        .query("channels")
+        .withIndex("by_defaultAgentId_and_service", (q) =>
+          q.eq("defaultAgentId", args.agentId),
+        )
+        .take(50);
+      return await Promise.all(
+        channels.map(async (channel) => {
+          const conversations = await ctx.db
+            .query("conversations")
+            .withIndex("by_channel_and_contactAddress", (q) => q.eq("channelId", channel._id))
+            .collect();
+          return {
+            ...channel,
+            conversationCount: conversations.length,
+          };
+        }),
+      );
+    }
     // Personal workspaces have no team/org, so channels are looked up by the
     // owner's connectedByUserId instead of by orgId. Team workspaces scope by
     // orgId as usual.

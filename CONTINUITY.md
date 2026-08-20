@@ -1,10 +1,10 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-20 [USER] Goal: create one PR so workflow-node positions are automatically saved at creation and after every move, restoring the last placement on return.
-- 2026-08-20 [CODE] Now: the authenticated canvas saves each drag-end coordinate through the existing authorized node mutation; created nodes already persisted their generated coordinates.
-- 2026-08-20 [CODE] Next: review and merge open PR #69; add a release changelog entry only when production availability is confirmed.
-- 2026-08-20 [ASSUMPTION] Persist the exact final React Flow drag position when the drag ends, without changing Cleanup/Arrange or the automation-only Save/Discard boundary.
+- 2026-08-20 [USER] Goal: a new agent’s Channels page must not show a channel connected to another agent.
+- 2026-08-20 [CODE] Now: Channels requests the current route agent and the backend returns only that owned agent’s assigned channels.
+- 2026-08-20 [CODE] Next: publish `codex/isolate-agent-channels` as a PR; add a release changelog entry only when production availability is confirmed.
+- 2026-08-20 [ASSUMPTION] Existing channel ownership is represented by `defaultAgentId`; unassigned legacy channels are not displayed as belonging to an arbitrary agent.
 
 # Decisions
 - 2026-08-18 [USER] D727 ACTIVE: the app does not send Google Ads conversion events; the installed Google tag measures the configured onboarding conversion.
@@ -20,17 +20,21 @@
 - 2026-08-17 [USER] D701–D718 ACTIVE: Agent Overview uses the 30-day range and contextual compact controls; Q&A includes reusable support-question presets; topic analytics are plan-entitled with an upgrade path.
 - 2026-08-17 [USER] D725 ACTIVE: landing benefit cards use the supplied revised portrait images at full grid-column width above customer-outcome copy on a zinc-gray section background; the booking card retains “Turn Enquiries Into Bookings” and makes KiloBot’s booking lifecycle automation explicit.
 - 2026-08-16 [USER] D637–D700 ACTIVE: Google Calendar remains individual and primary-calendar-only; connected writes fail closed and manual/CSV customers retain active-agent scope.
+- 2026-08-20 [USER] D734 ACTIVE: Channel management is agent-scoped; a channel assigned to one agent must not appear on another agent’s Channels page.
 
 # Done (recent)
+- 2026-08-20 [CODE] Added authenticated agent-scoped channel retrieval and wired the Channels page to its route agent, preventing cross-agent channel cards.
 - 2026-08-20 [TOOL] Opened PR #69 from `codex/persist-workflow-node-positions` into `main` at commit `8fe01b8`.
 - 2026-08-20 [CODE] Connected authenticated `WorkflowCanvas.onNodeMoved` to an immediate persisted position update; landing-preview dragging remains local-only.
 - 2026-08-20 [CODE] Added regression coverage for the page callback, exact position payload, and a real create-move-reload Convex workflow journey.
 - 2026-08-20 [TOOL] Node v22.22.0 focused workflow suite passes: 16 tests in 3 files; production build exits successfully. ESLint has no errors and one pre-existing `WorkflowPage` exhaustive-deps warning.
 - 2026-08-20 [TOOL] Targeted review found no critical or important defects; it noted only that coverage is split across page wiring, action payload, and Convex reload tests rather than one browser drag integration.
 - 2026-08-20 [TOOL] Confirmed this is a linked isolated workspace at `/Users/leykwanchoo/.codex/worktrees/e0ef/chat-saas` in detached HEAD state; a feature branch will be created before committing.
-- 2026-08-20 [TOOL] Existing `workflows.addNodeAfter` writes generated node positions; `workflows.updateNode` already authorizes and validates individual position updates; `WorkflowPage` currently omits `onNodeMoved` by design.
 
 # Working set
+- 2026-08-20 [CODE] `convex/channels.ts`
+- 2026-08-20 [CODE] `convex/channels.test.ts`
+- 2026-08-20 [CODE] `src/pages/ChannelsPage.tsx`
 - 2026-08-20 [CODE] `src/pages/WorkflowPage.tsx`
 - 2026-08-20 [CODE] `src/pages/useWorkflowMessageActions.ts`
 - 2026-08-20 [CODE] `src/pages/WorkflowPage.test.ts`
@@ -39,6 +43,9 @@
 - 2026-08-18 [CODE] `CONTINUITY.md`
 
 # Receipts
+- 2026-08-20 [TOOL] New agent-channel isolation test passes under Node v22.22.0; production build exits 0, with existing Meta app ID and large-chunk warnings.
+- 2026-08-20 [TOOL] Full `bun run test` with mock Stripe prices fails in unrelated calendar and agent-overview suites (18 tests across 6 files); the new channel test passes.
+- 2026-08-20 [TOOL] `bunx convex codegen` is unavailable in this isolated worktree because `CONVEX_DEPLOYMENT` is unset.
 - 2026-08-18 [TOOL] `origin/main` at `32a2ebe` contains merged PR #66; the removal branch is resolving that merge in favor of D727.
 - 2026-08-18 [TOOL] Post-merge focused Vitest checks (7), loader test (1), and Node v22.22.0 production build passed; only existing Meta app ID and large-chunk Vite warnings remain.
 - 2026-08-18 [TOOL] The incoming `src/googleAdsTag.test.mjs` verifies the Google Ads loader URL and config ID and remains intact.
@@ -57,4 +64,3 @@
 - 2026-08-18 [TOOL] Neutral View in chat regression test and Node v22.22.0 production build pass.
 - 2026-08-18 [TOOL] Inbox dummy-preview removal passed 8 relevant tests and the Node v22.22.0 production build; the lifecycle fixture retains its known missing aggregate-component warning.
 - 2026-08-18 [TOOL] Draft PR #68 was created from `codex/inbox-escalation-trace` into `main` via authenticated GitHub CLI after the connector returned 403.
-- 2026-08-20 [TOOL] PR #69 is open against `main`; the branch tracks `origin/codex/persist-workflow-node-positions` at `8fe01b8`.
