@@ -1,6 +1,10 @@
 # CONTINUITY.md
 
 # Snapshot
+- 2026-08-21 [USER] Goal: replace Kilobot’s AI widget with a Chatwoot-inspired right-side iframe home, optional visitor form, and normal conversation view; preserve the snippet and Traditional widget.
+- 2026-08-21 [CODE] Now: iframe host, standalone React widget entry, normalized home/form configuration, public visitor-profile APIs, and HTTP compatibility endpoints are implemented.
+- 2026-08-21 [CODE] Next: reshape dashboard settings/preview to edit the new home/form fields and add widget interaction coverage.
+- 2026-08-21 [CODE] Open question: UNCONFIRMED whether the next slice should include dashboard controls before visual polish and mobile viewport work.
 - 2026-08-20 [USER] Goal: remove Messenger diagnostics and pause Messenger plus Instagram channel setup.
 - 2026-08-20 [CODE] Now: Messenger OAuth and Page-list diagnostics are removed; Messenger and Instagram channel-card containers are hidden, including connected cards; Website/KiloBot remains visible.
 - 2026-08-20 [TOOL] Next: the updated branch is ready for review.

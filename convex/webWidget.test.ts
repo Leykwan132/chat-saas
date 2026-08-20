@@ -165,15 +165,133 @@ test("public config resolves by widget key and rejects disabled widgets", async 
   ).rejects.toThrow("Widget not found");
 });
 
-test("web widget placement can change while theme stays fixed", async () => {
+test("new widgets expose the dark right-side home experience", async () => {
+  const t = initTest();
+  const agentId = await createAgent(t, "user_web_home", "Home Agent");
+  const identity = { subject: "user_web_home", email: "home@example.com" };
+  const setup = await t.withIdentity(identity).mutation(api.webWidget.ensureForAgent, { agentId });
+
+  const config = await t.query(api.webWidget.publicGetConfig, {
+    publicKey: setup.publicKey,
+  });
+
+  expect(config).toMatchObject({
+    layout: "right_avatar",
+    theme: "dark",
+    home: {
+      greeting: "Hi there! 👋",
+      availabilityText: "We are online",
+    },
+    leadForm: {
+      enabled: false,
+      fields: {
+        name: { visible: true, required: true },
+        phone: { visible: false, required: false },
+      },
+    },
+  });
+});
+
+test("visitor form submission creates a web customer before a message", async () => {
+  const t = initTest();
+  const agentId = await createAgent(t, "user_web_lead", "Lead Agent");
+  const identity = { subject: "user_web_lead", email: "lead@example.com" };
+  const setup = await t.withIdentity(identity).mutation(api.webWidget.ensureForAgent, { agentId });
+
+  await t.run(async (ctx) => {
+    const settings = await ctx.db
+      .query("webWidgetSettings")
+      .withIndex("by_publicKey", (q) => q.eq("publicKey", setup.publicKey))
+      .unique();
+    if (settings === null) {
+      throw new Error("Widget settings not found");
+    }
+    await ctx.db.patch(settings._id, {
+      leadForm: {
+        enabled: true,
+        heading: "Tell us about yourself",
+        description: "We will use this to follow up.",
+        submitLabel: "Start chat",
+        fields: {
+          name: { visible: true, required: true },
+          email: { visible: true, required: true },
+          phone: { visible: false, required: false },
+        },
+      },
+    });
+  });
+
+  const profile = await t.mutation(api.webWidgetPublic.submitVisitorProfile, {
+    publicKey: setup.publicKey,
+    visitorId: "visitor-lead-1",
+    name: "Taylor Visitor",
+    email: "taylor@example.com",
+  });
+
+  expect(profile).toEqual({
+    name: "Taylor Visitor",
+    email: "taylor@example.com",
+    phone: null,
+  });
+  const customers = await t.run(async (ctx) => await ctx.db.query("customers").collect());
+  const conversations = await t.run(async (ctx) => await ctx.db.query("conversations").collect());
+  expect(customers).toHaveLength(1);
+  expect(customers[0]).toMatchObject({
+    service: "web",
+    contactAddress: "visitor-lead-1",
+    name: "Taylor Visitor",
+    email: "taylor@example.com",
+  });
+  expect(conversations).toEqual([]);
+});
+
+test("owners can configure their widget home and visitor form", async () => {
+  const t = initTest();
+  const agentId = await createAgent(t, "user_web_owner", "Owner Agent");
+  const identity = { subject: "user_web_owner", email: "owner@example.com" };
+  const setup = await t.withIdentity(identity).mutation(api.webWidget.ensureForAgent, { agentId });
+
+  await t.withIdentity(identity).mutation(api.webWidget.updateSettings, {
+    agentId,
+    home: {
+      greeting: "Welcome to Acme",
+      introduction: "Ask our team anything.",
+      availabilityText: "Support is available",
+      replyTimeText: "Replies within one business day",
+    },
+    leadForm: {
+      enabled: true,
+      heading: "Let’s get started",
+      description: "Tell us where to reply.",
+      submitLabel: "Chat with us",
+      fields: {
+        name: { visible: true, required: true },
+        email: { visible: true, required: true },
+        phone: { visible: true, required: false },
+      },
+    },
+  });
+
+  const config = await t.query(api.webWidget.publicGetConfig, { publicKey: setup.publicKey });
+  expect(config).toMatchObject({
+    home: { greeting: "Welcome to Acme", availabilityText: "Support is available" },
+    leadForm: {
+      enabled: true,
+      heading: "Let’s get started",
+      fields: { phone: { visible: true, required: false } },
+    },
+  });
+});
+
+test("web widgets stay on the right while owners can choose a theme", async () => {
   const t = initTest();
   const agentId = await createAgent(t, "user_web_layout", "Layout Agent");
   const setup = await t
     .withIdentity({ subject: "user_web_layout", email: "layout@example.com" })
     .mutation(api.webWidget.ensureForAgent, { agentId });
 
-  expect(setup.layout).toBe("input_bar");
-  expect(setup.theme).toBe("light");
+  expect(setup.layout).toBe("right_avatar");
+  expect(setup.theme).toBe("dark");
 
   await t
     .withIdentity({ subject: "user_web_layout", email: "layout@example.com" })
@@ -181,7 +299,7 @@ test("web widget placement can change while theme stays fixed", async () => {
       agentId,
       agentDisplayName: "Left Concierge",
       layout: "right_avatar",
-      theme: "dark",
+      theme: "light",
       placeholder: "Ask the concierge anything",
     });
 

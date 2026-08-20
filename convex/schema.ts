@@ -14,6 +14,8 @@ import {
 } from "./workflowValidators";
 import {
   webWidgetLayoutValidator,
+  webWidgetHomeValidator,
+  webWidgetLeadFormValidator,
   webWidgetModeValidator,
   webWidgetThemeValidator,
 } from "./webWidgetValidators";
@@ -627,6 +629,8 @@ export default defineSchema({
     placeholder: v.optional(v.string()),
     layout: v.optional(webWidgetLayoutValidator),
     theme: v.optional(webWidgetThemeValidator),
+    home: v.optional(webWidgetHomeValidator),
+    leadForm: v.optional(webWidgetLeadFormValidator),
     iconStorageId: v.optional(v.id("_storage")),
     hidePoweredBy: v.optional(v.boolean()),
     mode: v.optional(webWidgetModeValidator),

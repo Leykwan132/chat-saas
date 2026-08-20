@@ -7,8 +7,14 @@ import {
 } from "../shared/webWidgetLayouts";
 import {
   DEFAULT_WEB_WIDGET_THEME,
+  normalizeWebWidgetTheme,
   type WebWidgetTheme,
 } from "../shared/webWidgetThemes";
+import {
+  normalizeWebWidgetExperience,
+  type WebWidgetHome,
+  type WebWidgetLeadForm,
+} from "../shared/webWidgetExperience";
 import {
   defaultWebWidgetPlaceholder,
   generateUniquePublicKey,
@@ -30,6 +36,7 @@ async function widgetDashboardConfig(ctx: QueryCtx | MutationCtx, settings: Doc<
     userId: settings.connectedByUserId,
   });
   const branding = resolveWebWidgetBranding(settings, planState.canUseCustomIcon);
+  const experience = normalizeWebWidgetExperience(settings);
   return {
     channelId: settings.channelId,
     publicKey: settings.publicKey,
@@ -38,10 +45,11 @@ async function widgetDashboardConfig(ctx: QueryCtx | MutationCtx, settings: Doc<
     placeholder:
       settings.placeholder ?? defaultWebWidgetPlaceholder(settings.agentDisplayName),
     layout: normalizeWebWidgetLayout(settings.layout),
-    theme: DEFAULT_WEB_WIDGET_THEME,
+    theme: normalizeWebWidgetTheme(settings.theme),
     iconUrl: await resolveWidgetIconUrl(ctx, settings, planState.canUseCustomIcon),
     ...branding,
     canUseCustomIcon: planState.canUseCustomIcon,
+    ...experience,
     traditional: await traditionalDashboardConfig(
       ctx,
       settings,
@@ -182,6 +190,8 @@ export async function updateWidgetSettings(
     placeholder?: string;
     layout?: WebWidgetLayout;
     theme?: WebWidgetTheme;
+    home?: WebWidgetHome;
+    leadForm?: WebWidgetLeadForm;
     hidePoweredBy?: boolean;
   },
 ) {
@@ -214,11 +224,27 @@ export async function updateWidgetSettings(
   if (args.layout !== undefined) {
     patch.layout = normalizeWebWidgetLayout(args.layout);
   }
+  if (args.theme !== undefined) {
+    patch.theme = args.theme;
+  }
+  if (args.home !== undefined) {
+    patch.home = normalizeWebWidgetExperience({ home: args.home }).home;
+  }
+  if (args.leadForm !== undefined) {
+    const leadForm = normalizeWebWidgetExperience({ leadForm: args.leadForm }).leadForm;
+    if (!Object.values(leadForm.fields).some((field) => field.visible && field.required)) {
+      throw new Error("Visitor form needs at least one visible required field");
+    }
+    patch.leadForm = leadForm;
+  }
   if (
     patch.agentDisplayName === undefined &&
     patch.placeholder === undefined &&
     patch.hidePoweredBy === undefined &&
-    patch.layout === undefined
+    patch.layout === undefined &&
+    patch.theme === undefined &&
+    patch.home === undefined &&
+    patch.leadForm === undefined
   ) {
     throw new Error("No widget settings changes provided");
   }
