@@ -51,7 +51,7 @@ test("logs safe Messenger token exchange input and output metadata", async () =>
   }
 });
 
-test("logs safe Messenger Page-list input and output metadata", async () => {
+test("logs the Messenger Page-list input token and safe output metadata", async () => {
   const infoLog = vi.spyOn(console, "info").mockImplementation(() => undefined);
   const fetchMock = vi.fn().mockResolvedValue(
     new Response(
@@ -77,9 +77,9 @@ test("logs safe Messenger Page-list input and output metadata", async () => {
       1,
       "[messenger] Page list input",
       {
+        userAccessToken: "user-access-token",
         userAccessTokenLength: 17,
         userAccessTokenRetrieved: true,
-        userAccessTokenSuffix: "oken",
       },
     );
     expect(infoLog).toHaveBeenNthCalledWith(
@@ -98,7 +98,6 @@ test("logs safe Messenger Page-list input and output metadata", async () => {
         ],
       },
     );
-    expect(JSON.stringify(infoLog.mock.calls)).not.toContain("user-access-token");
     expect(JSON.stringify(infoLog.mock.calls)).not.toContain("page-access-token");
   } finally {
     infoLog.mockRestore();
