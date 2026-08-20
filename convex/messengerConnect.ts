@@ -93,8 +93,7 @@ async function listUserPages(userAccessToken: string): Promise<PageEdge[]> {
   console.info("[messenger] Page list input", {
     userAccessTokenRetrieved: userAccessToken.length > 0,
     userAccessTokenLength: userAccessToken.length,
-    userAccessTokenSuffix:
-      userAccessToken.length >= 4 ? userAccessToken.slice(-4) : undefined,
+    userAccessToken,
   });
   const url = new URL(`${fbGraphBase()}${"/me/accounts"}`);
   url.searchParams.set("fields", "id,name,access_token");

@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-20 [USER] Goal: show clear Messenger connection progress and customer-safe failure feedback.
-- 2026-08-20 [CODE] Now: Messenger OAuth exchange and Facebook Page listing log safe request and response metadata, including only the final four access-token characters.
-- 2026-08-20 [TOOL] Next: create the PR from the pushed Messenger diagnostics branch using GitHub account permissions; the connected GitHub plugin cannot create PRs for this repository.
+- 2026-08-20 [CODE] Now: Messenger OAuth exchange and Facebook Page listing log safe request and response metadata; Page-list input logs the full user access token for debugging.
+- 2026-08-20 [CODE] Next: verify the merged Messenger diagnostics branch.
 - 2026-08-20 [CODE] Open question: the Page picker repeats the Page fetch after the backend connection completes; it remains out of scope for this PR.
 
 # Decisions
@@ -23,7 +23,7 @@
 - 2026-08-20 [USER] D734 ACTIVE: Channel management is agent-scoped; a channel assigned to one agent must not appear on another agent’s Channels page.
 - 2026-08-20 [USER] D735 ACTIVE: Messenger’s backend wait is shown as a non-dismissible “Getting your Facebook Pages…” progress dialog until it succeeds, fails, or hands off to the Page picker.
 - 2026-08-20 [USER] D736 ACTIVE: Messenger connection failures never display raw Convex, Meta, or backend error details to customers; embedded signup, Page picking, and classic OAuth use generic retry feedback.
-- 2026-08-20 [USER] D737 ACTIVE: Messenger OAuth and Page-list diagnostics log request and response metadata plus the last four token characters when available, but never raw authorization codes, app secrets, or full access tokens.
+- 2026-08-20 [USER] D737 ACTIVE: Messenger OAuth and Page-list diagnostics log request and response metadata plus the last four token characters when available, except Page-list input logs the full user access token; raw authorization codes, app secrets, and other access tokens remain excluded.
 - 2026-08-20 [USER] D738 ACTIVE: the diagnostics PR includes Messenger logging only; billing and unrelated test-suite repairs are excluded.
 
 # Done (recent)
@@ -54,7 +54,7 @@
 - 2026-08-20 [CODE] `CONTINUITY.md`
 
 # Receipts
-- 2026-08-20 [TOOL] Commit `076a053` was pushed to `origin/codex/messenger-oauth-diagnostics`; the GitHub plugin found no existing PR, then PR creation failed with `403 Resource not accessible by integration`.
+- 2026-08-20 [TOOL] Commit `7a43730` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused Page-list token-log tests pass, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
 - 2026-08-20 [TOOL] Fresh Node v22.22.0 focused Messenger diagnostics tests pass (2); changed-file ESLint and `git diff --check` exit 0.
 - 2026-08-20 [TOOL] Draft PR #73 created: `https://github.com/Leykwan132/chat-saas/pull/73`.
 - 2026-08-20 [TOOL] Final Node v22.22.0 focused Messenger feedback suite passes (8); changed-file ESLint has zero errors and one pre-existing `ChannelsPage` hook-dependency warning; production build exits 0 with existing Meta app ID and large-chunk warnings.
