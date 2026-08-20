@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-20 [USER] Goal: create one PR so workflow-node positions are automatically saved at creation and after every move, restoring the last placement on return.
 - 2026-08-20 [CODE] Now: the authenticated canvas saves each drag-end coordinate through the existing authorized node mutation; created nodes already persisted their generated coordinates.
-- 2026-08-20 [CODE] Next: push the reviewed feature branch and open one PR; do not add a release changelog entry until production availability is confirmed.
+- 2026-08-20 [CODE] Next: review and merge open PR #69; add a release changelog entry only when production availability is confirmed.
 - 2026-08-20 [ASSUMPTION] Persist the exact final React Flow drag position when the drag ends, without changing Cleanup/Arrange or the automation-only Save/Discard boundary.
 
 # Decisions
@@ -22,18 +22,13 @@
 - 2026-08-16 [USER] D637–D700 ACTIVE: Google Calendar remains individual and primary-calendar-only; connected writes fail closed and manual/CSV customers retain active-agent scope.
 
 # Done (recent)
+- 2026-08-20 [TOOL] Opened PR #69 from `codex/persist-workflow-node-positions` into `main` at commit `8fe01b8`.
 - 2026-08-20 [CODE] Connected authenticated `WorkflowCanvas.onNodeMoved` to an immediate persisted position update; landing-preview dragging remains local-only.
 - 2026-08-20 [CODE] Added regression coverage for the page callback, exact position payload, and a real create-move-reload Convex workflow journey.
 - 2026-08-20 [TOOL] Node v22.22.0 focused workflow suite passes: 16 tests in 3 files; production build exits successfully. ESLint has no errors and one pre-existing `WorkflowPage` exhaustive-deps warning.
 - 2026-08-20 [TOOL] Targeted review found no critical or important defects; it noted only that coverage is split across page wiring, action payload, and Convex reload tests rather than one browser drag integration.
 - 2026-08-20 [TOOL] Confirmed this is a linked isolated workspace at `/Users/leykwanchoo/.codex/worktrees/e0ef/chat-saas` in detached HEAD state; a feature branch will be created before committing.
 - 2026-08-20 [TOOL] Existing `workflows.addNodeAfter` writes generated node positions; `workflows.updateNode` already authorizes and validates individual position updates; `WorkflowPage` currently omits `onNodeMoved` by design.
-- 2026-08-18 [CODE] Removed the custom CTA conversion helper and all four public CTA calls; WorkOS sign-up starts immediately while the Google tag remains installed.
-- 2026-08-18 [CODE] AI-to-human escalations now persist their source message, render an inbox divider immediately after it, and expose a View in chat action-history link; `?dummyData=true` previews the divider in development.
-- 2026-08-18 [CODE] Escalation dividers now expand to show their stored reason, and Action History is rendered by a shared production component.
-- 2026-08-18 [CODE] Removed the Inbox-only dummy conversation, message timeline, marker generator, and `?dummyData=true` render path.
-- 2026-08-18 [CODE] Removed the obsolete helper test and implementation design/plan documentation; retained the incoming global-tag loader test.
-- 2026-08-18 [TOOL] Focused landing/header regression tests pass: 7 tests across 2 files; the loader test passes; the Node 22 production build passed after resolving latest `origin/main`.
 
 # Working set
 - 2026-08-20 [CODE] `src/pages/WorkflowPage.tsx`
@@ -44,8 +39,6 @@
 - 2026-08-18 [CODE] `CONTINUITY.md`
 
 # Receipts
-- 2026-08-18 [TOOL] The regression test failed before removal because all CTA owners still called `reportGoogleAdsConversion`; it passed after the helper and calls were removed.
-- 2026-08-18 [TOOL] Node v22.22.0 `bun run build` passed after the removal, with only existing unset Meta app ID and large-chunk Vite warnings.
 - 2026-08-18 [TOOL] `origin/main` at `32a2ebe` contains merged PR #66; the removal branch is resolving that merge in favor of D727.
 - 2026-08-18 [TOOL] Post-merge focused Vitest checks (7), loader test (1), and Node v22.22.0 production build passed; only existing Meta app ID and large-chunk Vite warnings remain.
 - 2026-08-18 [TOOL] The incoming `src/googleAdsTag.test.mjs` verifies the Google Ads loader URL and config ID and remains intact.
@@ -64,3 +57,4 @@
 - 2026-08-18 [TOOL] Neutral View in chat regression test and Node v22.22.0 production build pass.
 - 2026-08-18 [TOOL] Inbox dummy-preview removal passed 8 relevant tests and the Node v22.22.0 production build; the lifecycle fixture retains its known missing aggregate-component warning.
 - 2026-08-18 [TOOL] Draft PR #68 was created from `codex/inbox-escalation-trace` into `main` via authenticated GitHub CLI after the connector returned 403.
+- 2026-08-20 [TOOL] PR #69 is open against `main`; the branch tracks `origin/codex/persist-workflow-node-positions` at `8fe01b8`.
