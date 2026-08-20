@@ -36,6 +36,7 @@ export function useWorkflowMessageActions({
   onSelectNode,
 }: WorkflowMessageActionsOptions) {
   const addNodeAfter = useMutation(api.workflows.addNodeAfter);
+  const updateNodeMutation = useMutation(api.workflows.updateNode);
   const removeNodeMutation = useMutation(api.workflows.removeNode);
   const connectNodesMutation = useMutation(api.workflows.connectNodes);
   const removeEdgeMutation = useMutation(api.workflows.removeEdge);
@@ -110,6 +111,23 @@ export function useWorkflowMessageActions({
     );
     if (nextGraph) onSelectNode(undefined);
   }, [agentId, onSelectNode, removeNodeMutation, runGraphMutation]);
+
+  const moveNode = useCallback(async (
+    nodeId: Id<"workflowNodes">,
+    position: { x: number; y: number },
+  ) => {
+    try {
+      const nextGraph = await updateNodeMutation({
+        agentId,
+        nodeId,
+        positionX: position.x,
+        positionY: position.y,
+      });
+      onGraph(nextGraph);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not save node position"));
+    }
+  }, [agentId, onGraph, updateNodeMutation]);
 
   const connectNodes = useCallback(async (
     sourceNodeId: Id<"workflowNodes">,
@@ -189,6 +207,7 @@ export function useWorkflowMessageActions({
     isApplyingNode,
     addNode,
     removeNode,
+    moveNode,
     connectNodes,
     removeEdge,
     applyNode,
