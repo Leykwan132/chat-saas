@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-20 [USER] Goal: show clear Messenger connection progress and customer-safe failure feedback.
-- 2026-08-20 [CODE] Now: Messenger embedded signup, Page picking, and classic OAuth show progress or generic retry feedback without exposing backend error text.
-- 2026-08-20 [CODE] Next: review and merge draft PR #73; add a release changelog entry only when production availability is confirmed.
+- 2026-08-20 [CODE] Now: Messenger OAuth exchange and Facebook Page listing log safe request and response metadata, including only the final four access-token characters.
+- 2026-08-20 [CODE] Next: publish the Messenger-only diagnostics branch as a PR; add a release changelog entry only when production availability is confirmed.
 - 2026-08-20 [CODE] Open question: the Page picker repeats the Page fetch after the backend connection completes; it remains out of scope for this PR.
 
 # Decisions
@@ -23,12 +23,15 @@
 - 2026-08-20 [USER] D734 ACTIVE: Channel management is agent-scoped; a channel assigned to one agent must not appear on another agent’s Channels page.
 - 2026-08-20 [USER] D735 ACTIVE: Messenger’s backend wait is shown as a non-dismissible “Getting your Facebook Pages…” progress dialog until it succeeds, fails, or hands off to the Page picker.
 - 2026-08-20 [USER] D736 ACTIVE: Messenger connection failures never display raw Convex, Meta, or backend error details to customers; embedded signup, Page picking, and classic OAuth use generic retry feedback.
+- 2026-08-20 [USER] D737 ACTIVE: Messenger OAuth and Page-list diagnostics log request and response metadata plus the last four token characters when available, but never raw authorization codes, app secrets, or full access tokens.
+- 2026-08-20 [USER] D738 ACTIVE: the diagnostics PR includes Messenger logging only; billing and unrelated test-suite repairs are excluded.
 
 # Done (recent)
 - 2026-08-20 [TOOL] PR #71 merged into `main`, isolating channel management by assigned agent.
 - 2026-08-20 [TOOL] PR #72 merged into `main`, fixing agent-scoped Messenger error recording.
 - 2026-08-20 [TOOL] Draft PR #73 opened from `codex/show-messenger-connection-progress` at commit `6f8f571`.
 - 2026-08-20 [CODE] Added Messenger connecting feedback and customer-safe failure messaging across embedded signup, Page picking, and classic OAuth.
+- 2026-08-20 [CODE] Added safe Messenger OAuth and Page-list input/output diagnostics with token status, length, and a four-character suffix.
 - 2026-08-20 [TOOL] Opened PR #69 from `codex/persist-workflow-node-positions` into `main` at commit `8fe01b8`.
 - 2026-08-20 [CODE] Connected authenticated `WorkflowCanvas.onNodeMoved` to an immediate persisted position update; landing-preview dragging remains local-only.
 - 2026-08-20 [CODE] Added regression coverage for the page callback, exact position payload, and a real create-move-reload Convex workflow journey.
@@ -46,6 +49,8 @@
 - 2026-08-20 [CODE] `src/lib/messengerConnectionFeedback.test.ts`
 - 2026-08-20 [CODE] `src/pages/ChannelsPage.tsx`
 - 2026-08-20 [CODE] `convex/http.ts`
+- 2026-08-20 [CODE] `convex/messengerConnect.ts`
+- 2026-08-20 [CODE] `convex/messengerConnect.test.ts`
 - 2026-08-20 [CODE] `CONTINUITY.md`
 
 # Receipts
