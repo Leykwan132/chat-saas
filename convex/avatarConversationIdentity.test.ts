@@ -18,8 +18,7 @@ describe('Avatar conversation identity', () => {
     expect(selectReusableInboxConversation(conversation('closed'), 'avatar')).toBeNull();
   });
 
-  it('does not change existing channel reuse behavior', () => {
-    const existing = conversation('closed');
-    expect(selectReusableInboxConversation(existing, 'web')).toBe(existing);
+  it('starts a fresh web conversation after the prior conversation closes', () => {
+    expect(selectReusableInboxConversation(conversation('closed'), 'web')).toBeNull();
   });
 });

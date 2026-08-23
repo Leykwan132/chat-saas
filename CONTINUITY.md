@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-19 [USER] Goal: ship an isolated white-label partner reseller portal where approved partners manage customer organizations, shared plans, manual credits, branding, and a single hostname without pricing or Stripe controls.
-- 2026-08-23 [CODE] Now: `origin/main` at `5b551d8` is merged locally into the partner branch; its iframe-widget redesign and Messenger diagnostics are present.
-- 2026-08-23 [CODE] Next: update the upstream stale widget and avatar test expectations before relying on a green full-suite baseline.
+- 2026-08-23 [CODE] Now: `origin/main` at `5b551d8` is merged locally into the partner branch, and its repaired test baseline passes.
+- 2026-08-23 [CODE] Next: push the merged branch and its test repairs to the existing draft PR.
 - 2026-08-19 [ASSUMPTION] This work is unshipped; no release changelog entry has been added.
 
 # Decisions
@@ -98,3 +98,4 @@
 - 2026-08-20 [CODE] Fixed personal-workspace plan resolution, manual schedule availability without shifts, stale route/sidebar tests, Growth-plan overview test fixtures, and Vitest exclusion of the separately executed Google Ads Node test; Node v22 typecheck, diff validation, and the full `bun run test` suite pass (502 Vitest files / 1,715 tests; 63 Node tests).
 - 2026-08-20 [TOOL] Merged `origin/main` commit `208213f` (agent-scoped channel isolation); no application conflicts occurred, TypeScript and `bun run test` pass, and the only conflict was the continuity ledger.
 - 2026-08-23 [TOOL] Merging `origin/main` at `5b551d8` produced only a continuity-ledger conflict. Full tests have 9 stale-expectation failures: eight still inspect the removed in-page widget after the intentional iframe redesign, and one expects closed web conversations to be reused despite the intentional new-session behavior.
+- 2026-08-23 [CODE] Replaced the obsolete widget implementation checks with behavioral iframe-host coverage and aligned the avatar web-session assertion with the new closed-session rule; Node v22 typecheck, diff validation, and `bun run test` pass (516 Vitest files / 1,788 tests; 63 Node tests).
