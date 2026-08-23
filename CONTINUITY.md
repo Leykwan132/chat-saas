@@ -6,7 +6,8 @@
 - 2026-08-21 [CODE] Now: `codex/iframe-widget-home` contains broad uncommitted widget work. The live iframe and dashboard preview share direct entry, a compact Geist chat, opt-in suggestions, reset confirmation, loading state, optional branding, and compact desktop/mobile frames.
 - 2026-08-21 [CODE] Now: Visitor-form settings use one bordered collection container without helper copy. Standard Name, Email, and Phone fields remain selectable; custom-field edits stay local drafts until Confirm merges them into the form, then compact rows expose Edit, requirement, and delete controls. Answers are saved on the customer record.
 - 2026-08-21 [CODE] Now: Appearance uses compact Name/avatar plus Remove Kilobot branding in the left desktop column, with Theme in the right column. A Save appearance action is shown only for a valid unsaved Name edit and hides after success.
-- 2026-08-23 [CODE] Next: the local-only `index.html` iframe snippet was removed before review; commit and open the widget PR from `codex/iframe-widget-home`.
+- 2026-08-23 [TOOL] Now: PR #79 is open from `codex/iframe-widget-home` into `main` at commit `6380a4f`.
+- 2026-08-23 [CODE] Next: review PR #79; the local-only `index.html` iframe snippet was removed from the shipping tree.
 - 2026-08-21 [TOOL] Convex code generation cannot reach its external service from this environment; run `bunx convex codegen` or `bunx convex dev` locally when network access is available.
 
 # Decisions
@@ -52,7 +53,6 @@
 
 # Receipts
 
-- 2026-08-21 [TOOL] Custom-field confirmation state: red validation test confirmed the missing readiness rule; focused tests (8), app TypeScript, targeted ESLint, and diff validation pass. The split visitor-form components remain below 300 lines.
 - 2026-08-21 [TOOL] Custom-field draft boundary: red merge test confirmed confirmation had no model boundary; focused tests (9), app TypeScript, targeted ESLint, and diff validation pass. All touched code files remain below 300 lines.
 - 2026-08-21 [TOOL] Required markers: red render tests confirmed both live and preview forms omitted markers; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Visitor-form layout: red render tests confirmed absent scroll/font classes; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
@@ -73,3 +73,4 @@
 - 2026-08-23 [TOOL] Avatar-aware closed preview launcher: red server-render test confirmed the configured avatar was absent; 34 focused settings/visitor-form tests, targeted ESLint, line-cap checks, and diff validation pass after the fix.
 - 2026-08-23 [TOOL] The local iframe test in `index.html` is appended to the dashboard body. While a Radix modal is open, Radix disables body pointer events for modal focus isolation, so the high-z-index iframe remains visible but cannot receive clicks. Use the in-modal preview or a separate local host page for widget interaction tests.
 - 2026-08-23 [TOOL] PR verification: 94 focused widget/settings/Convex tests and the Node v22 production build pass. The full suite initially included 21 obsolete inline-widget assertions, now replaced by iframe-host coverage; it also reports six unrelated Calendar and agent-overview failures in unchanged areas.
+- 2026-08-23 [TOOL] PR #79 created: `https://github.com/Leykwan132/chat-saas/pull/79`.
