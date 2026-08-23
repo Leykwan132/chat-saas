@@ -10,47 +10,28 @@ import {
   type WebWidgetTheme,
 } from "../shared/webWidgetThemes";
 import {
-  defaultWebWidgetPlaceholder,
+  normalizeWebWidgetExperience,
+  isWebWidgetLeadFormValid,
+  type WebWidgetHome,
+  type WebWidgetLeadFormInput,
+} from "../shared/webWidgetExperience";
+import { normalizeWebWidgetSuggestions } from "../shared/webWidgetSuggestions";
+import {
   generateUniquePublicKey,
   getWebWidgetPlanState,
   normalizeAgentDisplayName,
   normalizeWidgetPlaceholder,
-  resolveWebWidgetBranding,
-  resolveWidgetIconUrl,
 } from "./webWidgetCore";
 import {
   getAuthorizedWebWidgetAgent,
   getWebWidgetSettingsForAgent,
 } from "./webWidgetAccess";
-import { traditionalDashboardConfig } from "./webWidgetTraditional";
+import { widgetDashboardConfig } from "./webWidgetDashboardConfig";
 
-async function widgetDashboardConfig(ctx: QueryCtx | MutationCtx, settings: Doc<"webWidgetSettings">) {
-  const planState = await getWebWidgetPlanState(ctx, {
-    orgId: settings.orgId,
-    userId: settings.connectedByUserId,
-  });
-  const branding = resolveWebWidgetBranding(settings, planState.canUseCustomIcon);
-  return {
-    channelId: settings.channelId,
-    publicKey: settings.publicKey,
-    enabled: settings.enabled,
-    agentDisplayName: settings.agentDisplayName,
-    placeholder:
-      settings.placeholder ?? defaultWebWidgetPlaceholder(settings.agentDisplayName),
-    layout: normalizeWebWidgetLayout(settings.layout),
-    theme: DEFAULT_WEB_WIDGET_THEME,
-    iconUrl: await resolveWidgetIconUrl(ctx, settings, planState.canUseCustomIcon),
-    ...branding,
-    canUseCustomIcon: planState.canUseCustomIcon,
-    traditional: await traditionalDashboardConfig(
-      ctx,
-      settings,
-      planState.canUseCustomIcon,
-    ),
-  };
-}
-
-async function findReusableWebChannel(ctx: MutationCtx, args: { channelOrgId: string; agentId: Id<"agents"> }) {
+async function findReusableWebChannel(
+  ctx: MutationCtx,
+  args: { channelOrgId: string; agentId: Id<"agents"> },
+) {
   const channels = await ctx.db
     .query("channels")
     .withIndex("by_orgId_and_service", (q) =>
@@ -60,8 +41,7 @@ async function findReusableWebChannel(ctx: MutationCtx, args: { channelOrgId: st
   return (
     channels.find(
       (row) =>
-        row.defaultAgentId === args.agentId &&
-        row.status !== "disconnected",
+        row.defaultAgentId === args.agentId && row.status !== "disconnected",
     ) ?? null
   );
 }
@@ -116,8 +96,14 @@ export async function getWidgetForAgent(ctx: QueryCtx, agentId: Id<"agents">) {
   return await widgetDashboardConfig(ctx, settings);
 }
 
-export async function ensureWidgetForAgent(ctx: MutationCtx, agentId: Id<"agents">) {
-  const { userId, channelOrgId, agent } = await getAuthorizedWebWidgetAgent(ctx, agentId);
+export async function ensureWidgetForAgent(
+  ctx: MutationCtx,
+  agentId: Id<"agents">,
+) {
+  const { userId, channelOrgId, agent } = await getAuthorizedWebWidgetAgent(
+    ctx,
+    agentId,
+  );
   const now = Date.now();
   const existingSettings = await getWebWidgetSettingsForAgent(ctx, agentId);
   const channel = await ensureConnectedWebChannel(ctx, {
@@ -141,6 +127,7 @@ export async function ensureWidgetForAgent(ctx: MutationCtx, agentId: Id<"agents
       agentDisplayName: normalizeAgentDisplayName(agent.name),
       layout: DEFAULT_WEB_WIDGET_LAYOUT,
       theme: DEFAULT_WEB_WIDGET_THEME,
+      suggestionsEnabled: false,
       createdAt: now,
       updatedAt: now,
     });
@@ -180,8 +167,12 @@ export async function updateWidgetSettings(
     agentId: Id<"agents">;
     agentDisplayName?: string;
     placeholder?: string;
+    suggestions?: readonly string[];
+    suggestionsEnabled?: boolean;
     layout?: WebWidgetLayout;
     theme?: WebWidgetTheme;
+    home?: Partial<WebWidgetHome>;
+    leadForm?: WebWidgetLeadFormInput;
     hidePoweredBy?: boolean;
   },
 ) {
@@ -208,32 +199,54 @@ export async function updateWidgetSettings(
   if (args.placeholder !== undefined) {
     patch.placeholder = normalizeWidgetPlaceholder(args.placeholder);
   }
+  if (args.suggestions !== undefined) {
+    patch.suggestions = normalizeWebWidgetSuggestions(args.suggestions);
+  }
+  if (args.suggestionsEnabled !== undefined) {
+    patch.suggestionsEnabled = args.suggestionsEnabled;
+  }
   if (args.hidePoweredBy !== undefined) {
     patch.hidePoweredBy = args.hidePoweredBy;
   }
   if (args.layout !== undefined) {
     patch.layout = normalizeWebWidgetLayout(args.layout);
   }
+  if (args.theme !== undefined) {
+    patch.theme = args.theme;
+  }
+  if (args.home !== undefined) {
+    patch.home = normalizeWebWidgetExperience({ home: args.home }).home;
+  }
+  if (args.leadForm !== undefined) {
+    const leadForm = normalizeWebWidgetExperience({
+      leadForm: args.leadForm,
+    }).leadForm;
+    if (!isWebWidgetLeadFormValid(leadForm)) {
+      throw new Error("Visitor form needs at least one visible field");
+    }
+    patch.leadForm = leadForm;
+  }
   if (
     patch.agentDisplayName === undefined &&
     patch.placeholder === undefined &&
+    patch.suggestions === undefined &&
+    patch.suggestionsEnabled === undefined &&
     patch.hidePoweredBy === undefined &&
-    patch.layout === undefined
+    patch.layout === undefined &&
+    patch.theme === undefined &&
+    patch.home === undefined &&
+    patch.leadForm === undefined
   ) {
     throw new Error("No widget settings changes provided");
   }
   await ctx.db.patch(settings._id, patch);
 }
 
-export async function generateWidgetIconUploadUrl(ctx: MutationCtx, agentId: Id<"agents">) {
-  const { channelOrgId, userId } = await getAuthorizedWebWidgetAgent(ctx, agentId);
-  const planState = await getWebWidgetPlanState(ctx, {
-    orgId: channelOrgId,
-    userId,
-  });
-  if (!planState.canUseCustomIcon) {
-    throw new Error("Custom widget icons are available on paid plans.");
-  }
+export async function generateWidgetIconUploadUrl(
+  ctx: MutationCtx,
+  agentId: Id<"agents">,
+) {
+  await getAuthorizedWebWidgetAgent(ctx, agentId);
   return await ctx.storage.generateUploadUrl();
 }
 
@@ -241,14 +254,7 @@ export async function saveWidgetIcon(
   ctx: MutationCtx,
   args: { agentId: Id<"agents">; storageId: Id<"_storage"> },
 ) {
-  const { channelOrgId, userId } = await getAuthorizedWebWidgetAgent(ctx, args.agentId);
-  const planState = await getWebWidgetPlanState(ctx, {
-    orgId: channelOrgId,
-    userId,
-  });
-  if (!planState.canUseCustomIcon) {
-    throw new Error("Custom widget icons are available on paid plans.");
-  }
+  await getAuthorizedWebWidgetAgent(ctx, args.agentId);
   const settings = await getWebWidgetSettingsForAgent(ctx, args.agentId);
   if (settings === null) {
     throw new Error("Widget settings not found");
@@ -259,7 +265,10 @@ export async function saveWidgetIcon(
   });
 }
 
-export async function removeWidgetIcon(ctx: MutationCtx, agentId: Id<"agents">) {
+export async function removeWidgetIcon(
+  ctx: MutationCtx,
+  agentId: Id<"agents">,
+) {
   await getAuthorizedWebWidgetAgent(ctx, agentId);
   const settings = await getWebWidgetSettingsForAgent(ctx, agentId);
   if (settings === null) {

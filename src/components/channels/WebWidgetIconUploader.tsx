@@ -1,5 +1,6 @@
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldDescription,
@@ -14,6 +15,7 @@ type WebWidgetIconUploaderProps = {
   name: string;
   uploading: boolean;
   onFileSelected: (file: File | undefined) => void;
+  onRemove: () => void;
 };
 
 export function WebWidgetIconUploader({
@@ -23,6 +25,7 @@ export function WebWidgetIconUploader({
   name,
   uploading,
   onFileSelected,
+  onRemove,
 }: WebWidgetIconUploaderProps) {
   const avatarSize = compact ? 'size-10' : 'size-16';
   const iconSize = compact ? 'size-4' : 'size-5';
@@ -65,8 +68,21 @@ export function WebWidgetIconUploader({
     return (
       <Field data-disabled={!canUseCustomIcon}>
         <FieldLabel>Avatar</FieldLabel>
-        <div className="flex items-center">
+        <div className="flex items-center gap-1">
           {control}
+          {iconUrl ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8 text-destructive hover:text-destructive"
+              disabled={!canUseCustomIcon || uploading}
+              aria-label="Remove avatar"
+              onClick={onRemove}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          ) : null}
         </div>
       </Field>
     );
@@ -80,6 +96,19 @@ export function WebWidgetIconUploader({
       </FieldDescription>
       <div className="flex items-center gap-3">
         {control}
+        {iconUrl ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive"
+            disabled={!canUseCustomIcon || uploading}
+            aria-label="Remove avatar"
+            onClick={onRemove}
+          >
+            <Trash2 className={iconSize} />
+          </Button>
+        ) : null}
       </div>
     </Field>
   );

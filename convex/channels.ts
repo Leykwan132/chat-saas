@@ -629,6 +629,13 @@ export const internalRecordError = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const defaultAgentId =
+      args.igUserId || args.pageId || args.phoneNumberId
+        ? undefined
+        : await resolveDefaultAgentIdForChannel(ctx, {
+            channelOrgId: args.orgId,
+            connectedByUserId: args.connectedByUserId,
+          });
     let existing: Doc<"channels"> | null;
     if (args.igUserId) {
       existing = await ctx.db
@@ -646,13 +653,15 @@ export const internalRecordError = internalMutation({
         .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId!))
         .collect();
       existing = channels.find((c) => c.orgId === args.orgId) ?? null;
-    } else {
+    } else if (defaultAgentId !== undefined) {
       existing = await ctx.db
         .query("channels")
-        .withIndex("by_orgId_and_service", (q) =>
-          q.eq("orgId", args.orgId).eq("service", args.service),
+        .withIndex("by_defaultAgentId_and_service", (q) =>
+          q.eq("defaultAgentId", defaultAgentId).eq("service", args.service),
         )
         .unique();
+    } else {
+      existing = null;
     }
     
     if (existing === null) {
@@ -665,6 +674,7 @@ export const internalRecordError = internalMutation({
         status: "error",
         lastError: args.error,
         connectedByUserId: args.connectedByUserId,
+        ...(defaultAgentId !== undefined ? { defaultAgentId } : {}),
         createdAt: now,
         updatedAt: now,
       });

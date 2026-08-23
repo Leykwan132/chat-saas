@@ -1,4 +1,5 @@
 import { httpRouter } from "convex/server";
+import type { FunctionReference } from "convex/server";
 import { httpAction, type ActionCtx } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { workosWebhook } from "./workosWebhook";
@@ -382,6 +383,22 @@ const widgetCorsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+type WidgetVisitorArgs = {
+  publicKey: string;
+  visitorId: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  customFields?: Record<string, string>;
+};
+
+const widgetPublicApi = api as unknown as {
+  webWidgetPublic: {
+    getVisitorProfile: FunctionReference<"query", "public", Pick<WidgetVisitorArgs, "publicKey" | "visitorId">, unknown>;
+    submitVisitorProfile: FunctionReference<"mutation", "public", WidgetVisitorArgs, unknown>;
+  };
+};
+
 function widgetJsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -493,6 +510,83 @@ const widgetMessage = httpAction(async (ctx, req) => {
   }
 });
 
+const widgetReset = httpAction(async (ctx, req) => {
+  let body: { publicKey?: unknown; visitorId?: unknown };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return widgetErrorResponse("Invalid JSON", 400);
+  }
+  if (typeof body.publicKey !== "string" || typeof body.visitorId !== "string") {
+    return widgetErrorResponse("Missing widget key or visitor ID", 400);
+  }
+  try {
+    await ctx.runMutation(internal.webWidget.internalResetConversation, {
+      publicKey: body.publicKey,
+      visitorId: body.visitorId,
+    });
+    return widgetJsonResponse({ ok: true });
+  } catch (error) {
+    return widgetErrorResponse(error, 400);
+  }
+});
+
+const widgetVisitorProfile = httpAction(async (ctx, req) => {
+  const publicKey = getWidgetKey(req);
+  const visitorId = getWidgetVisitorId(req);
+  if (!publicKey || !visitorId) {
+    return widgetErrorResponse("Missing widget key or visitor ID", 400);
+  }
+  try {
+    return widgetJsonResponse({
+      profile: await ctx.runQuery(widgetPublicApi.webWidgetPublic.getVisitorProfile, { publicKey, visitorId }),
+    });
+  } catch (error) {
+    return widgetErrorResponse(error, 404);
+  }
+});
+
+const widgetSubmitVisitorProfile = httpAction(async (ctx, req) => {
+  let body: {
+    publicKey?: unknown;
+    visitorId?: unknown;
+    name?: unknown;
+    email?: unknown;
+    phone?: unknown;
+    customFields?: unknown;
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return widgetErrorResponse("Invalid JSON", 400);
+  }
+  if (typeof body.publicKey !== "string" || typeof body.visitorId !== "string") {
+    return widgetErrorResponse("Missing widget key or visitor ID", 400);
+  }
+  try {
+    return widgetJsonResponse({
+      profile: await ctx.runMutation(widgetPublicApi.webWidgetPublic.submitVisitorProfile, {
+        publicKey: body.publicKey,
+        visitorId: body.visitorId,
+        name: typeof body.name === "string" ? body.name : undefined,
+        email: typeof body.email === "string" ? body.email : undefined,
+        phone: typeof body.phone === "string" ? body.phone : undefined,
+        customFields:
+          body.customFields &&
+          typeof body.customFields === "object" &&
+          !Array.isArray(body.customFields) &&
+          Object.values(body.customFields).every(
+            (value) => typeof value === "string",
+          )
+            ? body.customFields as Record<string, string>
+            : undefined,
+      }),
+    });
+  } catch (error) {
+    return widgetErrorResponse(error, 400);
+  }
+});
+
 http.route({
   path: "/widget/config",
   method: "GET",
@@ -524,7 +618,23 @@ http.route({
 });
 
 http.route({
+  path: "/widget/reset",
+  method: "POST",
+  handler: widgetReset,
+});
+
+http.route({ path: "/widget/visitor", method: "GET", handler: widgetVisitorProfile });
+http.route({ path: "/widget/visitor", method: "POST", handler: widgetSubmitVisitorProfile });
+http.route({ path: "/widget/visitor", method: "OPTIONS", handler: httpAction(async () => widgetOptionsResponse()) });
+
+http.route({
   path: "/widget/message",
+  method: "OPTIONS",
+  handler: httpAction(async () => widgetOptionsResponse()),
+});
+
+http.route({
+  path: "/widget/reset",
   method: "OPTIONS",
   handler: httpAction(async () => widgetOptionsResponse()),
 });
@@ -633,21 +743,14 @@ http.route({
 // `messengerAuth.start` and `exchangeCodeForUserToken` exactly:
 // `${CONVEX_SITE_URL}/auth/messenger/callback` (trim trailing slash on site).
 const messengerOAuthCallback = httpAction(async (ctx, req) => {
-  const { code, csrf, returnPath, oauthError, oauthErrorReason } =
-    parseCallbackUrl(req);
+  const { code, csrf, returnPath, oauthError } = parseCallbackUrl(req);
 
   if (oauthError) {
-    return redirectResponse(returnPath, {
-      messenger: "error",
-      message: oauthErrorReason ?? oauthError,
-    });
+    return redirectResponse(returnPath, { messenger: "error" });
   }
 
   if (!code || !csrf) {
-    return redirectResponse(returnPath, {
-      messenger: "error",
-      message: "Missing code or state from Messenger OAuth callback",
-    });
+    return redirectResponse(returnPath, { messenger: "error" });
   }
 
   const session = await ctx.runQuery(
@@ -660,18 +763,12 @@ const messengerOAuthCallback = httpAction(async (ctx, req) => {
     session.consumed ||
     session.expiresAt < Date.now()
   ) {
-    return redirectResponse(returnPath, {
-      messenger: "error",
-      message: "OAuth session expired or already used. Please try again.",
-    });
+    return redirectResponse(returnPath, { messenger: "error" });
   }
 
   const siteUrl = process.env.CONVEX_SITE_URL;
   if (!siteUrl) {
-    return redirectResponse(session.returnPath, {
-      messenger: "error",
-      message: "CONVEX_SITE_URL is not configured",
-    });
+    return redirectResponse(session.returnPath, { messenger: "error" });
   }
   const redirectUri = `${siteUrl.replace(/\/+$/, "")}/auth/messenger/callback`;
 
@@ -704,12 +801,8 @@ const messengerOAuthCallback = httpAction(async (ctx, req) => {
       csrf,
     });
     return redirectResponse(session.returnPath, { messenger: "connected" });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return redirectResponse(session.returnPath, {
-      messenger: "error",
-      message,
-    });
+  } catch {
+    return redirectResponse(session.returnPath, { messenger: "error" });
   }
 });
 

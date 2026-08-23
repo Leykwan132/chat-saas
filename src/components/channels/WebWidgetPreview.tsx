@@ -1,131 +1,145 @@
-import { useMemo, useRef, useState, type PointerEvent } from 'react';
-import { Globe, RotateCcw } from 'lucide-react';
-import type { WebWidgetLayout } from '../../../shared/webWidgetLayouts';
-import type { WebWidgetTheme } from '../../../shared/webWidgetThemes';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { useWebWidgetPreviewConversation } from './useWebWidgetPreviewConversation';
-import { LauncherAvatar } from './WebWidgetPreviewAvatars';
-import { WebWidgetPreviewComposer } from './WebWidgetPreviewComposer';
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Globe, MessagesSquare, X } from "lucide-react";
+import type {
+  WebWidgetLeadForm,
+} from "../../../shared/webWidgetExperience";
+import { DEFAULT_WEB_WIDGET_PROMPT_PLACEHOLDER } from "../../../shared/webWidgetExperience";
+import type { WebWidgetTheme } from "../../../shared/webWidgetThemes";
+import type { WebWidgetSuggestions } from "../../../shared/webWidgetSuggestions";
+import { cn } from "@/lib/utils";
+import {
+  getModernWidgetPreviewEntryScreen,
+  getWidgetLauncherLabel,
+} from "./webWidgetConfigurationState";
 import {
   WebWidgetPreviewDeviceToggle,
   type WebWidgetPreviewDevice,
-} from './WebWidgetPreviewDeviceToggle';
-import { WebWidgetPreviewFrame } from './WebWidgetPreviewFrame';
-import { WebWidgetPreviewPanel } from './WebWidgetPreviewPanel';
+} from "./WebWidgetPreviewDeviceToggle";
+import { WebWidgetPreviewFrame } from "./WebWidgetPreviewFrame";
+import { WebWidgetPreviewChat } from "./WebWidgetPreviewChat";
+import { WebWidgetPreviewForm } from "./WebWidgetPreviewForm";
+import { WebWidgetPreviewResetDialog } from "./WebWidgetPreviewResetDialog";
+
+type PreviewScreen = "form" | "chat";
+
+type PreviewMessage = {
+  direction: "agent" | "visitor";
+  sender: "ai" | "team" | "visitor";
+  content: string;
+  createdAt: number;
+};
 
 type WebWidgetPreviewProps = {
   agentName: string;
-  enabled?: boolean;
   iconUrl?: string;
-  layout: WebWidgetLayout;
-  placeholder: string;
+  leadForm: WebWidgetLeadForm;
+  suggestions: WebWidgetSuggestions;
+  suggestionsEnabled: boolean;
   poweredBy: boolean;
-  publicKey: string;
   theme: WebWidgetTheme;
   className?: string;
 };
 
 export function WebWidgetPreview({
   agentName,
-  enabled = true,
   iconUrl,
-  layout,
-  placeholder,
+  leadForm,
+  suggestions,
+  suggestionsEnabled,
   poweredBy,
-  publicKey,
   theme,
   className,
 }: WebWidgetPreviewProps) {
-  const displayName = agentName.trim() || 'AI Agent';
-  const dark = theme === 'dark';
-  const [draft, setDraft] = useState('');
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [previewDevice, setPreviewDevice] = useState<WebWidgetPreviewDevice>('desktop');
-  const widgetRef = useRef<HTMLDivElement>(null);
-  const {
-    loading: messagesLoading,
-    messages,
-    resetConversation,
-    sendError,
-    sending,
-    sendMessage,
-  } = useWebWidgetPreviewConversation(publicKey, enabled);
-  const mobilePreview = previewDevice === 'mobile';
-  const placeholderWords = useMemo(
-    () => [
-      placeholder,
-      `Ask ${displayName} anything`,
-      `Get help from ${displayName}`,
-    ],
-    [displayName, placeholder],
+  const [device, setDevice] = useState<WebWidgetPreviewDevice>("desktop");
+  const [screen, setScreen] = useState<PreviewScreen>("chat");
+  const [isOpen, setIsOpen] = useState(false);
+  const [hasVisitorProfile, setHasVisitorProfile] = useState(false);
+  const [messages, setMessages] = useState<PreviewMessage[]>([]);
+  const [draft, setDraft] = useState("");
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
+  const replyTimerRef = useRef<number | undefined>(undefined);
+  const dark = theme === "dark";
+  const displayName = agentName.trim() || "AI Agent";
+  const mobile = device === "mobile";
+  const panelClassName = cn(
+    "absolute bottom-[64px] overflow-hidden rounded-xl shadow-2xl",
+    dark ? "bg-zinc-900 text-zinc-100" : "bg-white text-zinc-950",
+    mobile
+      ? "bottom-[64px] right-0 h-[650px] w-[336px] max-w-[calc(100%-1rem)]"
+      : "right-0 h-[620px] w-[390px]",
+  );
+  const borderClassName = dark ? "border-white/10" : "border-zinc-200";
+  const subduedTextClassName = dark ? "text-zinc-400" : "text-zinc-500";
+  const beginConversation = () => {
+    setScreen(
+      getModernWidgetPreviewEntryScreen({
+        leadFormEnabled: leadForm.enabled,
+        hasVisitorProfile,
+      }),
+    );
+  };
+
+  const submitProfile = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setHasVisitorProfile(true);
+    setScreen("chat");
+  };
+
+  const stopThinking = () => {
+    if (replyTimerRef.current !== undefined) {
+      window.clearTimeout(replyTimerRef.current);
+      replyTimerRef.current = undefined;
+    }
+    setIsThinking(false);
+  };
+
+  useEffect(
+    () => () => {
+      if (replyTimerRef.current !== undefined) {
+        window.clearTimeout(replyTimerRef.current);
+      }
+    },
+    [],
   );
 
-  const hidePanel = () => {
-    setPanelOpen(false);
-    if (!draft.trim()) setFocused(false);
+  const sendMessageContent = (value: string) => {
+    const content = value.trim();
+    if (!content || isThinking) return;
+    setDraft("");
+    setMessages((current) => [
+      ...current,
+      { direction: "visitor", sender: "visitor", content, createdAt: Date.now() },
+    ]);
+    setIsThinking(true);
+    replyTimerRef.current = window.setTimeout(() => {
+      setMessages((current) => [
+        ...current,
+        {
+          direction: "agent",
+          sender: "ai",
+          content: `Thanks for reaching out. ${displayName} will help from here.`,
+          createdAt: Date.now(),
+        },
+      ]);
+      replyTimerRef.current = undefined;
+      setIsThinking(false);
+    }, 700);
   };
 
-  const sendPreviewMessage = () => {
-    if (!enabled) return;
-    const content = draft.trim();
-    setPanelOpen(true);
-    setFocused(true);
-    if (!content || sending) return;
-
-    setDraft('');
-    void sendMessage(content).then((sent) => {
-      if (!sent) setDraft(content);
-    });
+  const sendMessage = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    sendMessageContent(draft);
   };
 
-  const composerOpen = focused || Boolean(draft.trim());
-  const focusComposer = () => {
-    if (!enabled) return;
-    setFocused(true);
-    setPanelOpen(true);
+  const sendSuggestion = (suggestion: string) => {
+    sendMessageContent(suggestion);
   };
-  const hidePanelFromWidgetGap = (event: PointerEvent<HTMLDivElement>) => {
-    if (panelOpen && event.target === event.currentTarget) hidePanel();
-  };
-  const resetPreviewConversation = () => {
-    setDraft('');
-    setFocused(false);
-    setPanelOpen(false);
-    resetConversation();
-  };
-  const widgetHeight =
-    mobilePreview && panelOpen ? 'h-full' : panelOpen ? 'h-[440px]' : 'h-12';
-  const launcherWidgetHeight =
-    mobilePreview && panelOpen ? 'h-full' : panelOpen ? 'h-[430px]' : 'h-[58px]';
-  const mobileInputPanelClassName = 'bottom-[4.5rem] left-0 right-0 top-0 w-full';
-  const mobileLauncherPanelClassName = 'bottom-16 left-0 right-0 top-0 w-full';
-
-  const renderComposer = (variant: 'bar' | 'panel') => (
-    <WebWidgetPreviewComposer
-      composerOpen={composerOpen}
-      dark={dark}
-      disabled={!enabled}
-      draft={draft}
-      mobile={mobilePreview}
-      placeholder={placeholder}
-      placeholderWords={placeholderWords}
-      variant={variant}
-      onBarBlur={() => {
-        if (!draft.trim()) setFocused(false);
-      }}
-      onDraftChange={setDraft}
-      onFocus={focusComposer}
-      sending={sending}
-      onSubmit={sendPreviewMessage}
-    />
-  );
 
   return (
     <div
       className={cn(
-        'relative flex min-h-[520px] flex-1 flex-col gap-4 text-foreground',
+        "relative flex min-h-[620px] flex-1 flex-col gap-4",
         className,
       )}
     >
@@ -134,122 +148,87 @@ export function WebWidgetPreview({
           <Globe className="size-4 text-muted-foreground" />
           <span className="text-sm font-medium">Preview</span>
         </div>
-        <WebWidgetPreviewDeviceToggle
-          value={previewDevice}
-          onChange={setPreviewDevice}
-        />
+        <WebWidgetPreviewDeviceToggle value={device} onChange={setDevice} />
       </div>
-
       <WebWidgetPreviewFrame
-        actions={
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-sm"
-            className="size-8 border-border/70 bg-background/90 text-muted-foreground shadow-none backdrop-blur hover:bg-background hover:text-foreground"
-            aria-label="Reset preview thread"
-            title="Reset preview thread"
-            disabled={!enabled || sending}
-            onClick={resetPreviewConversation}
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            <RotateCcw className="size-3.5" />
-          </Button>
-        }
-        device={previewDevice}
-        onPointerDownCapture={(event) => {
-          if (
-            panelOpen &&
-            widgetRef.current &&
-            !widgetRef.current.contains(event.target as Node)
-          ) {
-            hidePanel();
-          }
-        }}
+        device={device}
+        onPointerDownCapture={() => undefined}
       >
-        {layout === 'input_bar' ? (
-          <div
-            ref={widgetRef}
-            className={cn(
-              'relative mx-auto flex w-full items-end transition-[height] duration-200 ease-in-out',
-              widgetHeight,
-              mobilePreview ? 'max-w-[390px]' : 'max-w-[460px]',
-            )}
-            onPointerDownCapture={hidePanelFromWidgetGap}
+        <div
+          className={cn(
+            "relative h-full w-full",
+            mobile ? "max-w-[390px]" : "",
+          )}
+        >
+          {isOpen ? (
+            <section className={panelClassName}>
+              {screen === "form" ? (
+                <WebWidgetPreviewForm
+                  borderClassName={borderClassName}
+                  leadForm={leadForm}
+                  subduedTextClassName={subduedTextClassName}
+                  onSubmit={submitProfile}
+                />
+              ) : null}
+              {screen === "chat" ? (
+                <WebWidgetPreviewChat
+                  borderClassName={borderClassName}
+                  dark={dark}
+                  displayName={displayName}
+                  draft={draft}
+                  iconUrl={iconUrl}
+                  messages={messages}
+                  placeholder={DEFAULT_WEB_WIDGET_PROMPT_PLACEHOLDER}
+                  suggestions={suggestions}
+                  suggestionsEnabled={suggestionsEnabled}
+                  poweredBy={poweredBy}
+                  isThinking={isThinking}
+                  subduedTextClassName={subduedTextClassName}
+                  onDraftChange={setDraft}
+                  onRequestReset={() => setIsResetDialogOpen(true)}
+                  onSelectSuggestion={sendSuggestion}
+                  onSend={sendMessage}
+                />
+              ) : null}
+              {isResetDialogOpen ? (
+                <WebWidgetPreviewResetDialog
+                  dark={dark}
+                  onCancel={() => setIsResetDialogOpen(false)}
+                  onConfirm={() => {
+                    stopThinking();
+                    setDraft("");
+                    setMessages([]);
+                    setIsResetDialogOpen(false);
+                  }}
+                />
+              ) : null}
+            </section>
+          ) : null}
+          <button
+            type="button"
+            className="absolute bottom-0 right-0 flex size-[52px] items-center justify-center rounded-full bg-zinc-950 text-white"
+            aria-label={getWidgetLauncherLabel(isOpen)}
+            onClick={() => {
+              setIsOpen((open) => {
+                if (!open) beginConversation();
+                if (open) stopThinking();
+                return !open;
+              });
+            }}
           >
-            <WebWidgetPreviewPanel
-              agentName={displayName}
-              className={cn(
-                mobilePreview
-                  ? mobileInputPanelClassName
-                  : 'bottom-16 left-1/2 -translate-x-1/2',
-              )}
-              fullScreen={mobilePreview}
-              iconUrl={iconUrl}
-              loading={messagesLoading}
-              messages={messages}
-              open={panelOpen}
-              poweredBy={poweredBy}
-              sendError={sendError}
-              theme={theme}
-              onClose={hidePanel}
-            />
-            {renderComposer('bar')}
-          </div>
-        ) : (
-          <div
-            ref={widgetRef}
-            className={cn(
-              'relative w-full max-w-[460px] transition-[height] duration-200 ease-in-out',
-              launcherWidgetHeight,
-              mobilePreview ? 'mx-auto max-w-[390px]' : layout === 'left_avatar' ? 'mr-auto' : 'ml-auto',
+            {isOpen ? (
+              <X className="size-6" />
+            ) : iconUrl ? (
+              <img
+                src={iconUrl}
+                alt=""
+                className="size-full rounded-full object-cover"
+              />
+            ) : (
+              <MessagesSquare className="size-6" />
             )}
-            onPointerDownCapture={hidePanelFromWidgetGap}
-          >
-            <WebWidgetPreviewPanel
-              agentName={displayName}
-              className={cn(
-                mobilePreview
-                  ? mobileLauncherPanelClassName
-                  : cn(
-                      'bottom-16 w-full',
-                      layout === 'left_avatar' ? 'left-0' : 'right-0',
-                    ),
-              )}
-              fullScreen={mobilePreview}
-              iconUrl={iconUrl}
-              loading={messagesLoading}
-              messages={messages}
-              open={panelOpen}
-              poweredBy={poweredBy}
-              sendError={sendError}
-              theme={theme}
-              onClose={hidePanel}
-            >
-              {renderComposer('panel')}
-            </WebWidgetPreviewPanel>
-            <div
-              className={cn(
-                'absolute bottom-0 flex items-center gap-2 rounded-full bg-white p-[5px] shadow-sm ring-1 ring-black/10',
-                layout === 'left_avatar' ? 'left-0' : 'right-0',
-              )}
-            >
-              <button
-                type="button"
-                className="flex size-12 items-center justify-center rounded-full bg-white text-black ring-1 ring-black/10 transition hover:bg-neutral-50"
-                aria-label="Open preview chat icon"
-                onClick={() => {
-                  if (!enabled) return;
-                  setPanelOpen(true);
-                  setFocused(true);
-                }}
-                disabled={!enabled}
-              >
-                <LauncherAvatar iconUrl={iconUrl} name={displayName} theme={theme} />
-              </button>
-            </div>
-          </div>
-        )}
+          </button>
+        </div>
       </WebWidgetPreviewFrame>
     </div>
   );

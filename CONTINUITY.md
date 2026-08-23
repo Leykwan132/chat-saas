@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-19 [USER] Goal: ship an isolated white-label partner reseller portal where approved partners manage customer organizations, shared plans, manual credits, branding, and a single hostname without pricing or Stripe controls.
-- 2026-08-20 [CODE] Now: `origin/main` at `208213f` is merged and its channel-isolation change passes the full test suite with the partner branch.
-- 2026-08-20 [CODE] Next: publish the local partner-dialog TypeScript fix when requested; keep the unrelated AgentsSidebar debug edits out of that scope.
+- 2026-08-23 [CODE] Now: `origin/main` at `5b551d8` is merged locally into the partner branch; its iframe-widget redesign and Messenger diagnostics are present.
+- 2026-08-23 [CODE] Next: update the upstream stale widget and avatar test expectations before relying on a green full-suite baseline.
 - 2026-08-19 [ASSUMPTION] This work is unshipped; no release changelog entry has been added.
 
 # Decisions
@@ -97,3 +97,4 @@
 - 2026-08-20 [TOOL] Incoming `origin/main` at `3f44e70` includes PR #69, which persists workflow node positions after drag; its application code merged automatically.
 - 2026-08-20 [CODE] Fixed personal-workspace plan resolution, manual schedule availability without shifts, stale route/sidebar tests, Growth-plan overview test fixtures, and Vitest exclusion of the separately executed Google Ads Node test; Node v22 typecheck, diff validation, and the full `bun run test` suite pass (502 Vitest files / 1,715 tests; 63 Node tests).
 - 2026-08-20 [TOOL] Merged `origin/main` commit `208213f` (agent-scoped channel isolation); no application conflicts occurred, TypeScript and `bun run test` pass, and the only conflict was the continuity ledger.
+- 2026-08-23 [TOOL] Merging `origin/main` at `5b551d8` produced only a continuity-ledger conflict. Full tests have 9 stale-expectation failures: eight still inspect the removed in-page widget after the intentional iframe redesign, and one expects closed web conversations to be reused despite the intentional new-session behavior.

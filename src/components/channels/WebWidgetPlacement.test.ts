@@ -1,44 +1,15 @@
-import { expect, test } from 'vitest';
-import layoutPickerSource from './WebWidgetLayoutPicker.tsx?raw';
-import previewSource from './WebWidgetPreview.tsx?raw';
-import settingsPanelSource from './WebWidgetSettingsPanel.tsx?raw';
+import { expect, test } from "vitest";
+import previewSource from "./WebWidgetPreview.tsx?raw";
+import settingsControlsSource from "./WebWidgetAiSettingsControls.tsx?raw";
 
-test('web widget placement options are limited to middle and bottom right', () => {
-  const values = Array.from(
-    layoutPickerSource.matchAll(/value: '([^']+)'/g),
-    (match) => match[1],
-  );
-  expect(values).toEqual(['input_bar', 'right_avatar']);
-  expect(layoutPickerSource).toContain("label: 'Middle'");
-  expect(layoutPickerSource).toContain("label: 'Bottom right'");
+test("AI-powered widget settings omit retired placement controls", () => {
+  expect(settingsControlsSource).not.toContain("WebWidgetLayoutPicker");
+  expect(settingsControlsSource).not.toContain("Pill text");
 });
 
-test('settings panel exposes placement and feeds it into the preview', () => {
-  expect(settingsPanelSource).toContain('<WebWidgetLayoutPicker');
-  expect(settingsPanelSource).toContain('layout={placementLayout}');
-});
-
-test('bottom right placement uses a single icon launcher', () => {
-  expect(settingsPanelSource).not.toContain('launcherLabel');
-  expect(settingsPanelSource).not.toContain('Pill text');
-  expect(previewSource).not.toContain('MessagesSquare');
-  expect(previewSource).not.toContain('MessageCircle');
-  expect(previewSource).not.toContain('rounded-full bg-neutral-100');
-  expect(previewSource).not.toContain('bg-neutral-100 px-3 text-sm font-normal text-neutral-950');
-  expect(previewSource).not.toContain('bg-black px-3 text-sm font-normal text-white');
-  expect(previewSource).not.toContain('px-3 pr-4');
-  expect(previewSource).not.toContain('text-sm font-medium text-white');
-  expect(previewSource).not.toContain('Need help?');
-  expect(previewSource).toContain("const mobileLauncherPanelClassName = 'bottom-16");
-  expect(previewSource).toContain("'bottom-16 w-full'");
-  expect(previewSource).toContain("panelOpen ? 'h-[430px]' : 'h-[58px]'");
-  expect(previewSource).toContain('rounded-full bg-white p-[5px] shadow-sm');
-  expect(previewSource).toContain('className="flex size-12 items-center');
-  expect(previewSource).toContain('aria-label="Open preview chat icon"');
-  expect(previewSource).not.toContain('aria-label="Open preview help"');
-});
-
-test('bottom right setup preview keeps the launcher icon visible while the panel is open', () => {
-  expect(previewSource).not.toContain('{!panelOpen ? (');
-  expect(previewSource).toContain('aria-label="Open preview chat icon"');
+test("AI-powered preview anchors its direct-chat launcher in the bottom right", () => {
+  expect(previewSource).toContain("absolute bottom-0 right-0");
+  expect(previewSource).toContain("bottom-[64px]");
+  expect(previewSource).toContain("right-0 h-[620px] w-[390px]");
+  expect(previewSource).toContain("getWidgetLauncherLabel(isOpen)");
 });

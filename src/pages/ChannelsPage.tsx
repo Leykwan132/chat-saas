@@ -49,12 +49,18 @@ import {
   isSupportedChannelService,
   type SupportedChannelService,
 } from '@/lib/channelServiceMeta';
+import { getCustomerSafeMessengerConnectionFailureMessage } from '@/lib/messengerConnectionFeedback';
 
 const CONNECTABLE_SERVICES: SupportedChannelService[] = [
   'whatsapp',
   'instagram',
   'messenger',
 ];
+
+const PAUSED_CHANNEL_SERVICES = new Set<SupportedChannelService>([
+  'instagram',
+  'messenger',
+]);
 
 type ChannelDoc = Doc<'channels'>;
 type ChannelWithConversationCount = ChannelDoc & { conversationCount?: number };
@@ -171,8 +177,11 @@ function useMetaChannelCallbackParams() {
         posthog?.capture('channel_connected', { channel_type: 'messenger' });
         toast.success('Messenger account connected');
       } else {
-        const message = searchParams.get('message') ?? 'Unknown error';
-        toast.error(`Messenger connect failed: ${message}`);
+        toast.error(
+          getCustomerSafeMessengerConnectionFailureMessage(
+            searchParams.get('message'),
+          ),
+        );
       }
       const next = new URLSearchParams(searchParams);
       next.delete('messenger');
@@ -329,9 +338,10 @@ export default function ChannelsPage() {
               return null;
             }
 
+            const shouldHideChannelCard = PAUSED_CHANNEL_SERVICES.has(service);
             const channel = connectedByService.get(service);
             if (channel) {
-              return (
+              const connectedChannelCard = (
                 <ConnectedChannelCard
                   key={channel._id}
                   agentId={agentId}
@@ -351,9 +361,15 @@ export default function ChannelsPage() {
                   onShowWebDetails={() => setWebDetailsOpen(true)}
                 />
               );
+
+              return shouldHideChannelCard ? (
+                <div className="hidden" key={service}>
+                  {connectedChannelCard}
+                </div>
+              ) : connectedChannelCard;
             }
 
-            return (
+            const availableChannelCard = (
               <AvailableChannelCard
                 key={service}
                 service={service}
@@ -364,6 +380,12 @@ export default function ChannelsPage() {
                 onLimitReached={openUpgradeModal}
               />
             );
+
+            return shouldHideChannelCard ? (
+              <div className="hidden" key={service}>
+                {availableChannelCard}
+              </div>
+            ) : availableChannelCard;
           })}
         </div>
       </section>
