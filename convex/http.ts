@@ -389,6 +389,7 @@ type WidgetVisitorArgs = {
   name?: string;
   email?: string;
   phone?: string;
+  customFields?: Record<string, string>;
 };
 
 const widgetPublicApi = api as unknown as {
@@ -509,6 +510,27 @@ const widgetMessage = httpAction(async (ctx, req) => {
   }
 });
 
+const widgetReset = httpAction(async (ctx, req) => {
+  let body: { publicKey?: unknown; visitorId?: unknown };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return widgetErrorResponse("Invalid JSON", 400);
+  }
+  if (typeof body.publicKey !== "string" || typeof body.visitorId !== "string") {
+    return widgetErrorResponse("Missing widget key or visitor ID", 400);
+  }
+  try {
+    await ctx.runMutation(internal.webWidget.internalResetConversation, {
+      publicKey: body.publicKey,
+      visitorId: body.visitorId,
+    });
+    return widgetJsonResponse({ ok: true });
+  } catch (error) {
+    return widgetErrorResponse(error, 400);
+  }
+});
+
 const widgetVisitorProfile = httpAction(async (ctx, req) => {
   const publicKey = getWidgetKey(req);
   const visitorId = getWidgetVisitorId(req);
@@ -525,7 +547,14 @@ const widgetVisitorProfile = httpAction(async (ctx, req) => {
 });
 
 const widgetSubmitVisitorProfile = httpAction(async (ctx, req) => {
-  let body: { publicKey?: unknown; visitorId?: unknown; name?: unknown; email?: unknown; phone?: unknown };
+  let body: {
+    publicKey?: unknown;
+    visitorId?: unknown;
+    name?: unknown;
+    email?: unknown;
+    phone?: unknown;
+    customFields?: unknown;
+  };
   try {
     body = await req.json();
   } catch {
@@ -542,6 +571,15 @@ const widgetSubmitVisitorProfile = httpAction(async (ctx, req) => {
         name: typeof body.name === "string" ? body.name : undefined,
         email: typeof body.email === "string" ? body.email : undefined,
         phone: typeof body.phone === "string" ? body.phone : undefined,
+        customFields:
+          body.customFields &&
+          typeof body.customFields === "object" &&
+          !Array.isArray(body.customFields) &&
+          Object.values(body.customFields).every(
+            (value) => typeof value === "string",
+          )
+            ? body.customFields as Record<string, string>
+            : undefined,
       }),
     });
   } catch (error) {
@@ -579,12 +617,24 @@ http.route({
   handler: widgetMessage,
 });
 
+http.route({
+  path: "/widget/reset",
+  method: "POST",
+  handler: widgetReset,
+});
+
 http.route({ path: "/widget/visitor", method: "GET", handler: widgetVisitorProfile });
 http.route({ path: "/widget/visitor", method: "POST", handler: widgetSubmitVisitorProfile });
 http.route({ path: "/widget/visitor", method: "OPTIONS", handler: httpAction(async () => widgetOptionsResponse()) });
 
 http.route({
   path: "/widget/message",
+  method: "OPTIONS",
+  handler: httpAction(async () => widgetOptionsResponse()),
+});
+
+http.route({
+  path: "/widget/reset",
   method: "OPTIONS",
   handler: httpAction(async () => widgetOptionsResponse()),
 });

@@ -1458,5 +1458,7 @@ export function selectReusableInboxConversation(
   latest: Doc<"conversations"> | null,
   service: Doc<"conversations">["service"],
 ) {
-  return latest?.status === "closed" && service === "avatar" ? null : latest;
+  return latest?.status === "closed" && (service === "avatar" || service === "web")
+    ? null
+    : latest;
 }

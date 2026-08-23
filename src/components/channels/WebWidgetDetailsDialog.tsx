@@ -35,6 +35,7 @@ export function WebWidgetDetailsDialog({
   const updateSettings = useMutation(api.webWidget.updateSettings);
   const generateIconUploadUrl = useMutation(api.webWidget.generateIconUploadUrl);
   const saveIcon = useMutation(api.webWidget.saveIcon);
+  const removeIcon = useMutation(api.webWidget.removeIcon);
   const ensuringAgentRef = useRef<Id<'agents'> | null>(null);
 
   useEffect(() => {
@@ -85,6 +86,7 @@ export function WebWidgetDetailsDialog({
                 updateSettings={updateSettings}
                 generateIconUploadUrl={generateIconUploadUrl}
                 saveIcon={saveIcon}
+                removeIcon={removeIcon}
               />
             </TabsContent>
             <TabsContent value="traditional" className="m-0 h-full min-h-0 overflow-y-auto">

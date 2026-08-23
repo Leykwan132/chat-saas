@@ -1,68 +1,75 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-21 [USER] Goal: replace Kilobot’s AI widget with a Chatwoot-inspired right-side iframe home, optional visitor form, and normal conversation view; preserve the snippet and Traditional widget.
-- 2026-08-21 [CODE] Now: iframe host, standalone React widget entry, normalized home/form configuration, public visitor-profile APIs, and HTTP compatibility endpoints are implemented.
-- 2026-08-21 [CODE] Next: reshape dashboard settings/preview to edit the new home/form fields and add widget interaction coverage.
-- 2026-08-21 [CODE] Open question: the upstream merge also pauses Messenger and Instagram channel setup; widget work remains the current branch focus.
+
+- 2026-08-21 [USER] Goal: ship an AI-powered Kilobot iframe widget that opens directly into an optional visitor form or chat, while preserving the Traditional widget and embed contract.
+- 2026-08-21 [CODE] Now: `codex/iframe-widget-home` contains broad uncommitted widget work. The live iframe and dashboard preview share direct entry, a compact Geist chat, opt-in suggestions, reset confirmation, loading state, optional branding, and compact desktop/mobile frames.
+- 2026-08-21 [CODE] Now: Visitor-form settings use one bordered collection container without helper copy. Standard Name, Email, and Phone fields remain selectable; custom-field edits stay local drafts until Confirm merges them into the form, then compact rows expose Edit, requirement, and delete controls. Answers are saved on the customer record.
+- 2026-08-21 [CODE] Now: Appearance uses compact Name/avatar plus Remove Kilobot branding in the left desktop column, with Theme in the right column. A Save appearance action is shown only for a valid unsaved Name edit and hides after success.
+- 2026-08-23 [CODE] Next: the local-only `index.html` iframe snippet was removed before review; commit and open the widget PR from `codex/iframe-widget-home`.
+- 2026-08-21 [TOOL] Convex code generation cannot reach its external service from this environment; run `bunx convex codegen` or `bunx convex dev` locally when network access is available.
 
 # Decisions
-- 2026-08-18 [USER] D727 ACTIVE: the app does not send Google Ads conversion events; the installed Google tag measures the configured onboarding conversion.
-- 2026-08-18 [USER] D728 ACTIVE: an AI escalation links to the exact incoming message used as the AI turn prompt; action history jumps to that marker in the conversation.
-- 2026-08-18 [USER] D733 ACTIVE: Inbox-only dummy preview code is removed; escalation dividers use neutral styling and disclose the stored customer request plus AI handoff context on click.
-- 2026-08-18 [USER] D729 SUPERSEDED by D733: the dummy preview no longer exists.
-- 2026-08-18 [USER] D730 ACTIVE: the neutral escalation divider uses the escalation-triangle icon rather than a question-mark icon.
-- 2026-08-18 [USER] D731 ACTIVE: expanded escalation details use readable text and label the AI-provided rationale “Why it needs a human.”
-- 2026-08-18 [USER] D732 ACTIVE: Action History’s View in chat control uses a neutral fully rounded background.
-- 2026-08-18 [USER] D726 SUPERSEDED by D727: unauthenticated “Start for free” CTAs do not use an app conversion helper.
-- 2026-08-17 [USER] D724 ACTIVE: hovering an overview distribution row expands its matching donut slice and renders the selected label and customer count inside the donut center.
-- 2026-08-17 [USER] D720 ACTIVE: `?dummyData=true` supplies browser-only Common Topics and Customer Sentiment data in local development and must be removed before PR #63 merges.
-- 2026-08-17 [USER] D701–D718 ACTIVE: Agent Overview uses the 30-day range and contextual compact controls; Q&A includes reusable support-question presets; topic analytics are plan-entitled with an upgrade path.
-- 2026-08-17 [USER] D725 ACTIVE: landing benefit cards use the supplied revised portrait images at full grid-column width above customer-outcome copy on a zinc-gray section background; the booking card retains “Turn Enquiries Into Bookings” and makes KiloBot’s booking lifecycle automation explicit.
-- 2026-08-16 [USER] D637–D700 ACTIVE: Google Calendar remains individual and primary-calendar-only; connected writes fail closed and manual/CSV customers retain active-agent scope.
+
+- 2026-08-21 [USER] D740 ACTIVE: Reset retires the visitor’s prior AI thread; their next message creates a fresh conversation and AI context.
+- 2026-08-21 [USER] D741 ACTIVE: Suggestions have an explicit enable switch that is off for new widgets; existing configured suggestions stay enabled. When disabled, their three dashboard inputs and helper copy are hidden. When enabled, three configured non-empty suggestions render as vertical content-sized pills only before the first visitor message and send immediately as that visitor message; Save suggestions appears only after edits.
+- 2026-08-21 [USER] D742 ACTIVE: AI-powered widgets always use the fixed `Ask a question…` placeholder; legacy stored values are ignored.
+- 2026-08-21 [USER] D743 ACTIVE: Appearance is one compact group with Name/avatar and a close-coupled Remove Kilobot branding switch in the desktop left column, Theme in the right column, and no generic branding helper text or separators. A custom avatar has its own adjacent trash action that removes it and returns the live widget and both closed/open preview states to the default icon.
+- 2026-08-21 [USER] D745 ACTIVE: Appearance saves follow the same edit-driven pattern as suggestions and visitor form: Save appearance is visible only after a valid Name change and clears immediately after a successful save.
+- 2026-08-21 [USER] D744 ACTIVE: Visitor-form configuration appears below Suggestions and exposes Name, Email, and Phone as full-width vertical rows. The standard-field switch controls Required versus Optional while the field remains visible in the form; a trash action removes it. New forms include Phone as visible Optional. Standard form copy is not configurable; Save form is shown only for pending valid edits and disappears immediately after a successful save; the title has a green, white-text Recommended badge.
+- 2026-08-21 [USER] D746 ACTIVE: Visitor-form configuration groups only configured fields in one container, with Add field and Save form outside it, and allows removable custom fields. Standard and custom field switches are labelled Required or Optional to reflect their state; all visitor-form trash actions are red. New and edited custom fields stay as local drafts until Confirm merges a valid field into the form and collapses it into a compact row; Edit restores a draft. They are Short text or Dropdown, and dropdowns require at least two configured options. Required standard and custom labels show a red `*` in the live form and preview. Submitted answers are stored on the customer as custom fields, and no required-fields helper copy is shown. Live and preview dropdown fields use one minimal shadcn Select trigger/popover rather than the browser-native menu.
+- 2026-08-23 [USER] D747 ACTIVE: The live visitor form and dashboard preview use Geist for their title and description, use a medium-weight title with a deliberate top inset, neutral light-theme input borders, place a fully rounded Continue button after the configured fields with a small gap, and scroll their form body for long field lists. Live and preview text inputs and dropdown triggers share a 12px horizontal inset.
+- 2026-08-21 [USER] D748 ACTIVE: Custom visitor fields support Short text, Email, Phone number, Number, Website URL, and Dropdown. Email, number, and website inputs use native browser controls and backend validation; phone accepts international formats without a restrictive server pattern. Dropdowns use the shared shadcn Select with native required-form participation. The dashboard type picker pairs every option with a clear icon and uses a more legible text size.
+- 2026-08-21 [USER] D749 ACTIVE: The chat thinking state is an unframed inline status: its label matches normal message text size, sits one pixel lower for optical centering, has a 10px gap from the dot grid, and uses a subtle reduced-motion-safe shimmer.
+- 2026-08-21 [USER] D750 ACTIVE: While the widget chat is open, it refreshes its public message list every two seconds so human and AI replies sent from the inbox appear without a visitor refresh or another visitor message. The faster 750ms loop remains only while awaiting an AI reply.
+- 2026-08-21 [USER] D751 ACTIVE: Visitor messages use a black, high-contrast bubble. AI and human replies use neutral bubbles with a sender label above: `AI Agent` for automated replies and only the team member name for human inbox replies when the member profile has a name. Every visitor, AI, and human message includes its local `hour:minute` timestamp below the bubble. Bubbles shrink to message width while retaining an 82–84% cap for long text. The dashboard preview follows the same visual treatment.
+- 2026-08-21 [USER] D752 ACTIVE: A visitor profile completed with the same browser-stored widget visitor ID bypasses an enabled visitor form on every later widget open and enters chat directly. The widget handles either profile/config load order; resetting a chat does not erase the profile.
 - 2026-08-20 [USER] D734 ACTIVE: Channel management is agent-scoped; a channel assigned to one agent must not appear on another agent’s Channels page.
-- 2026-08-20 [USER] D735 ACTIVE: Messenger’s backend wait is shown as a non-dismissible “Getting your Facebook Pages…” progress dialog until it succeeds, fails, or hands off to the Page picker.
-- 2026-08-20 [USER] D736 ACTIVE: Messenger connection failures never display raw Convex, Meta, or backend error details to customers; embedded signup, Page picking, and classic OAuth use generic retry feedback.
-- 2026-08-20 [USER] D737 SUPERSEDED by D739: temporary Messenger diagnostics were removed.
-- 2026-08-20 [USER] D738 ACTIVE: the diagnostics PR includes Messenger logging only; billing and unrelated test-suite repairs are excluded.
-- 2026-08-20 [USER] D739 ACTIVE: Messenger diagnostic logging is removed; Messenger and Instagram setup are paused by hiding their channel-card containers while Website/KiloBot remains visible.
+- 2026-08-20 [USER] D735–D739 ACTIVE: Messenger setup shows safe progress/errors and its setup cards are currently hidden while Website/KiloBot remains visible.
 
 # Done (recent)
-- 2026-08-20 [TOOL] PR #71 merged into `main`, isolating channel management by assigned agent.
-- 2026-08-20 [TOOL] PR #72 merged into `main`, fixing agent-scoped Messenger error recording.
-- 2026-08-20 [TOOL] Draft PR #73 opened from `codex/show-messenger-connection-progress` at commit `6f8f571`.
-- 2026-08-20 [CODE] Added Messenger connecting feedback and customer-safe failure messaging across embedded signup, Page picking, and classic OAuth.
-- 2026-08-20 [CODE] Removed Messenger OAuth and Page-list diagnostic logging; paused Messenger and Instagram setup by hiding their channel-card containers, including connected cards; Website/KiloBot remains visible.
-- 2026-08-20 [TOOL] Opened PR #69 from `codex/persist-workflow-node-positions` into `main` at commit `8fe01b8`.
-- 2026-08-20 [CODE] Connected authenticated `WorkflowCanvas.onNodeMoved` to an immediate persisted position update; landing-preview dragging remains local-only.
-- 2026-08-20 [CODE] Added regression coverage for the page callback, exact position payload, and a real create-move-reload Convex workflow journey.
-- 2026-08-20 [TOOL] Node v22.22.0 focused workflow suite passes: 16 tests in 3 files; production build exits successfully. ESLint has no errors and one pre-existing `WorkflowPage` exhaustive-deps warning.
-- 2026-08-20 [TOOL] Targeted review found no critical or important defects; it noted only that coverage is split across page wiring, action payload, and Convex reload tests rather than one browser drag integration.
+
+- 2026-08-21 [CODE] Completed the locally uncommitted AI-widget redesign: direct iframe UX, Message Scroller transcript, prompt composer, reset, branding, aligned live/preview presentation, an unframed shimmering thinking status, chat-open message refresh, and sender-aware bubbles with human attribution and timestamps.
+- 2026-08-21 [CODE] Simplified human-reply attribution in the live widget to the replying team member’s name only; the workspace-team prefix is no longer rendered.
+- 2026-08-21 [CODE] Simplified Visitor form to selected data fields with a green Recommended badge; compact standard/custom rows expose requirement state plus Edit/Delete actions, while new or edited custom fields remain local drafts until Confirm. Returning visitors with a saved profile now go straight to chat; live and preview forms are scrollable, Geist-based, neutral-bordered, and consistently spaced with rounded Continue controls. Live text and dropdown controls share a 12px horizontal inset.
+- 2026-08-21 [CODE] Added vertical content-sized suggestions with opt-in visibility and immediate-send behavior, plus compact Name/avatar, branding, and theme settings with edit-driven saves.
+- 2026-08-21 [CODE] Added Short text, Email, Phone number, Number, Website URL, and Dropdown custom fields across dashboard, preview, live iframe, shared configuration, and backend validation; dropdowns use a shared minimal shadcn Select with balanced trigger spacing.
+- 2026-08-21 [CODE] Added icons for every custom-field type-picker option and slightly increased the picker and confirmed-row type text for readability; custom avatars now have a remove control and the reactive preview follows upload/removal.
+- 2026-08-23 [CODE] Made the dashboard preview launcher use the configured avatar when closed; its open chat header already uses the same avatar. Preview field controls retain the shared 12px horizontal inset.
 
 # Working set
-- 2026-08-20 [CODE] `src/pages/ChannelsPage.tsx`
-- 2026-08-20 [CODE] `src/components/channels/AvailableChannelCard.test.ts`
-- 2026-08-20 [CODE] `convex/messengerConnect.ts`
-- 2026-08-20 [CODE] `convex/messengerConnectLogging.test.ts`
-- 2026-08-20 [CODE] `CONTINUITY.md`
+
+- 2026-08-21 [CODE] `shared/webWidgetExperience.ts`
+- 2026-08-21 [CODE] `convex/{webWidget.ts,webWidgetAdmin.ts,webWidgetPublic.ts,webWidgetValidators.ts,http.ts}`
+- 2026-08-21 [CODE] `public/widget/ai.js`
+- 2026-08-21 [CODE] `src/widget/{Widget.tsx,widgetEntryScreen.ts,WidgetVisitorForm.tsx,styles.css}`
+- 2026-08-21 [CODE] `src/components/channels/WebWidgetAiSettingsControls.tsx`
+- 2026-08-21 [CODE] `src/components/channels/WebWidgetAppearanceSection.tsx`
+- 2026-08-21 [CODE] `src/components/channels/WebWidgetLeadFormSection.tsx`
+- 2026-08-21 [CODE] `src/components/channels/WebWidgetPreview.tsx`
+- 2026-08-21 [CODE] `src/components/channels/WebWidgetSettingsPanel.tsx`
+- 2026-08-21 [CODE] `index.html`
 
 # Receipts
-- 2026-08-20 [TOOL] Merged `origin/main` into `codex/messenger-oauth-diagnostics`, resolved the logging conflicts in favor of the user-requested removal, then pushed merge commit `921e50d`.
-- 2026-08-20 [TOOL] Corrected pause scope: focused channel/logging tests pass (2), changed-file ESLint has zero errors and one pre-existing hook-dependency warning, and production build exits 0 with existing Meta app ID and large-chunk warnings.
-- 2026-08-20 [TOOL] Commit `145a52c` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused regression tests pass (2), production build exits 0, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
-- 2026-08-20 [TOOL] Commit `7a43730` was pushed to `origin/codex/messenger-oauth-diagnostics`; focused Page-list token-log tests pass, and the GitHub plugin found no existing PR before PR creation failed with `403 Resource not accessible by integration`.
-- 2026-08-20 [TOOL] Fresh Node v22.22.0 focused Messenger diagnostics tests pass (2); changed-file ESLint and `git diff --check` exit 0.
-- 2026-08-20 [TOOL] Draft PR #73 created: `https://github.com/Leykwan132/chat-saas/pull/73`.
-- 2026-08-20 [TOOL] Final Node v22.22.0 focused Messenger feedback suite passes (8); changed-file ESLint has zero errors and one pre-existing `ChannelsPage` hook-dependency warning; production build exits 0 with existing Meta app ID and large-chunk warnings.
-- 2026-08-20 [TOOL] Re-review found no raw Convex, Meta, or backend error exposure across Messenger embedded signup, Page picking, or classic OAuth.
-- 2026-08-20 [TOOL] Node v22.22.0 Messenger feedback tests (6) and changed-file ESLint checks pass after adding the generic error-message regression case.
-- 2026-08-20 [TOOL] Node v22.22.0 focused Messenger feedback tests (5) and changed-file ESLint checks pass; production build exits 0 with existing missing Meta app ID and large-chunk warnings.
-- 2026-08-20 [TOOL] The Messenger progress regression test failed before implementation because the dialog state/content exports did not exist, then passed after the behavior was added.
-- 2026-08-20 [TOOL] New agent-channel isolation test passes under Node v22.22.0; production build exits 0, with existing Meta app ID and large-chunk warnings.
-- 2026-08-20 [TOOL] Full `bun run test` with mock Stripe prices fails in unrelated calendar and agent-overview suites (18 tests across 6 files); the new channel test passes.
-- 2026-08-20 [TOOL] `bunx convex codegen` is unavailable in this isolated worktree because `CONVEX_DEPLOYMENT` is unset.
-- 2026-08-18 [TOOL] `origin/main` at `32a2ebe` contains merged PR #66; the removal branch is resolving that merge in favor of D727.
-- 2026-08-18 [TOOL] Post-merge focused Vitest checks (7), loader test (1), and Node v22.22.0 production build passed; only existing Meta app ID and large-chunk Vite warnings remain.
-- 2026-08-18 [TOOL] The incoming `src/googleAdsTag.test.mjs` verifies the Google Ads loader URL and config ID and remains intact.
-- 2026-08-18 [TOOL] Escalation lifecycle (including a text-and-image inbound message) plus two inbox-marker tests pass; Node v22.22.0 production build passes. The lifecycle fixture emits pre-existing missing aggregate-component warnings after passing.
-- 2026-08-18 [TOOL] `gh auth status` confirms the active GitHub token is invalid, so the requested branch push and draft PR cannot be created until `gh auth login -h github.com` succeeds.
+
+- 2026-08-21 [TOOL] Custom-field confirmation state: red validation test confirmed the missing readiness rule; focused tests (8), app TypeScript, targeted ESLint, and diff validation pass. The split visitor-form components remain below 300 lines.
+- 2026-08-21 [TOOL] Custom-field draft boundary: red merge test confirmed confirmation had no model boundary; focused tests (9), app TypeScript, targeted ESLint, and diff validation pass. All touched code files remain below 300 lines.
+- 2026-08-21 [TOOL] Required markers: red render tests confirmed both live and preview forms omitted markers; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
+- 2026-08-21 [TOOL] Visitor-form layout: red render tests confirmed absent scroll/font classes; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
+- 2026-08-21 [TOOL] Visitor-form header spacing: red preview render test confirmed the prior padding and semibold title; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
+- 2026-08-21 [TOOL] Light form-control borders: visitor-form render test, app TypeScript, targeted ESLint, and diff validation pass.
+- 2026-08-21 [TOOL] Visitor-form top inset and Continue styling: red preview render test confirmed the compact top inset and rounded rectangle; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
+- 2026-08-21 [TOOL] Live Continue radius: visitor-form render test, app TypeScript, targeted ESLint, and diff validation pass after correcting CSS precedence.
+- 2026-08-21 [TOOL] Custom field types: red shared and rendered-form tests confirmed missing normalization and native input types; 21 focused tests, app TypeScript, targeted ESLint, and diff validation pass. Touched code files remain below 300 lines.
+- 2026-08-21 [TOOL] Custom-field type-picker icons: 18 focused tests, app TypeScript, targeted ESLint, and diff validation pass; the row remains below 300 lines.
+- 2026-08-21 [TOOL] Thinking-indicator refinement: 40 focused render tests, app TypeScript, targeted ESLint, and diff validation pass; its CSS remains below 300 lines.
+- 2026-08-21 [TOOL] Thinking-indicator optical alignment: red CSS expectations confirmed the prior 6px gap; 40 focused render tests, app TypeScript, targeted ESLint, and diff validation pass.
+- 2026-08-21 [TOOL] Inbox-to-widget reply refresh: red widget test confirmed no chat-open polling; 34 focused widget/Convex tests, app TypeScript, targeted ESLint, and diff validation pass. `Widget.tsx` remains below 300 lines.
+- 2026-08-21 [TOOL] Sender-aware bubbles, human attribution, metadata order, timestamps, content-sized width, and returning-profile routing: red backend/live/preview tests confirmed absent sender metadata, member names, required top/bottom ordering, timestamps, content sizing, and returning-visitor routing; 68 focused tests, app TypeScript, targeted ESLint, and diff validation pass. All newly touched code files remain below 300 lines.
+- 2026-08-21 [TOOL] Human-reply name-only attribution: red widget render test confirmed the prior separator remained; 68 focused tests, app TypeScript, targeted ESLint, the Widget line cap, and diff validation pass.
+- 2026-08-21 [TOOL] Avatar removal: red avatar-uploader render test confirmed the clear action was absent; 76 focused tests, app TypeScript, targeted ESLint, code line caps, and diff validation pass.
+- 2026-08-21 [TOOL] Shadcn visitor-form dropdowns: red rendered-form test confirmed the browser-native menu remained; 88 focused tests, app TypeScript, targeted ESLint, code line caps, and diff validation pass.
+- 2026-08-23 [TOOL] Live visitor-form padding: red style test confirmed inputs retained their 11px horizontal inset; 72 focused tests, app TypeScript, targeted ESLint, code line caps, and diff validation pass.
+- 2026-08-23 [TOOL] Avatar-aware closed preview launcher: red server-render test confirmed the configured avatar was absent; 34 focused settings/visitor-form tests, targeted ESLint, line-cap checks, and diff validation pass after the fix.
+- 2026-08-23 [TOOL] The local iframe test in `index.html` is appended to the dashboard body. While a Radix modal is open, Radix disables body pointer events for modal focus isolation, so the high-z-index iframe remains visible but cannot receive clicks. Use the in-modal preview or a separate local host page for widget interaction tests.
+- 2026-08-23 [TOOL] PR verification: 94 focused widget/settings/Convex tests and the Node v22 production build pass. The full suite initially included 21 obsolete inline-widget assertions, now replaced by iframe-host coverage; it also reports six unrelated Calendar and agent-overview failures in unchanged areas.

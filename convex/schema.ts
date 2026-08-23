@@ -17,6 +17,7 @@ import {
   webWidgetHomeValidator,
   webWidgetLeadFormValidator,
   webWidgetModeValidator,
+  webWidgetSuggestionsValidator,
   webWidgetThemeValidator,
 } from "./webWidgetValidators";
 import {
@@ -627,6 +628,8 @@ export default defineSchema({
     enabled: v.boolean(),
     agentDisplayName: v.string(),
     placeholder: v.optional(v.string()),
+    suggestions: v.optional(webWidgetSuggestionsValidator),
+    suggestionsEnabled: v.optional(v.boolean()),
     layout: v.optional(webWidgetLayoutValidator),
     theme: v.optional(webWidgetThemeValidator),
     home: v.optional(webWidgetHomeValidator),

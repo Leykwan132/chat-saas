@@ -19,6 +19,7 @@ import {
   getEnabledSettingsByPublicKey,
   listMessagesForVisitor,
   publicConfigForSettings,
+  resetWidgetConversation,
 } from "./webWidgetCore";
 import {
   activateWebWidgetMode,
@@ -34,6 +35,7 @@ import {
   webWidgetHomeValidator,
   webWidgetLeadFormValidator,
   webWidgetModeValidator,
+  webWidgetSuggestionsValidator,
   webWidgetThemeValidator,
 } from "./webWidgetValidators";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
@@ -69,6 +71,8 @@ export const updateSettings = mutation({
     agentId: v.id("agents"),
     agentDisplayName: v.optional(v.string()),
     placeholder: v.optional(v.string()),
+    suggestions: v.optional(webWidgetSuggestionsValidator),
+    suggestionsEnabled: v.optional(v.boolean()),
     layout: v.optional(webWidgetLayoutValidator),
     theme: v.optional(webWidgetThemeValidator),
     home: v.optional(webWidgetHomeValidator),
@@ -226,6 +230,17 @@ export const internalReceiveMessage = internalMutation({
   },
   handler: async (ctx, args) => {
     return await receiveWidgetMessage(ctx, args);
+  },
+});
+
+export const internalResetConversation = internalMutation({
+  args: {
+    publicKey: v.string(),
+    visitorId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    return await resetWidgetConversation(ctx, args);
   },
 });
 

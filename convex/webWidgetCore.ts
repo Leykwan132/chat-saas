@@ -1,9 +1,14 @@
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
+import { deleteConversationAgentThread } from "./channelAgentThreadCleanup";
 import { getTeamStripePlanHelper } from "./plans";
 import { normalizeWebWidgetLayout } from "../shared/webWidgetLayouts";
 import { normalizeWebWidgetTheme } from "../shared/webWidgetThemes";
 import { normalizeWebWidgetExperience } from "../shared/webWidgetExperience";
+import {
+  normalizeWebWidgetSuggestions,
+  resolveWebWidgetSuggestionsEnabled,
+} from "../shared/webWidgetSuggestions";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
 import {
   DEFAULT_WEB_WIDGET_MODE,
@@ -121,17 +126,31 @@ export async function publicConfigForSettings(
     orgId: settings.orgId,
     userId: settings.connectedByUserId,
   });
-  const branding = resolveWebWidgetBranding(settings, planState.canUseCustomIcon);
-  const iconUrl = await resolveWidgetIconUrl(ctx, settings, planState.canUseCustomIcon);
+  const branding = resolveWebWidgetBranding(
+    settings,
+    planState.canUseCustomIcon,
+  );
+  const iconUrl = await resolveWidgetIconUrl(ctx, settings, true);
+  const team = await ctx.db
+    .query("teams")
+    .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", settings.orgId))
+    .unique();
   const experience = normalizeWebWidgetExperience(settings);
   return {
     mode: "ai_powered" as const,
     publicKey: settings.publicKey,
     agentDisplayName: settings.agentDisplayName,
+    teamName: team?.name ?? "Team",
     layout: normalizeWebWidgetLayout(settings.layout),
     theme: normalizeWebWidgetTheme(settings.theme),
     placeholder:
-      settings.placeholder ?? defaultWebWidgetPlaceholder(settings.agentDisplayName),
+      settings.placeholder ??
+      defaultWebWidgetPlaceholder(settings.agentDisplayName),
+    suggestions: normalizeWebWidgetSuggestions(settings.suggestions),
+    suggestionsEnabled: resolveWebWidgetSuggestionsEnabled(
+      settings.suggestionsEnabled,
+      settings.suggestions,
+    ),
     iconUrl,
     poweredBy: branding.poweredBy,
     ...experience,
@@ -164,10 +183,13 @@ export async function listMessagesForVisitor(
   const conversation = await ctx.db
     .query("conversations")
     .withIndex("by_channel_and_contactAddress", (q) =>
-      q.eq("channelId", settings.channelId).eq("contactAddress", args.visitorId),
+      q
+        .eq("channelId", settings.channelId)
+        .eq("contactAddress", args.visitorId),
     )
-    .unique();
-  if (conversation === null) {
+    .order("desc")
+    .first();
+  if (conversation === null || conversation.status === "closed") {
     return [];
   }
   const messages = await ctx.db
@@ -177,12 +199,73 @@ export async function listMessagesForVisitor(
     )
     .order("desc")
     .take(RECENT_WIDGET_MESSAGES);
+  const authorUserIds = [
+    ...new Set(
+      messages.flatMap((message) =>
+        message.authorUserId === undefined ? [] : [message.authorUserId],
+      ),
+    ),
+  ];
+  const teamMemberNames = new Map(
+    await Promise.all(
+      authorUserIds.map(async (authorUserId) => {
+        const user = await ctx.db
+          .query("users")
+          .withIndex("by_workosUserId", (q) =>
+            q.eq("workosUserId", authorUserId),
+          )
+          .unique();
+        const senderName = [user?.firstName, user?.lastName]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+        return [authorUserId, senderName || undefined] as const;
+      }),
+    ),
+  );
   return messages.reverse().map((message) => ({
     id: message._id,
     direction: message.direction,
+    sender:
+      message.direction === "incoming"
+        ? "visitor"
+        : message.authorUserId === undefined
+          ? "ai"
+          : "team",
+    senderName:
+      message.authorUserId === undefined
+        ? undefined
+        : teamMemberNames.get(message.authorUserId),
     contentType: message.contentType,
     content: message.content,
     mediaUrl: message.mediaUrl,
     createdAt: message.createdAt,
   }));
+}
+
+export async function resetWidgetConversation(
+  ctx: MutationCtx,
+  args: { publicKey: string; visitorId: string },
+) {
+  const settings = await getEnabledSettingsByPublicKey(ctx, args.publicKey);
+  const conversation = await ctx.db
+    .query("conversations")
+    .withIndex("by_channel_and_contactAddress", (q) =>
+      q
+        .eq("channelId", settings.channelId)
+        .eq("contactAddress", args.visitorId),
+    )
+    .order("desc")
+    .first();
+  if (conversation === null || conversation.status === "closed") {
+    return null;
+  }
+  await deleteConversationAgentThread(ctx, conversation.threadId);
+  await ctx.db.patch(conversation._id, {
+    status: "closed",
+    assignToAiAgent: false,
+    unreadCount: 0,
+    updatedAt: Date.now(),
+  });
+  return null;
 }

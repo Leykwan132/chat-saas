@@ -612,6 +612,7 @@ export const generateAiReplyWorker = internalAction({
     });
     if (
       conv === null ||
+      conv.status === "closed" ||
       !conv.assignToAiAgent ||
       !conv.assignedAgentId
     ) {
@@ -754,8 +755,10 @@ export const generateAiReplyWorker = internalAction({
         { conversationId: args.conversationId },
       );
       if (
-        convAfterGeneration?.status === "requires_user_input" &&
-        convAfterGeneration.escalation
+        convAfterGeneration === null ||
+        convAfterGeneration.status === "closed" ||
+        (convAfterGeneration.status === "requires_user_input" &&
+          convAfterGeneration.escalation)
       ) {
         return;
       }
