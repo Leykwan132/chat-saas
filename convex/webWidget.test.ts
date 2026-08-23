@@ -27,39 +27,63 @@ afterEach(() => {
 });
 
 const stripeModules = {
-  public: () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
-  private: () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
-  "_generated/server": () => import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
+  public: () =>
+    import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
+  private: () =>
+    import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
+  "_generated/server": () =>
+    import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
 };
 
 const workpoolModules = {
-  complete: () => import("../node_modules/@convex-dev/workpool/dist/component/complete.js"),
-  config: () => import("../node_modules/@convex-dev/workpool/dist/component/config.js"),
-  crons: () => import("../node_modules/@convex-dev/workpool/dist/component/crons.js"),
-  danger: () => import("../node_modules/@convex-dev/workpool/dist/component/danger.js"),
-  kick: () => import("../node_modules/@convex-dev/workpool/dist/component/kick.js"),
-  lib: () => import("../node_modules/@convex-dev/workpool/dist/component/lib.js"),
-  logging: () => import("../node_modules/@convex-dev/workpool/dist/component/logging.js"),
-  loop: () => import("../node_modules/@convex-dev/workpool/dist/component/loop.js"),
-  recovery: () => import("../node_modules/@convex-dev/workpool/dist/component/recovery.js"),
-  stats: () => import("../node_modules/@convex-dev/workpool/dist/component/stats.js"),
-  worker: () => import("../node_modules/@convex-dev/workpool/dist/component/worker.js"),
-  "_generated/server": () => import("../node_modules/@convex-dev/workpool/dist/component/_generated/server.js"),
+  complete: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/complete.js"),
+  config: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/config.js"),
+  crons: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/crons.js"),
+  danger: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/danger.js"),
+  kick: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/kick.js"),
+  lib: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/lib.js"),
+  logging: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/logging.js"),
+  loop: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/loop.js"),
+  recovery: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/recovery.js"),
+  stats: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/stats.js"),
+  worker: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/worker.js"),
+  "_generated/server": () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/_generated/server.js"),
 };
 
 const aggregateModules = {
-  public: () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
-  "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+  public: () =>
+    import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
+  "_generated/server": () =>
+    import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
 };
 
 const agentModules = {
-  apiKeys: () => import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
-  files: () => import("../node_modules/@convex-dev/agent/dist/component/files.js"),
-  messages: () => import("../node_modules/@convex-dev/agent/dist/component/messages.js"),
-  streams: () => import("../node_modules/@convex-dev/agent/dist/component/streams.js"),
-  threads: () => import("../node_modules/@convex-dev/agent/dist/component/threads.js"),
-  users: () => import("../node_modules/@convex-dev/agent/dist/component/users.js"),
-  "_generated/server": () => import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
+  apiKeys: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
+  files: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/files.js"),
+  messages: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/messages.js"),
+  streams: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/streams.js"),
+  threads: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/threads.js"),
+  users: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/users.js"),
+  "_generated/server": () =>
+    import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
 };
 
 function initTest() {
@@ -68,8 +92,16 @@ function initTest() {
   t.registerComponent("agent", agentSchema, agentModules);
   t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, workpoolModules);
   t.registerComponent("metaIndicatorWorkpool", workpoolSchema, workpoolModules);
-  t.registerComponent("threadSummarizerWorkpool", workpoolSchema, workpoolModules);
-  t.registerComponent("conversationLogWorkpool", workpoolSchema, workpoolModules);
+  t.registerComponent(
+    "threadSummarizerWorkpool",
+    workpoolSchema,
+    workpoolModules,
+  );
+  t.registerComponent(
+    "conversationLogWorkpool",
+    workpoolSchema,
+    workpoolModules,
+  );
   t.registerComponent("analyticsMetrics", aggregateSchema, aggregateModules);
   t.registerComponent("modelLifetimeUsage", aggregateSchema, aggregateModules);
   t.registerComponent("modelMonthlyUsage", aggregateSchema, aggregateModules);
@@ -78,7 +110,11 @@ function initTest() {
   return t;
 }
 
-async function createAgent(t: ReturnType<typeof initTest>, userId: string, name = "Site Agent") {
+async function createAgent(
+  t: ReturnType<typeof initTest>,
+  userId: string,
+  name = "Site Agent",
+) {
   return await t.run(async (ctx) => {
     const now = Date.now();
     return await ctx.db.insert("agents", {
@@ -110,7 +146,7 @@ test("ensureForAgent creates one connected web channel and widget settings", asy
   expect(second.channelId).toBe(first.channelId);
   expect(second.publicKey).toBe(first.publicKey);
   expect(first.agentDisplayName).toBe("Concierge");
-  expect(first.canUseCustomIcon).toBe(false);
+  expect(first.canUseCustomIcon).toBe(true);
 
   const rows = await t.run(async (ctx) => {
     const channels = await ctx.db.query("channels").collect();
@@ -165,15 +201,222 @@ test("public config resolves by widget key and rejects disabled widgets", async 
   ).rejects.toThrow("Widget not found");
 });
 
-test("web widget placement can change while theme stays fixed", async () => {
+test("new widgets expose the dark right-side home experience", async () => {
+  const t = initTest();
+  const agentId = await createAgent(t, "user_web_home", "Home Agent");
+  const identity = { subject: "user_web_home", email: "home@example.com" };
+  const setup = await t
+    .withIdentity(identity)
+    .mutation(api.webWidget.ensureForAgent, { agentId });
+
+  const config = await t.query(api.webWidget.publicGetConfig, {
+    publicKey: setup.publicKey,
+  });
+
+  expect(config).toMatchObject({
+    layout: "right_avatar",
+    theme: "dark",
+    home: {
+      greeting: "Hello there.",
+      availabilityText: "We are online",
+    },
+    leadForm: {
+      enabled: false,
+      fields: {
+        name: { visible: true, required: true },
+        phone: { visible: true, required: false },
+      },
+    },
+  });
+});
+
+test("visitor form submission creates a web customer before a message", async () => {
+  const t = initTest();
+  const agentId = await createAgent(t, "user_web_lead", "Lead Agent");
+  const identity = { subject: "user_web_lead", email: "lead@example.com" };
+  const setup = await t
+    .withIdentity(identity)
+    .mutation(api.webWidget.ensureForAgent, { agentId });
+
+  await t.run(async (ctx) => {
+    const settings = await ctx.db
+      .query("webWidgetSettings")
+      .withIndex("by_publicKey", (q) => q.eq("publicKey", setup.publicKey))
+      .unique();
+    if (settings === null) {
+      throw new Error("Widget settings not found");
+    }
+    await ctx.db.patch(settings._id, {
+      leadForm: {
+        enabled: true,
+        heading: "Tell us about yourself",
+        description: "We will use this to follow up.",
+        submitLabel: "Start chat",
+        fields: {
+          name: { visible: true, required: true },
+          email: { visible: true, required: true },
+          phone: { visible: false, required: false },
+        },
+      },
+    });
+  });
+
+  const profile = await t.mutation(api.webWidgetPublic.submitVisitorProfile, {
+    publicKey: setup.publicKey,
+    visitorId: "visitor-lead-1",
+    name: "Taylor Visitor",
+    email: "taylor@example.com",
+  });
+
+  expect(profile).toEqual({
+    name: "Taylor Visitor",
+    email: "taylor@example.com",
+    phone: null,
+  });
+  const customers = await t.run(
+    async (ctx) => await ctx.db.query("customers").collect(),
+  );
+  const conversations = await t.run(
+    async (ctx) => await ctx.db.query("conversations").collect(),
+  );
+  expect(customers).toHaveLength(1);
+  expect(customers[0]).toMatchObject({
+    service: "web",
+    contactAddress: "visitor-lead-1",
+    name: "Taylor Visitor",
+    email: "taylor@example.com",
+  });
+  expect(conversations).toEqual([]);
+});
+
+test("visitor form validates dropdown answers and stores custom fields", async () => {
+  const t = initTest();
+  const agentId = await createAgent(t, "user_web_custom_field", "Lead Agent");
+  const identity = {
+    subject: "user_web_custom_field",
+    email: "custom-field@example.com",
+  };
+  const setup = await t
+    .withIdentity(identity)
+    .mutation(api.webWidget.ensureForAgent, { agentId });
+
+  expect(setup.suggestionsEnabled).toBe(false);
+
+  await t.withIdentity(identity).mutation(api.webWidget.updateSettings, {
+    agentId,
+    leadForm: {
+      enabled: true,
+      heading: "Ignored",
+      description: "Ignored",
+      submitLabel: "Ignored",
+      fields: {
+        name: { visible: false, required: false },
+        email: { visible: false, required: false },
+        phone: { visible: false, required: false },
+      },
+      customFields: [
+        {
+          id: "company_size",
+          label: "Company size",
+          type: "select",
+          options: ["1–10", "11–50"],
+        },
+      ],
+    },
+  });
+
+  await expect(
+    t.mutation(api.webWidgetPublic.submitVisitorProfile, {
+      publicKey: setup.publicKey,
+      visitorId: "visitor-custom-field",
+      customFields: { company_size: "51–200" },
+    }),
+  ).rejects.toThrow("Company size is invalid");
+
+  await t.mutation(api.webWidgetPublic.submitVisitorProfile, {
+    publicKey: setup.publicKey,
+    visitorId: "visitor-custom-field",
+    customFields: { company_size: "11–50" },
+  });
+
+  const customers = await t.run(
+    async (ctx) => await ctx.db.query("customers").collect(),
+  );
+  expect(customers).toHaveLength(1);
+  expect(customers[0]?.customFields).toEqual({ company_size: "11–50" });
+});
+
+test("owners can configure their widget home and visitor form", async () => {
+  const t = initTest();
+  const agentId = await createAgent(t, "user_web_owner", "Owner Agent");
+  const identity = { subject: "user_web_owner", email: "owner@example.com" };
+  const setup = await t
+    .withIdentity(identity)
+    .mutation(api.webWidget.ensureForAgent, { agentId });
+
+  await t.withIdentity(identity).mutation(api.webWidget.updateSettings, {
+    agentId,
+    home: {
+      greeting: "Welcome to Acme",
+      introduction: "Ask our team anything.",
+      initialMessage: "Welcome to Acme. What can we solve together?",
+      availabilityText: "Support is available",
+      replyTimeText: "Replies within one business day",
+    },
+    leadForm: {
+      enabled: true,
+      heading: "Let’s get started",
+      description: "Tell us where to reply.",
+      submitLabel: "Chat with us",
+      fields: {
+        name: { visible: true, required: true },
+        email: { visible: true, required: true },
+        phone: { visible: true, required: false },
+      },
+    },
+    suggestions: ["Compare plans", "Book a demo", "Get support"],
+    suggestionsEnabled: true,
+  });
+
+  const [config, dashboard] = await Promise.all([
+    t.query(api.webWidget.publicGetConfig, {
+      publicKey: setup.publicKey,
+    }),
+    t.withIdentity(identity).query(api.webWidget.getForAgent, { agentId }),
+  ]);
+  expect(config).toMatchObject({
+    home: {
+      greeting: "Welcome to Acme",
+      availabilityText: "Support is available",
+    },
+    leadForm: {
+      enabled: true,
+      heading: "Before we begin",
+      description: "Share your details so we can better help you.",
+      submitLabel: "Continue",
+      fields: { phone: { visible: true, required: false } },
+    },
+    suggestions: ["Compare plans", "Book a demo", "Get support"],
+    suggestionsEnabled: true,
+  });
+  expect(dashboard?.suggestions).toEqual([
+    "Compare plans",
+    "Book a demo",
+    "Get support",
+  ]);
+  expect(dashboard?.suggestionsEnabled).toBe(true);
+  expect(config.home).not.toHaveProperty("initialMessage");
+});
+
+test("web widgets stay on the right while owners can choose a theme", async () => {
   const t = initTest();
   const agentId = await createAgent(t, "user_web_layout", "Layout Agent");
   const setup = await t
     .withIdentity({ subject: "user_web_layout", email: "layout@example.com" })
     .mutation(api.webWidget.ensureForAgent, { agentId });
 
-  expect(setup.layout).toBe("input_bar");
-  expect(setup.theme).toBe("light");
+  expect(setup.layout).toBe("right_avatar");
+  expect(setup.theme).toBe("dark");
 
   await t
     .withIdentity({ subject: "user_web_layout", email: "layout@example.com" })
@@ -181,7 +424,7 @@ test("web widget placement can change while theme stays fixed", async () => {
       agentId,
       agentDisplayName: "Left Concierge",
       layout: "right_avatar",
-      theme: "dark",
+      theme: "light",
       placeholder: "Ask the concierge anything",
     });
 
@@ -256,16 +499,66 @@ test("same visitor id reuses the web conversation", async () => {
     assignedAgentId: agentId,
     assignToAiAgent: true,
   });
-  expect(state.messages.filter((m) => m.conversationId === first.conversationId)).toHaveLength(2);
+  expect(
+    state.messages.filter((m) => m.conversationId === first.conversationId),
+  ).toHaveLength(2);
   expect(state.analyticsRequests).toHaveLength(2);
   expect(indicatorWork).toHaveLength(0);
+});
+
+test("reset retires a visitor conversation and starts a fresh AI thread on the next message", async () => {
+  const t = initTest();
+  const agentId = await createAgent(t, "user_web_reset");
+  const setup = await t
+    .withIdentity({ subject: "user_web_reset", email: "reset@example.com" })
+    .mutation(api.webWidget.ensureForAgent, { agentId });
+
+  const first = await t.mutation(internal.webWidget.internalReceiveMessage, {
+    publicKey: setup.publicKey,
+    visitorId: "visitor-reset",
+    content: "Start over later",
+  });
+  const beforeReset = await t.run(async (ctx) => await ctx.db.get(first.conversationId));
+
+  await t.mutation(internal.webWidget.internalResetConversation, {
+    publicKey: setup.publicKey,
+    visitorId: "visitor-reset",
+  });
+
+  const afterReset = await t.run(async (ctx) => await ctx.db.get(first.conversationId));
+  const deletedThread = await withComponents(t).runInComponent(
+    "agent",
+    async (ctx) => await ctx.db.get(beforeReset!.threadId as never),
+  );
+  const visibleMessages = await t.query(api.webWidget.publicListMessages, {
+    publicKey: setup.publicKey,
+    visitorId: "visitor-reset",
+  });
+  const next = await t.mutation(internal.webWidget.internalReceiveMessage, {
+    publicKey: setup.publicKey,
+    visitorId: "visitor-reset",
+    content: "This is a new conversation",
+  });
+  const nextConversation = await t.run(async (ctx) => await ctx.db.get(next.conversationId));
+
+  expect(beforeReset).not.toBeNull();
+  expect(afterReset).toMatchObject({ status: "closed", assignToAiAgent: false });
+  expect(deletedThread).toBeNull();
+  expect(visibleMessages).toEqual([]);
+  expect(next.conversationId).not.toBe(first.conversationId);
+  expect(nextConversation?.threadId).not.toBe(beforeReset?.threadId);
 });
 
 test("web replies persist without requiring Meta channel send", async () => {
   const t = initTest();
   const agentId = await createAgent(t, "user_web_reply");
+  const identity = {
+    subject: "user_web_reply",
+    email: "reply@example.com",
+    name: "Jordan Lee",
+  };
   const setup = await t
-    .withIdentity({ subject: "user_web_reply", email: "reply@example.com" })
+    .withIdentity(identity)
     .mutation(api.webWidget.ensureForAgent, { agentId });
   const received = await t.mutation(internal.webWidget.internalReceiveMessage, {
     publicKey: setup.publicKey,
@@ -274,7 +567,7 @@ test("web replies persist without requiring Meta channel send", async () => {
   });
 
   const reply = await t
-    .withIdentity({ subject: "user_web_reply", email: "reply@example.com" })
+    .withIdentity(identity)
     .action(api.chat.inboxActions.sendReply, {
       conversationId: received.conversationId,
       content: "Yes, this stays in the web chat.",
@@ -291,10 +584,25 @@ test("web replies persist without requiring Meta channel send", async () => {
     "Can you reply here?",
     "Yes, this stays in the web chat.",
   ]);
+  expect(messages.map((message) => message.sender)).toEqual([
+    "visitor",
+    "team",
+  ]);
+  expect(messages.map((message) => message.senderName)).toEqual([
+    undefined,
+    "Jordan Lee",
+  ]);
 
-  const agentMessages = await withComponents(t).runInComponent("agent", async (ctx) => {
-    return await ctx.db.query("messages").collect();
-  });
+  const agentMessages = await withComponents(t).runInComponent(
+    "agent",
+    async (ctx) => {
+      return await ctx.db.query("messages").collect();
+    },
+  );
 
-  expect(agentMessages.some((message) => message.text === "Yes, this stays in the web chat.")).toBe(true);
+  expect(
+    agentMessages.some(
+      (message) => message.text === "Yes, this stays in the web chat.",
+    ),
+  ).toBe(true);
 });

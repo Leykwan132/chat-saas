@@ -393,6 +393,7 @@ export const addManually = mutation({
     name: v.string(),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
+    customFields: v.optional(v.record(v.string(), v.string())),
     tags: v.optional(v.array(v.string())),
     leadTemperature: v.optional(v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"))),
   },
@@ -570,6 +571,7 @@ export const internalUpsertFromWebhook = internalMutation({
     profileName: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
+    customFields: v.optional(v.record(v.string(), v.string())),
     userId: v.optional(v.string()),
     agentId: v.optional(v.id("agents")),
   },
@@ -593,6 +595,7 @@ async function upsertCustomer(
     profileName?: string;
     email?: string;
     phone?: string;
+    customFields?: Record<string, string>;
     userId?: string;
     agentId?: Id<"agents">;
   },
@@ -628,6 +631,10 @@ async function upsertCustomer(
       name: resolvedName,
       email: inputEmail,
       phone,
+      customFields:
+        Object.keys(args.customFields ?? {}).length > 0
+          ? args.customFields
+          : undefined,
       searchText: customerSearchText({
         name: resolvedName,
         email: inputEmail,
@@ -657,6 +664,9 @@ async function upsertCustomer(
   }
   if (!existing.phone && args.phone) {
     patch.phone = args.phone.trim();
+  }
+  if (Object.keys(args.customFields ?? {}).length > 0) {
+    patch.customFields = { ...existing.customFields, ...args.customFields };
   }
   patch.searchText = customerSearchText({
     name: (patch.name as string | undefined) ?? existing.name,

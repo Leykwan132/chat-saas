@@ -4,17 +4,11 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { WebWidgetTheme } from '../../../shared/webWidgetThemes';
-import {
-  Field,
-  FieldDescription,
-  FieldLabel,
-} from '@/components/ui/field';
 import { cn } from '@/lib/utils';
 
 type ThemeOption = {
   value: WebWidgetTheme;
   label: string;
-  description: string;
   Icon: LucideIcon;
 };
 
@@ -22,13 +16,11 @@ const themeOptions: ThemeOption[] = [
   {
     value: 'light',
     label: 'Light',
-    description: 'Light prompt input and chat surface.',
     Icon: Sun,
   },
   {
     value: 'dark',
     label: 'Dark',
-    description: 'Dark prompt input and chat surface.',
     Icon: Moon,
   },
 ];
@@ -45,20 +37,15 @@ export function WebWidgetThemePicker({
   onChange,
 }: WebWidgetThemePickerProps) {
   return (
-    <Field>
+    <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <FieldLabel>Theme</FieldLabel>
-          <FieldDescription>
-            Choose the color mode for the website widget.
-          </FieldDescription>
-        </div>
+        <span className="text-sm font-medium text-foreground">Theme</span>
         {saving ? (
           <span className="text-xs text-muted-foreground">Saving</span>
         ) : null}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {themeOptions.map(({ value: optionValue, label, description, Icon }) => {
+      <div className="grid grid-cols-2 gap-2" role="group" aria-label="Theme">
+        {themeOptions.map(({ value: optionValue, label, Icon }) => {
           const selected = value === optionValue;
           return (
             <button
@@ -67,26 +54,19 @@ export function WebWidgetThemePicker({
               aria-pressed={selected}
               disabled={saving}
               className={cn(
-                'flex min-h-[104px] flex-col justify-between rounded-lg border bg-card p-3 text-left transition hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-70',
+                'flex h-9 items-center justify-center gap-2 rounded-md border px-3 text-sm font-medium transition hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-70',
                 selected
-                  ? 'border-primary ring-2 ring-primary/20'
+                  ? 'border-primary bg-primary/5 text-foreground'
                   : 'border-border',
               )}
               onClick={() => onChange(optionValue)}
             >
-              <Icon className="size-4 text-muted-foreground" />
-              <span className="space-y-1">
-                <span className="block text-sm font-medium text-foreground">
-                  {label}
-                </span>
-                <span className="block text-xs leading-relaxed text-muted-foreground">
-                  {description}
-                </span>
-              </span>
+              <Icon className="size-3.5" />
+              {label}
             </button>
           );
         })}
       </div>
-    </Field>
+    </div>
   );
 }

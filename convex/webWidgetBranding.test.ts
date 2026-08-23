@@ -23,41 +23,61 @@ beforeAll(() => {
 });
 
 const stripeModules = {
-  public: () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
-  private: () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
+  public: () =>
+    import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
+  private: () =>
+    import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
   "_generated/server": () =>
     import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
 };
 
 const workpoolModules = {
-  complete: () => import("../node_modules/@convex-dev/workpool/dist/component/complete.js"),
-  config: () => import("../node_modules/@convex-dev/workpool/dist/component/config.js"),
-  crons: () => import("../node_modules/@convex-dev/workpool/dist/component/crons.js"),
-  danger: () => import("../node_modules/@convex-dev/workpool/dist/component/danger.js"),
-  kick: () => import("../node_modules/@convex-dev/workpool/dist/component/kick.js"),
-  lib: () => import("../node_modules/@convex-dev/workpool/dist/component/lib.js"),
-  logging: () => import("../node_modules/@convex-dev/workpool/dist/component/logging.js"),
-  loop: () => import("../node_modules/@convex-dev/workpool/dist/component/loop.js"),
-  recovery: () => import("../node_modules/@convex-dev/workpool/dist/component/recovery.js"),
-  stats: () => import("../node_modules/@convex-dev/workpool/dist/component/stats.js"),
-  worker: () => import("../node_modules/@convex-dev/workpool/dist/component/worker.js"),
+  complete: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/complete.js"),
+  config: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/config.js"),
+  crons: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/crons.js"),
+  danger: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/danger.js"),
+  kick: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/kick.js"),
+  lib: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/lib.js"),
+  logging: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/logging.js"),
+  loop: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/loop.js"),
+  recovery: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/recovery.js"),
+  stats: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/stats.js"),
+  worker: () =>
+    import("../node_modules/@convex-dev/workpool/dist/component/worker.js"),
   "_generated/server": () =>
     import("../node_modules/@convex-dev/workpool/dist/component/_generated/server.js"),
 };
 
 const aggregateModules = {
-  public: () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
+  public: () =>
+    import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
   "_generated/server": () =>
     import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
 };
 
 const agentModules = {
-  apiKeys: () => import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
-  files: () => import("../node_modules/@convex-dev/agent/dist/component/files.js"),
-  messages: () => import("../node_modules/@convex-dev/agent/dist/component/messages.js"),
-  streams: () => import("../node_modules/@convex-dev/agent/dist/component/streams.js"),
-  threads: () => import("../node_modules/@convex-dev/agent/dist/component/threads.js"),
-  users: () => import("../node_modules/@convex-dev/agent/dist/component/users.js"),
+  apiKeys: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
+  files: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/files.js"),
+  messages: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/messages.js"),
+  streams: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/streams.js"),
+  threads: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/threads.js"),
+  users: () =>
+    import("../node_modules/@convex-dev/agent/dist/component/users.js"),
   "_generated/server": () =>
     import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
 };
@@ -68,8 +88,16 @@ function initTest() {
   t.registerComponent("agent", agentSchema, agentModules);
   t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, workpoolModules);
   t.registerComponent("metaIndicatorWorkpool", workpoolSchema, workpoolModules);
-  t.registerComponent("threadSummarizerWorkpool", workpoolSchema, workpoolModules);
-  t.registerComponent("conversationLogWorkpool", workpoolSchema, workpoolModules);
+  t.registerComponent(
+    "threadSummarizerWorkpool",
+    workpoolSchema,
+    workpoolModules,
+  );
+  t.registerComponent(
+    "conversationLogWorkpool",
+    workpoolSchema,
+    workpoolModules,
+  );
   t.registerComponent("analyticsMetrics", aggregateSchema, aggregateModules);
   t.registerComponent("modelLifetimeUsage", aggregateSchema, aggregateModules);
   t.registerComponent("modelMonthlyUsage", aggregateSchema, aggregateModules);
@@ -96,10 +124,13 @@ async function createAgent(t: ReturnType<typeof initTest>) {
   });
 }
 
-test("free plan widgets cannot remove powered by branding", async () => {
+test("free plan widgets can use their own icon but cannot remove powered by branding", async () => {
   const t = initTest();
   const agentId = await createAgent(t);
-  const identity = { subject: "user_web_branding", email: "branding@example.com" };
+  const identity = {
+    subject: "user_web_branding",
+    email: "branding@example.com",
+  };
   const setup = await t
     .withIdentity(identity)
     .mutation(api.webWidget.ensureForAgent, { agentId });
@@ -108,7 +139,14 @@ test("free plan widgets cannot remove powered by branding", async () => {
     poweredBy: true,
     hidePoweredBy: false,
     canHideBranding: false,
+    canUseCustomIcon: true,
   });
+
+  await expect(
+    t.withIdentity(identity).mutation(api.webWidget.generateIconUploadUrl, {
+      agentId,
+    }),
+  ).resolves.toEqual(expect.any(String));
 
   await expect(
     t.withIdentity(identity).mutation(api.webWidget.updateSettings, {
