@@ -2,6 +2,9 @@
 
 # Snapshot
 
+- 2026-08-24 [USER] Goal: add Book a Service onboarding to agent creation: editable weekday 9–5 availability, optional self-only first service, and an optional ready appointment-booking workflow action; create a review PR.
+- 2026-08-24 [CODE] Now: approved design is recorded in `docs/superpowers/specs/2026-08-24-booking-agent-onboarding-design.md`; awaiting the required spec-review acknowledgment before implementation.
+- 2026-08-24 [USER] Next: availability is always created; new invited workspace members receive independent Mon–Fri 9–5 schedules for existing agents and are not added automatically to creator-only onboarding services.
 - 2026-08-21 [USER] Goal: ship an AI-powered Kilobot iframe widget that opens directly into an optional visitor form or chat, while preserving the Traditional widget and embed contract.
 - 2026-08-21 [CODE] Now: `codex/iframe-widget-home` contains broad uncommitted widget work. The live iframe and dashboard preview share direct entry, a compact Geist chat, opt-in suggestions, reset confirmation, loading state, optional branding, and compact desktop/mobile frames.
 - 2026-08-21 [CODE] Now: Visitor-form settings use one bordered collection container without helper copy. Standard Name, Email, and Phone fields remain selectable; custom-field edits stay local drafts until Confirm merges them into the form, then compact rows expose Edit, requirement, and delete controls. Answers are saved on the customer record.
@@ -12,6 +15,7 @@
 
 # Decisions
 
+- 2026-08-24 [USER] D753 ACTIVE: Book a Service agent onboarding is Identity → Goal → editable availability (default Monday–Friday 9–5) → optional service. Create Agent atomically creates selected availability, an active service assigned only to the creator, and a ready Book appointment workflow node for that service only when Enable appointment booking is on; Skip for now creates the agent directly with availability alone. New workspace members receive independent default availability for every existing agent but do not inherit creator-only onboarding services.
 - 2026-08-21 [USER] D740 ACTIVE: Reset retires the visitor’s prior AI thread; their next message creates a fresh conversation and AI context.
 - 2026-08-21 [USER] D741 ACTIVE: Suggestions have an explicit enable switch that is off for new widgets; existing configured suggestions stay enabled. When disabled, their three dashboard inputs and helper copy are hidden. When enabled, three configured non-empty suggestions render as vertical content-sized pills only before the first visitor message and send immediately as that visitor message; Save suggestions appears only after edits.
 - 2026-08-21 [USER] D742 ACTIVE: AI-powered widgets always use the fixed `Ask a question…` placeholder; legacy stored values are ignored.
