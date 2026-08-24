@@ -5,16 +5,10 @@ import type { MutationCtx } from "../_generated/server";
 import { getAuthContext } from "../authUtils";
 import { assertAvailabilityRead, assertRoutingManage } from "./helpers";
 import { refreshWorkflowNodeReadinessForAgent } from "../workflowNodeReadiness";
+import { DEFAULT_AVAILABILITY_SHIFTS } from "../../shared/availabilityDefaults";
 
 const DEFAULT_TIMEZONE = "Asia/Kuala_Lumpur";
-const DEFAULT_SHIFT_START_MINUTES = 9 * 60;
-const DEFAULT_SHIFT_END_MINUTES = 17 * 60;
-
-const DEFAULT_WEEKLY_SHIFTS = Array.from({ length: 7 }, (_, dayOfWeek) => ({
-  dayOfWeek,
-  startMinutes: DEFAULT_SHIFT_START_MINUTES,
-  endMinutes: DEFAULT_SHIFT_END_MINUTES,
-}));
+const DEFAULT_WEEKLY_SHIFTS = DEFAULT_AVAILABILITY_SHIFTS;
 
 async function insertDefaultShifts(ctx: MutationCtx, userScheduleId: Id<"userSchedules">) {
   for (const shift of DEFAULT_WEEKLY_SHIFTS) {
