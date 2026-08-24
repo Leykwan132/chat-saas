@@ -135,6 +135,9 @@ test('service setup reassures users that services can be managed later', () => {
   );
 
   expect(markup).toContain('You can add or edit your services later.');
+  expect(markup).toContain(
+    '</div></div><p class="text-sm text-muted-foreground">You can add or edit your services later.</p><div class="flex items-center justify-between gap-3">',
+  );
 });
 
 test('success state offers training and playground without channel deployment', () => {
