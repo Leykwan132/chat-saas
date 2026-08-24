@@ -1,91 +1,11 @@
 import { v } from "convex/values";
 import { query, mutation } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
-import type { MutationCtx } from "../_generated/server";
 import { getAuthContext } from "../authUtils";
 import { assertAvailabilityRead, assertRoutingManage } from "./helpers";
 import { refreshWorkflowNodeReadinessForAgent } from "../workflowNodeReadiness";
-import { DEFAULT_AVAILABILITY_SHIFTS } from "../../shared/availabilityDefaults";
-import { replaceScheduleShifts } from "./shiftStore";
-
-const DEFAULT_TIMEZONE = "Asia/Kuala_Lumpur";
-const DEFAULT_WEEKLY_SHIFTS = DEFAULT_AVAILABILITY_SHIFTS;
-
-async function insertDefaultShifts(ctx: MutationCtx, userScheduleId: Id<"userSchedules">) {
-  for (const shift of DEFAULT_WEEKLY_SHIFTS) {
-    await ctx.db.insert("userShifts", {
-      userScheduleId,
-      dayOfWeek: shift.dayOfWeek,
-      startMinutes: shift.startMinutes,
-      endMinutes: shift.endMinutes,
-    });
-  }
-}
-
-export async function ensureUserScheduleForAgent(
-  ctx: MutationCtx,
-  args: {
-    agentId: Id<"agents">;
-    workosUserId: string;
-    timezone?: string;
-    enabled?: boolean;
-  },
-): Promise<Id<"userSchedules">> {
-  const existing = await ctx.db
-    .query("userSchedules")
-    .withIndex("by_agentId_and_workosUserId", (q) =>
-      q.eq("agentId", args.agentId).eq("workosUserId", args.workosUserId),
-    )
-    .unique();
-  if (existing !== null) {
-    return existing._id;
-  }
-
-  const now = Date.now();
-  const userScheduleId = await ctx.db.insert("userSchedules", {
-    agentId: args.agentId,
-    workosUserId: args.workosUserId,
-    mode: "scheduled",
-    manualStatus: "available",
-    timezone: args.timezone?.trim() || DEFAULT_TIMEZONE,
-    enabled: args.enabled ?? true,
-    createdAt: now,
-    updatedAt: now,
-  });
-  await insertDefaultShifts(ctx, userScheduleId);
-  return userScheduleId;
-}
-
-async function assertOrgMember(ctx: Parameters<typeof assertAvailabilityRead>[0], workosUserId: string) {
-  const { orgId } = await getAuthContext(ctx);
-  if (!orgId || orgId === "personal") {
-    throw new Error("Organization required");
-  }
-  const team = await ctx.db
-    .query("teams")
-    .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
-    .unique();
-  if (team === null) {
-    throw new Error("Team not found");
-  }
-  const userRow = await ctx.db
-    .query("users")
-    .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
-    .unique();
-  if (userRow === null) {
-    throw new Error("User not found");
-  }
-  const membership = await ctx.db
-    .query("teamMemberships")
-    .withIndex("by_userId_and_teamId", (q) =>
-      q.eq("userId", userRow._id).eq("teamId", team._id),
-    )
-    .unique();
-  if (membership === null) {
-    throw new Error("User is not a member of this team");
-  }
-}
-
+import { assertScheduleOrgMember } from "./scheduleAccess";
+import { DEFAULT_SCHEDULE_TIMEZONE, ensureUserScheduleForAgent, replaceScheduleShifts } from "./shiftStore";
+export { ensureUserScheduleForAgent } from "./shiftStore";
 export const listForAgent = query({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
@@ -94,7 +14,6 @@ export const listForAgent = query({
       .query("userSchedules")
       .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
       .collect();
-
     const result = [];
     for (const schedule of schedules) {
       const shifts = await ctx.db
@@ -120,7 +39,7 @@ export const getForAgentUser = query({
     await assertAvailabilityRead(ctx, args.agentId);
     const { userId } = await getAuthContext(ctx);
     if (userId !== args.workosUserId) {
-      await assertOrgMember(ctx, args.workosUserId);
+      await assertScheduleOrgMember(ctx, args.workosUserId);
     }
 
     const user = await ctx.db
@@ -197,7 +116,7 @@ export const getForAgentUser = query({
       },
       schedule: {
         ...schedule,
-        timezone: schedule.timezone.trim() || DEFAULT_TIMEZONE,
+        timezone: schedule.timezone.trim() || DEFAULT_SCHEDULE_TIMEZONE,
       },
       shifts,
       timeOff,
@@ -219,7 +138,7 @@ export const addUser = mutation({
       await assertAvailabilityRead(ctx, args.agentId);
     }
     if (userId !== args.workosUserId) {
-      await assertOrgMember(ctx, args.workosUserId);
+      await assertScheduleOrgMember(ctx, args.workosUserId);
     }
 
     return await ensureUserScheduleForAgent(ctx, {
@@ -260,7 +179,7 @@ export const updateUser = mutation({
     const patch: Record<string, unknown> = { updatedAt: Date.now() };
     if (args.mode !== undefined) patch.mode = args.mode;
     if (args.manualStatus !== undefined) patch.manualStatus = args.manualStatus;
-    if (args.timezone !== undefined) patch.timezone = args.timezone.trim() || DEFAULT_TIMEZONE;
+    if (args.timezone !== undefined) patch.timezone = args.timezone.trim() || DEFAULT_SCHEDULE_TIMEZONE;
     if (args.enabled !== undefined) patch.enabled = args.enabled;
     if (args.assignmentPriority !== undefined) {
       patch.assignmentPriority = Math.max(1, Math.floor(args.assignmentPriority));

@@ -3,8 +3,8 @@
 # Snapshot
 
 - 2026-08-24 [USER] Goal: add Book a Service onboarding to agent creation: editable weekday 9–5 availability, optional self-only first service, and an optional ready appointment-booking workflow action; create a review PR.
-- 2026-08-24 [CODE] Now: approved design is recorded in `docs/superpowers/specs/2026-08-24-booking-agent-onboarding-design.md`; awaiting the required spec-review acknowledgment before implementation.
-- 2026-08-24 [USER] Next: availability is always created; new invited workspace members receive independent Mon–Fri 9–5 schedules for existing agents and are not added automatically to creator-only onboarding services.
+- 2026-08-24 [CODE] Now: booking-agent onboarding is implemented and verified on `codex/booking-agent-onboarding`; preparing the review PR.
+- 2026-08-24 [USER] Next: review the PR. Availability is always created; new invited workspace members receive independent Mon–Fri 9–5 schedules for existing agents and are not added automatically to creator-only onboarding services.
 - 2026-08-21 [USER] Goal: ship an AI-powered Kilobot iframe widget that opens directly into an optional visitor form or chat, while preserving the Traditional widget and embed contract.
 - 2026-08-21 [CODE] Now: `codex/iframe-widget-home` contains broad uncommitted widget work. The live iframe and dashboard preview share direct entry, a compact Geist chat, opt-in suggestions, reset confirmation, loading state, optional branding, and compact desktop/mobile frames.
 - 2026-08-21 [CODE] Now: Visitor-form settings use one bordered collection container without helper copy. Standard Name, Email, and Phone fields remain selectable; custom-field edits stay local drafts until Confirm merges them into the form, then compact rows expose Edit, requirement, and delete controls. Answers are saved on the customer record.
@@ -34,6 +34,7 @@
 
 # Done (recent)
 
+- 2026-08-24 [CODE] Added Book a Service agent onboarding: an editable weekday 9–5 availability step, optional self-only service creation, and an opt-in ready Book appointment workflow node that still requires customer slot confirmation. Skipping service creation creates the agent with availability alone.
 - 2026-08-21 [CODE] Completed the locally uncommitted AI-widget redesign: direct iframe UX, Message Scroller transcript, prompt composer, reset, branding, aligned live/preview presentation, an unframed shimmering thinking status, chat-open message refresh, and sender-aware bubbles with human attribution and timestamps.
 - 2026-08-21 [CODE] Simplified human-reply attribution in the live widget to the replying team member’s name only; the workspace-team prefix is no longer rendered.
 - 2026-08-21 [CODE] Simplified Visitor form to selected data fields with a green Recommended badge; compact standard/custom rows expose requirement state plus Edit/Delete actions, while new or edited custom fields remain local drafts until Confirm. Returning visitors with a saved profile now go straight to chat; live and preview forms are scrollable, Geist-based, neutral-bordered, and consistently spaced with rounded Continue controls. Live text and dropdown controls share a 12px horizontal inset.
@@ -57,6 +58,7 @@
 
 # Receipts
 
+- 2026-08-24 [TOOL] Booking onboarding: 30 focused backend/UI tests and targeted lint pass; production build completes with Node v22; all touched source files are at or below 300 lines. Repository-wide lint remains blocked by 223 pre-existing errors in unrelated paths. The full `bun test` run is unsuitable here (1,362 pass, 174 fail, 116 loader errors) because Bun lacks Vitest `import.meta.glob` support and required Stripe environment values. Convex codegen requires an unconfigured `CONVEX_DEPLOYMENT`.
 - 2026-08-21 [TOOL] Custom-field draft boundary: red merge test confirmed confirmation had no model boundary; focused tests (9), app TypeScript, targeted ESLint, and diff validation pass. All touched code files remain below 300 lines.
 - 2026-08-21 [TOOL] Required markers: red render tests confirmed both live and preview forms omitted markers; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Visitor-form layout: red render tests confirmed absent scroll/font classes; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.

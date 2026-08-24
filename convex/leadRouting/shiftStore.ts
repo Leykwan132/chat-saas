@@ -1,11 +1,51 @@
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { DEFAULT_AVAILABILITY_SHIFTS } from "../../shared/availabilityDefaults";
+
+export const DEFAULT_SCHEDULE_TIMEZONE = "Asia/Kuala_Lumpur";
 
 export type ScheduleShiftInput = {
   dayOfWeek: number;
   startMinutes: number;
   endMinutes: number;
 };
+
+async function insertDefaultShifts(ctx: MutationCtx, userScheduleId: Id<"userSchedules">) {
+  for (const shift of DEFAULT_AVAILABILITY_SHIFTS) {
+    await ctx.db.insert("userShifts", { userScheduleId, ...shift });
+  }
+}
+
+export async function ensureUserScheduleForAgent(
+  ctx: MutationCtx,
+  args: {
+    agentId: Id<"agents">;
+    workosUserId: string;
+    timezone?: string;
+    enabled?: boolean;
+  },
+): Promise<Id<"userSchedules">> {
+  const existing = await ctx.db
+    .query("userSchedules")
+    .withIndex("by_agentId_and_workosUserId", (q) =>
+      q.eq("agentId", args.agentId).eq("workosUserId", args.workosUserId),
+    )
+    .unique();
+  if (existing !== null) return existing._id;
+  const now = Date.now();
+  const userScheduleId = await ctx.db.insert("userSchedules", {
+    agentId: args.agentId,
+    workosUserId: args.workosUserId,
+    mode: "scheduled",
+    manualStatus: "available",
+    timezone: args.timezone?.trim() || DEFAULT_SCHEDULE_TIMEZONE,
+    enabled: args.enabled ?? true,
+    createdAt: now,
+    updatedAt: now,
+  });
+  await insertDefaultShifts(ctx, userScheduleId);
+  return userScheduleId;
+}
 
 function assertValidShift(shift: ScheduleShiftInput) {
   if (!Number.isInteger(shift.dayOfWeek) || shift.dayOfWeek < 0 || shift.dayOfWeek > 6) {
