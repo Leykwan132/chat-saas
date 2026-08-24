@@ -72,11 +72,11 @@ export function WebWidgetDetailsDialog({
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
         ) : settings ? (
-          <Tabs key={settings.publicKey} defaultValue="traditional" className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-0 overflow-hidden">
+          <Tabs key={settings.publicKey} defaultValue="ai_powered" className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-0 overflow-hidden">
             <div className="flex items-center px-8 py-3 lg:px-10">
               <TabsList variant="line" aria-label="Widget mode">
-                <TabsTrigger value="traditional">Traditional</TabsTrigger>
                 <TabsTrigger value="ai_powered">AI-powered</TabsTrigger>
+                <TabsTrigger value="traditional">Traditional</TabsTrigger>
               </TabsList>
             </div>
             <TabsContent value="ai_powered" className="m-0 h-full min-h-0 overflow-y-auto">

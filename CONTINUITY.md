@@ -8,6 +8,8 @@
 - 2026-08-21 [CODE] Now: Appearance uses compact Name/avatar plus Remove Kilobot branding in the left desktop column, with Theme in the right column. A Save appearance action is shown only for a valid unsaved Name edit and hides after success.
 - 2026-08-23 [TOOL] Now: PR #79 is open from `codex/iframe-widget-home` into `main` at commit `6380a4f`.
 - 2026-08-23 [CODE] Next: review PR #79; the local-only `index.html` iframe snippet was removed from the shipping tree.
+- 2026-08-24 [USER] Goal: make AI-powered the default and first choice in web-widget setup.
+- 2026-08-24 [CODE] Now: `codex/default-ai-widget` contains the focused, verified change and is ready for a separate PR if requested.
 - 2026-08-21 [TOOL] Convex code generation cannot reach its external service from this environment; run `bunx convex codegen` or `bunx convex dev` locally when network access is available.
 
 # Decisions
@@ -30,6 +32,7 @@
 
 # Done (recent)
 
+- 2026-08-24 [CODE] Made AI-powered the default and first tab in web-widget setup; Traditional remains available as the second tab.
 - 2026-08-21 [CODE] Completed the locally uncommitted AI-widget redesign: direct iframe UX, Message Scroller transcript, prompt composer, reset, branding, aligned live/preview presentation, an unframed shimmering thinking status, chat-open message refresh, and sender-aware bubbles with human attribution and timestamps.
 - 2026-08-21 [CODE] Simplified human-reply attribution in the live widget to the replying team member’s name only; the workspace-team prefix is no longer rendered.
 - 2026-08-21 [CODE] Simplified Visitor form to selected data fields with a green Recommended badge; compact standard/custom rows expose requirement state plus Edit/Delete actions, while new or edited custom fields remain local drafts until Confirm. Returning visitors with a saved profile now go straight to chat; live and preview forms are scrollable, Geist-based, neutral-bordered, and consistently spaced with rounded Continue controls. Live text and dropdown controls share a 12px horizontal inset.
@@ -53,6 +56,7 @@
 
 # Receipts
 
+- 2026-08-24 [TOOL] AI-powered widget default: red/green regression tests confirmed the prior Traditional default/order; 2 focused tests, targeted lint, and diff validation pass.
 - 2026-08-21 [TOOL] Custom-field draft boundary: red merge test confirmed confirmation had no model boundary; focused tests (9), app TypeScript, targeted ESLint, and diff validation pass. All touched code files remain below 300 lines.
 - 2026-08-21 [TOOL] Required markers: red render tests confirmed both live and preview forms omitted markers; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Visitor-form layout: red render tests confirmed absent scroll/font classes; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
