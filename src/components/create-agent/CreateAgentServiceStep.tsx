@@ -61,7 +61,7 @@ export function CreateAgentServiceStep({
         />
         <Field orientation="horizontal" className="justify-between rounded-xl border p-4">
           <div className="flex flex-col gap-1">
-            <FieldLabel htmlFor="appointment-booking-enabled">Enable appointment booking</FieldLabel>
+            <FieldLabel htmlFor="appointment-booking-enabled">Enable AI appointment scheduling</FieldLabel>
           </div>
           <Switch
             id="appointment-booking-enabled"

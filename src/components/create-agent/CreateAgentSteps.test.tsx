@@ -4,6 +4,7 @@ import { CreateAgentGoalStep } from './CreateAgentGoalStep';
 import { CreateAgentIdentityStep } from './CreateAgentIdentityStep';
 import { CreateAgentCreationState } from './CreateAgentCreationState';
 import { CreateAgentSuccessState } from './CreateAgentSuccessState';
+import { CreateAgentServiceStep } from './CreateAgentServiceStep';
 import { CreateAgentVisualPanel } from './CreateAgentVisualPanel';
 
 test('identity step renders required business details', () => {
@@ -81,6 +82,25 @@ test('booking goal continues to availability instead of creating immediately', (
 
   expect(markup).toContain('Continue');
   expect(markup).not.toContain('Create agent');
+});
+
+test('service setup enables AI appointment scheduling', () => {
+  const markup = renderToStaticMarkup(
+    <CreateAgentServiceStep
+      name="Consultation"
+      durationMinutes={30}
+      appointmentBookingEnabled
+      onNameChange={() => undefined}
+      onDurationChange={() => undefined}
+      onAppointmentBookingEnabledChange={() => undefined}
+      onBack={() => undefined}
+      onCreate={() => undefined}
+      onSkip={() => undefined}
+    />,
+  );
+
+  expect(markup).toContain('Enable AI appointment scheduling');
+  expect(markup).not.toContain('Let AI schedule appointments');
 });
 
 test('success state offers training and playground without channel deployment', () => {
