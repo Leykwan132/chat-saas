@@ -6,6 +6,7 @@ import { getAuthContext } from "../authUtils";
 import { assertAvailabilityRead, assertRoutingManage } from "./helpers";
 import { refreshWorkflowNodeReadinessForAgent } from "../workflowNodeReadiness";
 import { DEFAULT_AVAILABILITY_SHIFTS } from "../../shared/availabilityDefaults";
+import { replaceScheduleShifts } from "./shiftStore";
 
 const DEFAULT_TIMEZONE = "Asia/Kuala_Lumpur";
 const DEFAULT_WEEKLY_SHIFTS = DEFAULT_AVAILABILITY_SHIFTS;
@@ -328,35 +329,7 @@ export const setShifts = mutation({
       await assertAvailabilityRead(ctx, schedule.agentId);
     }
 
-    // Validate overlaps
-    const sorted = [...args.shifts].sort((a, b) => {
-      if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
-      return a.startMinutes - b.startMinutes;
-    });
-    for (let i = 0; i < sorted.length - 1; i++) {
-      const cur = sorted[i]!;
-      const next = sorted[i + 1]!;
-      if (cur.dayOfWeek === next.dayOfWeek && cur.endMinutes > next.startMinutes) {
-        throw new Error("Shifts cannot overlap on the same day");
-      }
-    }
-
-    const existing = await ctx.db
-      .query("userShifts")
-      .withIndex("by_userScheduleId", (q) => q.eq("userScheduleId", args.userScheduleId))
-      .collect();
-    for (const shift of existing) {
-      await ctx.db.delete(shift._id);
-    }
-    for (const shift of args.shifts) {
-      await ctx.db.insert("userShifts", {
-        userScheduleId: args.userScheduleId,
-        dayOfWeek: shift.dayOfWeek,
-        startMinutes: shift.startMinutes,
-        endMinutes: shift.endMinutes,
-      });
-    }
-    await ctx.db.patch(args.userScheduleId, { updatedAt: Date.now() });
+    await replaceScheduleShifts(ctx, args.userScheduleId, args.shifts);
   },
 });
 

@@ -1523,6 +1523,7 @@ export default defineSchema({
     assignmentStrategy: appointmentAssignmentStrategyValidator,
     specificWorkosUserId: v.optional(v.string()),
     assignedWorkosUserIds: v.optional(v.array(v.string())),
+    autoAssignNewMembers: v.optional(v.boolean()),
     lastAssignedWorkosUserId: v.optional(v.string()),
     lastAssignedAt: v.optional(v.number()),
     createdAt: v.number(),
