@@ -34,7 +34,7 @@
 
 # Done (recent)
 
-- 2026-08-24 [CODE] Added Book a Service agent onboarding: an editable weekday 9–5 availability step, optional self-only service creation, and an opt-in ready Book appointment workflow node that still requires customer slot confirmation. Skipping service creation creates the agent with availability alone.
+- 2026-08-24 [CODE] Added Book a Service agent onboarding: an editable weekday 9–5 availability step, optional self-only service creation, and an opt-in ready Book appointment workflow node. Booking requires a post-availability customer message plus the agent’s recorded reaction before the selected slot can be created. Skipping service creation creates the agent with availability alone.
 - 2026-08-21 [CODE] Completed the locally uncommitted AI-widget redesign: direct iframe UX, Message Scroller transcript, prompt composer, reset, branding, aligned live/preview presentation, an unframed shimmering thinking status, chat-open message refresh, and sender-aware bubbles with human attribution and timestamps.
 - 2026-08-21 [CODE] Simplified human-reply attribution in the live widget to the replying team member’s name only; the workspace-team prefix is no longer rendered.
 - 2026-08-21 [CODE] Simplified Visitor form to selected data fields with a green Recommended badge; compact standard/custom rows expose requirement state plus Edit/Delete actions, while new or edited custom fields remain local drafts until Confirm. Returning visitors with a saved profile now go straight to chat; live and preview forms are scrollable, Geist-based, neutral-bordered, and consistently spaced with rounded Continue controls. Live text and dropdown controls share a 12px horizontal inset.
@@ -58,7 +58,7 @@
 
 # Receipts
 
-- 2026-08-24 [TOOL] Booking onboarding: 30 focused backend/UI tests and targeted lint pass; production build completes with Node v22; all touched source files are at or below 300 lines. Repository-wide lint remains blocked by 223 pre-existing errors in unrelated paths. The full `bun test` run is unsuitable here (1,362 pass, 174 fail, 116 loader errors) because Bun lacks Vitest `import.meta.glob` support and required Stripe environment values. Convex codegen requires an unconfigured `CONVEX_DEPLOYMENT`.
+- 2026-08-24 [TOOL] Booking onboarding: 31 focused backend/UI tests and targeted lint pass; production build completes with Node v22; all new or modularized source files are at or below 300 lines. Repository-wide lint remains blocked by 223 pre-existing errors in unrelated paths. The full `bun test` run is unsuitable here (1,362 pass, 174 fail, 116 loader errors) because Bun lacks Vitest `import.meta.glob` support and required Stripe environment values. Convex codegen requires an unconfigured `CONVEX_DEPLOYMENT`.
 - 2026-08-21 [TOOL] Custom-field draft boundary: red merge test confirmed confirmation had no model boundary; focused tests (9), app TypeScript, targeted ESLint, and diff validation pass. All touched code files remain below 300 lines.
 - 2026-08-21 [TOOL] Required markers: red render tests confirmed both live and preview forms omitted markers; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Visitor-form layout: red render tests confirmed absent scroll/font classes; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.

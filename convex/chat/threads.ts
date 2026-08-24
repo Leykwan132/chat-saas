@@ -683,12 +683,19 @@ export function buildAgent(
       inputSchema: z.object({
         serviceId: z.string().describe("The selected Services service ID."),
         startTimeIso: z.string().describe("Confirmed appointment start time as an ISO timestamp from checkAvailability."),
+        customerConfirmed: z.literal(true).describe("Set only after the customer explicitly confirms this offered slot."),
       }),
       execute: async (ctx, input) => {
         const startAt = Date.parse(input.startTimeIso);
         if (!Number.isFinite(startAt)) {
           return { success: false, message: "Invalid appointment start time." };
         }
+        const confirmation = await ctx.runMutation(internal.appointmentBooking.sessions.confirmBookingSlot, {
+          conversationId,
+          serviceId: input.serviceId as Id<"appointmentServices">,
+          startAt,
+        });
+        if (!confirmation.success) return confirmation;
         return await ctx.runAction(internal.appointmentBooking.bookAppointment.bookAppointment, {
           conversationId,
           serviceId: input.serviceId as Id<"appointmentServices">,

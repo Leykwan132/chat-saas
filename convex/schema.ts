@@ -1540,6 +1540,7 @@ export default defineSchema({
     collectedFields: v.record(v.string(), appointmentCollectedValueValidator),
     proposedSlots: v.optional(v.array(appointmentBookingSlotValidator)),
     selectedSlot: v.optional(appointmentBookingSlotValidator),
+    customerConfirmationMessageId: v.optional(v.id("messages")),
     calendarEventId: v.optional(v.id("calendarEvents")),
     createdAt: v.number(),
     updatedAt: v.number(),
