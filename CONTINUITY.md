@@ -3,8 +3,8 @@
 # Snapshot
 
 - 2026-08-19 [USER] Goal: ship an isolated white-label partner reseller portal where approved partners manage customer organizations, shared plans, manual credits, branding, and a single hostname without pricing or Stripe controls.
-- 2026-08-24 [TOOL] Now: `codex/white-label-partner-portal` is merging current `origin/main`; application files merged automatically and only this ledger required reconciliation.
-- 2026-08-24 [CODE] Next: complete merge validation, then review or commit the unshipped partner portal changes as directed.
+- 2026-08-24 [TOOL] Now: `codex/white-label-partner-portal` includes current `origin/main` at merge commit `d400f52` and generated Convex API types at `ecd0325`.
+- 2026-08-24 [CODE] Next: review or continue the unshipped partner portal changes as directed.
 - 2026-08-19 [ASSUMPTION] This work is unshipped; no release changelog entry has been added.
 
 # Decisions
@@ -45,3 +45,4 @@
 - 2026-08-20 [TOOL] The last upstream merge at `5b551d8` had only a ledger conflict; the full suite then passed after intentional widget expectations were updated.
 - 2026-08-24 [TOOL] The separate organization/customer-table change passed 18 focused tests, TypeScript, ESLint, and diff validation on Node v22.
 - 2026-08-24 [TOOL] The header/content alignment change passed focused Partner Programme tests, ESLint, and diff validation on Node v22.
+- 2026-08-24 [TOOL] The `origin/main` merge passed 18 focused partner tests, Node v22 TypeScript, and diff validation; the unrelated booking API edit is preserved in `stash@{0}`.

@@ -12,7 +12,9 @@ import type * as adminUsageCostAggregateQuery from "../adminUsageCostAggregateQu
 import type * as adminUsageCostAggregation from "../adminUsageCostAggregation.js";
 import type * as adminUsageCosts from "../adminUsageCosts.js";
 import type * as agentAccess from "../agentAccess.js";
+import type * as agentBookingOnboarding from "../agentBookingOnboarding.js";
 import type * as agentCostAggregateModel from "../agentCostAggregateModel.js";
+import type * as agentCreationAccess from "../agentCreationAccess.js";
 import type * as agentModelMigration from "../agentModelMigration.js";
 import type * as agentOverview from "../agentOverview.js";
 import type * as agentOverviewAbandonments from "../agentOverviewAbandonments.js";
@@ -72,6 +74,7 @@ import type * as appointmentBooking_customerBookings from "../appointmentBooking
 import type * as appointmentBooking_editBookingStatus from "../appointmentBooking/editBookingStatus.js";
 import type * as appointmentBooking_editing from "../appointmentBooking/editing.js";
 import type * as appointmentBooking_fields from "../appointmentBooking/fields.js";
+import type * as appointmentBooking_initialService from "../appointmentBooking/initialService.js";
 import type * as appointmentBooking_manualBooking from "../appointmentBooking/manualBooking.js";
 import type * as appointmentBooking_manualBookingCore from "../appointmentBooking/manualBookingCore.js";
 import type * as appointmentBooking_manualBookingFields from "../appointmentBooking/manualBookingFields.js";
@@ -257,8 +260,10 @@ import type * as leadRouting_assign from "../leadRouting/assign.js";
 import type * as leadRouting_eligibility from "../leadRouting/eligibility.js";
 import type * as leadRouting_helpers from "../leadRouting/helpers.js";
 import type * as leadRouting_provision from "../leadRouting/provision.js";
+import type * as leadRouting_scheduleAccess from "../leadRouting/scheduleAccess.js";
 import type * as leadRouting_schedules from "../leadRouting/schedules.js";
 import type * as leadRouting_settings from "../leadRouting/settings.js";
+import type * as leadRouting_shiftStore from "../leadRouting/shiftStore.js";
 import type * as llm_ilmu from "../llm/ilmu.js";
 import type * as llm_languageModel from "../llm/languageModel.js";
 import type * as llm_modelCost from "../llm/modelCost.js";
@@ -423,6 +428,7 @@ import type * as workflowFollowUpStartAfterMigration from "../workflowFollowUpSt
 import type * as workflowFollowUpTimer from "../workflowFollowUpTimer.js";
 import type * as workflowFollowUpWorker from "../workflowFollowUpWorker.js";
 import type * as workflowGraphSaveValidators from "../workflowGraphSaveValidators.js";
+import type * as workflowInitialBookingAction from "../workflowInitialBookingAction.js";
 import type * as workflowLayout from "../workflowLayout.js";
 import type * as workflowMedia from "../workflowMedia.js";
 import type * as workflowMediaDeletion from "../workflowMediaDeletion.js";
@@ -463,7 +469,9 @@ declare const fullApi: ApiFromModules<{
   adminUsageCostAggregation: typeof adminUsageCostAggregation;
   adminUsageCosts: typeof adminUsageCosts;
   agentAccess: typeof agentAccess;
+  agentBookingOnboarding: typeof agentBookingOnboarding;
   agentCostAggregateModel: typeof agentCostAggregateModel;
+  agentCreationAccess: typeof agentCreationAccess;
   agentModelMigration: typeof agentModelMigration;
   agentOverview: typeof agentOverview;
   agentOverviewAbandonments: typeof agentOverviewAbandonments;
@@ -523,6 +531,7 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/editBookingStatus": typeof appointmentBooking_editBookingStatus;
   "appointmentBooking/editing": typeof appointmentBooking_editing;
   "appointmentBooking/fields": typeof appointmentBooking_fields;
+  "appointmentBooking/initialService": typeof appointmentBooking_initialService;
   "appointmentBooking/manualBooking": typeof appointmentBooking_manualBooking;
   "appointmentBooking/manualBookingCore": typeof appointmentBooking_manualBookingCore;
   "appointmentBooking/manualBookingFields": typeof appointmentBooking_manualBookingFields;
@@ -708,8 +717,10 @@ declare const fullApi: ApiFromModules<{
   "leadRouting/eligibility": typeof leadRouting_eligibility;
   "leadRouting/helpers": typeof leadRouting_helpers;
   "leadRouting/provision": typeof leadRouting_provision;
+  "leadRouting/scheduleAccess": typeof leadRouting_scheduleAccess;
   "leadRouting/schedules": typeof leadRouting_schedules;
   "leadRouting/settings": typeof leadRouting_settings;
+  "leadRouting/shiftStore": typeof leadRouting_shiftStore;
   "llm/ilmu": typeof llm_ilmu;
   "llm/languageModel": typeof llm_languageModel;
   "llm/modelCost": typeof llm_modelCost;
@@ -874,6 +885,7 @@ declare const fullApi: ApiFromModules<{
   workflowFollowUpTimer: typeof workflowFollowUpTimer;
   workflowFollowUpWorker: typeof workflowFollowUpWorker;
   workflowGraphSaveValidators: typeof workflowGraphSaveValidators;
+  workflowInitialBookingAction: typeof workflowInitialBookingAction;
   workflowLayout: typeof workflowLayout;
   workflowMedia: typeof workflowMedia;
   workflowMediaDeletion: typeof workflowMediaDeletion;
