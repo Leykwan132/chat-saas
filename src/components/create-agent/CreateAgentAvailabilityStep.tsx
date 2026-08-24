@@ -39,6 +39,7 @@ export function CreateAgentAvailabilityStep({
         onTimezoneChange={onTimezoneChange}
         timeOptions={SCHEDULE_TIME_OPTIONS}
       />
+      <p className="text-sm text-muted-foreground">You can edit it later.</p>
 
       <div className="flex items-center justify-between">
         <Button type="button" variant="ghost" onClick={onBack}>

@@ -3,6 +3,7 @@ import { expect, test } from 'vitest';
 import { CreateAgentGoalStep } from './CreateAgentGoalStep';
 import { CreateAgentIdentityStep } from './CreateAgentIdentityStep';
 import { CreateAgentCreationState } from './CreateAgentCreationState';
+import { CreateAgentAvailabilityStep } from './CreateAgentAvailabilityStep';
 import { CreateAgentSuccessState } from './CreateAgentSuccessState';
 import { CreateAgentServiceStep } from './CreateAgentServiceStep';
 import { CreateAgentVisualPanel } from './CreateAgentVisualPanel';
@@ -82,6 +83,21 @@ test('booking goal continues to availability instead of creating immediately', (
 
   expect(markup).toContain('Continue');
   expect(markup).not.toContain('Create agent');
+});
+
+test('availability setup reassures users that they can edit it later', () => {
+  const markup = renderToStaticMarkup(
+    <CreateAgentAvailabilityStep
+      shiftDrafts={[]}
+      timezone="Asia/Kuala_Lumpur"
+      onShiftDraftsChange={() => undefined}
+      onTimezoneChange={() => undefined}
+      onBack={() => undefined}
+      onContinue={() => undefined}
+    />,
+  );
+
+  expect(markup).toContain('You can edit it later.');
 });
 
 test('service setup enables AI appointment scheduling', () => {
