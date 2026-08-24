@@ -119,6 +119,24 @@ test('service setup enables AI appointment scheduling', () => {
   expect(markup).not.toContain('Let AI schedule appointments');
 });
 
+test('service setup reassures users that services can be managed later', () => {
+  const markup = renderToStaticMarkup(
+    <CreateAgentServiceStep
+      name="Consultation"
+      durationMinutes={30}
+      appointmentBookingEnabled
+      onNameChange={() => undefined}
+      onDurationChange={() => undefined}
+      onAppointmentBookingEnabledChange={() => undefined}
+      onBack={() => undefined}
+      onCreate={() => undefined}
+      onSkip={() => undefined}
+    />,
+  );
+
+  expect(markup).toContain('You can add or edit your services later.');
+});
+
 test('success state offers training and playground without channel deployment', () => {
   const markup = renderToStaticMarkup(
     <CreateAgentSuccessState
