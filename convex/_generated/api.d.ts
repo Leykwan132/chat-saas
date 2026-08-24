@@ -400,6 +400,7 @@ import type * as whiteLabel_planResolver from "../whiteLabel/planResolver.js";
 import type * as whiteLabel_portal from "../whiteLabel/portal.js";
 import type * as whiteLabel_portalActions from "../whiteLabel/portalActions.js";
 import type * as whiteLabel_portalAuthorization from "../whiteLabel/portalAuthorization.js";
+import type * as whiteLabel_portalOverview from "../whiteLabel/portalOverview.js";
 import type * as whiteLabel_portalProvisioning from "../whiteLabel/portalProvisioning.js";
 import type * as workflowAppointmentServices from "../workflowAppointmentServices.js";
 import type * as workflowAutomationConfig from "../workflowAutomationConfig.js";
@@ -850,6 +851,7 @@ declare const fullApi: ApiFromModules<{
   "whiteLabel/portal": typeof whiteLabel_portal;
   "whiteLabel/portalActions": typeof whiteLabel_portalActions;
   "whiteLabel/portalAuthorization": typeof whiteLabel_portalAuthorization;
+  "whiteLabel/portalOverview": typeof whiteLabel_portalOverview;
   "whiteLabel/portalProvisioning": typeof whiteLabel_portalProvisioning;
   workflowAppointmentServices: typeof workflowAppointmentServices;
   workflowAutomationConfig: typeof workflowAutomationConfig;

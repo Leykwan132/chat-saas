@@ -50,11 +50,19 @@ export type PartnerOverview = {
     status: "active" | "suspended";
     planKey: PlanKey;
     monthlyAllowance: number;
+    renewalAt: number;
+    customerCount: number;
     addedCredits: number;
     spentCredits: number;
     remainingCredits: number;
     lastGrantAt: number | null;
     grantCount: number;
+  }>;
+  customers: Array<{
+    email: string;
+    organizationName: string;
+    role: "owner" | "admin" | "member";
+    invitationStatus: "pending" | "accepted";
   }>;
 };
 

@@ -6,7 +6,11 @@ import { action } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { getAuthContext } from "../authUtils";
 import { provisionOrganizationRoles } from "../orgRoles";
-import { workosRequest, type WorkOSOrganization } from "../workosClient";
+import {
+  workosRequest,
+  type WorkOSInvitation,
+  type WorkOSOrganization,
+} from "../workosClient";
 import { WORKOS_OWNER_ROLE_SLUG, WORKOS_ADMIN_ROLE_SLUG, WORKOS_MEMBER_ROLE_SLUG } from "../../shared/teamRoleCatalog";
 
 const planKeyValidator = v.union(v.literal("free"), v.literal("starter"), v.literal("growth"), v.literal("business"));
@@ -42,6 +46,13 @@ export const inviteOrganizationAccount = action({
     const auth = await getAuthContext(ctx);
     const organization: { workosOrgId: string } = await ctx.runQuery(internal.whiteLabel.portalAuthorization.getInvitableOrganization, { email: auth.email, workosUserId: auth.userId, partnerOrganizationId: args.partnerOrganizationId });
     const roleSlug = args.role === "owner" ? WORKOS_OWNER_ROLE_SLUG : args.role === "admin" ? WORKOS_ADMIN_ROLE_SLUG : WORKOS_MEMBER_ROLE_SLUG;
-    return await workosRequest("/user_management/invitations", { method: "POST", body: JSON.stringify({ email: args.email.trim().toLowerCase(), organization_id: organization.workosOrgId, role_slug: roleSlug }) });
+    const invitation = await workosRequest<WorkOSInvitation>(
+      "/user_management/invitations",
+      { method: "POST", body: JSON.stringify({ email: args.email.trim().toLowerCase(), organization_id: organization.workosOrgId, role_slug: roleSlug }) },
+    );
+    await ctx.runMutation(internal.teamInvitationRecords.syncFromWorkosInvitation, {
+      data: invitation,
+    });
+    return invitation;
   },
 });

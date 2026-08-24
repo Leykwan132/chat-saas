@@ -17,6 +17,10 @@ const customerListSource = readFileSync(
   new URL("../components/partner/PartnerCustomerList.tsx", import.meta.url),
   "utf8",
 );
+const organizationListSource = readFileSync(
+  new URL("../components/partner/PartnerOrganizationList.tsx", import.meta.url),
+  "utf8",
+);
 const customerControlsSource = readFileSync(
   new URL("../components/partner/PartnerCustomerControls.tsx", import.meta.url),
   "utf8",
@@ -43,6 +47,10 @@ const apiSource = readFileSync(
 );
 const portalSource = readFileSync(
   new URL("../../convex/whiteLabel/portal.ts", import.meta.url),
+  "utf8",
+);
+const portalOverviewSource = readFileSync(
+  new URL("../../convex/whiteLabel/portalOverview.ts", import.meta.url),
   "utf8",
 );
 
@@ -78,16 +86,19 @@ describe("Partner Programme", () => {
     expect(overviewSource).not.toContain('label="Biggest top-up"');
     expect(overviewSource).not.toContain('label="Most remaining"');
     expect(overviewSource).not.toContain("Customer overview");
-    expect(portalSource).toContain("totalSpentCredits");
+    expect(portalOverviewSource).toContain("totalSpentCredits");
     expect(apiSource).toContain("totalSpentCredits: number");
   });
 
   test("returns active organizations with the active status discriminator", () => {
-    expect(portalSource).toContain('eq("status", "active")');
-    expect(portalSource).toContain('status: "active" as const,');
+    expect(portalOverviewSource).toContain('eq("status", "active")');
+    expect(portalOverviewSource).toContain('status: "active" as const,');
   });
 
   test("uses ghost-style icon navigation without a side separator or active line", () => {
+    expect(pageSource).toContain(
+      '<div className="flex flex-col gap-2 sm:pl-48">',
+    );
     expect(pageSource).toContain('orientation="vertical"');
     expect(pageSource).toContain('className="mt-8 gap-8"');
     expect(pageSource).toContain("LayoutDashboard");
@@ -131,7 +142,7 @@ describe("Partner Programme", () => {
     );
   });
 
-  test("opens customer operations in three modals above the customer table", () => {
+  test("separates organizations and customers below the customer operations", () => {
     expect(customerFormsSource).toContain('from "@/components/ui/dialog"');
     expect(customerFormsSource.match(/<DialogTrigger asChild>/g)).toHaveLength(
       3,
@@ -143,6 +154,11 @@ describe("Partner Programme", () => {
       'className="rounded-lg border border-border shadow-none ring-0"',
     );
     expect(customerListSource).toContain('from "@/components/ui/table"');
+    expect(organizationListSource).toContain('from "@/components/ui/table"');
+    expect(organizationListSource).toContain("Customers");
+    expect(organizationListSource).toContain("customerCount");
+    expect(customerListSource).toContain("Organization");
+    expect(customerListSource).toContain("Invitation status");
     expect(customerListSource).toContain('from "@/components/ui/empty"');
     expect(customerListSource).toContain("<TableHeader>");
     expect(customerListSource).toContain("<TableBody>");
@@ -150,6 +166,9 @@ describe("Partner Programme", () => {
       "<EmptyTitle>No customers yet</EmptyTitle>",
     );
     expect(pageSource.indexOf("<PartnerCustomerForms")).toBeLessThan(
+      pageSource.indexOf("<PartnerOrganizationList"),
+    );
+    expect(pageSource.indexOf("<PartnerOrganizationList")).toBeLessThan(
       pageSource.indexOf("<PartnerCustomerList"),
     );
   });
@@ -161,6 +180,55 @@ describe("Partner Programme", () => {
     expect(customerFormsSource).toContain("isGivingCredits");
     expect(customerFormsSource).toContain('<Spinner data-icon="inline-start" />');
     expect(pageSource).toContain("pendingCustomerAction");
+  });
+
+  test("closes the organization dialog only after creation succeeds and confirms it", () => {
+    expect(customerFormsSource).toMatch(
+      /const \[isOrganizationDialogOpen, setIsOrganizationDialogOpen\]\s*=\s*useState\(false\);/,
+    );
+    expect(customerFormsSource).toContain("open={isOrganizationDialogOpen}");
+    expect(customerFormsSource).toContain(
+      "onOpenChange={setIsOrganizationDialogOpen}",
+    );
+    expect(customerFormsSource).toContain(
+      "if (await onCreateOrganization()) {",
+    );
+    expect(customerFormsSource).toContain(
+      "setIsOrganizationDialogOpen(false);",
+    );
+    expect(pageSource).toContain("toast.success(success);");
+    expect(pageSource).toContain("return true;");
+  });
+
+  test("requires confirmation before applying a customer plan change", () => {
+    expect(organizationListSource).toContain('from "@/components/ui/dialog"');
+    expect(organizationListSource).toContain("Confirm plan change");
+    expect(organizationListSource).toContain("formatRenewalDate");
+    expect(organizationListSource).toContain('variant="ghost"');
+    expect(organizationListSource).toContain("setPendingPlanChange({");
+    expect(organizationListSource).toContain(
+      "onPlanChange(pendingPlanChange.organization, pendingPlanChange.planKey);",
+    );
+    expect(apiSource).toContain("renewalAt: number;");
+    expect(portalOverviewSource).toContain("renewalAt: v.number(),");
+    expect(portalOverviewSource).toContain(
+      "renewalAt: balance.period.periodEnd,",
+    );
+  });
+
+  test("shows active organization status with a dot and confirms suspension", () => {
+    expect(organizationListSource).toContain("bg-emerald-500");
+    expect(organizationListSource).toContain('variant="destructive"');
+    expect(organizationListSource).toContain("Suspend organization");
+    expect(organizationListSource).toContain("setPendingSuspension(organization)");
+  });
+
+  test("returns invitation-backed customer rows and organization counts", () => {
+    expect(apiSource).toContain("customerCount: number;");
+    expect(apiSource).toContain("customers: Array<{");
+    expect(portalOverviewSource).toContain("customerCount: v.number(),");
+    expect(portalOverviewSource).toContain("customers: v.array(");
+    expect(portalOverviewSource).toContain("teamInvitationRecords");
   });
 
   test("uses compact icon-first customer action buttons with descriptions and right arrows", () => {

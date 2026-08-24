@@ -1,15 +1,12 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
-import { PLAN_CATALOG, type PlanKey } from "../planCatalog";
 import {
   assertCurrentPartnerAccess,
   assertPartnerOrganizationAccess,
   getCurrentPartnerAccess,
 } from "./access";
-import {
-  getPartnerCreditBalance,
-  grantPartnerOrganizationCredits,
-} from "./creditLedger";
+import { grantPartnerOrganizationCredits } from "./creditLedger";
+import { getPartnerOverview, partnerOverviewValidator } from "./portalOverview";
 
 const planKeyValidator = v.union(
   v.literal("free"),
@@ -17,33 +14,6 @@ const planKeyValidator = v.union(
   v.literal("growth"),
   v.literal("business"),
 );
-
-const partnerOverviewValidator = v.object({
-  activeOrganizations: v.number(),
-  grantCount: v.number(),
-  totalGrantedCredits: v.number(),
-  totalSpentCredits: v.number(),
-  planMix: v.object({
-    free: v.number(),
-    starter: v.number(),
-    growth: v.number(),
-    business: v.number(),
-  }),
-  organizations: v.array(
-    v.object({
-      partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
-      name: v.string(),
-      status: v.literal("active"),
-      planKey: planKeyValidator,
-      monthlyAllowance: v.number(),
-      addedCredits: v.number(),
-      spentCredits: v.number(),
-      remainingCredits: v.number(),
-      lastGrantAt: v.union(v.number(), v.null()),
-      grantCount: v.number(),
-    }),
-  ),
-});
 
 export const getCurrentPartner = query({
   args: {},
@@ -107,65 +77,7 @@ export const getCurrentPartner = query({
 export const getOverview = query({
   args: {},
   returns: partnerOverviewValidator,
-  handler: async (ctx) => {
-    const { partner } = await assertCurrentPartnerAccess(ctx);
-    const organizations = await ctx.db
-      .query("whiteLabelPartnerOrganizations")
-      .withIndex("by_partnerId_and_status", (q) =>
-        q.eq("partnerId", partner._id).eq("status", "active"),
-      )
-      .take(100);
-    const rows = await Promise.all(
-      organizations.map(async (organization) => {
-        const [team, plan, balance] = await Promise.all([
-          ctx.db.get(organization.teamId),
-          ctx.db
-            .query("whiteLabelPartnerOrganizationPlans")
-            .withIndex("by_partnerOrganizationId", (q) =>
-              q.eq("partnerOrganizationId", organization._id),
-            )
-            .unique(),
-          getPartnerCreditBalance(ctx, organization._id),
-        ]);
-        const planKey = plan?.activePlanKey ?? "free";
-        return {
-          partnerOrganizationId: organization._id,
-          name: team?.name ?? "Unknown",
-          status: "active" as const,
-          planKey,
-          monthlyAllowance: PLAN_CATALOG[planKey].monthlyCredits,
-          addedCredits: balance.balance?.manualGrantedCredits ?? 0,
-          spentCredits:
-            (balance.period?.usedCredits ?? 0) +
-            (balance.balance?.manualUsedCredits ?? 0),
-          remainingCredits: balance.remainingCredits,
-          lastGrantAt: balance.balance?.lastGrantAt ?? null,
-          grantCount: balance.balance?.grantCount ?? 0,
-        };
-      }),
-    );
-    const planMix = rows.reduce<Record<PlanKey, number>>(
-      (mix, row) => {
-        mix[row.planKey] += 1;
-        return mix;
-      },
-      { free: 0, starter: 0, growth: 0, business: 0 },
-    );
-    return {
-      activeOrganizations: rows.length,
-      grantCount: rows.reduce((count, row) => count + row.grantCount, 0),
-      totalGrantedCredits: rows.reduce(
-        (total, row) => total + row.addedCredits,
-        0,
-      ),
-      totalSpentCredits: rows.reduce(
-        (total, row) => total + row.spentCredits,
-        0,
-      ),
-      planMix,
-      organizations: rows,
-    };
-  },
+  handler: getPartnerOverview,
 });
 
 export const setOrganizationStatus = mutation({

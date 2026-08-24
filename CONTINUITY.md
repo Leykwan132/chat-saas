@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-19 [USER] Goal: ship an isolated white-label partner reseller portal where approved partners manage customer organizations, shared plans, manual credits, branding, and a single hostname without pricing or Stripe controls.
-- 2026-08-23 [CODE] Now: `origin/main` at `5b551d8` is merged locally into the partner branch, and its repaired test baseline passes.
-- 2026-08-23 [CODE] Next: push the merged branch and its test repairs to the existing draft PR.
+- 2026-08-24 [CODE] Now: Customers separates organization operations from invited/active customer accounts; organizations show invitation-backed customer counts, current credit data, plan-change confirmation, and destructive suspension confirmation.
+- 2026-08-24 [CODE] Next: review or commit the unshipped partner portal changes as directed.
 - 2026-08-19 [ASSUMPTION] This work is unshipped; no release changelog entry has been added.
 
 # Decisions
@@ -34,15 +34,19 @@
 - 2026-08-20 [USER] D758 ACTIVE: certificate checking may be explicitly resumed with a Check again control that starts an immediate fresh poll without changing the hostname or DNS records.
 - 2026-08-20 [USER] D759 ACTIVE: Step 3 certificate issuance uses one concise inline spinner row, “Waiting for certificate…”, without duration guidance; the other verification states retain their existing guidance.
 - 2026-08-20 [USER] D760 ACTIVE: completed custom-domain setup steps are collapsed, borderless accordions with a green check and expandable title, so the next required step remains the primary focus.
+- 2026-08-24 [USER] D761 ACTIVE: Create Organization closes only after its server action succeeds and the portal presents its success toast; failures leave the dialog open for retry.
+- 2026-08-24 [USER] D762 ACTIVE: selecting a different customer plan opens a confirmation modal that shows the exact monthly-credit renewal date; Cancel is a ghost action, and only confirmation schedules the plan change.
+- 2026-08-24 [USER] D763 ACTIVE: Customers presents separate organization and customer tables. Organization customer counts include pending and accepted invitation records; each active status has a green dot, and suspension is a destructive confirmed action.
+- 2026-08-24 [USER] D764 ACTIVE: On desktop, the Partner Programme header aligns with the tab-content column beside the side navigation; mobile retains the unshifted header.
 
 # Done (recent)
-- 2026-08-19 [CODE] Reorganized the Partner Programme into icon-led ghost side navigation, rendered its Overview as six core metrics, placed the sole shadcn customer Table/Empty state in Customers beneath three compact icon-first modal actions with balanced horizontal insets, added selected-plan catalog inclusions to organization creation, standardized every tab on subtle bordered containers and readable dropdown labels, and added authenticated logo upload and persistence in Branding.
 - 2026-08-19 [CODE] Resolved the interrupted stash merge: removed conflict markers from the Convex partner admin and portal modules, removed the duplicate membership index, and restored the feature-flag module without temporary logging.
 - 2026-08-19 [CODE] Added isolated partners, access, organization mapping, append-only plan assignments, credit periods/grants/ledger/balances, and domain lifecycle tables.
 - 2026-08-19 [CODE] Admin partner-owner lookup now handles duplicate user rows for the same email and returns each matching owner workspace.
 - 2026-08-19 [CODE] Customer workspace menus, team settings, and invitations hide team/account-management controls; backend gates preserve Partner portal as the only staffing path.
 - 2026-08-19 [CODE] Partner plans, AI usage, Stripe blocking, and portal access guard are isolated for partner-managed workspaces.
 - 2026-08-20 [CODE] Refined custom-domain setup: completed steps are expandable collapsed accordions, checks and pending states are compact, certificate polling can be manually resumed, and partner submissions use persisted-email authorization with duplicate-submit prevention; this remains unshipped, so no release-changelog entry was added.
+- 2026-08-24 [CODE] Aligned the Partner Programme header with its tab-content column on desktop; this remains unshipped, so no release-changelog entry was added.
 
 # Working set
 - 2026-08-19 [CODE] `convex/schema.ts`

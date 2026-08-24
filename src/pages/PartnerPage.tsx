@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { PartnerBrandingTab } from "@/components/partner/PartnerBrandingTab";
 import { PartnerCustomerForms } from "@/components/partner/PartnerCustomerForms";
 import { PartnerCustomerList } from "@/components/partner/PartnerCustomerList";
+import { PartnerOrganizationList } from "@/components/partner/PartnerOrganizationList";
 import { PartnerOverviewTab } from "@/components/partner/PartnerOverviewTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type PlanKey, whiteLabelApi } from "@/lib/whiteLabelApi";
@@ -78,12 +79,14 @@ export default function PartnerPage() {
     try {
       await work();
       toast.success(success);
+      return true;
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
           : "Unable to complete this request.",
       );
+      return false;
     }
   };
 
@@ -113,7 +116,7 @@ export default function PartnerPage() {
   ) => {
     setPendingCustomerAction(action);
     try {
-      await run(work, success);
+      return await run(work, success);
     } finally {
       setPendingCustomerAction(null);
     }
@@ -121,7 +124,7 @@ export default function PartnerPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl p-5 sm:p-8">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 sm:pl-48">
         <h1 className="text-3xl font-semibold tracking-tight">
           Partner Programme
         </h1>
@@ -182,13 +185,17 @@ export default function PartnerPage() {
             isCreatingCustomer={pendingCustomerAction === "customer"}
             isGivingCredits={pendingCustomerAction === "credits"}
             onCreateOrganization={() =>
-              void runCustomerAction("organization", async () => {
-                await createOrganization({
-                  name: organizationName,
-                  planKey: organizationPlan,
-                });
-                setOrganizationName("");
-              }, "Customer organization created.")
+              runCustomerAction(
+                "organization",
+                async () => {
+                  await createOrganization({
+                    name: organizationName,
+                    planKey: organizationPlan,
+                  });
+                  setOrganizationName("");
+                },
+                "Customer organization created.",
+              )
             }
             onCreateCustomer={() =>
               void runCustomerAction("customer", async () => {
@@ -212,7 +219,7 @@ export default function PartnerPage() {
               }, "Credits added to this customer.")
             }
           />
-          <PartnerCustomerList
+          <PartnerOrganizationList
             organizations={organizations}
             onPlanChange={(organization, planKey) =>
               void run(
@@ -224,20 +231,18 @@ export default function PartnerPage() {
                 "Plan updated. Monthly credits change on the next cycle.",
               )
             }
-            onStatusChange={(organization) =>
+            onSuspend={(organization) =>
               void run(
                 () =>
                   setStatus({
                     partnerOrganizationId: organization.partnerOrganizationId,
-                    status:
-                      organization.status === "active" ? "suspended" : "active",
+                    status: "suspended",
                   }),
-                organization.status === "active"
-                  ? "Organization suspended."
-                  : "Organization reactivated.",
+                "Organization suspended.",
               )
             }
           />
+          <PartnerCustomerList customers={overview?.customers ?? []} />
         </TabsContent>
         <TabsContent value="branding">
           <PartnerBrandingTab

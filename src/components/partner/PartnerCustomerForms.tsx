@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ArrowRight, Building2, UserPlus, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,16 +55,28 @@ export function PartnerCustomerForms({
   onCreditAmountChange: (value: string) => void;
   onInviteEmailChange: (value: string) => void;
   onInviteRoleChange: (value: "owner" | "admin" | "member") => void;
-  onCreateOrganization: () => void;
+  onCreateOrganization: () => Promise<boolean>;
   onCreateCustomer: () => void;
   onGiveCredits: () => void;
   isCreatingOrganization: boolean;
   isCreatingCustomer: boolean;
   isGivingCredits: boolean;
 }) {
+  const [isOrganizationDialogOpen, setIsOrganizationDialogOpen] =
+    useState(false);
+
+  const handleCreateOrganization = async () => {
+    if (await onCreateOrganization()) {
+      setIsOrganizationDialogOpen(false);
+    }
+  };
+
   return (
     <div className="grid gap-4 sm:grid-cols-3">
-      <Dialog>
+      <Dialog
+        open={isOrganizationDialogOpen}
+        onOpenChange={setIsOrganizationDialogOpen}
+      >
         <DialogTrigger asChild>
           <Button
             variant="outline"
@@ -116,7 +129,7 @@ export function PartnerCustomerForms({
           <DialogFooter showCloseButton>
             <Button
               disabled={!organizationName.trim() || isCreatingOrganization}
-              onClick={onCreateOrganization}
+              onClick={() => void handleCreateOrganization()}
             >
               {isCreatingOrganization ? <Spinner data-icon="inline-start" /> : null}
               Create organization
