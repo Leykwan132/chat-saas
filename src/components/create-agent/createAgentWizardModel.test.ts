@@ -5,6 +5,7 @@ import {
   hasRequiredIdentity,
   reduceCreateAgentStatus,
 } from './createAgentWizardModel';
+import * as wizardModel from './createAgentWizardModel';
 
 test('requires trimmed agent, business, and business description fields', () => {
   expect(
@@ -47,6 +48,38 @@ test('builds a trimmed backend-owned creation request', () => {
     businessDescription: 'Family dental care',
     goal: 'support',
   });
+});
+
+test('adds booking onboarding to a Book a Service creation request', () => {
+  expect(
+    buildCreateAgentRequest({
+      name: 'Nova',
+      businessName: 'Northstar',
+      businessDescription: 'Family dental care',
+      goal: 'bookService',
+      bookingOnboarding: {
+        availability: {
+          timezone: 'Asia/Kuala_Lumpur',
+          shifts: [{ dayOfWeek: 1, startMinutes: 540, endMinutes: 1020 }],
+        },
+      },
+    }),
+  ).toMatchObject({
+    bookingOnboarding: {
+      availability: {
+        shifts: [{ dayOfWeek: 1, startMinutes: 540, endMinutes: 1020 }],
+      },
+    },
+  });
+});
+
+test('changes the booking goal action and wizard length', () => {
+  expect(wizardModel).toHaveProperty('getCreateAgentGoalActionLabel');
+  expect(wizardModel).toHaveProperty('getCreateAgentStepCount');
+  expect(wizardModel.getCreateAgentGoalActionLabel('bookService')).toBe('Continue');
+  expect(wizardModel.getCreateAgentStepCount('bookService')).toBe(4);
+  expect(wizardModel.getCreateAgentGoalActionLabel('support')).toBe('Create agent');
+  expect(wizardModel.getCreateAgentStepCount('support')).toBe(2);
 });
 
 test('returns a failed creation to the goal step for a retry', () => {

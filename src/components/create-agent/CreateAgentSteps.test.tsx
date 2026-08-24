@@ -69,6 +69,20 @@ test('goal step renders only Support and Book a Service choices', () => {
   expect(markup).not.toContain('Model');
 });
 
+test('booking goal continues to availability instead of creating immediately', () => {
+  const markup = renderToStaticMarkup(
+    <CreateAgentGoalStep
+      goal="bookService"
+      onGoalChange={() => undefined}
+      onBack={() => undefined}
+      onCreate={() => undefined}
+    />,
+  );
+
+  expect(markup).toContain('Continue');
+  expect(markup).not.toContain('Create agent');
+});
+
 test('success state offers training and playground without channel deployment', () => {
   const markup = renderToStaticMarkup(
     <CreateAgentSuccessState
