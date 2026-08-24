@@ -7,7 +7,7 @@
 - 2026-08-24 [CODE] Now: direct active-customer provisioning, Profile reset access, three-dot deletion menus, and partner workspace cleanup are implemented locally; customer-removal helpers use explicit local unions because Convex validator inference does not narrow discriminants, while Convex code generation still requires explicit outbound-network approval before final verification.
 - 2026-08-24 [CODE] Now: the Workers build's nullable custom-domain preview URL is safely narrowed before its copy handler; the pending PR still needs its local feature work committed and pushed.
 - 2026-08-24 [CODE] Now: newly created customer credentials are returned once to the partner dashboard for secure copying; the customer can later use the existing Settings password-reset action.
-- 2026-08-24 [USER] Now: partners need a customer-row credential view and a password-reset-status column; the approved secure design needs written-spec review before planning and implementation.
+- 2026-08-25 [CODE] Now: the partner portal changes are committed as `6b3f00d`; `origin/main` was fetched and was already up to date, while Convex code generation still needs explicit outbound-data approval before final verification.
 - 2026-08-24 [CODE] Next: run Convex code generation with approval, re-run final checks, then commit the unshipped feature work.
 - 2026-08-19 [ASSUMPTION] This work is unshipped; no release changelog entry has been added.
 
@@ -68,3 +68,6 @@
 - 2026-08-24 [TOOL] Customer-removal helper typecheck passed with Node v22 using `convex/tsconfig.json`; focused customer-account tests pass (2 tests).
 - 2026-08-24 [TOOL] Node v22 `tsc -b` and Vite production build pass after the custom-domain preview-link fix.
 - 2026-08-24 [TOOL] One-time customer credential and Settings password-reset contracts pass focused tests, Convex and app TypeScript, ESLint, and a Vite production build on Node v22.
+- 2026-08-25 [TOOL] Retained-credential implementation plan passed placeholder and diff review; implementation awaits execution-mode selection.
+- 2026-08-25 [TOOL] Focused encryption and Partner Programme tests pass (26 tests); Convex code generation was rejected because it may transmit repository metadata/source to Convex.
+- 2026-08-25 [TOOL] Focused suite passed 27 tests, app TypeScript and diff validation passed, commit `6b3f00d` was created, and `git fetch origin && git merge origin/main` reported already up to date.

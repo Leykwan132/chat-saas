@@ -53,6 +53,10 @@ const portalOverviewSource = readFileSync(
   new URL("../../convex/whiteLabel/portalOverview.ts", import.meta.url),
   "utf8",
 );
+const teamDeletionLocalSource = readFileSync(
+  new URL("../../convex/teamDeletion/local.ts", import.meta.url),
+  "utf8",
+);
 
 describe("Partner Programme", () => {
   test("uses the three approved sections with the customer table only in Customers", () => {
@@ -88,6 +92,13 @@ describe("Partner Programme", () => {
     expect(overviewSource).not.toContain("Customer overview");
     expect(portalOverviewSource).toContain("totalSpentCredits");
     expect(apiSource).toContain("totalSpentCredits: number");
+  });
+
+  test("uses skeletons instead of placeholder zeroes while overview data loads", () => {
+    expect(overviewSource).toContain('from "@/components/ui/skeleton"');
+    expect(overviewSource).toContain('<Skeleton className="h-7 w-12" />');
+    expect(overviewSource).not.toContain("?? 0");
+    expect(overviewSource).toContain("value: number | string | undefined;");
   });
 
   test("returns active organizations with the active status discriminator", () => {
@@ -158,7 +169,7 @@ describe("Partner Programme", () => {
     expect(organizationListSource).toContain("Customers");
     expect(organizationListSource).toContain("customerCount");
     expect(customerListSource).toContain("Organization");
-    expect(customerListSource).toContain("Invitation status");
+    expect(customerListSource).toContain("<TableHead>Status</TableHead>");
     expect(customerListSource).toContain('from "@/components/ui/empty"');
     expect(customerListSource).toContain("<TableHeader>");
     expect(customerListSource).toContain("<TableBody>");
@@ -197,7 +208,7 @@ describe("Partner Programme", () => {
       "setIsOrganizationDialogOpen(false);",
     );
     expect(pageSource).toContain("toast.success(success);");
-    expect(pageSource).toContain("return true;");
+    expect(pageSource).toContain("return result;");
   });
 
   test("requires confirmation before applying a customer plan change", () => {
@@ -216,11 +227,23 @@ describe("Partner Programme", () => {
     );
   });
 
-  test("shows active organization status with a dot and confirms suspension", () => {
+  test("shows active organization status with a dot and confirms deletion", () => {
     expect(organizationListSource).toContain("bg-emerald-500");
     expect(organizationListSource).toContain('variant="destructive"');
-    expect(organizationListSource).toContain("Suspend organization");
-    expect(organizationListSource).toContain("setPendingSuspension(organization)");
+    expect(organizationListSource).toContain("Delete organization");
+    expect(organizationListSource).toContain("setPendingDeletion(organization)");
+  });
+
+  test("keeps the organization name left-aligned and other columns centered", () => {
+    expect(
+      organizationListSource.match(/<TableHead className="text-center">/g),
+    ).toHaveLength(7);
+    expect(organizationListSource).toContain(
+      '<TableCell className="font-medium">',
+    );
+    expect(organizationListSource).toContain(
+      '<div className="flex justify-center">',
+    );
   });
 
   test("returns invitation-backed customer rows and organization counts", () => {
@@ -229,6 +252,50 @@ describe("Partner Programme", () => {
     expect(portalOverviewSource).toContain("customerCount: v.number(),");
     expect(portalOverviewSource).toContain("customers: v.array(");
     expect(portalOverviewSource).toContain("teamInvitationRecords");
+  });
+
+  test("merges direct active customer accounts with legacy invitations", () => {
+    expect(apiSource).toContain('"pending" | "accepted" | "active"');
+    expect(portalOverviewSource).toContain(
+      "whiteLabelPartnerOrganizationAccounts",
+    );
+    expect(portalOverviewSource).toContain(
+      'invitationStatus: "active" as const',
+    );
+    expect(portalOverviewSource).toContain("customerCount: customers.length");
+  });
+
+  test("shows pending customer invitations with a yellow status dot", () => {
+    expect(customerListSource).toContain(
+      'customer.invitationStatus === "pending"',
+    );
+    expect(customerListSource).toContain("bg-amber-500");
+    expect(customerListSource).toContain("gap-1.5 capitalize");
+  });
+
+  test("creates active customer accounts and closes the dialog on success", () => {
+    expect(pageSource).toContain("createCustomerAccount");
+    expect(pageSource).toContain(
+      "Customer account created.",
+    );
+    expect(customerFormsSource).toContain("isCustomerDialogOpen");
+    expect(customerListSource).toContain(
+      'customer.invitationStatus === "active"',
+    );
+    expect(customerListSource).toContain("bg-emerald-500");
+  });
+
+  test("uses three-dot menus to confirm destructive customer access removal", () => {
+    expect(customerListSource).toContain("MoreHorizontal");
+    expect(customerListSource).toContain("DropdownMenu");
+    expect(customerListSource).toContain("Delete customer");
+    expect(organizationListSource).toContain("Delete organization");
+    expect(organizationListSource).toContain("DropdownMenu");
+    expect(pageSource).toContain("removeCustomerFromOrganization");
+    expect(pageSource).toContain("deletePartnerOrganization");
+    expect(teamDeletionLocalSource).toContain(
+      "deleteWhiteLabelPartnerOrganizationPage",
+    );
   });
 
   test("uses compact icon-first customer action buttons with descriptions and right arrows", () => {
@@ -249,7 +316,7 @@ describe("Partner Programme", () => {
     expect(customerFormsSource).toContain(
       "Start a workspace and choose its plan.",
     );
-    expect(customerFormsSource).toContain("Invite someone to an organization.");
+    expect(customerFormsSource).toContain("Create an active account for an organization.");
     expect(customerFormsSource).toContain("Top up a customer's balance.");
   });
 

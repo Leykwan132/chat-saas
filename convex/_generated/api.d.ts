@@ -318,6 +318,7 @@ import type * as teamDeletion_model from "../teamDeletion/model.js";
 import type * as teamDeletion_pool from "../teamDeletion/pool.js";
 import type * as teamDeletion_request from "../teamDeletion/request.js";
 import type * as teamDeletion_verify from "../teamDeletion/verify.js";
+import type * as teamDeletion_whiteLabelCleanup from "../teamDeletion/whiteLabelCleanup.js";
 import type * as teamDeletion_worker from "../teamDeletion/worker.js";
 import type * as teamHelpers from "../teamHelpers.js";
 import type * as teamInvitationRecords from "../teamInvitationRecords.js";
@@ -398,6 +399,10 @@ import type * as whiteLabel_customHostnameCloudflare from "../whiteLabel/customH
 import type * as whiteLabel_customHostnameData from "../whiteLabel/customHostnameData.js";
 import type * as whiteLabel_customHostnameRestartData from "../whiteLabel/customHostnameRestartData.js";
 import type * as whiteLabel_customHostnameState from "../whiteLabel/customHostnameState.js";
+import type * as whiteLabel_customerAccountActions from "../whiteLabel/customerAccountActions.js";
+import type * as whiteLabel_customerAccountPassword from "../whiteLabel/customerAccountPassword.js";
+import type * as whiteLabel_customerAccounts from "../whiteLabel/customerAccounts.js";
+import type * as whiteLabel_customerCredentialEncryption from "../whiteLabel/customerCredentialEncryption.js";
 import type * as whiteLabel_partnerCreditModel from "../whiteLabel/partnerCreditModel.js";
 import type * as whiteLabel_partnerUsage from "../whiteLabel/partnerUsage.js";
 import type * as whiteLabel_partnerUsageModel from "../whiteLabel/partnerUsageModel.js";
@@ -775,6 +780,7 @@ declare const fullApi: ApiFromModules<{
   "teamDeletion/pool": typeof teamDeletion_pool;
   "teamDeletion/request": typeof teamDeletion_request;
   "teamDeletion/verify": typeof teamDeletion_verify;
+  "teamDeletion/whiteLabelCleanup": typeof teamDeletion_whiteLabelCleanup;
   "teamDeletion/worker": typeof teamDeletion_worker;
   teamHelpers: typeof teamHelpers;
   teamInvitationRecords: typeof teamInvitationRecords;
@@ -855,6 +861,10 @@ declare const fullApi: ApiFromModules<{
   "whiteLabel/customHostnameData": typeof whiteLabel_customHostnameData;
   "whiteLabel/customHostnameRestartData": typeof whiteLabel_customHostnameRestartData;
   "whiteLabel/customHostnameState": typeof whiteLabel_customHostnameState;
+  "whiteLabel/customerAccountActions": typeof whiteLabel_customerAccountActions;
+  "whiteLabel/customerAccountPassword": typeof whiteLabel_customerAccountPassword;
+  "whiteLabel/customerAccounts": typeof whiteLabel_customerAccounts;
+  "whiteLabel/customerCredentialEncryption": typeof whiteLabel_customerCredentialEncryption;
   "whiteLabel/partnerCreditModel": typeof whiteLabel_partnerCreditModel;
   "whiteLabel/partnerUsage": typeof whiteLabel_partnerUsage;
   "whiteLabel/partnerUsageModel": typeof whiteLabel_partnerUsageModel;

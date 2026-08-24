@@ -4,6 +4,7 @@ import type { MutationCtx } from "../_generated/server";
 import { internalMutation } from "../_generated/server";
 import { TEAM_DELETION_MANIFEST } from "./manifest";
 import { deleteDescendantPage } from "./localDescendants";
+import { deleteWhiteLabelPartnerOrganizationPage } from "./whiteLabelCleanup";
 
 const PAGE_SIZE = 100;
 
@@ -62,7 +63,14 @@ export async function deleteLocalPage(
   target: TeamDeletionTarget,
   cursor?: string,
 ): Promise<DeleteLocalPageResult> {
-  if (!cursor || cursor === "descendants") {
+  let currentCursor = cursor;
+  if (!currentCursor || currentCursor === "whiteLabel") {
+    if (await deleteWhiteLabelPartnerOrganizationPage(ctx, target)) {
+      return { done: false, cursor: "whiteLabel" };
+    }
+    currentCursor = "descendants";
+  }
+  if (currentCursor === "descendants") {
     const deletedDescendants = await deleteDescendantPage(
       ctx,
       target.orgId,
@@ -73,9 +81,9 @@ export async function deleteLocalPage(
     return await deleteManifestPage(ctx, target, 0);
   }
 
-  const manifestIndex = Number.parseInt(cursor, 10);
+  const manifestIndex = Number.parseInt(currentCursor, 10);
   if (!Number.isInteger(manifestIndex) || manifestIndex < 0) {
-    throw new Error(`Invalid team deletion cursor: ${cursor}`);
+    throw new Error(`Invalid team deletion cursor: ${currentCursor}`);
   }
   return await deleteManifestPage(ctx, target, manifestIndex);
 }

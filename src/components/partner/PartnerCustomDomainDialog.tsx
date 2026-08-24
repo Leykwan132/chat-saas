@@ -81,6 +81,7 @@ export function PartnerCustomDomainDialog({
     ["connected"],
   );
   const isConnected = domain?.setupState === "connected";
+  const previewUrl = domain?.previewUrl;
   const run = async (action: string, work: () => Promise<unknown>) => {
     setPendingAction(action);
     try {
@@ -235,12 +236,12 @@ export function PartnerCustomDomainDialog({
             ) : null}
           </SetupStep>
           <SetupStep status={isConnected ? "complete" : "locked"} number={6} title="Connected domain">
-            {isConnected && domain?.previewUrl ? (
+            {isConnected && previewUrl ? (
               <div className="flex flex-col gap-3">
                 <StepDetail>{domain.hostname} is connected and ready to use.</StepDetail>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button asChild variant="outline">
-                    <a href={domain.previewUrl} target="_blank" rel="noreferrer">
+                    <a href={previewUrl} target="_blank" rel="noreferrer">
                       <ExternalLink data-icon="inline-start" />
                       Preview domain
                     </a>
@@ -248,7 +249,7 @@ export function PartnerCustomDomainDialog({
                   <Button
                     variant="ghost"
                     onClick={() =>
-                      copyText(domain.previewUrl, "Preview link copied.")
+                      copyText(previewUrl, "Preview link copied.")
                     }
                   >
                     <Copy data-icon="inline-start" />

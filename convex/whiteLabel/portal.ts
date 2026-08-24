@@ -7,6 +7,7 @@ import {
 } from "./access";
 import { grantPartnerOrganizationCredits } from "./creditLedger";
 import { getPartnerOverview, partnerOverviewValidator } from "./portalOverview";
+import { requestTeamDeletion, teamDeletionRequestResultValidator } from "../teamDeletion/request";
 
 const planKeyValidator = v.union(
   v.literal("free"),
@@ -96,6 +97,33 @@ export const setOrganizationStatus = mutation({
       status: args.status,
       updatedAt: Date.now(),
     });
+  },
+});
+
+export const deletePartnerOrganization = mutation({
+  args: { partnerOrganizationId: v.id("whiteLabelPartnerOrganizations") },
+  returns: teamDeletionRequestResultValidator,
+  handler: async (ctx, args) => {
+    const { partner } = await assertCurrentPartnerAccess(ctx);
+    const organization = await assertPartnerOrganizationAccess(
+      ctx,
+      partner._id,
+      args.partnerOrganizationId,
+    );
+    const team = await ctx.db.get(organization.teamId);
+    if (team?.workosOrgId === undefined) {
+      throw new Error("Customer organization workspace not found.");
+    }
+    const result = await requestTeamDeletion(ctx, {
+      workosOrgId: team.workosOrgId,
+      source: "workos",
+      preserveOwnerSubscription: true,
+    });
+    await ctx.db.patch(organization._id, {
+      status: "suspended",
+      updatedAt: Date.now(),
+    });
+    return result;
   },
 });
 

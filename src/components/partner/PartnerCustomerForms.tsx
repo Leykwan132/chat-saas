@@ -19,6 +19,10 @@ import {
   PartnerRoleSelect,
 } from "@/components/partner/PartnerCustomerControls";
 import { PartnerPlanDetails } from "@/components/partner/PartnerPlanDetails";
+import {
+  PartnerCustomerCredentialsDialog,
+  type CustomerCredentials,
+} from "@/components/partner/PartnerCustomerCredentialsDialog";
 import { type PartnerOverview, type PlanKey } from "@/lib/whiteLabelApi";
 
 export function PartnerCustomerForms({
@@ -56,7 +60,7 @@ export function PartnerCustomerForms({
   onInviteEmailChange: (value: string) => void;
   onInviteRoleChange: (value: "owner" | "admin" | "member") => void;
   onCreateOrganization: () => Promise<boolean>;
-  onCreateCustomer: () => void;
+  onCreateCustomer: () => Promise<CustomerCredentials | null>;
   onGiveCredits: () => void;
   isCreatingOrganization: boolean;
   isCreatingCustomer: boolean;
@@ -64,6 +68,9 @@ export function PartnerCustomerForms({
 }) {
   const [isOrganizationDialogOpen, setIsOrganizationDialogOpen] =
     useState(false);
+  const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
+  const [customerCredentials, setCustomerCredentials] =
+    useState<CustomerCredentials | null>(null);
 
   const handleCreateOrganization = async () => {
     if (await onCreateOrganization()) {
@@ -71,8 +78,17 @@ export function PartnerCustomerForms({
     }
   };
 
+  const handleCreateCustomer = async () => {
+    const credentials = await onCreateCustomer();
+    if (credentials) {
+      setIsCustomerDialogOpen(false);
+      setCustomerCredentials(credentials);
+    }
+  };
+
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <>
+      <div className="grid gap-4 sm:grid-cols-3">
       <Dialog
         open={isOrganizationDialogOpen}
         onOpenChange={setIsOrganizationDialogOpen}
@@ -138,7 +154,10 @@ export function PartnerCustomerForms({
         </DialogContent>
       </Dialog>
 
-      <Dialog>
+      <Dialog
+        open={isCustomerDialogOpen}
+        onOpenChange={setIsCustomerDialogOpen}
+      >
         <DialogTrigger asChild>
           <Button
             variant="outline"
@@ -149,7 +168,7 @@ export function PartnerCustomerForms({
               Create customer
             </span>
             <span className="max-w-48 text-sm text-muted-foreground whitespace-normal">
-              Invite someone to an organization.
+              Create an active account for an organization.
             </span>
             <ArrowRight
               data-icon="inline-end"
@@ -161,7 +180,7 @@ export function PartnerCustomerForms({
           <DialogHeader>
             <DialogTitle>Create customer</DialogTitle>
             <DialogDescription>
-              Send a customer account invitation for an organization.
+              Create an active customer account for an organization.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
@@ -194,10 +213,17 @@ export function PartnerCustomerForms({
               />
             </Field>
           </FieldGroup>
-          <DialogFooter showCloseButton>
+          <DialogFooter className="justify-between sm:justify-between">
+            <Button
+              disabled={isCreatingCustomer}
+              variant="ghost"
+              onClick={() => setIsCustomerDialogOpen(false)}
+            >
+              Close
+            </Button>
             <Button
               disabled={!selectedOrganizationId || !inviteEmail.trim() || isCreatingCustomer}
-              onClick={onCreateCustomer}
+              onClick={() => void handleCreateCustomer()}
             >
               {isCreatingCustomer ? <Spinner data-icon="inline-start" /> : null}
               Create customer
@@ -266,6 +292,11 @@ export function PartnerCustomerForms({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+      <PartnerCustomerCredentialsDialog
+        credentials={customerCredentials}
+        onClose={() => setCustomerCredentials(null)}
+      />
+    </>
   );
 }

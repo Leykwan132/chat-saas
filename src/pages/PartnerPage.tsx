@@ -10,7 +10,12 @@ import { PartnerOverviewTab } from "@/components/partner/PartnerOverviewTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type PlanKey, whiteLabelApi } from "@/lib/whiteLabelApi";
 
-type CustomerAction = "organization" | "customer" | "credits";
+type CustomerAction =
+  | "organization"
+  | "customer"
+  | "credits"
+  | "customerDeletion"
+  | "organizationDeletion";
 
 export default function PartnerPage() {
   const partner = useQuery(whiteLabelApi.portal.getCurrentPartner);
@@ -21,12 +26,20 @@ export default function PartnerPage() {
   const createOrganization = useAction(
     whiteLabelApi.actions.createOrganization,
   );
-  const inviteAccount = useAction(
-    whiteLabelApi.actions.inviteOrganizationAccount,
+  const createCustomerAccount = useAction(
+    whiteLabelApi.actions.createCustomerAccount,
   );
   const grantCredits = useMutation(whiteLabelApi.portal.grantCredits);
   const assignPlan = useMutation(whiteLabelApi.portal.assignOrganizationPlan);
-  const setStatus = useMutation(whiteLabelApi.portal.setOrganizationStatus);
+  const deletePartnerOrganization = useMutation(
+    whiteLabelApi.portal.deletePartnerOrganization,
+  );
+  const removeCustomerFromOrganization = useAction(
+    whiteLabelApi.actions.removeCustomerFromOrganization,
+  );
+  const getCustomerInitialCredentials = useAction(
+    whiteLabelApi.actions.getCustomerInitialCredentials,
+  );
   const generateLogoUploadUrl = useMutation(
     whiteLabelApi.portal.generateLogoUploadUrl,
   );
@@ -75,18 +88,18 @@ export default function PartnerPage() {
     );
   }
 
-  const run = async (work: () => Promise<unknown>, success: string) => {
+  const run = async <Result,>(work: () => Promise<Result>, success: string) => {
     try {
-      await work();
+      const result = await work();
       toast.success(success);
-      return true;
+      return result;
     } catch (error) {
       toast.error(
         error instanceof Error
           ? error.message
           : "Unable to complete this request.",
       );
-      return false;
+      return null;
     }
   };
 
@@ -109,9 +122,9 @@ export default function PartnerPage() {
     }, "Logo updated.");
   };
 
-  const runCustomerAction = async (
+  const runCustomerAction = async <Result,>(
     action: CustomerAction,
-    work: () => Promise<unknown>,
+    work: () => Promise<Result>,
     success: string,
   ) => {
     setPendingCustomerAction(action);
@@ -184,8 +197,8 @@ export default function PartnerPage() {
             isCreatingOrganization={pendingCustomerAction === "organization"}
             isCreatingCustomer={pendingCustomerAction === "customer"}
             isGivingCredits={pendingCustomerAction === "credits"}
-            onCreateOrganization={() =>
-              runCustomerAction(
+            onCreateOrganization={async () =>
+              (await runCustomerAction(
                 "organization",
                 async () => {
                   await createOrganization({
@@ -195,18 +208,19 @@ export default function PartnerPage() {
                   setOrganizationName("");
                 },
                 "Customer organization created.",
-              )
+              )) !== null
             }
             onCreateCustomer={() =>
-              void runCustomerAction("customer", async () => {
-                await inviteAccount({
+              runCustomerAction("customer", async () => {
+                const customer = await createCustomerAccount({
                   partnerOrganizationId:
                     selectedOrganization!.partnerOrganizationId,
                   email: inviteEmail,
                   role: inviteRole,
                 });
                 setInviteEmail("");
-              }, "Customer account invitation sent.")
+                return customer;
+              }, "Customer account created.")
             }
             onGiveCredits={() =>
               void runCustomerAction("credits", async () => {
@@ -231,18 +245,42 @@ export default function PartnerPage() {
                 "Plan updated. Monthly credits change on the next cycle.",
               )
             }
-            onSuspend={(organization) =>
-              void run(
+            onDelete={async (organization) =>
+              (await runCustomerAction(
+                "organizationDeletion",
                 () =>
-                  setStatus({
+                  deletePartnerOrganization({
                     partnerOrganizationId: organization.partnerOrganizationId,
-                    status: "suspended",
                   }),
-                "Organization suspended.",
+                "Organization deletion started.",
+              )) !== null
+            }
+          />
+          <PartnerCustomerList
+            customers={overview?.customers ?? []}
+            onRemove={async (partnerOrganizationId, removal) =>
+              (await runCustomerAction(
+                "customerDeletion",
+                () =>
+                  removeCustomerFromOrganization({
+                    partnerOrganizationId,
+                    removal,
+                  }),
+                "Customer removed from organization.",
+              )) !== null
+            }
+            onShowCredentials={(partnerOrganizationId, workosUserId) =>
+              runCustomerAction(
+                "customer",
+                () =>
+                  getCustomerInitialCredentials({
+                    partnerOrganizationId,
+                    workosUserId,
+                  }),
+                "Customer credentials loaded.",
               )
             }
           />
-          <PartnerCustomerList customers={overview?.customers ?? []} />
         </TabsContent>
         <TabsContent value="branding">
           <PartnerBrandingTab

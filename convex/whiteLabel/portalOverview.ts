@@ -15,6 +15,7 @@ const planKeyValidator = v.union(
 const customerInvitationStateValidator = v.union(
   v.literal("pending"),
   v.literal("accepted"),
+  v.literal("active"),
 );
 
 export const partnerOverviewValidator = v.object({
@@ -46,6 +47,7 @@ export const partnerOverviewValidator = v.object({
   ),
   customers: v.array(
     v.object({
+      partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
       email: v.string(),
       organizationName: v.string(),
       role: v.union(
@@ -54,6 +56,11 @@ export const partnerOverviewValidator = v.object({
         v.literal("member"),
       ),
       invitationStatus: customerInvitationStateValidator,
+      hasRetainedInitialPassword: v.boolean(),
+      passwordResetAt: v.optional(v.number()),
+      workosUserId: v.optional(v.string()),
+      workosOrganizationMembershipId: v.optional(v.string()),
+      workosInvitationId: v.optional(v.string()),
     }),
   ),
 });
@@ -90,23 +97,63 @@ export async function getPartnerOverview(ctx: QueryCtx) {
       if (balance.period === null) {
         throw new Error("Customer organization credit period not found.");
       }
-      const invitations = await ctx.db
-        .query("teamInvitationRecords")
-        .withIndex("by_workosOrgId", (q) =>
-          q.eq("workosOrgId", team.workosOrgId),
-        )
-        .take(100);
-      const customers = invitations.flatMap((invitation) => {
-        if (!isCustomerInvitation(invitation.state)) return [];
-        return [
-          {
-            email: invitation.email,
-            organizationName: team.name,
-            role: orgRoleKeyFromWorkosSlug(invitation.roleSlug),
-            invitationStatus: invitation.state,
-          },
-        ];
-      });
+      const [accounts, invitations] = await Promise.all([
+        ctx.db
+          .query("whiteLabelPartnerOrganizationAccounts")
+          .withIndex("by_partnerOrganizationId", (q) =>
+            q.eq("partnerOrganizationId", organization._id),
+          )
+          .take(100),
+        ctx.db
+          .query("teamInvitationRecords")
+          .withIndex("by_workosOrgId", (q) =>
+            q.eq("workosOrgId", team.workosOrgId),
+          )
+          .take(100),
+      ]);
+      const customers = [
+        ...(await Promise.all(
+          accounts.map(async (account) => {
+            const credential = await ctx.db
+              .query("whiteLabelPartnerCustomerCredentials")
+              .withIndex("by_partnerOrganizationId_and_workosUserId", (q) =>
+                q
+                  .eq("partnerOrganizationId", organization._id)
+                  .eq("workosUserId", account.workosUserId),
+              )
+              .unique();
+            return {
+              partnerOrganizationId: organization._id,
+              email: account.email,
+              organizationName: team.name,
+              role: account.role,
+              invitationStatus: "active" as const,
+              hasRetainedInitialPassword: credential !== null,
+              ...(account.passwordResetAt === undefined
+                ? {}
+                : { passwordResetAt: account.passwordResetAt }),
+              workosUserId: account.workosUserId,
+              workosOrganizationMembershipId:
+                account.workosOrganizationMembershipId,
+            };
+          }),
+        )),
+        ...invitations.flatMap((invitation) => {
+          if (!isCustomerInvitation(invitation.state)) return [];
+          return [
+            {
+              partnerOrganizationId: organization._id,
+              email: invitation.email,
+              organizationName: team.name,
+              role: orgRoleKeyFromWorkosSlug(invitation.roleSlug),
+              invitationStatus: invitation.state,
+              hasRetainedInitialPassword: false,
+              workosUserId: invitation.acceptedWorkosUserId,
+              workosInvitationId: invitation.workosInvitationId,
+            },
+          ];
+        }),
+      ];
       const planKey = plan?.activePlanKey ?? "free";
       return {
         organization: {

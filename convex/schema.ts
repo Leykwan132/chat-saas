@@ -471,6 +471,40 @@ export default defineSchema({
     .index("by_partnerId_and_status", ["partnerId", "status"])
     .index("by_teamId", ["teamId"])
     .index("by_partnerId_and_teamId", ["partnerId", "teamId"]),
+  whiteLabelPartnerOrganizationAccounts: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    workosUserId: v.string(),
+    workosOrganizationMembershipId: v.string(),
+    email: v.string(),
+    role: v.union(
+      v.literal("owner"),
+      v.literal("admin"),
+      v.literal("member"),
+    ),
+    status: v.literal("active"),
+    passwordResetAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_partnerOrganizationId", ["partnerOrganizationId"])
+    .index("by_workosUserId", ["workosUserId"])
+    .index("by_partnerOrganizationId_and_workosUserId", [
+      "partnerOrganizationId",
+    "workosUserId",
+  ]),
+  whiteLabelPartnerCustomerCredentials: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    workosUserId: v.string(),
+    ciphertext: v.string(),
+    initializationVector: v.string(),
+    authenticationTag: v.string(),
+    keyVersion: v.literal("v1"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_partnerOrganizationId_and_workosUserId", [
+    "partnerOrganizationId",
+    "workosUserId",
+  ]),
   whiteLabelPartnerOrganizationPlans: defineTable({
     partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
     activePlanKey: whiteLabelPlanKeyValidator,

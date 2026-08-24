@@ -37,7 +37,7 @@ Removing a customer deletes its encrypted credential record with the account rel
 
 ### Password-reset status
 
-Add an optional `passwordResetAt` timestamp to the direct customer account relationship. Its absence renders `Not reset`; its presence renders `Reset` with the completed timestamp available only to the partner data flow if needed later.
+Add an optional `passwordResetAt` timestamp to the direct customer account relationship. Its absence renders `Not reset`; its presence renders `Password has been reset by user`.
 
 The existing signed `/webhook/workos` endpoint already verifies `WORKOS_WEBHOOK_SECRET` and deduplicates `event.id` in `processedEvents`. Its dispatcher gains a `password_reset.succeeded` branch. WorkOS event data for this event is the password-reset resource, including `user_id`; the branch finds direct partner accounts for that user and records the event time as `passwordResetAt`. Replayed deliveries are harmless because the existing event-id deduplication remains the transaction boundary.
 

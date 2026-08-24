@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import { PartnerPlanSelect } from "@/components/partner/PartnerCustomerControls";
 import { PartnerPanel } from "@/components/partner/PartnerPanel";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -26,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Spinner } from "@/components/ui/spinner";
 import { formatRenewalDate } from "@/lib/formatRenewalDate";
 import { type PartnerOverview, type PlanKey } from "@/lib/whiteLabelApi";
 
@@ -39,16 +47,18 @@ type PendingPlanChange = {
 export function PartnerOrganizationList({
   organizations,
   onPlanChange,
-  onSuspend,
+  onDelete,
 }: {
   organizations: PartnerOverview["organizations"];
   onPlanChange: (organization: Organization, planKey: PlanKey) => void;
-  onSuspend: (organization: Organization) => void;
+  onDelete: (organization: Organization) => Promise<boolean>;
 }) {
   const [pendingPlanChange, setPendingPlanChange] =
     useState<PendingPlanChange | null>(null);
-  const [pendingSuspension, setPendingSuspension] =
-    useState<Organization | null>(null);
+  const [pendingDeletion, setPendingDeletion] = useState<Organization | null>(
+    null,
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
   const pendingPlanRenewalDate = pendingPlanChange
     ? formatRenewalDate(pendingPlanChange.organization.renewalAt)
     : null;
@@ -59,10 +69,16 @@ export function PartnerOrganizationList({
     setPendingPlanChange(null);
   };
 
-  const confirmSuspension = () => {
-    if (pendingSuspension === null) return;
-    onSuspend(pendingSuspension);
-    setPendingSuspension(null);
+  const confirmDeletion = async () => {
+    if (pendingDeletion === null) return;
+    setIsDeleting(true);
+    try {
+      if (await onDelete(pendingDeletion)) {
+        setPendingDeletion(null);
+      }
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -89,13 +105,13 @@ export function PartnerOrganizationList({
               <TableHeader>
                 <TableRow>
                   <TableHead>Organization</TableHead>
-                  <TableHead className="text-right">Customers</TableHead>
-                  <TableHead>Plan</TableHead>
-                  <TableHead className="text-right">Monthly</TableHead>
-                  <TableHead className="text-right">Top-up</TableHead>
-                  <TableHead className="text-right">Remaining</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-center">Customers</TableHead>
+                  <TableHead className="text-center">Plan</TableHead>
+                  <TableHead className="text-center">Monthly</TableHead>
+                  <TableHead className="text-center">Top-up</TableHead>
+                  <TableHead className="text-center">Remaining</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -104,43 +120,62 @@ export function PartnerOrganizationList({
                     <TableCell className="font-medium">
                       {organization.name}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-center">
                       {organization.customerCount.toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      <PartnerPlanSelect
-                        value={organization.planKey}
-                        onValueChange={(planKey) => {
-                          if (planKey !== organization.planKey) {
-                            setPendingPlanChange({ organization, planKey });
-                          }
-                        }}
-                        compact
-                      />
+                      <div className="flex justify-center">
+                        <PartnerPlanSelect
+                          value={organization.planKey}
+                          onValueChange={(planKey) => {
+                            if (planKey !== organization.planKey) {
+                              setPendingPlanChange({ organization, planKey });
+                            }
+                          }}
+                          compact
+                        />
+                      </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-center">
                       {organization.monthlyAllowance.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-center">
                       {organization.addedCredits.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-center">
                       {organization.remainingCredits.toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      <Badge className="gap-1.5 capitalize" variant="secondary">
-                        <span className="size-1.5 rounded-full bg-emerald-500" />
-                        {organization.status}
-                      </Badge>
+                      <div className="flex justify-center">
+                        <Badge className="gap-1.5 capitalize" variant="secondary">
+                          <span className="size-1.5 rounded-full bg-emerald-500" />
+                          {organization.status}
+                        </Badge>
+                      </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => setPendingSuspension(organization)}
-                      >
-                        Suspend
-                      </Button>
+                    <TableCell>
+                      <div className="flex justify-center">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-label={`Organization actions for ${organization.name}`}
+                              size="icon"
+                              variant="ghost"
+                            >
+                              <MoreHorizontal />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onSelect={() => setPendingDeletion(organization)}
+                            >
+                              <Trash2 />
+                              Delete organization
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -173,25 +208,34 @@ export function PartnerOrganizationList({
         </DialogContent>
       </Dialog>
       <Dialog
-        open={pendingSuspension !== null}
+        open={pendingDeletion !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingSuspension(null);
+          if (!open) setPendingDeletion(null);
         }}
       >
         <DialogContent className="rounded-lg border border-border shadow-none ring-0">
           <DialogHeader>
-            <DialogTitle>Suspend organization</DialogTitle>
+            <DialogTitle>Delete organization</DialogTitle>
             <DialogDescription>
-              Suspend {pendingSuspension?.name}? Customer access to this
-              organization will be paused.
+              Delete {pendingDeletion?.name}? This removes the workspace and
+              all customer access within it.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setPendingSuspension(null)}>
+            <Button
+              disabled={isDeleting}
+              variant="ghost"
+              onClick={() => setPendingDeletion(null)}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmSuspension}>
-              Suspend organization
+            <Button
+              disabled={isDeleting}
+              variant="destructive"
+              onClick={() => void confirmDeletion()}
+            >
+              {isDeleting ? <Spinner data-icon="inline-start" /> : null}
+              Delete organization
             </Button>
           </DialogFooter>
         </DialogContent>

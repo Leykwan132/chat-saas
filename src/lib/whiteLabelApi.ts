@@ -2,6 +2,19 @@ import { makeFunctionReference } from "convex/server";
 
 export type PlanKey = "free" | "starter" | "growth" | "business";
 
+export type PartnerCustomerRemoval =
+  | {
+      kind: "active";
+      workosUserId: string;
+      workosOrganizationMembershipId: string;
+    }
+  | { kind: "pending"; workosInvitationId: string }
+  | {
+      kind: "accepted";
+      workosInvitationId: string;
+      workosUserId: string;
+    };
+
 export type PartnerProfile = {
   partnerId: string;
   name: string;
@@ -59,10 +72,16 @@ export type PartnerOverview = {
     grantCount: number;
   }>;
   customers: Array<{
+    partnerOrganizationId: string;
     email: string;
     organizationName: string;
     role: "owner" | "admin" | "member";
-    invitationStatus: "pending" | "accepted";
+    invitationStatus: "pending" | "accepted" | "active";
+    hasRetainedInitialPassword: boolean;
+    passwordResetAt?: number;
+    workosUserId?: string;
+    workosOrganizationMembershipId?: string;
+    workosInvitationId?: string;
   }>;
 };
 
@@ -88,6 +107,11 @@ export const whiteLabelApi = {
       { partnerOrganizationId: string; status: "active" | "suspended" },
       null
     >("whiteLabel/portal:setOrganizationStatus"),
+    deletePartnerOrganization: makeFunctionReference<
+      "mutation",
+      { partnerOrganizationId: string },
+      { accepted: true; duplicate: boolean }
+    >("whiteLabel/portal:deletePartnerOrganization"),
     assignOrganizationPlan: makeFunctionReference<
       "mutation",
       { partnerOrganizationId: string; planKey: PlanKey },
@@ -159,6 +183,33 @@ export const whiteLabelApi = {
       },
       unknown
     >("whiteLabel/portalActions:inviteOrganizationAccount"),
+    createCustomerAccount: makeFunctionReference<
+      "action",
+      {
+        partnerOrganizationId: string;
+        email: string;
+        role: "owner" | "admin" | "member";
+      },
+      { workosUserId: string; email: string; initialPassword: string }
+    >("whiteLabel/customerAccountActions:createCustomerAccount"),
+    startCurrentUserPasswordReset: makeFunctionReference<
+      "action",
+      Record<string, never>,
+      { passwordResetUrl: string }
+    >("whiteLabel/customerAccountActions:startCurrentUserPasswordReset"),
+    getCustomerInitialCredentials: makeFunctionReference<
+      "action",
+      { partnerOrganizationId: string; workosUserId: string },
+      { email: string; initialPassword: string; passwordResetAt: number | null }
+    >("whiteLabel/customerAccountActions:getCustomerInitialCredentials"),
+    removeCustomerFromOrganization: makeFunctionReference<
+      "action",
+      {
+        partnerOrganizationId: string;
+        removal: PartnerCustomerRemoval;
+      },
+      null
+    >("whiteLabel/customerAccountActions:removeCustomerFromOrganization"),
   },
   admin: {
     getOwnerWorkspaces: makeFunctionReference<
