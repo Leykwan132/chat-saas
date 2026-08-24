@@ -4,6 +4,7 @@ import { AGENT_GOAL_OPTIONS } from '../../../shared/agentCreationGoals';
 import { Button } from '@/components/ui/button';
 import { FieldDescription, FieldSet } from '@/components/ui/field';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { getCreateAgentGoalActionLabel } from './createAgentWizardModel';
 
 type CreateAgentGoalStepProps = {
   goal: AgentGoal | null;
@@ -78,7 +79,7 @@ export function CreateAgentGoalStep({
           Back
         </Button>
         <Button type="submit" disabled={!goal}>
-          Create agent
+          {getCreateAgentGoalActionLabel(goal)}
           <CornerDownLeft data-icon="inline-end" />
         </Button>
       </div>

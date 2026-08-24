@@ -55,14 +55,34 @@ test('enables a new organizational member for existing agents', async () => {
     },
   });
 
-  const schedule = await t.run(async (ctx) =>
-    await ctx.db
+  const { schedule, shifts } = await t.run(async (ctx) => {
+    const schedule = await ctx.db
       .query('userSchedules')
       .withIndex('by_agentId_and_workosUserId', (q) =>
         q.eq('agentId', agentId).eq('workosUserId', 'new-availability-member'),
       )
-      .unique(),
-  );
+      .unique();
+    return {
+      schedule,
+      shifts: schedule === null
+        ? []
+        : await ctx.db
+          .query('userShifts')
+          .withIndex('by_userScheduleId', (q) => q.eq('userScheduleId', schedule._id))
+          .collect(),
+    };
+  });
 
   expect(schedule?.enabled).toBe(true);
+  expect(shifts.map(({ dayOfWeek, startMinutes, endMinutes }) => ({
+    dayOfWeek,
+    startMinutes,
+    endMinutes,
+  }))).toEqual([
+    { dayOfWeek: 1, startMinutes: 540, endMinutes: 1020 },
+    { dayOfWeek: 2, startMinutes: 540, endMinutes: 1020 },
+    { dayOfWeek: 3, startMinutes: 540, endMinutes: 1020 },
+    { dayOfWeek: 4, startMinutes: 540, endMinutes: 1020 },
+    { dayOfWeek: 5, startMinutes: 540, endMinutes: 1020 },
+  ]);
 });

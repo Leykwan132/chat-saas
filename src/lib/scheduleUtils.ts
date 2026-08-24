@@ -1,4 +1,5 @@
 import { formatTimeZoneDisplayLabel } from './calendarTimeUtils';
+import { DEFAULT_AVAILABILITY_SHIFTS } from '../../shared/availabilityDefaults';
 
 export const SCHEDULE_DAYS = [
   { dayOfWeek: 0, label: 'Sunday' },
@@ -188,12 +189,7 @@ export function buildScheduleTimeOptions(stepMinutes = 15) {
 /** Precomputed once — avoids rebuilding 90+ options on every editor mount. */
 export const SCHEDULE_TIME_OPTIONS = buildScheduleTimeOptions();
 
-/** Default weekly hours: 9:00am–5:00pm, every day. */
-export const DEFAULT_SCHEDULE_SHIFTS: ScheduleShift[] = SCHEDULE_DAYS.map((day) => ({
-  dayOfWeek: day.dayOfWeek,
-  startMinutes: DEFAULT_SHIFT_START_MINUTES,
-  endMinutes: DEFAULT_SHIFT_END_MINUTES,
-}));
+export const DEFAULT_SCHEDULE_SHIFTS: ScheduleShift[] = DEFAULT_AVAILABILITY_SHIFTS;
 
 export function shiftsForDisplay(shifts: ScheduleShift[]): ScheduleShift[] {
   return shifts.length > 0 ? shifts : DEFAULT_SCHEDULE_SHIFTS;

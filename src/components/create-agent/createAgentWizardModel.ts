@@ -1,7 +1,19 @@
 import type { AgentGoal } from '../../../shared/agentCreationGoals';
 import { buildAgentSetupTestPath } from '../setup-checklist/workspaceSetupChecklistNavigation';
 
-export type CreateAgentStep = 'identity' | 'goal' | 'creating' | 'success';
+export type CreateAgentStep = 'identity' | 'goal' | 'availability' | 'service' | 'creating' | 'success';
+
+export type BookingOnboardingDraft = {
+  availability: {
+    timezone: string;
+    shifts: Array<{ dayOfWeek: number; startMinutes: number; endMinutes: number }>;
+  };
+  service?: {
+    name: string;
+    durationMinutes: number;
+    appointmentBookingEnabled: boolean;
+  };
+};
 
 export type CreateAgentStatus = {
   step: CreateAgentStep;
@@ -13,6 +25,8 @@ export type CreateAgentStatus = {
 type CreateAgentStatusAction =
   | { type: 'showIdentity' }
   | { type: 'showGoal' }
+  | { type: 'showAvailability' }
+  | { type: 'showService' }
   | { type: 'started' }
   | { type: 'progressed'; phase: number }
   | { type: 'created'; agentId: string }
@@ -40,13 +54,23 @@ export function buildCreateAgentRequest(input: {
   businessName: string;
   businessDescription: string;
   goal: AgentGoal;
+  bookingOnboarding?: BookingOnboardingDraft;
 }) {
   return {
     name: input.name.trim(),
     businessName: input.businessName.trim(),
     businessDescription: input.businessDescription.trim(),
     goal: input.goal,
+    ...(input.bookingOnboarding ? { bookingOnboarding: input.bookingOnboarding } : {}),
   };
+}
+
+export function getCreateAgentGoalActionLabel(goal: AgentGoal | null) {
+  return goal === 'bookService' ? 'Continue' : 'Create agent';
+}
+
+export function getCreateAgentStepCount(goal: AgentGoal | null) {
+  return goal === 'bookService' ? 4 : 2;
 }
 
 export function reduceCreateAgentStatus(
@@ -58,6 +82,12 @@ export function reduceCreateAgentStatus(
   }
   if (action.type === 'showGoal') {
     return { ...status, step: 'goal', error: null };
+  }
+  if (action.type === 'showAvailability') {
+    return { ...status, step: 'availability', error: null };
+  }
+  if (action.type === 'showService') {
+    return { ...status, step: 'service', error: null };
   }
   if (action.type === 'started') {
     return { step: 'creating', phase: 0, error: null, createdAgentId: null };

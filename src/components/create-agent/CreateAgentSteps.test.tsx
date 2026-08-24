@@ -3,7 +3,9 @@ import { expect, test } from 'vitest';
 import { CreateAgentGoalStep } from './CreateAgentGoalStep';
 import { CreateAgentIdentityStep } from './CreateAgentIdentityStep';
 import { CreateAgentCreationState } from './CreateAgentCreationState';
+import { CreateAgentAvailabilityStep } from './CreateAgentAvailabilityStep';
 import { CreateAgentSuccessState } from './CreateAgentSuccessState';
+import { CreateAgentServiceStep } from './CreateAgentServiceStep';
 import { CreateAgentVisualPanel } from './CreateAgentVisualPanel';
 
 test('identity step renders required business details', () => {
@@ -67,6 +69,75 @@ test('goal step renders only Support and Book a Service choices', () => {
   expect(markup).toContain('data-variant="ghost"');
   expect(markup).not.toContain('General');
   expect(markup).not.toContain('Model');
+});
+
+test('booking goal continues to availability instead of creating immediately', () => {
+  const markup = renderToStaticMarkup(
+    <CreateAgentGoalStep
+      goal="bookService"
+      onGoalChange={() => undefined}
+      onBack={() => undefined}
+      onCreate={() => undefined}
+    />,
+  );
+
+  expect(markup).toContain('Continue');
+  expect(markup).not.toContain('Create agent');
+});
+
+test('availability setup reassures users that they can edit it later', () => {
+  const markup = renderToStaticMarkup(
+    <CreateAgentAvailabilityStep
+      shiftDrafts={[]}
+      timezone="Asia/Kuala_Lumpur"
+      onShiftDraftsChange={() => undefined}
+      onTimezoneChange={() => undefined}
+      onBack={() => undefined}
+      onContinue={() => undefined}
+    />,
+  );
+
+  expect(markup).toContain('You can edit it later.');
+});
+
+test('service setup enables AI appointment scheduling', () => {
+  const markup = renderToStaticMarkup(
+    <CreateAgentServiceStep
+      name="Consultation"
+      durationMinutes={30}
+      appointmentBookingEnabled
+      onNameChange={() => undefined}
+      onDurationChange={() => undefined}
+      onAppointmentBookingEnabledChange={() => undefined}
+      onBack={() => undefined}
+      onCreate={() => undefined}
+      onSkip={() => undefined}
+    />,
+  );
+
+  expect(markup).toContain('Enable AI appointment scheduling');
+  expect(markup).not.toContain('Let AI schedule appointments');
+});
+
+test('service setup reassures users that services can be managed later', () => {
+  const markup = renderToStaticMarkup(
+    <CreateAgentServiceStep
+      name="Consultation"
+      durationMinutes={30}
+      appointmentBookingEnabled
+      onNameChange={() => undefined}
+      onDurationChange={() => undefined}
+      onAppointmentBookingEnabledChange={() => undefined}
+      onBack={() => undefined}
+      onCreate={() => undefined}
+      onSkip={() => undefined}
+    />,
+  );
+
+  expect(markup).toContain('You can add or edit your services later.');
+  expect(markup).toContain(
+    '</div></div><p class="text-sm text-muted-foreground">You can add or edit your services later.</p><div class="flex items-center justify-between gap-3">',
+  );
 });
 
 test('success state offers training and playground without channel deployment', () => {
