@@ -62,6 +62,27 @@ function GoalTerminal({
   );
 }
 
+function BookingSetupTerminal({
+  name,
+  businessName,
+  step,
+}: Pick<CreateAgentVisualPanelProps, 'name' | 'businessName' | 'step'>) {
+  const isAvailability = step === 'availability';
+  return (
+    <Terminal className="w-full">
+      <TypingAnimation>&gt; kilobot configure booking</TypingAnimation>
+      <AnimatedSpan className="text-primary">✔ Agent: {name.trim()}</AnimatedSpan>
+      <AnimatedSpan className="text-primary">✔ Business: {businessName.trim()}</AnimatedSpan>
+      <AnimatedSpan className={isAvailability ? 'text-primary' : 'text-muted-foreground'}>
+        {isAvailability ? '✔ Set your availability' : '⏳ Set your availability…'}
+      </AnimatedSpan>
+      <AnimatedSpan className={isAvailability ? 'text-muted-foreground' : 'text-primary'}>
+        {isAvailability ? '⏳ Create a service…' : '✔ Create a service'}
+      </AnimatedSpan>
+    </Terminal>
+  );
+}
+
 function CreatingTerminal({
   name,
   businessName,
@@ -123,6 +144,9 @@ export function CreateAgentVisualPanel(props: CreateAgentVisualPanelProps) {
       <div className="relative w-full max-w-lg">
         {props.step === 'identity' ? <IdentityTerminal {...props} /> : null}
         {props.step === 'goal' ? <GoalTerminal {...props} /> : null}
+        {props.step === 'availability' || props.step === 'service' ? (
+          <BookingSetupTerminal {...props} />
+        ) : null}
         {props.step === 'creating' && props.goal ? (
           <CreatingTerminal {...props} goal={props.goal} />
         ) : null}

@@ -25,7 +25,7 @@ const workpoolModules = {
 test("bookAppointment marks the conversation as booked", async () => {
   const t = convexTest(schema, modules);
   t.registerComponent("conversationLogWorkpool", workpoolSchema, workpoolModules);
-  const startAt = Date.UTC(2026, 6, 1, 9, 0, 0);
+  const startAt = Date.UTC(2028, 6, 1, 9, 0, 0);
   const ids = await t.run(async (ctx) => {
     const now = Date.now();
     const userId = await ctx.db.insert("users", {
@@ -87,6 +87,18 @@ test("bookAppointment marks the conversation as booked", async () => {
       createdAt: now,
       updatedAt: now,
     });
+    const previousMessageId = await ctx.db.insert("messages", {
+      orgId: "",
+      conversationId,
+      service: "whatsapp",
+      externalId: "booking-previous-message",
+      orgAddress: "business",
+      contactAddress: "+60123456789",
+      direction: "incoming",
+      contentType: "text",
+      content: "I would like to book an appointment.",
+      createdAt: now + 1,
+    });
     const serviceId = await ctx.db.insert("appointmentServices", {
       agentId,
       name: "Consultation",
@@ -97,6 +109,27 @@ test("bookAppointment marks the conversation as booked", async () => {
       timeSlotPolicy: "offer_slots",
       salesStyle: "neutral",
       assignmentStrategy: "balanced",
+      assignedWorkosUserIds: ["booking-owner"],
+      createdAt: now,
+      updatedAt: now,
+    });
+    const workflowId = await ctx.db.insert("workflows", {
+      agentId,
+      orgId: "",
+      userId: "booking-owner",
+      name: "Booking workflow",
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("workflowNodes", {
+      workflowId,
+      kind: "bookAppointment",
+      title: "Book appointment",
+      description: "",
+      allowedAppointmentServiceIds: [serviceId],
+      isReady: true,
+      positionX: 0,
+      positionY: 0,
       createdAt: now,
       updatedAt: now,
     });
@@ -109,8 +142,90 @@ test("bookAppointment marks the conversation as booked", async () => {
       createdAt: now,
       updatedAt: now,
     });
-    return { conversationId, serviceId };
+    return { agentId, conversationId, previousMessageId, serviceId };
   });
+
+  const unconfirmedResult = await t.action(internal.appointmentBooking.bookAppointment.bookAppointment, {
+    conversationId: ids.conversationId as Id<"conversations">,
+    serviceId: ids.serviceId as Id<"appointmentServices">,
+    startAt,
+  });
+
+  expect(unconfirmedResult.success).toBe(false);
+  expect(unconfirmedResult.message).toContain("customer must confirm");
+
+  const availability = await t.mutation(internal.appointmentBooking.sessions.checkAvailability, {
+    conversationId: ids.conversationId as Id<"conversations">,
+    serviceId: ids.serviceId as Id<"appointmentServices">,
+    preferredStartAt: startAt,
+  });
+
+  expect(availability.success).toBe(true);
+
+  const offeredResult = await t.action(internal.appointmentBooking.bookAppointment.bookAppointment, {
+    conversationId: ids.conversationId as Id<"conversations">,
+    serviceId: ids.serviceId as Id<"appointmentServices">,
+    startAt,
+  });
+
+  expect(offeredResult.success).toBe(false);
+  expect(offeredResult.message).toContain("customer must confirm");
+
+  const missingReaction = await t.mutation(internal.appointmentBooking.sessions.confirmBookingSlot, {
+    conversationId: ids.conversationId as Id<"conversations">,
+    serviceId: ids.serviceId as Id<"appointmentServices">,
+    startAt,
+  });
+
+  expect(missingReaction.success).toBe(false);
+  expect(missingReaction.message).toContain("React to the customer's confirmation");
+
+  await t.mutation(internal.chat.reactions.internalUpsertReaction, {
+    conversationId: ids.conversationId as Id<"conversations">,
+    messageId: ids.previousMessageId,
+    emoji: "👍",
+    source: "ai",
+    actorAgentId: ids.agentId,
+    actorName: "Booking Agent",
+  });
+
+  const staleReaction = await t.mutation(internal.appointmentBooking.sessions.confirmBookingSlot, {
+    conversationId: ids.conversationId as Id<"conversations">,
+    serviceId: ids.serviceId as Id<"appointmentServices">,
+    startAt,
+  });
+
+  expect(staleReaction.success).toBe(false);
+
+  const confirmationMessageId = await t.run(async (ctx) => await ctx.db.insert("messages", {
+    orgId: "",
+    conversationId: ids.conversationId,
+    service: "whatsapp",
+    externalId: "booking-confirmation-message",
+    orgAddress: "business",
+    contactAddress: "+60123456789",
+    direction: "incoming",
+    contentType: "text",
+    content: "Yes, that time works for me.",
+    createdAt: Date.now() + 1,
+  }));
+
+  await t.mutation(internal.chat.reactions.internalUpsertReaction, {
+    conversationId: ids.conversationId as Id<"conversations">,
+    messageId: confirmationMessageId,
+    emoji: "👍",
+    source: "ai",
+    actorAgentId: ids.agentId,
+    actorName: "Booking Agent",
+  });
+
+  const confirmation = await t.mutation(internal.appointmentBooking.sessions.confirmBookingSlot, {
+    conversationId: ids.conversationId as Id<"conversations">,
+    serviceId: ids.serviceId as Id<"appointmentServices">,
+    startAt,
+  });
+
+  expect(confirmation.success).toBe(true);
 
   const result = await t.action(internal.appointmentBooking.bookAppointment.bookAppointment, {
     conversationId: ids.conversationId as Id<"conversations">,

@@ -9,16 +9,21 @@ import type { AgentGoal } from '../../../shared/agentCreationGoals';
 import { api } from '../../../convex/_generated/api';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CreateAgentCreationState } from './CreateAgentCreationState';
+import { CreateAgentAvailabilityStep } from './CreateAgentAvailabilityStep';
 import { CreateAgentGoalStep } from './CreateAgentGoalStep';
 import { CreateAgentIdentityStep } from './CreateAgentIdentityStep';
+import { CreateAgentServiceStep } from './CreateAgentServiceStep';
 import { CreateAgentSuccessState } from './CreateAgentSuccessState';
 import { CreateAgentVisualPanel } from './CreateAgentVisualPanel';
 import { createAgentSubmissionController } from './createAgentSubmission';
 import {
   buildCreateAgentRequest,
+  getCreateAgentStepCount,
   getCreateAgentDestinations,
   reduceCreateAgentStatus,
 } from './createAgentWizardModel';
+import { createStandardShiftDrafts, draftsToShifts } from '@/lib/scheduleShiftDrafts';
+import { DEFAULT_SCHEDULE_TIMEZONE } from '@/lib/scheduleUtils';
 
 const INITIAL_STATUS = {
   step: 'identity' as const,
@@ -42,6 +47,11 @@ export function CreateAgentWizard() {
   const [businessName, setBusinessName] = useState('');
   const [businessDescription, setBusinessDescription] = useState('');
   const [goal, setGoal] = useState<AgentGoal | null>(null);
+  const [shiftDrafts, setShiftDrafts] = useState(createStandardShiftDrafts);
+  const [timezone, setTimezone] = useState(DEFAULT_SCHEDULE_TIMEZONE);
+  const [serviceName, setServiceName] = useState('');
+  const [serviceDurationMinutes, setServiceDurationMinutes] = useState(30);
+  const [appointmentBookingEnabled, setAppointmentBookingEnabled] = useState(true);
   const [status, dispatch] = useReducer(reduceCreateAgentStatus, INITIAL_STATUS);
   const [submissionController] = useState(createAgentSubmissionController);
 
@@ -49,14 +59,29 @@ export function CreateAgentWizard() {
     return () => submissionController.cancel();
   }, [submissionController]);
 
-  const handleCreate = () => {
+  const handleCreate = (includeService = false) => {
     if (!goal) return;
+    const bookingOnboarding = goal === 'bookService'
+      ? {
+          availability: { timezone, shifts: draftsToShifts(shiftDrafts) },
+          ...(includeService
+            ? {
+                service: {
+                  name: serviceName,
+                  durationMinutes: serviceDurationMinutes,
+                  appointmentBookingEnabled,
+                },
+              }
+            : {}),
+        }
+      : undefined;
     submissionController.start({
       request: buildCreateAgentRequest({
         name,
         businessName,
         businessDescription,
         goal,
+        bookingOnboarding,
       }),
       createAgent,
       onStarted: () => dispatch({ type: 'started' }),
@@ -74,11 +99,16 @@ export function CreateAgentWizard() {
     });
   };
 
+  const stepCount = getCreateAgentStepCount(goal);
   const stepLabel =
     status.step === 'identity'
-      ? 'Step 1 of 2'
+      ? `Step 1 of ${stepCount}`
       : status.step === 'goal'
-        ? 'Step 2 of 2'
+        ? `Step 2 of ${stepCount}`
+        : status.step === 'availability'
+          ? `Step 3 of ${stepCount}`
+          : status.step === 'service'
+            ? `Step 4 of ${stepCount}`
         : status.step === 'creating'
           ? 'Creating agent…'
           : null;
@@ -136,7 +166,39 @@ export function CreateAgentWizard() {
                       goal={goal}
                       onGoalChange={setGoal}
                       onBack={() => dispatch({ type: 'showIdentity' })}
-                      onCreate={handleCreate}
+                      onCreate={() => {
+                        if (goal === 'bookService') dispatch({ type: 'showAvailability' });
+                        else handleCreate();
+                      }}
+                    />
+                  </motion.div>
+                ) : null}
+
+                {status.step === 'availability' ? (
+                  <motion.div key="availability" {...stepMotion}>
+                    <CreateAgentAvailabilityStep
+                      shiftDrafts={shiftDrafts}
+                      timezone={timezone}
+                      onShiftDraftsChange={setShiftDrafts}
+                      onTimezoneChange={setTimezone}
+                      onBack={() => dispatch({ type: 'showGoal' })}
+                      onContinue={() => dispatch({ type: 'showService' })}
+                    />
+                  </motion.div>
+                ) : null}
+
+                {status.step === 'service' ? (
+                  <motion.div key="service" {...stepMotion}>
+                    <CreateAgentServiceStep
+                      name={serviceName}
+                      durationMinutes={serviceDurationMinutes}
+                      appointmentBookingEnabled={appointmentBookingEnabled}
+                      onNameChange={setServiceName}
+                      onDurationChange={setServiceDurationMinutes}
+                      onAppointmentBookingEnabledChange={setAppointmentBookingEnabled}
+                      onBack={() => dispatch({ type: 'showAvailability' })}
+                      onCreate={() => handleCreate(true)}
+                      onSkip={() => handleCreate()}
                     />
                   </motion.div>
                 ) : null}
