@@ -5,6 +5,7 @@
 - 2026-08-24 [USER] Goal: add Book a Service onboarding to agent creation: editable weekday 9–5 availability, optional self-only first service, and an optional ready appointment-booking workflow action; create a review PR.
 - 2026-08-24 [TOOL] Now: booking-agent onboarding review PR #80 is open from `codex/booking-agent-onboarding` into `main`.
 - 2026-08-24 [USER] Next: review the PR. Availability is always created; new invited workspace members receive independent Mon–Fri 9–5 schedules for existing agents and are not added automatically to creator-only onboarding services.
+- 2026-08-25 [USER] Goal: publish a Terms statement that raw or derived user data received from Workspace APIs adheres to the Google User Data Policy and Limited Use requirements; review PR requested. This customer-facing legal update is UNRELEASED and must not be added to the changelog until production availability is confirmed.
 - 2026-08-21 [USER] Goal: ship an AI-powered Kilobot iframe widget that opens directly into an optional visitor form or chat, while preserving the Traditional widget and embed contract.
 - 2026-08-21 [CODE] Now: `codex/iframe-widget-home` contains broad uncommitted widget work. The live iframe and dashboard preview share direct entry, a compact Geist chat, opt-in suggestions, reset confirmation, loading state, optional branding, and compact desktop/mobile frames.
 - 2026-08-21 [CODE] Now: Visitor-form settings use one bordered collection container without helper copy. Standard Name, Email, and Phone fields remain selectable; custom-field edits stay local drafts until Confirm merges them into the form, then compact rows expose Edit, requirement, and delete controls. Answers are saved on the customer record.
@@ -35,6 +36,7 @@
 # Done (recent)
 
 - 2026-08-24 [CODE] Added Book a Service agent onboarding: an editable weekday 9–5 availability step, optional self-only service creation, and an opt-in ready Book appointment workflow node. Booking requires a post-availability customer message plus the agent’s recorded reaction before the selected slot can be created. Skipping service creation creates the agent with availability alone.
+- 2026-08-25 [CODE] Added a dedicated Google Workspace API data Terms section and updated the Terms last-updated date; verified with the focused legal-content regression test and pending review PR.
 - 2026-08-21 [CODE] Completed the locally uncommitted AI-widget redesign: direct iframe UX, Message Scroller transcript, prompt composer, reset, branding, aligned live/preview presentation, an unframed shimmering thinking status, chat-open message refresh, and sender-aware bubbles with human attribution and timestamps.
 - 2026-08-21 [CODE] Simplified Visitor form to selected data fields with a green Recommended badge; compact standard/custom rows expose requirement state plus Edit/Delete actions, while new or edited custom fields remain local drafts until Confirm. Returning visitors with a saved profile now go straight to chat; live and preview forms are scrollable, Geist-based, neutral-bordered, and consistently spaced with rounded Continue controls. Live text and dropdown controls share a 12px horizontal inset.
 - 2026-08-21 [CODE] Added vertical content-sized suggestions with opt-in visibility and immediate-send behavior, plus compact Name/avatar, branding, and theme settings with edit-driven saves.
@@ -54,9 +56,11 @@
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetPreview.tsx`
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetSettingsPanel.tsx`
 - 2026-08-21 [CODE] `index.html`
+- 2026-08-25 [CODE] `src/content/{termsUserContentSections.tsx,legalConstants.ts,legalDocumentContent.test.tsx}`
 
 # Receipts
 
+- 2026-08-25 [TOOL] Google Workspace API Terms: focused legal-content regression test passes (4 tests) and `git diff --check` passes. Full `bun run test` reaches 13 unrelated failures: Google Calendar booking sync (4), agent overview (7), avatar conversation identity (1), and Calendar sidebar padding (1).
 - 2026-08-24 [TOOL] Service reassurance placement: red/green service-step render test confirmed the helper was inside the appointment-scheduling card; 10 focused tests, targeted lint, and diff validation pass.
 - 2026-08-24 [TOOL] Availability reassurance: a red/green availability-step render test confirmed the edit-later text was absent; 9 focused tests, targeted lint, and diff validation pass.
 - 2026-08-24 [TOOL] Booking toggle wording: red/green service-step render test confirmed the prior wording; 8 focused tests, targeted lint, and diff validation pass.
