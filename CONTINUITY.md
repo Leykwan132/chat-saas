@@ -60,7 +60,7 @@
 
 # Receipts
 
-- 2026-08-25 [TOOL] Google Workspace API Terms: focused legal-content regression test passes (4 tests) and `git diff --check` passes. Full `bun run test` reaches 13 unrelated failures: Google Calendar booking sync (4), agent overview (7), avatar conversation identity (1), and Calendar sidebar padding (1).
+- 2026-08-25 [TOOL] Google Workspace API Terms: focused legal-content regression test passes (4 tests) and `git diff --check` passes. Full `bun run test` fails in unrelated existing suites, including Google Calendar, agent overview, legacy widget, avatar conversation identity, and Calendar sidebar tests.
 - 2026-08-24 [TOOL] Service reassurance placement: red/green service-step render test confirmed the helper was inside the appointment-scheduling card; 10 focused tests, targeted lint, and diff validation pass.
 - 2026-08-24 [TOOL] Availability reassurance: a red/green availability-step render test confirmed the edit-later text was absent; 9 focused tests, targeted lint, and diff validation pass.
 - 2026-08-24 [TOOL] Booking toggle wording: red/green service-step render test confirmed the prior wording; 8 focused tests, targeted lint, and diff validation pass.
