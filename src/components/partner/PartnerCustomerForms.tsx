@@ -69,6 +69,7 @@ export function PartnerCustomerForms({
   const [isOrganizationDialogOpen, setIsOrganizationDialogOpen] =
     useState(false);
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
+  const [isCreditDialogOpen, setIsCreditDialogOpen] = useState(false);
   const [customerCredentials, setCustomerCredentials] =
     useState<CustomerCredentials | null>(null);
 
@@ -142,7 +143,14 @@ export function PartnerCustomerForms({
               <PartnerPlanDetails planKey={organizationPlan} />
             </Field>
           </FieldGroup>
-          <DialogFooter showCloseButton>
+          <DialogFooter className="justify-end gap-2">
+            <Button
+              disabled={isCreatingOrganization}
+              variant="ghost"
+              onClick={() => setIsOrganizationDialogOpen(false)}
+            >
+              Close
+            </Button>
             <Button
               disabled={!organizationName.trim() || isCreatingOrganization}
               onClick={() => void handleCreateOrganization()}
@@ -213,7 +221,7 @@ export function PartnerCustomerForms({
               />
             </Field>
           </FieldGroup>
-          <DialogFooter className="justify-between sm:justify-between">
+          <DialogFooter className="justify-end gap-2">
             <Button
               disabled={isCreatingCustomer}
               variant="ghost"
@@ -232,7 +240,7 @@ export function PartnerCustomerForms({
         </DialogContent>
       </Dialog>
 
-      <Dialog>
+      <Dialog open={isCreditDialogOpen} onOpenChange={setIsCreditDialogOpen}>
         <DialogTrigger asChild>
           <Button
             variant="outline"
@@ -281,7 +289,14 @@ export function PartnerCustomerForms({
               />
             </Field>
           </FieldGroup>
-          <DialogFooter showCloseButton>
+          <DialogFooter className="justify-end gap-2">
+            <Button
+              disabled={isGivingCredits}
+              variant="ghost"
+              onClick={() => setIsCreditDialogOpen(false)}
+            >
+              Close
+            </Button>
             <Button
               disabled={!selectedOrganizationId || Number(creditAmount) <= 0 || isGivingCredits}
               onClick={onGiveCredits}

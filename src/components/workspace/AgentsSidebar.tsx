@@ -132,7 +132,7 @@ export function AgentsSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ) : null}
-              {referralProgramEnabled ? (
+              {referralProgramEnabled && isPartnerManagedWorkspace === false ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild

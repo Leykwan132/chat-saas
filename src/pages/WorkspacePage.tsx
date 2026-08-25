@@ -12,6 +12,7 @@ import {
   AgentCardSkeleton,
   CreateAgentCard,
 } from '@/components/workspace/AgentCards';
+import { AgentCreationPermissionEmptyState } from '@/components/workspace/AgentCreationPermissionEmptyState';
 import { ModeToggle } from '@/components/mode-toggle';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { TeamSwitcher } from '@/components/TeamSwitcher';
@@ -128,11 +129,13 @@ export function AgentsIndex() {
           <AgentCardSkeleton />
         </div>
       ) : agents.length === 0 ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {can(Permission.AGENTS_CREATE) && (
+        can(Permission.AGENTS_CREATE) ? (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             <CreateAgentCard onClick={handleNewAgent} />
-          )}
-        </div>
+          </div>
+        ) : (
+          <AgentCreationPermissionEmptyState />
+        )
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {agents.map((agent: Doc<'agents'>) => (

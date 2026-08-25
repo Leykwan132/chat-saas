@@ -42,4 +42,10 @@ describe('partner-managed workspace controls', () => {
       expect(source).toContain('usePartnerManagedWorkspace');
     }
   });
+
+  test('hides referral credits for partner-managed workspaces', () => {
+    expect(sidebarSource).toContain(
+      'referralProgramEnabled && isPartnerManagedWorkspace === false',
+    );
+  });
 });

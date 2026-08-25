@@ -82,18 +82,26 @@ export function PartnerPlanSelect({
 export function PartnerRoleSelect({
   value,
   onValueChange,
+  compact = false,
+  disabled = false,
 }: {
   value: "owner" | "admin" | "member";
   onValueChange: (value: "owner" | "admin" | "member") => void;
+  compact?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <Select
+      disabled={disabled}
       value={value}
       onValueChange={(nextValue) =>
         onValueChange(nextValue as "owner" | "admin" | "member")
       }
     >
-      <SelectTrigger id="customer-role" className={fullWidthSelectClassName}>
+      <SelectTrigger
+        id="customer-role"
+        className={compact ? "w-28 text-sm" : fullWidthSelectClassName}
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

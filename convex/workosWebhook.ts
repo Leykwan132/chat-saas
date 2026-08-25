@@ -25,6 +25,7 @@ import {
   fetchWorkosUserById,
 } from "./workosClient";
 import { requestTeamDeletion } from "./teamDeletion/request";
+import { reconcilePartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
 
 // POST /webhook/workos
 // Verifies the WorkOS-Signature header against WORKOS_WEBHOOK_SECRET, dedupes
@@ -209,18 +210,19 @@ async function deleteUserByWorkosId(ctx: MutationCtx, workosUserId?: string) {
 }
 
 async function recordCompletedPasswordReset(ctx: MutationCtx, data: unknown) {
-  if (
-    typeof data !== "object" ||
-    data === null ||
-    !("user_id" in data) ||
-    typeof data.user_id !== "string" ||
-    !data.user_id
-  ) {
+  const workosUserId =
+    typeof data === "object" &&
+    data !== null &&
+    "user_id" in data &&
+    typeof data.user_id === "string"
+      ? data.user_id
+      : null;
+  if (!workosUserId) {
     return;
   }
   const accounts = await ctx.db
     .query("whiteLabelPartnerOrganizationAccounts")
-    .withIndex("by_workosUserId", (q) => q.eq("workosUserId", data.user_id))
+    .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
     .take(100);
   const now = Date.now();
   for (const account of accounts) {
@@ -311,6 +313,7 @@ async function applyMembership(ctx: MutationCtx, data: any) {
     userId,
     role: finalRole,
   });
+  await reconcilePartnerCustomerWorkspace(ctx, workosUserId);
 
   if (isNewMember) {
     const user = await ctx.db.get(userId);

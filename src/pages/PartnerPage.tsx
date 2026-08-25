@@ -9,6 +9,7 @@ import { PartnerOrganizationList } from "@/components/partner/PartnerOrganizatio
 import { PartnerOverviewTab } from "@/components/partner/PartnerOverviewTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type PlanKey, whiteLabelApi } from "@/lib/whiteLabelApi";
+import { completePartnerCustomerRemoval } from "@/lib/partnerCustomerRemoval";
 
 type CustomerAction =
   | "organization"
@@ -39,6 +40,9 @@ export default function PartnerPage() {
   );
   const getCustomerInitialCredentials = useAction(
     whiteLabelApi.actions.getCustomerInitialCredentials,
+  );
+  const updateCustomerAccountRole = useAction(
+    whiteLabelApi.actions.updateCustomerAccountRole,
   );
   const generateLogoUploadUrl = useMutation(
     whiteLabelApi.portal.generateLogoUploadUrl,
@@ -262,12 +266,14 @@ export default function PartnerPage() {
               (await runCustomerAction(
                 "customerDeletion",
                 () =>
-                  removeCustomerFromOrganization({
-                    partnerOrganizationId,
-                    removal,
-                  }),
+                  completePartnerCustomerRemoval(() =>
+                    removeCustomerFromOrganization({
+                      partnerOrganizationId,
+                      removal,
+                    }),
+                  ),
                 "Customer removed from organization.",
-              )) !== null
+              )) === true
             }
             onShowCredentials={(partnerOrganizationId, workosUserId) =>
               runCustomerAction(
@@ -280,6 +286,19 @@ export default function PartnerPage() {
                 "Customer credentials loaded.",
               )
             }
+            onRoleChange={async (customer, role) => {
+              const workosUserId = customer.workosUserId;
+              if (!workosUserId) return;
+              await run(
+                () =>
+                  updateCustomerAccountRole({
+                    partnerOrganizationId: customer.partnerOrganizationId,
+                    workosUserId,
+                    role,
+                  }),
+                "Customer role updated.",
+              );
+            }}
           />
         </TabsContent>
         <TabsContent value="branding">

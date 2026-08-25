@@ -202,6 +202,15 @@ export const whiteLabelApi = {
       { partnerOrganizationId: string; workosUserId: string },
       { email: string; initialPassword: string; passwordResetAt: number | null }
     >("whiteLabel/customerAccountActions:getCustomerInitialCredentials"),
+    updateCustomerAccountRole: makeFunctionReference<
+      "action",
+      {
+        partnerOrganizationId: string;
+        workosUserId: string;
+        role: "owner" | "admin" | "member";
+      },
+      null
+    >("whiteLabel/customerAccountActions:updateCustomerAccountRole"),
     removeCustomerFromOrganization: makeFunctionReference<
       "action",
       {

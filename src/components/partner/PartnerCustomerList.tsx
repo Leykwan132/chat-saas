@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { KeyRound, MoreHorizontal, Trash2 } from "lucide-react";
 import { PartnerPanel } from "@/components/partner/PartnerPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,10 +37,12 @@ import {
   type CustomerCredentials,
   PartnerCustomerCredentialsDialog,
 } from "@/components/partner/PartnerCustomerCredentialsDialog";
+import { PartnerCustomerRoleControl } from "@/components/partner/PartnerCustomerRoleControl";
 import {
   type PartnerCustomerRemoval,
   type PartnerOverview,
 } from "@/lib/whiteLabelApi";
+import { preventCustomerRowClick } from "./customerRemovalMenu";
 
 type Customer = PartnerOverview["customers"][number];
 
@@ -77,6 +79,7 @@ export function PartnerCustomerList({
   customers,
   onRemove,
   onShowCredentials,
+  onRoleChange,
 }: {
   customers: PartnerOverview["customers"];
   onRemove: (
@@ -87,10 +90,13 @@ export function PartnerCustomerList({
     partnerOrganizationId: string,
     workosUserId: string,
   ) => Promise<CustomerCredentials | null>;
+  onRoleChange: (customer: Customer, role: Customer["role"]) => Promise<void>;
 }) {
   const [pendingCustomer, setPendingCustomer] = useState<Customer | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
   const [credentials, setCredentials] = useState<CustomerCredentials | null>(null);
+  const [isCredentialsLoading, setIsCredentialsLoading] = useState(false);
+  const credentialsRequestId = useRef(0);
 
   const confirmRemoval = async () => {
     if (pendingCustomer === null) return;
@@ -106,6 +112,27 @@ export function PartnerCustomerList({
     } finally {
       setIsRemoving(false);
     }
+  };
+
+  const showCredentials = async (customer: Customer) => {
+    if (!customer.hasRetainedInitialPassword || !customer.workosUserId) return;
+    const requestId = credentialsRequestId.current + 1;
+    credentialsRequestId.current = requestId;
+    setCredentials(null);
+    setIsCredentialsLoading(true);
+    const nextCredentials = await onShowCredentials(
+      customer.partnerOrganizationId,
+      customer.workosUserId,
+    );
+    if (credentialsRequestId.current !== requestId) return;
+    setCredentials(nextCredentials);
+    setIsCredentialsLoading(false);
+  };
+
+  const closeCredentials = () => {
+    credentialsRequestId.current += 1;
+    setCredentials(null);
+    setIsCredentialsLoading(false);
   };
 
   return (
@@ -135,34 +162,23 @@ export function PartnerCustomerList({
                   <TableHead>Organization</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Password reset</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {customers.map((customer) => (
                   <TableRow
-                    className={customer.hasRetainedInitialPassword ? "cursor-pointer" : undefined}
                     key={`${customer.organizationName}-${customer.email}`}
-                    onClick={() => {
-                      if (customer.hasRetainedInitialPassword && customer.workosUserId) {
-                        void onShowCredentials(customer.partnerOrganizationId, customer.workosUserId).then(setCredentials);
-                      }
-                    }}
                   >
                     <TableCell className="font-medium">
                       {customer.email}
                     </TableCell>
-                    <TableCell>
-                      {customer.invitationStatus === "active"
-                        ? customer.passwordResetAt
-                          ? "Password has been reset by user"
-                          : "Not reset"
-                        : "—"}
-                    </TableCell>
                     <TableCell>{customer.organizationName}</TableCell>
-                    <TableCell className="capitalize">
-                      {customer.role}
+                    <TableCell>
+                      <PartnerCustomerRoleControl
+                        customer={customer}
+                        onRoleChange={onRoleChange}
+                      />
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -190,7 +206,18 @@ export function PartnerCustomerList({
                               <MoreHorizontal />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent
+                            align="end"
+                            onClick={preventCustomerRowClick}
+                          >
+                            {customer.hasRetainedInitialPassword && customer.workosUserId ? (
+                              <DropdownMenuItem
+                                onSelect={() => void showCredentials(customer)}
+                              >
+                                <KeyRound />
+                                Show password
+                              </DropdownMenuItem>
+                            ) : null}
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onSelect={() => setPendingCustomer(customer)}
@@ -244,7 +271,8 @@ export function PartnerCustomerList({
       </Dialog>
       <PartnerCustomerCredentialsDialog
         credentials={credentials}
-        onClose={() => setCredentials(null)}
+        isLoading={isCredentialsLoading}
+        onClose={closeCredentials}
       />
     </section>
   );

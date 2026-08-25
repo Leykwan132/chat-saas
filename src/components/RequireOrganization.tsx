@@ -5,6 +5,7 @@ import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
 import { Navigate } from 'react-router';
 import { getClientTimeZone } from '@/lib/calendarTimeUtils';
+import { canAccessOrganization } from '@/lib/organizationAccess';
 
 type RequireOrganizationProps = {
   children: ReactNode;
@@ -64,12 +65,7 @@ export function RequireOrganization({ children }: RequireOrganizationProps) {
     );
   }
 
-  const hasValidPlan =
-    currentUser.plan === 'free' ||
-    currentUser.stripeSubscriptionStatus === 'active' ||
-    currentUser.stripeSubscriptionStatus === 'trialing';
-
-  if (!currentUser.onboarded || !hasValidPlan) {
+  if (!canAccessOrganization(currentUser)) {
     return <Navigate to="/onboarding" replace />;
   }
 

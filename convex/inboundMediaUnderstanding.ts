@@ -15,6 +15,7 @@ import {
   type InboundMediaResult,
 } from "./chat/inboundMediaModel";
 import { buildAgent } from "./chat/threads";
+import type { ClaimedInboundMediaBatch } from "./inboundMediaBatch";
 
 const CHUNK_SIZE = 10;
 
@@ -91,7 +92,7 @@ export const processBatch = internalAction({
     revision: v.number(),
   },
   handler: async (ctx, args) => {
-    const claimed = await ctx.runMutation(
+    const claimed: ClaimedInboundMediaBatch | null = await ctx.runMutation(
       internal.inboundMediaBatch.claimBatch,
       args,
     );

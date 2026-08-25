@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { getAuthContext } from "../authUtils";
-import { createWorkOSClient } from "../workosClient";
+import { createWorkOSClient, workosRequest } from "../workosClient";
 import { generateInitialCustomerPassword } from "./customerAccountPassword";
 import {
   decryptInitialCustomerPassword,
@@ -130,7 +130,11 @@ export const getCustomerInitialCredentials = action({
     initialPassword: v.string(),
     passwordResetAt: v.union(v.number(), v.null()),
   }),
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{
+    email: string;
+    initialPassword: string;
+    passwordResetAt: number | null;
+  }> => {
     const auth = await getAuthContext(ctx);
     await ctx.runQuery(
       internal.whiteLabel.portalAuthorization.getInvitableOrganization,
@@ -159,6 +163,46 @@ export const getCustomerInitialCredentials = action({
       initialPassword: decryptInitialCustomerPassword(credential),
       passwordResetAt: credential.passwordResetAt,
     };
+  },
+});
+
+export const updateCustomerAccountRole = action({
+  args: {
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    workosUserId: v.string(),
+    role: roleValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const auth = await getAuthContext(ctx);
+    await ctx.runQuery(
+      internal.whiteLabel.portalAuthorization.getInvitableOrganization,
+      {
+        email: auth.email,
+        workosUserId: auth.userId,
+        partnerOrganizationId: args.partnerOrganizationId,
+      },
+    );
+    const target: { workosOrganizationMembershipId: string } =
+      await ctx.runQuery(
+        internal.whiteLabel.customerRoleRecords.getCustomerRoleTarget,
+        {
+          partnerOrganizationId: args.partnerOrganizationId,
+          workosUserId: args.workosUserId,
+        },
+      );
+    await workosRequest(
+      `/user_management/organization_memberships/${target.workosOrganizationMembershipId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ role_slug: roleSlugFor(args.role) }),
+      },
+    );
+    await ctx.runMutation(
+      internal.whiteLabel.customerRoleRecords.updateCustomerRoleRecord,
+      args,
+    );
+    return null;
   },
 });
 

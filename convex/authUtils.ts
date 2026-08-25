@@ -17,6 +17,7 @@ import {
 } from "./teamHelpers";
 import type { EnsureUserAccountArgs } from "./teamHelpers";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
+import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
 
 export const PERSONAL_ORG_FALLBACK = PERSONAL_ORG_ID;
 
@@ -96,6 +97,16 @@ async function buildAuthContextFromDb(
   let activeTeamId: Id<"teams">;
 
   if (overrideOrgId !== undefined) {
+    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(
+      ctx,
+      user.workosUserId,
+    );
+    if (
+      assignedWorkspace !== null &&
+      overrideOrgId !== teamToOrgId(assignedWorkspace.team)
+    ) {
+      throw new Error("Partner customers can only access their assigned workspace");
+    }
     if (!(await canProcessWorkspaceActivity(ctx, overrideOrgId))) {
       throw new Error("Workspace unavailable");
     }

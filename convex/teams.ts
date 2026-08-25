@@ -15,6 +15,7 @@ import {
   teamToOrgId,
 } from "./teamHelpers";
 import { getWhiteLabelPlanForTeam, isWhiteLabelTeam } from "./whiteLabel/planResolver";
+import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
 
 export type TeamListItem = {
   _id: string;
@@ -101,11 +102,19 @@ async function listTeamsForCurrentUser(ctx: QueryCtx) {
   if (userRow === null) return [];
 
   const activeTeam = await getActiveTeamForUser(ctx, userRow);
-
-  const memberships = await ctx.db
-    .query("teamMemberships")
-    .withIndex("by_userId", (q) => q.eq("userId", userRow._id))
-    .collect();
+  const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(ctx, userId);
+  const memberships = assignedWorkspace === null
+    ? await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_userId", (q) => q.eq("userId", userRow._id))
+      .collect()
+    : await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_userId_and_teamId", (q) =>
+        q.eq("userId", userRow._id).eq("teamId", assignedWorkspace.team._id),
+      )
+      .unique()
+      .then((membership) => membership === null ? [] : [membership]);
 
   const teams = (
     await Promise.all(memberships.map((membership) => ctx.db.get(membership.teamId)))

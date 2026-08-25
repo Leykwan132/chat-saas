@@ -1,7 +1,7 @@
 import type { WorkId } from "@convex-dev/workpool";
 import { v, type Infer } from "convex/values";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalMutation,
   type MutationCtx,
@@ -35,6 +35,14 @@ export const inboundMediaDescriptorValidator = v.object({
 export type InboundMediaDescriptor = Infer<
   typeof inboundMediaDescriptorValidator
 >;
+
+export type ClaimedInboundMediaBatch = {
+  batch: Doc<"inboundMediaBatches">;
+  items: Doc<"inboundMediaBatchItems">[];
+  conversation: Doc<"conversations">;
+  agent: Doc<"agents">;
+  accessToken: string | undefined;
+};
 
 export async function queueInboundMediaBatch(
   ctx: MutationCtx,
