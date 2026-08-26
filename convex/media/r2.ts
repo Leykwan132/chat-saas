@@ -89,6 +89,15 @@ export function generateKnowledgeBaseImageKey(
   return `knowledge-base/${orgId}/${agentId}/${safeCollection}/${safeFileName}`;
 }
 
+export function generateWebMarkdownKey(
+  orgId: string,
+  agentId: string,
+  entryId: string,
+): string {
+  const safeEntryId = sanitizePathSegment(entryId.trim());
+  return `knowledge-base/web-markdown/${orgId}/${agentId}/${safeEntryId}.md`;
+}
+
 export function buildWorkflowMediaFileName(originalFileName: string): string {
   return sanitizePathSegment(originalFileName.trim());
 }

@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { hasParentWebUrl, isSameWebUrl } from "./webEntryUrl";
+import {
+  excludeConvertedWebLinks,
+  hasParentWebUrl,
+  isSameWebUrl,
+} from "./webEntryUrl";
 
 describe("webEntryUrl", () => {
   test("treats trailing slashes as the same URL", () => {
@@ -16,5 +20,24 @@ describe("webEntryUrl", () => {
     expect(hasParentWebUrl(entries, "https://zia-realty.com")).toBe(true);
     expect(hasParentWebUrl(entries, "https://zia-realty.com/team")).toBe(false);
     expect(hasParentWebUrl(entries, "https://other.com")).toBe(false);
+  });
+
+  test("removes links already converted to markdown from discovery", () => {
+    expect(
+      excludeConvertedWebLinks(
+        [
+          "https://example.com/about/",
+          "https://example.com/pricing",
+          "https://example.com/contact",
+        ],
+        [
+          { url: "https://example.com/about", status: "completed" },
+          { url: "https://example.com/pricing", status: "gettingMarkdown" },
+        ],
+      ),
+    ).toEqual([
+      "https://example.com/pricing",
+      "https://example.com/contact",
+    ]);
   });
 });

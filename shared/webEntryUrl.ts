@@ -8,3 +8,14 @@ export function hasParentWebUrl(
 ): boolean {
   return entries.some((entry) => !entry.parentId && isSameWebUrl(entry.url, url));
 }
+
+export function excludeConvertedWebLinks(
+  links: readonly string[],
+  entries: ReadonlyArray<{ url: string; status?: string }>,
+): string[] {
+  return links.filter(
+    (link) => !entries.some(
+      (entry) => entry.status === "completed" && isSameWebUrl(entry.url, link),
+    ),
+  );
+}

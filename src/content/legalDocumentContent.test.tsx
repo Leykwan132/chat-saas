@@ -41,6 +41,14 @@ test('privacy policy links AI processing disclosure to OpenRouter privacy inform
   expect(policy).toContain('href="https://openrouter.ai/privacy"');
 });
 
+test('privacy policy states Google Workspace API Limited Use compliance', () => {
+  const policy = renderLegalSections(privacyPolicySections);
+
+  expect(policy).toContain(
+    'The use of raw or derived user data received from Workspace APIs will adhere to the Google User Data Policy, including the Limited Use requirements.',
+  );
+});
+
 test('terms state the approved contractual protections', () => {
   const terms = renderLegalSections(termsOfServiceSections);
 

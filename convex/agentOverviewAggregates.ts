@@ -63,6 +63,7 @@ export async function recordAiAssistedConversationFact(
     timestamp: number;
   },
 ) {
+  if (args.conversation.service === "playground") return;
   const timeZone = await resolveConversationTimeZone(ctx, args.conversation);
   const date = toTimeZoneDateKey(args.timestamp, timeZone);
   const existingFact = await ctx.db
