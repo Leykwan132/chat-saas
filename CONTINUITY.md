@@ -2,6 +2,8 @@
 
 # Snapshot
 
+- 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
+- 2026-08-26 [CODE] Now: uncommitted policy update adds the exact required statement in a dedicated Google Workspace API data section; it will be included in review PR #83.
 - 2026-08-26 [USER] Goal: omit pages already converted to Markdown from new web-link discoveries and display a selected page’s scraped Markdown in an expanded, readable drawer.
 - 2026-08-26 [TOOL] Now: review PR #83 is open from `codex/web-markdown-preview` into `main`; it filters completed URLs before Cloudflare `/markdown`, stores new scrape Markdown in Convex file storage, and shows it below the file size in a wider expandable drawer.
 - 2026-08-26 [ASSUMPTION] Legacy completed web entries have no stored Markdown, so the drawer can display Markdown for new scrapes only; the existing converted entries remain intact and are not re-scraped.
@@ -22,6 +24,7 @@
 
 - 2026-08-24 [USER] D753 ACTIVE: Book a Service agent onboarding is Identity → Goal → editable availability (default Monday–Friday 9–5) with a You can edit it later reassurance → optional service with a You can add or edit your services later reassurance beneath, not inside, the appointment-scheduling card. Create Agent atomically creates selected availability, an active service assigned only to the creator, and a ready Book appointment workflow node for that service only when Enable AI appointment scheduling is on; Skip for now creates the agent directly with availability alone. New workspace members receive independent default availability for every existing agent but do not inherit creator-only onboarding services.
 - 2026-08-26 [USER] D754 ACTIVE: A completed web source is excluded only from subsequent discovery results, preserving the original converted entry and avoiding another Cloudflare `/markdown` conversion. New scraped Markdown is stored separately from the web-entry record and displayed as raw, expandable Markdown in the selected item drawer.
+- 2026-08-26 [USER] D755 ACTIVE: The Privacy Policy must state verbatim that raw or derived user data received from Workspace APIs adheres to the Google User Data Policy, including Limited Use requirements.
 - 2026-08-21 [USER] D740 ACTIVE: Reset retires the visitor’s prior AI thread; their next message creates a fresh conversation and AI context.
 - 2026-08-21 [USER] D741 ACTIVE: Suggestions have an explicit enable switch that is off for new widgets; existing configured suggestions stay enabled. When disabled, their three dashboard inputs and helper copy are hidden. When enabled, three configured non-empty suggestions render as vertical content-sized pills only before the first visitor message and send immediately as that visitor message; Save suggestions appears only after edits.
 - 2026-08-21 [USER] D742 ACTIVE: AI-powered widgets always use the fixed `Ask a question…` placeholder; legacy stored values are ignored.
@@ -51,7 +54,7 @@
 # Working set
 
 - 2026-08-26 [CODE] `convex/{agentOverviewModel.ts,agentOverviewMessages.ts,agentOverviewAggregates.ts,agentOverviewAiHandled.test.ts}`
-- 2026-08-26 [CODE] `convex/{schema.ts,knowledgeBase.ts,cloudflare.ts,workpool.ts,webScraperMarkdownPersistence.test.ts}`, `shared/webEntryUrl.ts`, `src/components/knowledge-base/{WebSection.tsx,WebEntryDetails.tsx}`
+- 2026-08-26 [CODE] `convex/{schema.ts,knowledgeBase.ts,cloudflare.ts,workpool.ts,webScraperMarkdownPersistence.test.ts}`, `shared/webEntryUrl.ts`, `src/components/knowledge-base/{WebSection.tsx,WebEntryDetails.tsx}`, `src/content/{privacyPolicyProviderSections.tsx,legalDocumentContent.test.tsx}`
 - 2026-08-21 [CODE] `shared/webWidgetExperience.ts`
 - 2026-08-21 [CODE] `convex/{webWidget.ts,webWidgetAdmin.ts,webWidgetPublic.ts,webWidgetValidators.ts,http.ts}`
 - 2026-08-21 [CODE] `public/widget/ai.js`
@@ -65,6 +68,7 @@
 
 # Receipts
 
+- 2026-08-26 [TOOL] Privacy-policy red/green test confirmed the Google Workspace API Limited Use statement was absent then present; 5 focused legal-content tests, targeted lint, and diff validation pass.
 - 2026-08-26 [TOOL] Local Vite preview is available at `http://127.0.0.1:5178`; review PR #83 created at `https://github.com/Leykwan132/chat-saas/pull/83` from commit `3479f1f`.
 - 2026-08-26 [TOOL] Web-source red/green coverage confirmed completed URLs are excluded, worker Markdown is retained in Convex storage, and the source-detail UI renders expandable Markdown beneath file size; 5 focused tests, targeted lint for clean touched files, and diff validation pass. Existing lint errors remain in unrelated pre-existing sections of `convex/cloudflare.ts` and `WebSection.tsx`.
 - 2026-08-26 [TOOL] New Overview regression failed before the fix (test thread counted as two conversations) and passes after it; focused suite passed 3/3. Broader Overview coverage has two existing date-boundary test failures in sentiment/topic assertions, unrelated to playground filtering.
