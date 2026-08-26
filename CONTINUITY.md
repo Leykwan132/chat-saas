@@ -3,10 +3,10 @@
 # Snapshot
 
 - 2026-08-26 [USER] Goal: omit pages already converted to Markdown from new web-link discoveries and display a selected page’s scraped Markdown in an expanded, readable drawer.
-- 2026-08-26 [CODE] Now: uncommitted web-source change filters completed URLs before scheduling Cloudflare `/markdown`, stores new scrape Markdown in Convex file storage, and shows it below the file size in a wider expandable drawer.
+- 2026-08-26 [TOOL] Now: review PR #83 is open from `codex/web-markdown-preview` into `main`; it filters completed URLs before Cloudflare `/markdown`, stores new scrape Markdown in Convex file storage, and shows it below the file size in a wider expandable drawer.
 - 2026-08-26 [ASSUMPTION] Legacy completed web entries have no stored Markdown, so the drawer can display Markdown for new scrapes only; the existing converted entries remain intact and are not re-scraped.
 - 2026-08-26 [USER] Goal: Overview AI-conversation analytics must exclude AI Playground test conversations.
-- 2026-08-26 [CODE] Now: uncommitted fix excludes `playground` conversations from Overview rows, AI-message fallback metrics, and new AI-conversation aggregate facts.
+- 2026-08-26 [TOOL] Now: review PR #83 also excludes `playground` conversations from Overview rows, AI-message fallback metrics, and new AI-conversation aggregate facts.
 - 2026-08-24 [USER] Goal: add Book a Service onboarding to agent creation: editable weekday 9–5 availability, optional self-only first service, and an optional ready appointment-booking workflow action; create a review PR.
 - 2026-08-24 [TOOL] Now: booking-agent onboarding review PR #80 is open from `codex/booking-agent-onboarding` into `main`.
 - 2026-08-24 [USER] Next: review the PR. Availability is always created; new invited workspace members receive independent Mon–Fri 9–5 schedules for existing agents and are not added automatically to creator-only onboarding services.
@@ -65,6 +65,7 @@
 
 # Receipts
 
+- 2026-08-26 [TOOL] Local Vite preview is available at `http://127.0.0.1:5178`; review PR #83 created at `https://github.com/Leykwan132/chat-saas/pull/83` from commit `3479f1f`.
 - 2026-08-26 [TOOL] Web-source red/green coverage confirmed completed URLs are excluded, worker Markdown is retained in Convex storage, and the source-detail UI renders expandable Markdown beneath file size; 5 focused tests, targeted lint for clean touched files, and diff validation pass. Existing lint errors remain in unrelated pre-existing sections of `convex/cloudflare.ts` and `WebSection.tsx`.
 - 2026-08-26 [TOOL] New Overview regression failed before the fix (test thread counted as two conversations) and passes after it; focused suite passed 3/3. Broader Overview coverage has two existing date-boundary test failures in sentiment/topic assertions, unrelated to playground filtering.
 - 2026-08-24 [TOOL] Service reassurance placement: red/green service-step render test confirmed the helper was inside the appointment-scheduling card; 10 focused tests, targeted lint, and diff validation pass.
