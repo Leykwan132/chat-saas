@@ -6,13 +6,10 @@ import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
 
-test("persists scraped markdown when a web worker completes", async () => {
+test("retains the R2 key when a web worker completes", async () => {
   const t = convexTest(schema, modules);
-  const { entryId, markdownStorageId } = await t.run(async (ctx) => {
+  const { entryId } = await t.run(async (ctx) => {
     const now = Date.now();
-    const markdownStorageId = await ctx.storage.store(
-      new Blob(["# Pricing\n\nPlans for every team."], { type: "text/markdown" }),
-    );
     const agentId = await ctx.db.insert("agents", {
       name: "Web Agent",
       provider: "openrouter",
@@ -34,7 +31,7 @@ test("persists scraped markdown when a web worker completes", async () => {
       orgId: "",
       createdAt: now,
     });
-    return { entryId, markdownStorageId };
+    return { entryId };
   });
 
   await t.mutation(internal.knowledgeBase.webScraperComplete, {
@@ -46,24 +43,21 @@ test("persists scraped markdown when a web worker completes", async () => {
         url: "https://example.com/pricing",
         cfItemId: "cf-pricing",
         fileSize: 2048,
-        markdownStorageId,
+        markdownR2Key: "web-markdown/org_web/agent_web/pricing.md",
       },
     },
   });
 
   const result = await t.run(async (ctx) => {
     const entry = await ctx.db.get(entryId);
-    const markdown = entry?.markdownStorageId
-      ? await ctx.storage.get(entry.markdownStorageId)
-      : null;
     return {
       status: entry?.status,
-      markdown: markdown ? await markdown.text() : null,
+      markdownR2Key: entry?.markdownR2Key,
     };
   });
 
   expect(result).toEqual({
     status: "completed",
-    markdown: "# Pricing\n\nPlans for every team.",
+    markdownR2Key: "web-markdown/org_web/agent_web/pricing.md",
   });
 });

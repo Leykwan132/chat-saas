@@ -528,6 +528,7 @@ export default defineSchema({
     )),
     cfItemId: v.optional(v.string()),
     markdownStorageId: v.optional(v.id("_storage")),
+    markdownR2Key: v.optional(v.string()),
     parentUrl: v.optional(v.string()),
     parentId: v.optional(v.id("webEntries")),
     userId: v.string(),

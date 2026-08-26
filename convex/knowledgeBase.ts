@@ -7,6 +7,7 @@ import type { Id } from "./_generated/dataModel";
 import { assertAgentAccess } from "./agentUsage";
 import { excludeConvertedWebLinks, hasParentWebUrl } from "../shared/webEntryUrl";
 import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
+import { getPublicMediaUrl } from "./media/r2";
 
 type KnowledgeEntryTable = "textEntries" | "fileEntries" | "webEntries" | "qaEntries";
 
@@ -227,10 +228,8 @@ export const getWebEntryMarkdown = query({
     const entry = await ctx.db.get(args.entryId);
     if (entry === null) throw new Error("Web entry not found");
     await assertAgentAccess(ctx, entry.agentId);
-    if (!entry.markdownStorageId) return null;
-    const markdownUrl = await ctx.storage.getUrl(entry.markdownStorageId);
-    if (markdownUrl === null) return null;
-    return { markdownUrl };
+    if (!entry.markdownR2Key) return null;
+    return { markdownUrl: getPublicMediaUrl(entry.markdownR2Key) };
   },
 });
 
@@ -294,6 +293,11 @@ export const removeWebEntry = mutation({
   handler: async (ctx, args) => {
     const entry = await ctx.db.get(args.entryId);
     if (entry?.markdownStorageId) await ctx.storage.delete(entry.markdownStorageId);
+    if (entry?.markdownR2Key) {
+      await ctx.scheduler.runAfter(0, internal.workpool.mediaDeleteWorker, {
+        r2Key: entry.markdownR2Key,
+      });
+    }
     await ctx.db.delete(args.entryId);
   },
 });
@@ -577,7 +581,7 @@ export const internalStoreWebEntryWithContent = internalMutation({
     agentId: v.id("agents"),
     url: v.string(),
     fileSize: v.number(),
-    markdownStorageId: v.id("_storage"),
+    markdownR2Key: v.string(),
     cfItemId: v.optional(v.string()),
     parentUrl: v.optional(v.string()),
     userId: v.string(),
@@ -589,7 +593,7 @@ export const internalStoreWebEntryWithContent = internalMutation({
       url: args.url,
       fileSize: args.fileSize,
       cfItemId: args.cfItemId,
-      markdownStorageId: args.markdownStorageId,
+      markdownR2Key: args.markdownR2Key,
       parentUrl: args.parentUrl,
       userId: args.userId,
       orgId: args.orgId,
@@ -735,7 +739,7 @@ export const internalCompleteWebEntry = internalMutation({
     entryId: v.id("webEntries"),
     cfItemId: v.string(),
     fileSize: v.number(),
-    markdownStorageId: v.id("_storage"),
+    markdownR2Key: v.string(),
   },
   handler: async (ctx, args) => {
     const entry = await ctx.db.get(args.entryId);
@@ -744,7 +748,7 @@ export const internalCompleteWebEntry = internalMutation({
       status: "completed",
       cfItemId: args.cfItemId,
       fileSize: args.fileSize,
-      markdownStorageId: entry.markdownStorageId ?? args.markdownStorageId,
+      markdownR2Key: entry.markdownR2Key ?? args.markdownR2Key,
     });
   },
 });
@@ -878,13 +882,13 @@ export const webScraperComplete = internalMutation({
     const { entryId } = args.context;
 
     if (args.result.kind === "success" && args.result.returnValue) {
-      const { cfItemId, fileSize, markdownStorageId } = args.result.returnValue as {
+      const { cfItemId, fileSize, markdownR2Key } = args.result.returnValue as {
         cfItemId: string;
         fileSize: number;
-        markdownStorageId: Id<"_storage">;
+        markdownR2Key: string;
       };
       await ctx.runMutation(internal.knowledgeBase.internalCompleteWebEntry, {
-        entryId: entryId as never, cfItemId, fileSize, markdownStorageId,
+        entryId: entryId as never, cfItemId, fileSize, markdownR2Key,
       });
 
       // Check if all siblings are completed, and if so, mark parent as completed

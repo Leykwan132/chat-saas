@@ -283,7 +283,7 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
             <SheetDescription>View the entry details.</SheetDescription>
           </SheetHeader>
           <div className="flex-1 px-6 py-4 space-y-4">
-            {editingWebEntry && <WebEntryDetails url={editingWebEntry.url} fileSizeLabel={formatFileSize(editingWebEntry.fileSize)} markdownUrl={webEntryMarkdown?.markdownUrl} />}
+            {editingWebEntry && <WebEntryDetails key={editingWebEntry._id} url={editingWebEntry.url} fileSizeLabel={formatFileSize(editingWebEntry.fileSize)} markdownUrl={webEntryMarkdown?.markdownUrl} isMarkdownLoading={webEntryMarkdown === undefined} />}
           </div>
           <SheetFooter className="flex flex-row justify-end gap-2">
             {editingWebEntry && (
