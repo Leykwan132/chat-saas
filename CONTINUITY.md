@@ -2,6 +2,8 @@
 
 # Snapshot
 
+- 2026-08-26 [USER] Goal: prevent the Workflow editor from crashing after a Send Media node is deleted.
+- 2026-08-26 [CODE] Now: authenticated workflow-media subscriptions return an empty list when their node has already been deleted; ownership and invalid-node checks remain strict. This customer-facing bug fix is UNRELEASED and must not enter the changelog until production availability is confirmed.
 - 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
 - 2026-08-26 [TOOL] Now: review PR #83 adds the exact required statement in a dedicated Privacy Policy section; `origin/main` already contains the corresponding Terms section.
 - 2026-08-26 [USER] Goal: omit pages already converted to Markdown from new web-link discoveries and display a selected page’s scraped Markdown in an expanded, readable drawer.
@@ -45,15 +47,15 @@
 
 - 2026-08-26 [CODE] New web-link discovery excludes completed URLs; newly scraped Markdown is retained in R2 and opens directly in a nearly full-screen, inset source viewer with a loading skeleton. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-26 [CODE] Overview now excludes AI Playground test conversations from customer conversation totals and AI-conversation metrics; the unshipped customer-facing fix is not in the release changelog.
+- 2026-08-26 [CODE] Prevented stale Send Media subscriptions from crashing the Workflow editor when their node is deleted; deleted-node media reads now resolve empty while protected access validation remains enforced.
 - 2026-08-24 [CODE] Added Book a Service agent onboarding: an editable weekday 9–5 availability step, optional self-only service creation, and an opt-in ready Book appointment workflow node. Booking requires a post-availability customer message plus the agent’s recorded reaction before the selected slot can be created. Skipping service creation creates the agent with availability alone.
 - 2026-08-25 [CODE] Added a dedicated Google Workspace API data Terms section and updated the Terms last-updated date; verified with the focused legal-content regression test and pending review PR.
 - 2026-08-21 [CODE] Completed the locally uncommitted AI-widget redesign and visitor-form refinement: direct iframe UX, prompt composer, reset, branding, sender-aware chat, editable field drafts, returning-profile routing, and aligned live/preview controls.
 - 2026-08-21 [CODE] Added opt-in suggestions, compact appearance controls, flexible custom visitor-field types, accessible dropdowns, and reactive avatar removal across dashboard and widget experiences.
-- 2026-08-23 [CODE] Made the dashboard preview launcher use the configured avatar when closed; its open chat header already uses the same avatar. Preview field controls retain the shared 12px horizontal inset.
 
 # Working set
 
-- 2026-08-26 [CODE] `convex/{agentOverviewModel.ts,agentOverviewMessages.ts,agentOverviewAggregates.ts,agentOverviewAiHandled.test.ts}`
+- 2026-08-26 [CODE] `convex/{agentOverviewModel.ts,agentOverviewMessages.ts,agentOverviewAggregates.ts,agentOverviewAiHandled.test.ts,workflowMedia.ts,workflowMediaShared.ts,workflowNodeDeletion.test.ts}`
 - 2026-08-26 [CODE] `convex/{schema.ts,knowledgeBase.ts,cloudflare.ts,workpool.ts,media/r2.ts,teamDeletion/external.ts,webScraperMarkdownPersistence.test.ts}`, `shared/webEntryUrl.ts`, `src/components/knowledge-base/{WebSection.tsx,WebEntryDetails.tsx,WebEntryDetailsModalLayout.test.tsx}`, `src/content/{privacyPolicyProviderSections.tsx,termsUserContentSections.tsx,legalConstants.ts,legalDocumentContent.test.tsx}`
 - 2026-08-21 [CODE] `shared/webWidgetExperience.ts`
 - 2026-08-21 [CODE] `convex/{webWidget.ts,webWidgetAdmin.ts,webWidgetPublic.ts,webWidgetValidators.ts,http.ts}`
@@ -68,23 +70,23 @@
 
 # Receipts
 
+- 2026-08-26 [TOOL] Merged `origin/main` into `codex/fix-workflow-media-deletion`; the continuity conflict was compacted with both lines of work retained. Node v22 verification passed 27 focused tests, TypeScript, targeted lint, and `git diff --check`.
+- 2026-08-26 [TOOL] Deleted-node media regression: focused test failed as expected before the fix with `Workflow media node not found` from `listForNode`; after the fix, 24 affected tests, TypeScript, targeted ESLint, and `git diff --check` pass with Node v22. Full `bun run test` completes 1,745 passing tests and 14 existing failures in five unchanged calendar, escalation, widget/UI, and test-discovery areas.
 - 2026-08-26 [TOOL] Google Workspace API Terms reached `origin/main`; Privacy-policy red/green coverage confirmed the same Limited Use statement was absent then present. The merged legal-content test suite passes 5 tests with targeted lint and a clean diff.
 - 2026-08-26 [TOOL] Review PR #83 at `https://github.com/Leykwan132/chat-saas/pull/83` includes completed-URL discovery filtering, persisted scraped Markdown, an expandable source-detail drawer, and the Privacy Policy statement; local Vite preview is `http://127.0.0.1:5178`.
 - 2026-08-26 [TOOL] R2 Markdown follow-up: 14 focused tests and targeted lint pass; integration-file lint reports 13 pre-existing issues in `convex/cloudflare.ts` and `WebSection.tsx`. Diff check passes and source files remain within the line cap.
 - 2026-08-26 [TOOL] Direct Markdown viewer follow-up: focused viewer regression failed before the interaction change and passes after it; the complete focused PR suite passes 14 tests and viewer-file lint is clean.
 - 2026-08-26 [TOOL] Inset Markdown viewer follow-up: red/green layout test confirmed the previous edge-to-edge geometry and now verifies 1rem/1.5rem responsive insets; 15 focused PR tests pass with a clean diff check.
 - 2026-08-26 [TOOL] Overview regression failed before the fix (test thread counted as two conversations) and passes after it; focused suite passed 3/3. Broader Overview coverage has two existing date-boundary test failures in sentiment/topic assertions, unrelated to playground filtering.
-- 2026-08-24 [TOOL] Service reassurance placement: red/green service-step render test confirmed the helper was inside the appointment-scheduling card; 10 focused tests, targeted lint, and diff validation pass.
-- 2026-08-24 [TOOL] Availability reassurance: a red/green availability-step render test confirmed the edit-later text was absent; 9 focused tests, targeted lint, and diff validation pass.
-- 2026-08-24 [TOOL] Booking toggle wording: red/green service-step render test confirmed the prior wording; 8 focused tests, targeted lint, and diff validation pass.
+- 2026-08-24 [TOOL] Booking onboarding refinements: red/green availability and service-step tests confirmed missing/incorrect reassurance placement and toggle wording; targeted lint and diff validation pass.
 - 2026-08-24 [TOOL] Booking onboarding: 31 focused backend/UI tests and targeted lint pass; production build completes with Node v22; all new or modularized source files are at or below 300 lines. Repository-wide lint remains blocked by 223 pre-existing errors in unrelated paths. The full `bun test` run is unsuitable here (1,362 pass, 174 fail, 116 loader errors) because Bun lacks Vitest `import.meta.glob` support and required Stripe environment values. Convex codegen requires an unconfigured `CONVEX_DEPLOYMENT`.
 - 2026-08-21 [TOOL] Custom-field draft boundary: red merge test confirmed confirmation had no model boundary; focused tests (9), app TypeScript, targeted ESLint, and diff validation pass. All touched code files remain below 300 lines.
 - 2026-08-21 [TOOL] Required markers: red render tests confirmed both live and preview forms omitted markers; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Visitor-form layout: red render tests confirmed absent scroll/font classes; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Visitor-form header spacing: red preview render test confirmed the prior padding and semibold title; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
-- 2026-08-21 [TOOL] Visitor-form top inset and Continue styling: red preview render test confirmed the compact top inset and rounded rectangle; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
+- 2026-08-21 [TOOL] Visitor-form top inset and Continue styling: red preview render test confirmed the compact top inset and rounded Continue styling; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Custom field types: red shared and rendered-form tests confirmed missing normalization and native input types; 21 focused tests, app TypeScript, targeted ESLint, and diff validation pass. Touched code files remain below 300 lines.
 - 2026-08-21 [TOOL] Custom-field type-picker icons: 18 focused tests, app TypeScript, targeted ESLint, and diff validation pass; the row remains below 300 lines.
-- 2026-08-21 [TOOL] Thinking-indicator refinement: 40 focused render tests, app TypeScript, targeted ESLint, and diff validation pass; its CSS remains below 300 lines.
-- 2026-08-21 [TOOL] Thinking-indicator optical alignment: red CSS expectations confirmed the prior 6px gap; 40 focused render tests, app TypeScript, targeted ESLint, and diff validation pass.
+- 2026-08-21 [TOOL] Thinking-indicator refinement: 40 focused tests, app TypeScript, targeted ESLint, and diff validation pass; its CSS remains below 300 lines.
+- 2026-08-21 [TOOL] Thinking-indicator optical alignment: red/green test confirmed the prior 6px gap; 40 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Inbox-to-widget reply refresh: red widget test confirmed no chat-open polling; 34 focused widget/Convex tests, app TypeScript, targeted ESLint, and diff validation pass. `Widget.tsx` remains below 300 lines.
