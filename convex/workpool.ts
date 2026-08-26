@@ -14,6 +14,7 @@ import {
 import {
   r2,
   generateKnowledgeBaseImageKey,
+  generateWebMarkdownKey,
   generateWorkflowMediaKey,
   getPublicMediaUrl,
 } from "./media/r2";
@@ -207,11 +208,13 @@ export const workflowMediaUploadWorker = internalAction({
 export const cfDeleteWorker = internalAction({
   args: {
     cfItemId: v.optional(v.string()),
+    r2Key: v.optional(v.string()),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
     if (args.cfItemId) {
       await deleteFromCF(args.cfItemId);
     }
+    if (args.r2Key) await r2.deleteObject(ctx, args.r2Key);
     return { deleted: true };
   },
 });
@@ -247,8 +250,23 @@ export const webScraperWorker = internalAction({
         }),
       deleteFromCFOrThrow,
     );
+    const markdownR2Key = generateWebMarkdownKey(
+      args.orgId,
+      args.agentId,
+      args.entryId,
+    );
+    await createWorkspaceExternalState(
+      ctx,
+      args.orgId,
+      "r2",
+      async () => {
+        await r2.store(ctx, markdownBlob, { key: markdownR2Key });
+        return markdownR2Key;
+      },
+      async (createdKey) => await r2.deleteObject(ctx, createdKey),
+    );
 
-    return { url: args.url, cfItemId, fileSize };
+    return { url: args.url, cfItemId, fileSize, markdownR2Key };
   },
 });
 

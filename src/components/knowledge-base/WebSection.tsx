@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useAction } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { usePostHog } from '@posthog/react';
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import {
@@ -12,19 +12,9 @@ import {
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { toast } from "sonner";
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import {
   Collapsible,
   CollapsibleContent,
@@ -41,6 +31,7 @@ import {
 } from './helpers';
 import { hasParentWebUrl } from '../../../shared/webEntryUrl';
 import { WebLinkEntry } from './WebLinkEntry';
+import { WebEntryDetails } from './WebEntryDetails';
 
 interface WebSectionProps {
   entries: any[] | undefined;
@@ -60,6 +51,10 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
   const [isSearchingLinks, setIsSearchingLinks] = useState(false);
   const [searchSourceUrl, setSearchSourceUrl] = useState("");
   const [editingWebEntry, setEditingWebEntry] = useState<any | null>(null);
+  const webEntryMarkdown = useQuery(
+    api.knowledgeBase.getWebEntryMarkdown,
+    editingWebEntry ? { entryId: editingWebEntry._id } : "skip",
+  );
 
   const handleSearchWeb = async () => {
     const trimmed = webInput.trim();
@@ -241,7 +236,7 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
                         {childLinks.map((entry: any) => {
                           const isGettingMarkdown = entry.status === "gettingMarkdown";
                           return (
-                            <div key={entry._id} onClick={canManage ? () => setEditingWebEntry(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-2.5 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
+                            <div key={entry._id} onClick={entry.status === "completed" ? () => setEditingWebEntry(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-2.5 ${entry.status === "completed" ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
                               <div className="flex items-center gap-2 min-w-0">
                                 {entry.status === "completed" ? (
                                   <div className="flex size-2 shrink-0 rounded-full bg-emerald-500" />
@@ -270,29 +265,8 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
         </div>
       )}
 
-      {canManage && editingWebEntry !== null ? (
-      <Sheet open={editingWebEntry !== null} onOpenChange={(open) => { if (!open) setEditingWebEntry(null); }}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Web URL Details</SheetTitle>
-            <SheetDescription>View the entry details.</SheetDescription>
-          </SheetHeader>
-          <div className="flex-1 px-6 py-4 space-y-4">
-            {editingWebEntry && (
-              <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 space-y-1.5">
-                <p className="text-sm break-all">{editingWebEntry.url}</p>
-                <p className="text-xs text-muted-foreground tabular-nums">{formatFileSize(editingWebEntry.fileSize)}</p>
-              </div>
-            )}
-          </div>
-          <SheetFooter className="flex flex-row justify-end gap-2">
-            {editingWebEntry && (
-              <Button type="button" variant="destructive" onClick={() => { setEditingWebEntry(null); openDeleteDialog('web', editingWebEntry._id, editingWebEntry.cfItemId); }}><Trash2 className="size-4 mr-1" />Delete</Button>
-            )}
-            <SheetClose asChild><Button variant="outline">Cancel</Button></SheetClose>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      {editingWebEntry !== null ? (
+        <WebEntryDetails key={editingWebEntry._id} open={true} onOpenChange={(open) => { if (!open) setEditingWebEntry(null); }} url={editingWebEntry.url} fileSizeLabel={formatFileSize(editingWebEntry.fileSize)} markdownUrl={webEntryMarkdown?.markdownUrl} isMarkdownLoading={webEntryMarkdown === undefined} />
       ) : null}
     </>
   );

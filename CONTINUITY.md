@@ -2,13 +2,18 @@
 
 # Snapshot
 
+- 2026-08-26 [USER] Goal: prevent the Workflow editor from crashing after a Send Media node is deleted.
+- 2026-08-26 [CODE] Now: authenticated workflow-media subscriptions return an empty list when their node has already been deleted; ownership and invalid-node checks remain strict. This customer-facing bug fix is UNRELEASED and must not enter the changelog until production availability is confirmed.
+- 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
+- 2026-08-26 [TOOL] Now: review PR #83 adds the exact required statement in a dedicated Privacy Policy section; `origin/main` already contains the corresponding Terms section.
+- 2026-08-26 [USER] Goal: omit pages already converted to Markdown from new web-link discoveries and display a selected page’s scraped Markdown in an expanded, readable drawer.
+- 2026-08-26 [CODE] Now: review PR #83 is open from `codex/web-markdown-preview` into `main`; it filters completed URLs before Cloudflare `/markdown`, stores new scrape Markdown in R2, and opens a completed source directly in a nearly full-screen Markdown viewer with a loading skeleton.
+- 2026-08-26 [ASSUMPTION] Legacy completed web entries have no stored Markdown, so the drawer can display Markdown for new scrapes only; the existing converted entries remain intact and are not re-scraped.
+- 2026-08-26 [USER] Goal: Overview AI-conversation analytics must exclude AI Playground test conversations.
+- 2026-08-26 [TOOL] Now: review PR #83 also excludes `playground` conversations from Overview rows, AI-message fallback metrics, and new AI-conversation aggregate facts.
 - 2026-08-24 [USER] Goal: add Book a Service onboarding to agent creation: editable weekday 9–5 availability, optional self-only first service, and an optional ready appointment-booking workflow action; create a review PR.
 - 2026-08-24 [TOOL] Now: booking-agent onboarding review PR #80 is open from `codex/booking-agent-onboarding` into `main`.
 - 2026-08-24 [USER] Next: review the PR. Availability is always created; new invited workspace members receive independent Mon–Fri 9–5 schedules for existing agents and are not added automatically to creator-only onboarding services.
-- 2026-08-25 [TOOL] Now: Google Workspace API data Terms review PR #82 is open from `codex/google-workspace-terms` into `main`. This customer-facing legal update is UNRELEASED and must not be added to the changelog until production availability is confirmed.
-- 2026-08-26 [USER] Goal: prevent the Workflow editor from crashing after a Send Media node is deleted.
-- 2026-08-26 [CODE] Now: authenticated workflow-media subscriptions return an empty list when their node has already been deleted; ownership and invalid-node checks remain strict. This customer-facing bug fix is UNRELEASED and must not enter the changelog until production availability is confirmed.
-- 2026-08-26 [CODE] Now: the affected agent-overview, booking, and conversation-identity tests are aligned with current billing, booking confirmation, and closed-conversation behavior. These changes are UNRELEASED.
 - 2026-08-21 [USER] Goal: ship an AI-powered Kilobot iframe widget that opens directly into an optional visitor form or chat, while preserving the Traditional widget and embed contract.
 - 2026-08-21 [CODE] Now: `codex/iframe-widget-home` contains broad uncommitted widget work. The live iframe and dashboard preview share direct entry, a compact Geist chat, opt-in suggestions, reset confirmation, loading state, optional branding, and compact desktop/mobile frames.
 - 2026-08-21 [CODE] Now: Visitor-form settings use one bordered collection container without helper copy. Standard Name, Email, and Phone fields remain selectable; custom-field edits stay local drafts until Confirm merges them into the form, then compact rows expose Edit, requirement, and delete controls. Answers are saved on the customer record.
@@ -20,6 +25,8 @@
 # Decisions
 
 - 2026-08-24 [USER] D753 ACTIVE: Book a Service agent onboarding is Identity → Goal → editable availability (default Monday–Friday 9–5) with a You can edit it later reassurance → optional service with a You can add or edit your services later reassurance beneath, not inside, the appointment-scheduling card. Create Agent atomically creates selected availability, an active service assigned only to the creator, and a ready Book appointment workflow node for that service only when Enable AI appointment scheduling is on; Skip for now creates the agent directly with availability alone. New workspace members receive independent default availability for every existing agent but do not inherit creator-only onboarding services.
+- 2026-08-26 [USER] D754 ACTIVE: A completed web source is excluded only from subsequent discovery results, preserving the original converted entry and avoiding another Cloudflare `/markdown` conversion. New scraped Markdown is stored in R2 under a web-entry key and opens directly in a nearly full-screen, inset viewer when the source is clicked.
+- 2026-08-26 [USER] D755 ACTIVE: The Terms and Privacy Policy must state verbatim that raw or derived user data received from Workspace APIs adheres to the Google User Data Policy, including Limited Use requirements.
 - 2026-08-21 [USER] D740 ACTIVE: Reset retires the visitor’s prior AI thread; their next message creates a fresh conversation and AI context.
 - 2026-08-21 [USER] D741 ACTIVE: Suggestions have an explicit enable switch that is off for new widgets; existing configured suggestions stay enabled. When disabled, their three dashboard inputs and helper copy are hidden. When enabled, three configured non-empty suggestions render as vertical content-sized pills only before the first visitor message and send immediately as that visitor message; Save suggestions appears only after edits.
 - 2026-08-21 [USER] D742 ACTIVE: AI-powered widgets always use the fixed `Ask a question…` placeholder; legacy stored values are ignored.
@@ -38,16 +45,18 @@
 
 # Done (recent)
 
+- 2026-08-26 [CODE] New web-link discovery excludes completed URLs; newly scraped Markdown is retained in R2 and opens directly in a nearly full-screen, inset source viewer with a loading skeleton. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-26 [CODE] Overview now excludes AI Playground test conversations from customer conversation totals and AI-conversation metrics; the unshipped customer-facing fix is not in the release changelog.
+- 2026-08-26 [CODE] Prevented stale Send Media subscriptions from crashing the Workflow editor when their node is deleted; deleted-node media reads now resolve empty while protected access validation remains enforced.
 - 2026-08-24 [CODE] Added Book a Service agent onboarding: an editable weekday 9–5 availability step, optional self-only service creation, and an opt-in ready Book appointment workflow node. Booking requires a post-availability customer message plus the agent’s recorded reaction before the selected slot can be created. Skipping service creation creates the agent with availability alone.
 - 2026-08-25 [CODE] Added a dedicated Google Workspace API data Terms section and updated the Terms last-updated date; verified with the focused legal-content regression test and pending review PR.
-- 2026-08-21 [CODE] Completed the locally uncommitted AI-widget redesign: direct iframe UX, Message Scroller transcript, prompt composer, reset, branding, aligned live/preview presentation, an unframed shimmering thinking status, chat-open message refresh, and sender-aware bubbles with human attribution and timestamps.
-- 2026-08-21 [CODE] Simplified Visitor form to selected data fields with a green Recommended badge; compact standard/custom rows expose requirement state plus Edit/Delete actions, while new or edited custom fields remain local drafts until Confirm. Returning visitors with a saved profile now go straight to chat; live and preview forms are scrollable, Geist-based, neutral-bordered, and consistently spaced with rounded Continue controls. Live text and dropdown controls share a 12px horizontal inset.
-- 2026-08-21 [CODE] Added Short text, Email, Phone number, Number, Website URL, and Dropdown custom fields across dashboard, preview, live iframe, shared configuration, and backend validation; dropdowns use a shared minimal shadcn Select with balanced trigger spacing.
-- 2026-08-23 [CODE] Made the dashboard preview launcher use the configured avatar when closed; its open chat header already uses the same avatar. Preview field controls retain the shared 12px horizontal inset.
-- 2026-08-26 [CODE] Prevented stale Send Media subscriptions from crashing the Workflow editor when their node is deleted; deleted-node media reads now resolve empty while protected access validation remains enforced.
+- 2026-08-21 [CODE] Completed the locally uncommitted AI-widget redesign and visitor-form refinement: direct iframe UX, prompt composer, reset, branding, sender-aware chat, editable field drafts, returning-profile routing, and aligned live/preview controls.
+- 2026-08-21 [CODE] Added opt-in suggestions, compact appearance controls, flexible custom visitor-field types, accessible dropdowns, and reactive avatar removal across dashboard and widget experiences.
 
 # Working set
 
+- 2026-08-26 [CODE] `convex/{agentOverviewModel.ts,agentOverviewMessages.ts,agentOverviewAggregates.ts,agentOverviewAiHandled.test.ts,workflowMedia.ts,workflowMediaShared.ts,workflowNodeDeletion.test.ts}`
+- 2026-08-26 [CODE] `convex/{schema.ts,knowledgeBase.ts,cloudflare.ts,workpool.ts,media/r2.ts,teamDeletion/external.ts,webScraperMarkdownPersistence.test.ts}`, `shared/webEntryUrl.ts`, `src/components/knowledge-base/{WebSection.tsx,WebEntryDetails.tsx,WebEntryDetailsModalLayout.test.tsx}`, `src/content/{privacyPolicyProviderSections.tsx,termsUserContentSections.tsx,legalConstants.ts,legalDocumentContent.test.tsx}`
 - 2026-08-21 [CODE] `shared/webWidgetExperience.ts`
 - 2026-08-21 [CODE] `convex/{webWidget.ts,webWidgetAdmin.ts,webWidgetPublic.ts,webWidgetValidators.ts,http.ts}`
 - 2026-08-21 [CODE] `public/widget/ai.js`
@@ -58,29 +67,26 @@
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetPreview.tsx`
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetSettingsPanel.tsx`
 - 2026-08-21 [CODE] `index.html`
-- 2026-08-25 [CODE] `src/content/{termsUserContentSections.tsx,legalConstants.ts,legalDocumentContent.test.tsx}`
-- 2026-08-26 [CODE] `convex/{workflowMedia.ts,workflowMediaShared.ts,workflowNodeDeletion.test.ts}`
 
 # Receipts
 
-- 2026-08-25 [TOOL] Google Workspace API Terms: focused legal-content regression test passes (4 tests) and `git diff --check` passes. Full `bun run test` fails in unrelated existing suites, including Google Calendar, agent overview, legacy widget, avatar conversation identity, and Calendar sidebar tests.
+- 2026-08-26 [TOOL] Merged `origin/main` into `codex/fix-workflow-media-deletion`; the continuity conflict was compacted with both lines of work retained. Node v22 verification passed 27 focused tests, TypeScript, targeted lint, and `git diff --check`.
+- 2026-08-26 [TOOL] Deleted-node media regression: focused test failed as expected before the fix with `Workflow media node not found` from `listForNode`; after the fix, 24 affected tests, TypeScript, targeted ESLint, and `git diff --check` pass with Node v22. Full `bun run test` completes 1,745 passing tests and 14 existing failures in five unchanged calendar, escalation, widget/UI, and test-discovery areas.
+- 2026-08-26 [TOOL] Google Workspace API Terms reached `origin/main`; Privacy-policy red/green coverage confirmed the same Limited Use statement was absent then present. The merged legal-content test suite passes 5 tests with targeted lint and a clean diff.
+- 2026-08-26 [TOOL] Review PR #83 at `https://github.com/Leykwan132/chat-saas/pull/83` includes completed-URL discovery filtering, persisted scraped Markdown, an expandable source-detail drawer, and the Privacy Policy statement; local Vite preview is `http://127.0.0.1:5178`.
+- 2026-08-26 [TOOL] R2 Markdown follow-up: 14 focused tests and targeted lint pass; integration-file lint reports 13 pre-existing issues in `convex/cloudflare.ts` and `WebSection.tsx`. Diff check passes and source files remain within the line cap.
+- 2026-08-26 [TOOL] Direct Markdown viewer follow-up: focused viewer regression failed before the interaction change and passes after it; the complete focused PR suite passes 14 tests and viewer-file lint is clean.
+- 2026-08-26 [TOOL] Inset Markdown viewer follow-up: red/green layout test confirmed the previous edge-to-edge geometry and now verifies 1rem/1.5rem responsive insets; 15 focused PR tests pass with a clean diff check.
+- 2026-08-26 [TOOL] Overview regression failed before the fix (test thread counted as two conversations) and passes after it; focused suite passed 3/3. Broader Overview coverage has two existing date-boundary test failures in sentiment/topic assertions, unrelated to playground filtering.
 - 2026-08-24 [TOOL] Booking onboarding refinements: red/green availability and service-step tests confirmed missing/incorrect reassurance placement and toggle wording; targeted lint and diff validation pass.
 - 2026-08-24 [TOOL] Booking onboarding: 31 focused backend/UI tests and targeted lint pass; production build completes with Node v22; all new or modularized source files are at or below 300 lines. Repository-wide lint remains blocked by 223 pre-existing errors in unrelated paths. The full `bun test` run is unsuitable here (1,362 pass, 174 fail, 116 loader errors) because Bun lacks Vitest `import.meta.glob` support and required Stripe environment values. Convex codegen requires an unconfigured `CONVEX_DEPLOYMENT`.
+- 2026-08-21 [TOOL] Custom-field draft boundary: red merge test confirmed confirmation had no model boundary; focused tests (9), app TypeScript, targeted ESLint, and diff validation pass. All touched code files remain below 300 lines.
 - 2026-08-21 [TOOL] Required markers: red render tests confirmed both live and preview forms omitted markers; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Visitor-form layout: red render tests confirmed absent scroll/font classes; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Visitor-form header spacing: red preview render test confirmed the prior padding and semibold title; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
-- 2026-08-21 [TOOL] Visitor-form top inset and Continue styling: red preview render test confirmed the compact top inset and rounded rectangle; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
+- 2026-08-21 [TOOL] Visitor-form top inset and Continue styling: red preview render test confirmed the compact top inset and rounded Continue styling; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Custom field types: red shared and rendered-form tests confirmed missing normalization and native input types; 21 focused tests, app TypeScript, targeted ESLint, and diff validation pass. Touched code files remain below 300 lines.
 - 2026-08-21 [TOOL] Custom-field type-picker icons: 18 focused tests, app TypeScript, targeted ESLint, and diff validation pass; the row remains below 300 lines.
-- 2026-08-21 [TOOL] Thinking-indicator refinement: 40 focused render tests, app TypeScript, targeted ESLint, and diff validation pass; its CSS remains below 300 lines.
-- 2026-08-21 [TOOL] Thinking-indicator optical alignment: red CSS expectations confirmed the prior 6px gap; 40 focused render tests, app TypeScript, targeted ESLint, and diff validation pass.
+- 2026-08-21 [TOOL] Thinking-indicator refinement: 40 focused tests, app TypeScript, targeted ESLint, and diff validation pass; its CSS remains below 300 lines.
+- 2026-08-21 [TOOL] Thinking-indicator optical alignment: red/green test confirmed the prior 6px gap; 40 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Inbox-to-widget reply refresh: red widget test confirmed no chat-open polling; 34 focused widget/Convex tests, app TypeScript, targeted ESLint, and diff validation pass. `Widget.tsx` remains below 300 lines.
-- 2026-08-21 [TOOL] Sender-aware bubbles, human attribution, metadata order, timestamps, content-sized width, and returning-profile routing: red backend/live/preview tests confirmed absent sender metadata, member names, required top/bottom ordering, timestamps, content sizing, and returning-visitor routing; 68 focused tests, app TypeScript, targeted ESLint, and diff validation pass. All newly touched code files remain below 300 lines.
-- 2026-08-21 [TOOL] Avatar removal: red avatar-uploader render test confirmed the clear action was absent; 76 focused tests, app TypeScript, targeted ESLint, code line caps, and diff validation pass.
-- 2026-08-21 [TOOL] Shadcn visitor-form dropdowns: red rendered-form test confirmed the browser-native menu remained; 88 focused tests, app TypeScript, targeted ESLint, code line caps, and diff validation pass.
-- 2026-08-23 [TOOL] Live visitor-form padding: red style test confirmed inputs retained their 11px horizontal inset; 72 focused tests, app TypeScript, targeted ESLint, code line caps, and diff validation pass.
-- 2026-08-23 [TOOL] Avatar-aware closed preview launcher: red server-render test confirmed the configured avatar was absent; 34 focused settings/visitor-form tests, targeted ESLint, line-cap checks, and diff validation pass after the fix.
-- 2026-08-23 [TOOL] The local iframe test in `index.html` is appended to the dashboard body. While a Radix modal is open, Radix disables body pointer events for modal focus isolation, so the high-z-index iframe remains visible but cannot receive clicks. Use the in-modal preview or a separate local host page for widget interaction tests.
-- 2026-08-23 [TOOL] PR verification: 94 focused widget/settings/Convex tests and the Node v22 production build pass. The full suite initially included 21 obsolete inline-widget assertions, now replaced by iframe-host coverage; it also reports six unrelated Calendar and agent-overview failures in unchanged areas.
-- 2026-08-23 [TOOL] PR #79 created: `https://github.com/Leykwan132/chat-saas/pull/79`.
-- 2026-08-26 [TOOL] Deleted-node media regression: focused test failed as expected before the fix with `Workflow media node not found` from `listForNode`; after the fix, 24 affected tests, TypeScript, targeted ESLint, and `git diff --check` pass with Node v22. Full `bun run test` completes 1,745 passing tests and 14 existing failures in five unchanged calendar, escalation, widget/UI, and test-discovery areas.
