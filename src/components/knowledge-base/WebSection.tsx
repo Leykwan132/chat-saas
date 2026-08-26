@@ -12,19 +12,9 @@ import {
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { toast } from "sonner";
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import {
   Collapsible,
   CollapsibleContent,
@@ -246,7 +236,7 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
                         {childLinks.map((entry: any) => {
                           const isGettingMarkdown = entry.status === "gettingMarkdown";
                           return (
-                            <div key={entry._id} onClick={canManage ? () => setEditingWebEntry(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-2.5 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
+                            <div key={entry._id} onClick={entry.status === "completed" ? () => setEditingWebEntry(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-2.5 ${entry.status === "completed" ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
                               <div className="flex items-center gap-2 min-w-0">
                                 {entry.status === "completed" ? (
                                   <div className="flex size-2 shrink-0 rounded-full bg-emerald-500" />
@@ -275,24 +265,8 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
         </div>
       )}
 
-      {canManage && editingWebEntry !== null ? (
-      <Sheet open={editingWebEntry !== null} onOpenChange={(open) => { if (!open) setEditingWebEntry(null); }}>
-        <SheetContent className="sm:max-w-4xl">
-          <SheetHeader>
-            <SheetTitle>Web URL Details</SheetTitle>
-            <SheetDescription>View the entry details.</SheetDescription>
-          </SheetHeader>
-          <div className="flex-1 px-6 py-4 space-y-4">
-            {editingWebEntry && <WebEntryDetails key={editingWebEntry._id} url={editingWebEntry.url} fileSizeLabel={formatFileSize(editingWebEntry.fileSize)} markdownUrl={webEntryMarkdown?.markdownUrl} isMarkdownLoading={webEntryMarkdown === undefined} />}
-          </div>
-          <SheetFooter className="flex flex-row justify-end gap-2">
-            {editingWebEntry && (
-              <Button type="button" variant="destructive" onClick={() => { setEditingWebEntry(null); openDeleteDialog('web', editingWebEntry._id, editingWebEntry.cfItemId); }}><Trash2 className="size-4 mr-1" />Delete</Button>
-            )}
-            <SheetClose asChild><Button variant="outline">Cancel</Button></SheetClose>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      {editingWebEntry !== null ? (
+        <WebEntryDetails key={editingWebEntry._id} open={true} onOpenChange={(open) => { if (!open) setEditingWebEntry(null); }} url={editingWebEntry.url} fileSizeLabel={formatFileSize(editingWebEntry.fileSize)} markdownUrl={webEntryMarkdown?.markdownUrl} isMarkdownLoading={webEntryMarkdown === undefined} />
       ) : null}
     </>
   );
