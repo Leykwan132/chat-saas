@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useAction } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { usePostHog } from '@posthog/react';
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import {
@@ -41,6 +41,7 @@ import {
 } from './helpers';
 import { hasParentWebUrl } from '../../../shared/webEntryUrl';
 import { WebLinkEntry } from './WebLinkEntry';
+import { WebEntryDetails } from './WebEntryDetails';
 
 interface WebSectionProps {
   entries: any[] | undefined;
@@ -60,6 +61,10 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
   const [isSearchingLinks, setIsSearchingLinks] = useState(false);
   const [searchSourceUrl, setSearchSourceUrl] = useState("");
   const [editingWebEntry, setEditingWebEntry] = useState<any | null>(null);
+  const webEntryMarkdown = useQuery(
+    api.knowledgeBase.getWebEntryMarkdown,
+    editingWebEntry ? { entryId: editingWebEntry._id } : "skip",
+  );
 
   const handleSearchWeb = async () => {
     const trimmed = webInput.trim();
@@ -272,18 +277,13 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
 
       {canManage && editingWebEntry !== null ? (
       <Sheet open={editingWebEntry !== null} onOpenChange={(open) => { if (!open) setEditingWebEntry(null); }}>
-        <SheetContent>
+        <SheetContent className="sm:max-w-4xl">
           <SheetHeader>
             <SheetTitle>Web URL Details</SheetTitle>
             <SheetDescription>View the entry details.</SheetDescription>
           </SheetHeader>
           <div className="flex-1 px-6 py-4 space-y-4">
-            {editingWebEntry && (
-              <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 space-y-1.5">
-                <p className="text-sm break-all">{editingWebEntry.url}</p>
-                <p className="text-xs text-muted-foreground tabular-nums">{formatFileSize(editingWebEntry.fileSize)}</p>
-              </div>
-            )}
+            {editingWebEntry && <WebEntryDetails url={editingWebEntry.url} fileSizeLabel={formatFileSize(editingWebEntry.fileSize)} markdownUrl={webEntryMarkdown?.markdownUrl} />}
           </div>
           <SheetFooter className="flex flex-row justify-end gap-2">
             {editingWebEntry && (

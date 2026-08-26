@@ -4,7 +4,8 @@ import { internal, api } from "./_generated/api";
 import { getAuthContext } from "./authUtils";
 import { getPlan, getPlanFromStripe } from "./plans";
 import type { Id } from "./_generated/dataModel";
-import { hasParentWebUrl } from "../shared/webEntryUrl";
+import { assertAgentAccess } from "./agentUsage";
+import { excludeConvertedWebLinks, hasParentWebUrl } from "../shared/webEntryUrl";
 import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
 type KnowledgeEntryTable = "textEntries" | "fileEntries" | "webEntries" | "qaEntries";
@@ -220,6 +221,19 @@ export const listWebEntries = query({
   },
 });
 
+export const getWebEntryMarkdown = query({
+  args: { entryId: v.id("webEntries") },
+  handler: async (ctx, args) => {
+    const entry = await ctx.db.get(args.entryId);
+    if (entry === null) throw new Error("Web entry not found");
+    await assertAgentAccess(ctx, entry.agentId);
+    if (!entry.markdownStorageId) return null;
+    const markdownUrl = await ctx.storage.getUrl(entry.markdownStorageId);
+    if (markdownUrl === null) return null;
+    return { markdownUrl };
+  },
+});
+
 export const internalHasParentWebUrl = internalQuery({
   args: {
     agentId: v.id("agents"),
@@ -278,6 +292,8 @@ export const updateWebEntry = mutation({
 export const removeWebEntry = mutation({
   args: { entryId: v.id("webEntries") },
   handler: async (ctx, args) => {
+    const entry = await ctx.db.get(args.entryId);
+    if (entry?.markdownStorageId) await ctx.storage.delete(entry.markdownStorageId);
     await ctx.db.delete(args.entryId);
   },
 });
@@ -561,7 +577,7 @@ export const internalStoreWebEntryWithContent = internalMutation({
     agentId: v.id("agents"),
     url: v.string(),
     fileSize: v.number(),
-    markdown: v.string(),
+    markdownStorageId: v.id("_storage"),
     cfItemId: v.optional(v.string()),
     parentUrl: v.optional(v.string()),
     userId: v.string(),
@@ -573,6 +589,7 @@ export const internalStoreWebEntryWithContent = internalMutation({
       url: args.url,
       fileSize: args.fileSize,
       cfItemId: args.cfItemId,
+      markdownStorageId: args.markdownStorageId,
       parentUrl: args.parentUrl,
       userId: args.userId,
       orgId: args.orgId,
@@ -602,6 +619,8 @@ export const internalPatchWebEntry = internalMutation({
 export const internalRemoveWebEntry = internalMutation({
   args: { entryId: v.id("webEntries") },
   handler: async (ctx, args) => {
+    const entry = await ctx.db.get(args.entryId);
+    if (entry?.markdownStorageId) await ctx.storage.delete(entry.markdownStorageId);
     await ctx.db.delete(args.entryId);
   },
 });
@@ -716,12 +735,16 @@ export const internalCompleteWebEntry = internalMutation({
     entryId: v.id("webEntries"),
     cfItemId: v.string(),
     fileSize: v.number(),
+    markdownStorageId: v.id("_storage"),
   },
   handler: async (ctx, args) => {
+    const entry = await ctx.db.get(args.entryId);
+    if (entry === null) throw new Error("Web entry not found");
     await ctx.db.patch(args.entryId, {
       status: "completed",
       cfItemId: args.cfItemId,
       fileSize: args.fileSize,
+      markdownStorageId: entry.markdownStorageId ?? args.markdownStorageId,
     });
   },
 });
@@ -855,9 +878,13 @@ export const webScraperComplete = internalMutation({
     const { entryId } = args.context;
 
     if (args.result.kind === "success" && args.result.returnValue) {
-      const { cfItemId, fileSize } = args.result.returnValue as { cfItemId: string; fileSize: number };
+      const { cfItemId, fileSize, markdownStorageId } = args.result.returnValue as {
+        cfItemId: string;
+        fileSize: number;
+        markdownStorageId: Id<"_storage">;
+      };
       await ctx.runMutation(internal.knowledgeBase.internalCompleteWebEntry, {
-        entryId: entryId as never, cfItemId, fileSize,
+        entryId: entryId as never, cfItemId, fileSize, markdownStorageId,
       });
 
       // Check if all siblings are completed, and if so, mark parent as completed
@@ -902,12 +929,22 @@ export const linkDiscovererComplete = internalMutation({
 
     if (args.result.kind === "success" && args.result.returnValue) {
       const { links } = args.result.returnValue as { links: string[]; sourceUrl: string };
+      const existingEntries = await ctx.db
+      .query("webEntries")
+      .withIndex("by_agentId", (q) => q.eq("agentId", agentId as never))
+      .collect();
+      const pendingLinks = excludeConvertedWebLinks(links, existingEntries);
+
+      if (pendingLinks.length === 0) {
+        await ctx.db.delete(entryId as never);
+        return;
+      }
 
       // Mark parent as processing while children are being scraped
       await ctx.db.patch(entryId as never, { status: "gettingMarkdown" });
 
       // Schedule enqueueWebScrape for each link — it handles DB insertion + workpool enqueueing
-      for (const link of links) {
+      for (const link of pendingLinks) {
         await ctx.scheduler.runAfter(0, api.cloudflare.enqueueWebScrape, {
           agentId: agentId as never,
           url: link,

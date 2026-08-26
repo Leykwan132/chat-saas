@@ -247,8 +247,9 @@ export const webScraperWorker = internalAction({
         }),
       deleteFromCFOrThrow,
     );
+    const markdownStorageId = await ctx.storage.store(markdownBlob);
 
-    return { url: args.url, cfItemId, fileSize };
+    return { url: args.url, cfItemId, fileSize, markdownStorageId };
   },
 });
 

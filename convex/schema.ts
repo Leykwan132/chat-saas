@@ -527,6 +527,7 @@ export default defineSchema({
       v.literal("deleting"),
     )),
     cfItemId: v.optional(v.string()),
+    markdownStorageId: v.optional(v.id("_storage")),
     parentUrl: v.optional(v.string()),
     parentId: v.optional(v.id("webEntries")),
     userId: v.string(),

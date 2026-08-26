@@ -252,13 +252,14 @@ export const processWebUrl = action({
     }
 
     const cfItemId = await uploadWorkspaceFileToCF(ctx, markdownBlob, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
+    const markdownStorageId = await ctx.storage.store(markdownBlob);
 
     await ctx.runMutation(
       internal.knowledgeBase.internalStoreWebEntryWithContent,
       {
         agentId: args.agentId,
         url,
-        markdown,
+        markdownStorageId,
         fileSize,
         cfItemId,
         parentUrl: args.parentUrl,
@@ -317,6 +318,7 @@ export const uploadWebEntry = action({
             const safeName = linkUrl.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
             const markdownBlob = new File([markdown], `${safeName}_${uid}.md`, { type: "text/markdown" });
             const cfItemId = await uploadWorkspaceFileToCF(ctx, markdownBlob, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
+            const markdownStorageId = await ctx.storage.store(markdownBlob);
 
             // Store entry with markdown in Convex storage
             await ctx.runMutation(
@@ -324,7 +326,7 @@ export const uploadWebEntry = action({
               {
                 agentId: args.agentId,
                 url: linkUrl,
-                markdown,
+                markdownStorageId,
                 fileSize: markdownBlob.size,
                 cfItemId,
                 parentUrl: linkUrl === url ? undefined : url,
