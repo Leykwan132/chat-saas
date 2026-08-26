@@ -6,6 +6,9 @@
 - 2026-08-24 [TOOL] Now: booking-agent onboarding review PR #80 is open from `codex/booking-agent-onboarding` into `main`.
 - 2026-08-24 [USER] Next: review the PR. Availability is always created; new invited workspace members receive independent Mon–Fri 9–5 schedules for existing agents and are not added automatically to creator-only onboarding services.
 - 2026-08-25 [TOOL] Now: Google Workspace API data Terms review PR #82 is open from `codex/google-workspace-terms` into `main`. This customer-facing legal update is UNRELEASED and must not be added to the changelog until production availability is confirmed.
+- 2026-08-26 [USER] Goal: prevent the Workflow editor from crashing after a Send Media node is deleted.
+- 2026-08-26 [CODE] Now: authenticated workflow-media subscriptions return an empty list when their node has already been deleted; ownership and invalid-node checks remain strict. This customer-facing bug fix is UNRELEASED and must not enter the changelog until production availability is confirmed.
+- 2026-08-26 [CODE] Now: the affected agent-overview, booking, and conversation-identity tests are aligned with current billing, booking confirmation, and closed-conversation behavior. These changes are UNRELEASED.
 - 2026-08-21 [USER] Goal: ship an AI-powered Kilobot iframe widget that opens directly into an optional visitor form or chat, while preserving the Traditional widget and embed contract.
 - 2026-08-21 [CODE] Now: `codex/iframe-widget-home` contains broad uncommitted widget work. The live iframe and dashboard preview share direct entry, a compact Geist chat, opt-in suggestions, reset confirmation, loading state, optional branding, and compact desktop/mobile frames.
 - 2026-08-21 [CODE] Now: Visitor-form settings use one bordered collection container without helper copy. Standard Name, Email, and Phone fields remain selectable; custom-field edits stay local drafts until Confirm merges them into the form, then compact rows expose Edit, requirement, and delete controls. Answers are saved on the customer record.
@@ -39,10 +42,9 @@
 - 2026-08-25 [CODE] Added a dedicated Google Workspace API data Terms section and updated the Terms last-updated date; verified with the focused legal-content regression test and pending review PR.
 - 2026-08-21 [CODE] Completed the locally uncommitted AI-widget redesign: direct iframe UX, Message Scroller transcript, prompt composer, reset, branding, aligned live/preview presentation, an unframed shimmering thinking status, chat-open message refresh, and sender-aware bubbles with human attribution and timestamps.
 - 2026-08-21 [CODE] Simplified Visitor form to selected data fields with a green Recommended badge; compact standard/custom rows expose requirement state plus Edit/Delete actions, while new or edited custom fields remain local drafts until Confirm. Returning visitors with a saved profile now go straight to chat; live and preview forms are scrollable, Geist-based, neutral-bordered, and consistently spaced with rounded Continue controls. Live text and dropdown controls share a 12px horizontal inset.
-- 2026-08-21 [CODE] Added vertical content-sized suggestions with opt-in visibility and immediate-send behavior, plus compact Name/avatar, branding, and theme settings with edit-driven saves.
 - 2026-08-21 [CODE] Added Short text, Email, Phone number, Number, Website URL, and Dropdown custom fields across dashboard, preview, live iframe, shared configuration, and backend validation; dropdowns use a shared minimal shadcn Select with balanced trigger spacing.
-- 2026-08-21 [CODE] Added icons for every custom-field type-picker option and slightly increased the picker and confirmed-row type text for readability; custom avatars now have a remove control and the reactive preview follows upload/removal.
 - 2026-08-23 [CODE] Made the dashboard preview launcher use the configured avatar when closed; its open chat header already uses the same avatar. Preview field controls retain the shared 12px horizontal inset.
+- 2026-08-26 [CODE] Prevented stale Send Media subscriptions from crashing the Workflow editor when their node is deleted; deleted-node media reads now resolve empty while protected access validation remains enforced.
 
 # Working set
 
@@ -57,15 +59,13 @@
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetSettingsPanel.tsx`
 - 2026-08-21 [CODE] `index.html`
 - 2026-08-25 [CODE] `src/content/{termsUserContentSections.tsx,legalConstants.ts,legalDocumentContent.test.tsx}`
+- 2026-08-26 [CODE] `convex/{workflowMedia.ts,workflowMediaShared.ts,workflowNodeDeletion.test.ts}`
 
 # Receipts
 
 - 2026-08-25 [TOOL] Google Workspace API Terms: focused legal-content regression test passes (4 tests) and `git diff --check` passes. Full `bun run test` fails in unrelated existing suites, including Google Calendar, agent overview, legacy widget, avatar conversation identity, and Calendar sidebar tests.
-- 2026-08-24 [TOOL] Service reassurance placement: red/green service-step render test confirmed the helper was inside the appointment-scheduling card; 10 focused tests, targeted lint, and diff validation pass.
-- 2026-08-24 [TOOL] Availability reassurance: a red/green availability-step render test confirmed the edit-later text was absent; 9 focused tests, targeted lint, and diff validation pass.
-- 2026-08-24 [TOOL] Booking toggle wording: red/green service-step render test confirmed the prior wording; 8 focused tests, targeted lint, and diff validation pass.
+- 2026-08-24 [TOOL] Booking onboarding refinements: red/green availability and service-step tests confirmed missing/incorrect reassurance placement and toggle wording; targeted lint and diff validation pass.
 - 2026-08-24 [TOOL] Booking onboarding: 31 focused backend/UI tests and targeted lint pass; production build completes with Node v22; all new or modularized source files are at or below 300 lines. Repository-wide lint remains blocked by 223 pre-existing errors in unrelated paths. The full `bun test` run is unsuitable here (1,362 pass, 174 fail, 116 loader errors) because Bun lacks Vitest `import.meta.glob` support and required Stripe environment values. Convex codegen requires an unconfigured `CONVEX_DEPLOYMENT`.
-- 2026-08-21 [TOOL] Custom-field draft boundary: red merge test confirmed confirmation had no model boundary; focused tests (9), app TypeScript, targeted ESLint, and diff validation pass. All touched code files remain below 300 lines.
 - 2026-08-21 [TOOL] Required markers: red render tests confirmed both live and preview forms omitted markers; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Visitor-form layout: red render tests confirmed absent scroll/font classes; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Visitor-form header spacing: red preview render test confirmed the prior padding and semibold title; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
@@ -83,3 +83,4 @@
 - 2026-08-23 [TOOL] The local iframe test in `index.html` is appended to the dashboard body. While a Radix modal is open, Radix disables body pointer events for modal focus isolation, so the high-z-index iframe remains visible but cannot receive clicks. Use the in-modal preview or a separate local host page for widget interaction tests.
 - 2026-08-23 [TOOL] PR verification: 94 focused widget/settings/Convex tests and the Node v22 production build pass. The full suite initially included 21 obsolete inline-widget assertions, now replaced by iframe-host coverage; it also reports six unrelated Calendar and agent-overview failures in unchanged areas.
 - 2026-08-23 [TOOL] PR #79 created: `https://github.com/Leykwan132/chat-saas/pull/79`.
+- 2026-08-26 [TOOL] Deleted-node media regression: focused test failed as expected before the fix with `Workflow media node not found` from `listForNode`; after the fix, 24 affected tests, TypeScript, targeted ESLint, and `git diff --check` pass with Node v22. Full `bun run test` completes 1,745 passing tests and 14 existing failures in five unchanged calendar, escalation, widget/UI, and test-discovery areas.
