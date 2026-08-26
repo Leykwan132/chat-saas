@@ -9,4 +9,4 @@ export const LEGAL_ADDRESS = {
   postalCode: '51200',
   country: 'Malaysia',
 } as const;
-export const LEGAL_LAST_UPDATED = 'August 03, 2026';
+export const LEGAL_LAST_UPDATED = 'August 25, 2026';

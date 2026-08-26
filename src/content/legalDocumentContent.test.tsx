@@ -71,6 +71,8 @@ test('terms state the approved contractual protections', () => {
     'Content provided by Kilobot',
     'Software license',
     'Service reselling',
+    'Google Workspace API data',
+    'The use of raw or derived user data received from Workspace APIs will adhere to the Google User Data Policy, including the Limited Use requirements.',
     'Content backups',
     'Service interruption and availability',
     'Account termination',
@@ -83,5 +85,5 @@ test('terms state the approved contractual protections', () => {
 });
 
 test('legal documents use the approved last-updated date', () => {
-  expect(LEGAL_LAST_UPDATED).toBe('August 03, 2026');
+  expect(LEGAL_LAST_UPDATED).toBe('August 25, 2026');
 });
