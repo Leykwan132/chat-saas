@@ -5,7 +5,7 @@
 - 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
 - 2026-08-26 [TOOL] Now: review PR #83 adds the exact required statement in a dedicated Privacy Policy section; `origin/main` already contains the corresponding Terms section.
 - 2026-08-26 [USER] Goal: omit pages already converted to Markdown from new web-link discoveries and display a selected page’s scraped Markdown in an expanded, readable drawer.
-- 2026-08-26 [CODE] Now: review PR #83 is open from `codex/web-markdown-preview` into `main`; it filters completed URLs before Cloudflare `/markdown`, stores new scrape Markdown in R2, and opens a completed source directly in a full-screen Markdown viewer with a loading skeleton.
+- 2026-08-26 [CODE] Now: review PR #83 is open from `codex/web-markdown-preview` into `main`; it filters completed URLs before Cloudflare `/markdown`, stores new scrape Markdown in R2, and opens a completed source directly in a nearly full-screen Markdown viewer with a loading skeleton.
 - 2026-08-26 [ASSUMPTION] Legacy completed web entries have no stored Markdown, so the drawer can display Markdown for new scrapes only; the existing converted entries remain intact and are not re-scraped.
 - 2026-08-26 [USER] Goal: Overview AI-conversation analytics must exclude AI Playground test conversations.
 - 2026-08-26 [TOOL] Now: review PR #83 also excludes `playground` conversations from Overview rows, AI-message fallback metrics, and new AI-conversation aggregate facts.
@@ -23,7 +23,7 @@
 # Decisions
 
 - 2026-08-24 [USER] D753 ACTIVE: Book a Service agent onboarding is Identity → Goal → editable availability (default Monday–Friday 9–5) with a You can edit it later reassurance → optional service with a You can add or edit your services later reassurance beneath, not inside, the appointment-scheduling card. Create Agent atomically creates selected availability, an active service assigned only to the creator, and a ready Book appointment workflow node for that service only when Enable AI appointment scheduling is on; Skip for now creates the agent directly with availability alone. New workspace members receive independent default availability for every existing agent but do not inherit creator-only onboarding services.
-- 2026-08-26 [USER] D754 ACTIVE: A completed web source is excluded only from subsequent discovery results, preserving the original converted entry and avoiding another Cloudflare `/markdown` conversion. New scraped Markdown is stored in R2 under a web-entry key and opens directly in a full-screen viewer when the source is clicked.
+- 2026-08-26 [USER] D754 ACTIVE: A completed web source is excluded only from subsequent discovery results, preserving the original converted entry and avoiding another Cloudflare `/markdown` conversion. New scraped Markdown is stored in R2 under a web-entry key and opens directly in a nearly full-screen, inset viewer when the source is clicked.
 - 2026-08-26 [USER] D755 ACTIVE: The Terms and Privacy Policy must state verbatim that raw or derived user data received from Workspace APIs adheres to the Google User Data Policy, including Limited Use requirements.
 - 2026-08-21 [USER] D740 ACTIVE: Reset retires the visitor’s prior AI thread; their next message creates a fresh conversation and AI context.
 - 2026-08-21 [USER] D741 ACTIVE: Suggestions have an explicit enable switch that is off for new widgets; existing configured suggestions stay enabled. When disabled, their three dashboard inputs and helper copy are hidden. When enabled, three configured non-empty suggestions render as vertical content-sized pills only before the first visitor message and send immediately as that visitor message; Save suggestions appears only after edits.
@@ -43,7 +43,7 @@
 
 # Done (recent)
 
-- 2026-08-26 [CODE] New web-link discovery excludes completed URLs; newly scraped Markdown is retained in R2 and opens directly in a full-screen source viewer with a loading skeleton. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-26 [CODE] New web-link discovery excludes completed URLs; newly scraped Markdown is retained in R2 and opens directly in a nearly full-screen, inset source viewer with a loading skeleton. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-26 [CODE] Overview now excludes AI Playground test conversations from customer conversation totals and AI-conversation metrics; the unshipped customer-facing fix is not in the release changelog.
 - 2026-08-24 [CODE] Added Book a Service agent onboarding: an editable weekday 9–5 availability step, optional self-only service creation, and an opt-in ready Book appointment workflow node. Booking requires a post-availability customer message plus the agent’s recorded reaction before the selected slot can be created. Skipping service creation creates the agent with availability alone.
 - 2026-08-25 [CODE] Added a dedicated Google Workspace API data Terms section and updated the Terms last-updated date; verified with the focused legal-content regression test and pending review PR.
@@ -54,7 +54,7 @@
 # Working set
 
 - 2026-08-26 [CODE] `convex/{agentOverviewModel.ts,agentOverviewMessages.ts,agentOverviewAggregates.ts,agentOverviewAiHandled.test.ts}`
-- 2026-08-26 [CODE] `convex/{schema.ts,knowledgeBase.ts,cloudflare.ts,workpool.ts,media/r2.ts,teamDeletion/external.ts,webScraperMarkdownPersistence.test.ts}`, `shared/webEntryUrl.ts`, `src/components/knowledge-base/{WebSection.tsx,WebEntryDetails.tsx}`, `src/content/{privacyPolicyProviderSections.tsx,termsUserContentSections.tsx,legalConstants.ts,legalDocumentContent.test.tsx}`
+- 2026-08-26 [CODE] `convex/{schema.ts,knowledgeBase.ts,cloudflare.ts,workpool.ts,media/r2.ts,teamDeletion/external.ts,webScraperMarkdownPersistence.test.ts}`, `shared/webEntryUrl.ts`, `src/components/knowledge-base/{WebSection.tsx,WebEntryDetails.tsx,WebEntryDetailsModalLayout.test.tsx}`, `src/content/{privacyPolicyProviderSections.tsx,termsUserContentSections.tsx,legalConstants.ts,legalDocumentContent.test.tsx}`
 - 2026-08-21 [CODE] `shared/webWidgetExperience.ts`
 - 2026-08-21 [CODE] `convex/{webWidget.ts,webWidgetAdmin.ts,webWidgetPublic.ts,webWidgetValidators.ts,http.ts}`
 - 2026-08-21 [CODE] `public/widget/ai.js`
@@ -72,6 +72,7 @@
 - 2026-08-26 [TOOL] Review PR #83 at `https://github.com/Leykwan132/chat-saas/pull/83` includes completed-URL discovery filtering, persisted scraped Markdown, an expandable source-detail drawer, and the Privacy Policy statement; local Vite preview is `http://127.0.0.1:5178`.
 - 2026-08-26 [TOOL] R2 Markdown follow-up: 14 focused tests and targeted lint pass; integration-file lint reports 13 pre-existing issues in `convex/cloudflare.ts` and `WebSection.tsx`. Diff check passes and source files remain within the line cap.
 - 2026-08-26 [TOOL] Direct Markdown viewer follow-up: focused viewer regression failed before the interaction change and passes after it; the complete focused PR suite passes 14 tests and viewer-file lint is clean.
+- 2026-08-26 [TOOL] Inset Markdown viewer follow-up: red/green layout test confirmed the previous edge-to-edge geometry and now verifies 1rem/1.5rem responsive insets; 15 focused PR tests pass with a clean diff check.
 - 2026-08-26 [TOOL] Overview regression failed before the fix (test thread counted as two conversations) and passes after it; focused suite passed 3/3. Broader Overview coverage has two existing date-boundary test failures in sentiment/topic assertions, unrelated to playground filtering.
 - 2026-08-24 [TOOL] Service reassurance placement: red/green service-step render test confirmed the helper was inside the appointment-scheduling card; 10 focused tests, targeted lint, and diff validation pass.
 - 2026-08-24 [TOOL] Availability reassurance: a red/green availability-step render test confirmed the edit-later text was absent; 9 focused tests, targeted lint, and diff validation pass.
@@ -87,4 +88,3 @@
 - 2026-08-21 [TOOL] Thinking-indicator refinement: 40 focused render tests, app TypeScript, targeted ESLint, and diff validation pass; its CSS remains below 300 lines.
 - 2026-08-21 [TOOL] Thinking-indicator optical alignment: red CSS expectations confirmed the prior 6px gap; 40 focused render tests, app TypeScript, targeted ESLint, and diff validation pass.
 - 2026-08-21 [TOOL] Inbox-to-widget reply refresh: red widget test confirmed no chat-open polling; 34 focused widget/Convex tests, app TypeScript, targeted ESLint, and diff validation pass. `Widget.tsx` remains below 300 lines.
-- 2026-08-21 [TOOL] Sender-aware bubbles, human attribution, metadata order, timestamps, content-sized width, and returning-profile routing: red backend/live/preview tests confirmed absent sender metadata, member names, required top/bottom ordering, timestamps, content sizing, and returning-visitor routing; 68 focused tests, app TypeScript, targeted ESLint, and diff validation pass. All newly touched code files remain below 300 lines.
