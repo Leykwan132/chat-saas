@@ -4,6 +4,7 @@ import { expect, test } from "vitest";
 import { api } from "./_generated/api";
 import {
   createAgentOverviewFixture as createFixture,
+  enableAgentOverviewTopicAnalytics,
   insertAgentOverviewConversation as insertConversation,
   registerAgentOverviewAggregateComponents,
 } from "./agentOverviewTestHelpers";
@@ -192,7 +193,7 @@ test("counts AI escalation events for the agent", async () => {
   const t = createOverviewTest();
   const { authed, agentId, now } = await createFixture(t);
   const conversationId = await insertConversation(t, { agentId, now });
-  const secondConversationId = await insertConversation(t, {
+  await insertConversation(t, {
     agentId,
     now: now + 1,
   });
@@ -218,6 +219,7 @@ test("counts AI escalation events for the agent", async () => {
 test("returns customer sentiment distribution for analyzed conversations", async () => {
   const t = createOverviewTest();
   const { authed, agentId, now } = await createFixture(t);
+  await enableAgentOverviewTopicAnalytics(t);
   const positiveConversationId = await insertConversation(t, { agentId, now });
   const negativeConversationId = await insertConversation(t, { agentId, now: now + 1 });
 
@@ -246,6 +248,7 @@ test("returns customer sentiment distribution for analyzed conversations", async
 test("returns trending topics for agent conversations in the period", async () => {
   const t = createOverviewTest();
   const { authed, agentId, now } = await createFixture(t);
+  await enableAgentOverviewTopicAnalytics(t);
   const conversationId = await insertConversation(t, { agentId, now });
   const secondConversationId = await insertConversation(t, {
     agentId,
