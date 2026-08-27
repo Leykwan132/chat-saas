@@ -2,6 +2,18 @@
 
 # Snapshot
 
+- 2026-08-27 [USER] Goal: make the web inbox chat responsive on mobile; the selected customer must remain a tap-to-switch control and the AI replies switch must remain available to turn AI off.
+- 2026-08-27 [CODE] Now: mobile shows the conversation list before selection, then a full-width chat whose customer header opens the searchable conversation switcher; a visible AI on/off switch stays in that header. Desktop inbox columns are unchanged.
+- 2026-08-27 [USER] Goal: keep a navigable sidebar available in mobile mode and reduce horizontal page padding.
+- 2026-08-27 [CODE] Now: the dashboard header exposes the existing sidebar sheet trigger on mobile; non-full-height pages use compact mobile gutters and preserve larger responsive gutters on desktop.
+- 2026-08-27 [USER] Goal: keep Personal workspace agents one per mobile row and apply the compact horizontal padding there too; this supersedes the earlier two-column mobile request.
+- 2026-08-27 [CODE] Now: the workspace header exposes the same mobile sidebar trigger; agent cards use one mobile column and retain three/four/five-column layouts from `sm` upward with compact mobile gutters.
+- 2026-08-27 [USER] Goal: preview the mobile inbox with visible customer and message data while retaining the AI-replies switch.
+- 2026-08-27 [CODE] Now: local development can open `/dashboard/<agent-id>/inbox?dummyData=true` to render a mobile-only demo inbox with four conversations, selectable threads, a searchable switcher, and an interactive AI replies toggle; real Convex data remains unchanged.
+- 2026-08-27 [USER] Goal: place a mobile control beside AI replies to reveal the conversation's right-hand customer details.
+- 2026-08-27 [CODE] Now: the mobile inbox header includes a right-panel icon that opens a right-side customer details sheet with platform, status, contact fields, lead temperature, and tags for both real and demo conversations.
+- 2026-08-27 [USER] Goal: match the mobile inbox header reference by placing the expand-right icon after AI replies and removing the AI control background.
+- 2026-08-27 [CODE] Now: AI replies render as a transparent inline control, followed by the right-details icon in both real and demo mobile inbox headers.
 - 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
 - 2026-08-26 [TOOL] Now: review PR #83 adds the exact required statement in a dedicated Privacy Policy section; `origin/main` already contains the corresponding Terms section.
 - 2026-08-26 [USER] Goal: omit pages already converted to Markdown from new web-link discoveries and display a selected page’s scraped Markdown in an expanded, readable drawer.
@@ -43,13 +55,16 @@
 
 # Done (recent)
 
+- 2026-08-27 [CODE] Added mobile inbox and workspace navigation: selected conversations use the full mobile canvas, the customer name opens a full-screen searchable conversation sheet, the header retains a visible AI replies on/off switch, and dashboard/workspace pages expose a mobile sidebar trigger with compact gutters and one-column mobile Personal agent cards. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Added an explicit development-only mobile inbox demo preview with four realistic conversations and message threads so responsive states can be inspected without seeded inbox records. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Added a mobile customer-details sheet trigger beside AI replies, including matching demo data content and an accessible `Show customer details` label. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Refined the mobile inbox header order and treatment to match the supplied reference: AI replies has no container background and the expand-right control follows it. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-26 [CODE] New web-link discovery excludes completed URLs; newly scraped Markdown is retained in R2 and opens directly in a nearly full-screen, inset source viewer with a loading skeleton. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-26 [CODE] Overview now excludes AI Playground test conversations from customer conversation totals and AI-conversation metrics; the unshipped customer-facing fix is not in the release changelog.
 - 2026-08-24 [CODE] Added Book a Service agent onboarding: an editable weekday 9–5 availability step, optional self-only service creation, and an opt-in ready Book appointment workflow node. Booking requires a post-availability customer message plus the agent’s recorded reaction before the selected slot can be created. Skipping service creation creates the agent with availability alone.
 - 2026-08-25 [CODE] Added a dedicated Google Workspace API data Terms section and updated the Terms last-updated date; verified with the focused legal-content regression test and pending review PR.
 - 2026-08-21 [CODE] Completed the locally uncommitted AI-widget redesign and visitor-form refinement: direct iframe UX, prompt composer, reset, branding, sender-aware chat, editable field drafts, returning-profile routing, and aligned live/preview controls.
 - 2026-08-21 [CODE] Added opt-in suggestions, compact appearance controls, flexible custom visitor-field types, accessible dropdowns, and reactive avatar removal across dashboard and widget experiences.
-- 2026-08-23 [CODE] Made the dashboard preview launcher use the configured avatar when closed; its open chat header already uses the same avatar. Preview field controls retain the shared 12px horizontal inset.
 
 # Working set
 
@@ -64,10 +79,16 @@
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetLeadFormSection.tsx`
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetPreview.tsx`
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetSettingsPanel.tsx`
-- 2026-08-21 [CODE] `index.html`
+- 2026-08-27 [CODE] `src/{pages/ChatsPage.tsx,pages/ChatsPageMobileLayout.test.ts,WorkspacePage.tsx,WorkspacePageMobileLayout.test.ts,layouts/DashboardLayout.tsx,layouts/DashboardLayoutMobileNavigation.test.ts}`, `src/components/inbox/{InboxConversationList.tsx,InboxMobileConversationSwitcher.tsx}`
+- 2026-08-27 [CODE] `src/pages/ChatsPageDemoData.test.ts`, `src/components/inbox/{InboxDemoPreview.tsx,inboxDemoData.ts}`
+- 2026-08-27 [CODE] `src/components/inbox/InboxMobileDetailsSheet.tsx`, `src/pages/ChatsPageMobileLayout.test.ts`
 
 # Receipts
 
+- 2026-08-27 [TOOL] Mobile inbox, dashboard, and workspace red/green regressions confirm the customer conversation switcher, mobile AI toggle, sidebar triggers, compact gutters, and one-column mobile agent grid; 9 focused tests pass across all changes. Targeted lint passes for the changed layout files and tests; `ChatsPage.tsx` has 10 pre-existing lint errors. `git diff --check` passes. A full production build did not complete within two 30-second execution windows.
+- 2026-08-27 [TOOL] Inbox demo regression is green: 11 focused mobile/inbox tests pass, targeted lint passes for the new demo files, and `bun run build` completes with Node v22. Demo mode is gated to development plus the explicit `dummyData=true` URL flag.
+- 2026-08-27 [TOOL] Mobile details-sheet regression is green: focused mobile tests, new-component lint, diff validation, and the Node v22 production build pass. `ChatsPage.tsx` still reports its existing 10 unrelated lint errors when linted directly.
+- 2026-08-27 [TOOL] Header refinement regression is green: 11 focused tests pass, targeted lint and diff validation pass, and the Node v22 production build exits 0.
 - 2026-08-26 [TOOL] Google Workspace API Terms reached `origin/main`; Privacy-policy red/green coverage confirmed the same Limited Use statement was absent then present. The merged legal-content test suite passes 5 tests with targeted lint and a clean diff.
 - 2026-08-26 [TOOL] Review PR #83 at `https://github.com/Leykwan132/chat-saas/pull/83` includes completed-URL discovery filtering, persisted scraped Markdown, an expandable source-detail drawer, and the Privacy Policy statement; local Vite preview is `http://127.0.0.1:5178`.
 - 2026-08-26 [TOOL] R2 Markdown follow-up: 14 focused tests and targeted lint pass; integration-file lint reports 13 pre-existing issues in `convex/cloudflare.ts` and `WebSection.tsx`. Diff check passes and source files remain within the line cap.
