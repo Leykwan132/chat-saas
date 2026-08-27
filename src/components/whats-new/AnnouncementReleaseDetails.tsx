@@ -33,41 +33,64 @@ export function AnnouncementReleaseDetails({
         </p>
       </div>
 
-      <section className="flex flex-col gap-2">
-        <h4 className="text-sm font-semibold">New Models</h4>
-        <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm">
-          {announcement.newModels.map((model) => (
-            <li key={model.name} className="leading-5">
-              <span className="font-medium">{model.name}</span>{' '}
-              <span className="text-muted-foreground">{model.description}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {announcement.highlights?.length ? (
+        <section className="flex flex-col gap-2">
+          <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm">
+            {announcement.highlights.map((highlight) => (
+              <li key={highlight.title} className="leading-5">
+                <span className="font-medium">{highlight.title}</span>{' '}
+                <span className="text-muted-foreground">
+                  {highlight.description}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
-      <section className="flex flex-col gap-2">
-        <h4 className="text-sm font-semibold">Retired Models</h4>
-        <p className="text-sm leading-5 text-muted-foreground">
-          {`${announcement.retiredModels.join(' and ')} are no longer available.`}
-        </p>
-      </section>
+      {announcement.newModels.length ? (
+        <section className="flex flex-col gap-2">
+          <h4 className="text-sm font-semibold">New Models</h4>
+          <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm">
+            {announcement.newModels.map((model) => (
+              <li key={model.name} className="leading-5">
+                <span className="font-medium">{model.name}</span>{' '}
+                <span className="text-muted-foreground">
+                  {model.description}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
-      <section className="flex flex-col gap-2">
-        <h4 className="text-sm font-semibold">Cost of Models</h4>
-        <dl className="flex flex-col gap-2 text-sm">
-          {announcement.modelCosts.map((tier) => (
-            <div
-              key={tier.cost}
-              className="grid gap-0.5 sm:grid-cols-[9rem_1fr] sm:gap-3"
-            >
-              <dt className="font-medium">{tier.cost}</dt>
-              <dd className="leading-5 text-muted-foreground">
-                {tier.models.join(', ')}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      {announcement.retiredModels.length ? (
+        <section className="flex flex-col gap-2">
+          <h4 className="text-sm font-semibold">Retired Models</h4>
+          <p className="text-sm leading-5 text-muted-foreground">
+            {`${announcement.retiredModels.join(' and ')} are no longer available.`}
+          </p>
+        </section>
+      ) : null}
+
+      {announcement.modelCosts.length ? (
+        <section className="flex flex-col gap-2">
+          <h4 className="text-sm font-semibold">Cost of Models</h4>
+          <dl className="flex flex-col gap-2 text-sm">
+            {announcement.modelCosts.map((tier) => (
+              <div
+                key={tier.cost}
+                className="grid gap-0.5 sm:grid-cols-[9rem_1fr] sm:gap-3"
+              >
+                <dt className="font-medium">{tier.cost}</dt>
+                <dd className="leading-5 text-muted-foreground">
+                  {tier.models.join(', ')}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
 
       <div
         data-slot="announcement-release-date"
