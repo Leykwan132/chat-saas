@@ -104,6 +104,7 @@
 - 2026-08-27 [TOOL] Review-fix verification is green: focused inbox/mobile tests, targeted lint, diff validation, and the Node v22 production build pass.
 - 2026-08-27 [TOOL] Follow-up review verification is green: 11 focused tests pass, targeted lint and diff validation pass; production build is rerun before the PR update.
 - 2026-08-27 [TOOL] What’s new announcement regression is green: 4 focused tests pass, targeted ESLint passes, and `git diff --check` is clean.
+- 2026-08-27 [TOOL] Merged refreshed `origin/main` into `codex/mobile-responsive`; resolved all `CONTINUITY.md` conflicts while retaining both branches’ ledger entries, then verified 18 incoming regression tests and 4 What’s new tests with Node v22.
 - 2026-08-27 [TOOL] Final PR verification on pushed branch is green: 11 focused tests, targeted lint, diff validation, and Node v22 production build pass. Pre-existing unstaged `convex/_generated/api.d.ts` remains outside the PR.
 - 2026-08-21 [CODE] `index.html`
 
