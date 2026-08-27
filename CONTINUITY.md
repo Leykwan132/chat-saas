@@ -15,6 +15,7 @@
 - 2026-08-27 [USER] Goal: match the mobile inbox header reference by placing the expand-right icon after AI replies and removing the AI control background.
 - 2026-08-27 [CODE] Now: AI replies render as a transparent inline control, followed by the right-details icon in both real and demo mobile inbox headers.
 - 2026-08-27 [CODE] Now: mobile switcher search preserves the active chat, conversation rows support keyboard activation, and demo details use readable platform labels plus realistic contact values.
+- 2026-08-27 [CODE] Now: switcher search uses isolated mobile state and clears on close, preserving the active conversation while browsing alternate customers.
 - 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
 - 2026-08-26 [TOOL] Now: review PR #83 adds the exact required statement in a dedicated Privacy Policy section; `origin/main` already contains the corresponding Terms section.
 - 2026-08-26 [USER] Goal: omit pages already converted to Markdown from new web-link discoveries and display a selected page’s scraped Markdown in an expanded, readable drawer.
@@ -61,6 +62,7 @@
 - 2026-08-27 [CODE] Added a mobile customer-details sheet trigger beside AI replies, including matching demo data content and an accessible `Show customer details` label. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-27 [CODE] Refined the mobile inbox header order and treatment to match the supplied reference: AI replies has no container background and the expand-right control follows it. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-27 [CODE] Addressed review findings for the mobile inbox: search no longer deselects the open chat, rows are keyboard accessible, and demo details contain human-readable platform/contact data. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Follow-up review fix isolates mobile switcher filtering from desktop selection state and clears the query when the sheet closes. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-26 [CODE] New web-link discovery excludes completed URLs; newly scraped Markdown is retained in R2 and opens directly in a nearly full-screen, inset source viewer with a loading skeleton. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-26 [CODE] Overview now excludes AI Playground test conversations from customer conversation totals and AI-conversation metrics; the unshipped customer-facing fix is not in the release changelog.
 - 2026-08-24 [CODE] Added Book a Service agent onboarding: an editable weekday 9–5 availability step, optional self-only service creation, and an opt-in ready Book appointment workflow node. Booking requires a post-availability customer message plus the agent’s recorded reaction before the selected slot can be created. Skipping service creation creates the agent with availability alone.
@@ -92,6 +94,7 @@
 - 2026-08-27 [TOOL] Mobile details-sheet regression is green: focused mobile tests, new-component lint, diff validation, and the Node v22 production build pass. `ChatsPage.tsx` still reports its existing 10 unrelated lint errors when linted directly.
 - 2026-08-27 [TOOL] Header refinement regression is green: 11 focused tests pass, targeted lint and diff validation pass, and the Node v22 production build exits 0.
 - 2026-08-27 [TOOL] Review-fix verification is green: focused inbox/mobile tests, targeted lint, diff validation, and the Node v22 production build pass.
+- 2026-08-27 [TOOL] Follow-up review verification is green: 11 focused tests pass, targeted lint and diff validation pass; production build is rerun before the PR update.
 - 2026-08-26 [TOOL] Google Workspace API Terms reached `origin/main`; Privacy-policy red/green coverage confirmed the same Limited Use statement was absent then present. The merged legal-content test suite passes 5 tests with targeted lint and a clean diff.
 - 2026-08-26 [TOOL] Review PR #83 at `https://github.com/Leykwan132/chat-saas/pull/83` includes completed-URL discovery filtering, persisted scraped Markdown, an expandable source-detail drawer, and the Privacy Policy statement; local Vite preview is `http://127.0.0.1:5178`.
 - 2026-08-26 [TOOL] R2 Markdown follow-up: 14 focused tests and targeted lint pass; integration-file lint reports 13 pre-existing issues in `convex/cloudflare.ts` and `WebSection.tsx`. Diff check passes and source files remain within the line cap.

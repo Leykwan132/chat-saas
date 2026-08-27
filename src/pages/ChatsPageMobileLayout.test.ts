@@ -26,6 +26,7 @@ test('keeps customer switching and the AI replies switch available in the mobile
   expect(pageSource).toContain('InboxMobileDetailsSheet');
   expect(detailsSource).toContain('mobile-details-button');
   expect(pageSource).toContain('if (mobileConversationSwitcherOpen) return;');
+  expect(pageSource).toContain('mobileConversationSearchQuery');
   expect(chatRowSource).toContain('tabIndex={0}');
   expect(chatRowSource).toContain("event.key === 'Enter'");
   expect(pageSource.indexOf('<InboxMobileDetailsSheet')).toBeGreaterThan(

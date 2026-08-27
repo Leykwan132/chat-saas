@@ -293,6 +293,7 @@ export default function ChatsPage() {
     Id<'conversations'> | null
   >(null);
   const [mobileConversationSwitcherOpen, setMobileConversationSwitcherOpen] = useState(false);
+  const [mobileConversationSearchQuery, setMobileConversationSearchQuery] = useState('');
   const [platformFilter, setPlatformFilter] = useState<'all' | ConversationPlatform>('all');
   const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>('all');
   const [escalatedActive, setEscalatedActive] = useState(false);
@@ -620,6 +621,16 @@ export default function ChatsPage() {
     bookingConversationIdSet,
   ]);
 
+  const mobileSwitcherChats = useMemo(() => {
+    const query = mobileConversationSearchQuery.trim().toLowerCase();
+    if (!query) return filteredChats;
+    return filteredChats.filter(
+      (chat) =>
+        chat.name.toLowerCase().includes(query) ||
+        chat.message.toLowerCase().includes(query),
+    );
+  }, [filteredChats, mobileConversationSearchQuery]);
+
   useEffect(() => {
     if (mobileConversationSwitcherOpen) return;
     if (
@@ -638,6 +649,11 @@ export default function ChatsPage() {
       else next.add(key);
       return next;
     });
+  };
+
+  const handleMobileConversationSwitcherOpenChange = (open: boolean) => {
+    setMobileConversationSwitcherOpen(open);
+    if (!open) setMobileConversationSearchQuery('');
   };
 
   const pinnedChats = useMemo(
@@ -1262,23 +1278,24 @@ export default function ChatsPage() {
                 <div className="flex min-w-0 flex-1 items-center md:hidden">
                   <InboxMobileConversationSwitcher
                     open={mobileConversationSwitcherOpen}
-                    onOpenChange={setMobileConversationSwitcherOpen}
+                    onOpenChange={handleMobileConversationSwitcherOpenChange}
                     customerName={displayHeaderName ?? 'Conversations'}
                   >
                     <InboxConversationList
                       fullWidth
-                      searchQuery={searchQuery}
-                      onSearchQueryChange={setSearchQuery}
+                      searchQuery={mobileConversationSearchQuery}
+                      onSearchQueryChange={setMobileConversationSearchQuery}
                       conversationSort={conversationSort}
                       onConversationSortChange={setConversationSort}
                       loading={conversationsStillLoading}
-                      filteredChats={filteredChats}
-                      pinnedChats={pinnedChats}
-                      unpinnedChats={unpinnedChats}
+                      filteredChats={mobileSwitcherChats}
+                      pinnedChats={mobileSwitcherChats.filter((chat) => pinnedIds.has(chat.id as string))}
+                      unpinnedChats={mobileSwitcherChats.filter((chat) => !pinnedIds.has(chat.id as string))}
                       totalConversationCount={chatItems.length}
                       selectedConversationId={selectedConversationId}
                       onSelectConversation={(conversationId) => {
                         setSelectedConversationId(conversationId);
+                        setMobileConversationSearchQuery('');
                         setMobileConversationSwitcherOpen(false);
                       }}
                       onTogglePin={togglePin}
