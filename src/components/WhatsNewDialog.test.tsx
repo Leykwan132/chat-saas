@@ -94,7 +94,7 @@ test('renders a labeled Package button that opens the announcement panel', () =>
 });
 
 test('provides the model support announcement as structured detail data', () => {
-  expect(ANNOUNCEMENTS).toHaveLength(1);
+  expect(ANNOUNCEMENTS).toHaveLength(2);
   expect(ANNOUNCEMENTS[0]).toMatchObject({
     id: 'model-support-update',
     title: 'Model support update',
@@ -102,7 +102,7 @@ test('provides the model support announcement as structured detail data', () => 
     releaseSummary:
       'Model pricing now uses clear credit tiers for every message.',
     publishedAt: '2026-08-12',
-    isNew: true,
+    isNew: false,
     icon: Orbit,
   });
   expect(ANNOUNCEMENTS[0].newModels).toEqual([
@@ -141,6 +141,44 @@ test('provides the model support announcement as structured detail data', () => 
       models: ['GPT-5.6 Luna'],
     },
   ]);
+  expect(ANNOUNCEMENTS[1]).toMatchObject({
+    id: 'google-calendar-support',
+    title: 'Google Calendar Support',
+    summary: 'Connect Google Calendar to keep customer bookings and availability in sync.',
+    releaseTitle: 'Google Calendar integration is here.',
+    releaseSummary:
+      'Connect your Google Calendar to manage availability and keep bookings in sync.',
+    publishedAt: '2026-08-27',
+    isNew: true,
+    icon: CalendarDays,
+  });
+  expect(ANNOUNCEMENTS[1].highlights).toEqual([
+    {
+      title: 'Connect your calendar',
+      description:
+        'Link Google Calendar to your Kilobot agent and keep your availability in one place.',
+    },
+    {
+      title: 'Stay in sync',
+      description:
+        'Your calendar events stay aligned with customer bookings made through Kilobot.',
+    },
+  ]);
+});
+
+test('renders calendar support details without model-only sections', () => {
+  const renderedDetails = AnnouncementReleaseDetails({
+    announcement: ANNOUNCEMENTS[1],
+  });
+  const releaseText = collectText(renderedDetails).replace(/\s+/g, ' ');
+
+  expect(releaseText).toContain('Google Calendar integration is here.');
+  expect(releaseText).toContain('Connect your calendar');
+  expect(releaseText).toContain('Stay in sync');
+  expect(releaseText).toContain('Released on 27 Aug 2026');
+  expect(releaseText).not.toContain('New Models');
+  expect(releaseText).not.toContain('Retired Models');
+  expect(releaseText).not.toContain('Cost of Models');
 });
 
 test('renders a single-open accordion with full details inline', async () => {

@@ -74,7 +74,15 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => onSelect(chat.id)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              onSelect(chat.id);
+            }
+          }}
           style={{
             display: 'flex', alignItems: 'center', gap: '12px',
             padding: '12px 16px',

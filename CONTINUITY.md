@@ -2,6 +2,24 @@
 
 # Snapshot
 
+- 2026-08-27 [USER] Goal: make the web inbox chat responsive on mobile; the selected customer must remain a tap-to-switch control and the AI replies switch must remain available to turn AI off.
+- 2026-08-27 [CODE] Now: mobile shows the conversation list before selection, then a full-width chat whose customer header opens the searchable conversation switcher; a visible AI on/off switch stays in that header. Desktop inbox columns are unchanged.
+- 2026-08-27 [USER] Goal: keep a navigable sidebar available in mobile mode and reduce horizontal page padding.
+- 2026-08-27 [CODE] Now: the dashboard header exposes the existing sidebar sheet trigger on mobile; non-full-height pages use compact mobile gutters and preserve larger responsive gutters on desktop.
+- 2026-08-27 [USER] Goal: keep Personal workspace agents one per mobile row and apply the compact horizontal padding there too; this supersedes the earlier two-column mobile request.
+- 2026-08-27 [CODE] Now: the workspace header exposes the same mobile sidebar trigger; agent cards use one mobile column and retain three/four/five-column layouts from `sm` upward with compact mobile gutters.
+- 2026-08-27 [USER] Goal: preview the mobile inbox with visible customer and message data while retaining the AI-replies switch.
+- 2026-08-27 [CODE] Now: local development can open `/dashboard/<agent-id>/inbox?dummyData=true` to render a mobile-only demo inbox with four conversations, selectable threads, a searchable switcher, and an interactive AI replies toggle; real Convex data remains unchanged.
+- 2026-08-27 [USER] Goal: place a mobile control beside AI replies to reveal the conversation's right-hand customer details.
+- 2026-08-27 [CODE] Now: the mobile inbox header includes a right-panel icon that opens a right-side customer details sheet with platform, status, contact fields, lead temperature, and tags for both real and demo conversations.
+- 2026-08-27 [USER] Goal: match the mobile inbox header reference by placing the expand-right icon after AI replies and removing the AI control background.
+- 2026-08-27 [CODE] Now: AI replies render as a transparent inline control, followed by the right-details icon in both real and demo mobile inbox headers.
+- 2026-08-27 [CODE] Now: mobile switcher search preserves the active chat, conversation rows support keyboard activation, and demo details use readable platform labels plus realistic contact values.
+- 2026-08-27 [CODE] Now: switcher search uses isolated mobile state and clears on close, preserving the active conversation while browsing alternate customers.
+- 2026-08-27 [USER] Goal: add Google Calendar Support as a new Kilobot “What’s new” announcement and remove the “New” marker from Model Support.
+- 2026-08-27 [CODE] Now: the What’s new panel contains a new Google Calendar Support release with calendar highlights; Model Support remains listed without a New badge.
+- 2026-08-27 [ASSUMPTION] Calendar announcement uses 2026-08-27 as its publication date; the production changelog remains unchanged until availability is confirmed.
+- 2026-08-27 [TOOL] Pull request #85 is open at `https://github.com/Leykwan132/chat-saas/pull/85` from `codex/mobile-responsive` into `main`; commits `b05dd54`, `e2d96bc`, and `4ba8a5d` contain the mobile responsive inbox/workspace work and review fixes.
 - 2026-08-26 [USER] Goal: prevent the Workflow editor from crashing after a Send Media node is deleted.
 - 2026-08-26 [CODE] Now: authenticated workflow-media subscriptions return an empty list when their node has already been deleted; ownership and invalid-node checks remain strict. This customer-facing bug fix is UNRELEASED and must not enter the changelog until production availability is confirmed.
 - 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
@@ -45,6 +63,13 @@
 
 # Done (recent)
 
+- 2026-08-27 [CODE] Added mobile inbox and workspace navigation: selected conversations use the full mobile canvas, the customer name opens a full-screen searchable conversation sheet, the header retains a visible AI replies on/off switch, and dashboard/workspace pages expose a mobile sidebar trigger with compact gutters and one-column mobile Personal agent cards. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Added an explicit development-only mobile inbox demo preview with four realistic conversations and message threads so responsive states can be inspected without seeded inbox records. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Added a mobile customer-details sheet trigger beside AI replies, including matching demo data content and an accessible `Show customer details` label. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Refined the mobile inbox header order and treatment to match the supplied reference: AI replies has no container background and the expand-right control follows it. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Addressed review findings for the mobile inbox: search no longer deselects the open chat, rows are keyboard accessible, and demo details contain human-readable platform/contact data. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Follow-up review fix isolates mobile switcher filtering from desktop selection state and clears the query when the sheet closes. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Added Google Calendar Support to Kilobot’s What’s new panel and removed the Model Support New badge; release copy is unshipped and not in the release changelog.
 - 2026-08-26 [CODE] New web-link discovery excludes completed URLs; newly scraped Markdown is retained in R2 and opens directly in a nearly full-screen, inset source viewer with a loading skeleton. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-26 [CODE] Overview now excludes AI Playground test conversations from customer conversation totals and AI-conversation metrics; the unshipped customer-facing fix is not in the release changelog.
 - 2026-08-26 [CODE] Prevented stale Send Media subscriptions from crashing the Workflow editor when their node is deleted; deleted-node media reads now resolve empty while protected access validation remains enforced.
@@ -66,6 +91,21 @@
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetLeadFormSection.tsx`
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetPreview.tsx`
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetSettingsPanel.tsx`
+- 2026-08-27 [CODE] `src/{pages/ChatsPage.tsx,pages/ChatsPageMobileLayout.test.ts,WorkspacePage.tsx,WorkspacePageMobileLayout.test.ts,layouts/DashboardLayout.tsx,layouts/DashboardLayoutMobileNavigation.test.ts}`, `src/components/inbox/{InboxConversationList.tsx,InboxMobileConversationSwitcher.tsx}`
+- 2026-08-27 [CODE] `src/pages/ChatsPageDemoData.test.ts`, `src/components/inbox/{InboxDemoPreview.tsx,inboxDemoData.ts}`
+- 2026-08-27 [CODE] `src/components/inbox/InboxMobileDetailsSheet.tsx`, `src/pages/ChatsPageMobileLayout.test.ts`
+
+# Receipts
+
+- 2026-08-27 [TOOL] Mobile inbox, dashboard, and workspace red/green regressions confirm the customer conversation switcher, mobile AI toggle, sidebar triggers, compact gutters, and one-column mobile agent grid; 9 focused tests pass across all changes. Targeted lint passes for the changed layout files and tests; `ChatsPage.tsx` has 10 pre-existing lint errors. `git diff --check` passes. A full production build did not complete within two 30-second execution windows.
+- 2026-08-27 [TOOL] Inbox demo regression is green: 11 focused mobile/inbox tests pass, targeted lint passes for the new demo files, and `bun run build` completes with Node v22. Demo mode is gated to development plus the explicit `dummyData=true` URL flag.
+- 2026-08-27 [TOOL] Mobile details-sheet regression is green: focused mobile tests, new-component lint, diff validation, and the Node v22 production build pass. `ChatsPage.tsx` still reports its existing 10 unrelated lint errors when linted directly.
+- 2026-08-27 [TOOL] Header refinement regression is green: 11 focused tests pass, targeted lint and diff validation pass, and the Node v22 production build exits 0.
+- 2026-08-27 [TOOL] Review-fix verification is green: focused inbox/mobile tests, targeted lint, diff validation, and the Node v22 production build pass.
+- 2026-08-27 [TOOL] Follow-up review verification is green: 11 focused tests pass, targeted lint and diff validation pass; production build is rerun before the PR update.
+- 2026-08-27 [TOOL] What’s new announcement regression is green: 4 focused tests pass, targeted ESLint passes, and `git diff --check` is clean.
+- 2026-08-27 [TOOL] Merged refreshed `origin/main` into `codex/mobile-responsive`; resolved all `CONTINUITY.md` conflicts while retaining both branches’ ledger entries, then verified 18 incoming regression tests and 4 What’s new tests with Node v22.
+- 2026-08-27 [TOOL] Final PR verification on pushed branch is green: 11 focused tests, targeted lint, diff validation, and Node v22 production build pass. Pre-existing unstaged `convex/_generated/api.d.ts` remains outside the PR.
 - 2026-08-21 [CODE] `index.html`
 
 # Receipts
@@ -78,6 +118,9 @@
 - 2026-08-26 [TOOL] Direct Markdown viewer follow-up: focused viewer regression failed before the interaction change and passes after it; the complete focused PR suite passes 14 tests and viewer-file lint is clean.
 - 2026-08-26 [TOOL] Inset Markdown viewer follow-up: red/green layout test confirmed the previous edge-to-edge geometry and now verifies 1rem/1.5rem responsive insets; 15 focused PR tests pass with a clean diff check.
 - 2026-08-26 [TOOL] Overview regression failed before the fix (test thread counted as two conversations) and passes after it; focused suite passed 3/3. Broader Overview coverage has two existing date-boundary test failures in sentiment/topic assertions, unrelated to playground filtering.
+- 2026-08-24 [TOOL] Service reassurance placement: red/green service-step render test confirmed the helper was inside the appointment-scheduling card; 10 focused tests, targeted lint, and diff validation pass.
+- 2026-08-24 [TOOL] Availability reassurance: a red/green availability-step render test confirmed the edit-later text was absent; 9 focused tests, targeted lint, and diff validation pass.
+- 2026-08-24 [TOOL] Booking toggle wording: red/green service-step render test confirmed the prior wording; 8 focused tests, targeted lint, and diff validation pass.
 - 2026-08-24 [TOOL] Booking onboarding refinements: red/green availability and service-step tests confirmed missing/incorrect reassurance placement and toggle wording; targeted lint and diff validation pass.
 - 2026-08-24 [TOOL] Booking onboarding: 31 focused backend/UI tests and targeted lint pass; production build completes with Node v22; all new or modularized source files are at or below 300 lines. Repository-wide lint remains blocked by 223 pre-existing errors in unrelated paths. The full `bun test` run is unsuitable here (1,362 pass, 174 fail, 116 loader errors) because Bun lacks Vitest `import.meta.glob` support and required Stripe environment values. Convex codegen requires an unconfigured `CONVEX_DEPLOYMENT`.
 - 2026-08-21 [TOOL] Custom-field draft boundary: red merge test confirmed confirmation had no model boundary; focused tests (9), app TypeScript, targeted ESLint, and diff validation pass. All touched code files remain below 300 lines.
