@@ -21,6 +21,8 @@ test('inbox demo preview is a dedicated mobile-only component', () => {
   expect(pageSource).toContain('<InboxDemoPreview />');
   expect(demoSource).toContain('md:hidden');
   expect(demoSource).toContain('Turn off AI replies');
+  expect(demoSource).toContain('INBOX_DEMO_PLATFORM_LABELS');
+  expect(demoSource).toContain('INBOX_DEMO_CONTACT_DETAILS');
   expect(fixtureSource).toContain('Maya Chen');
   expect(fixtureSource).toContain('Jordan Lee');
 });

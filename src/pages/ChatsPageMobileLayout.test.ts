@@ -14,6 +14,10 @@ const demoSource = readFileSync(
   new URL('../components/inbox/InboxDemoPreview.tsx', import.meta.url),
   'utf8',
 );
+const chatRowSource = readFileSync(
+  new URL('../components/ChatRow.tsx', import.meta.url),
+  'utf8',
+);
 
 test('keeps customer switching and the AI replies switch available in the mobile chat header', () => {
   expect(pageSource).toContain('InboxMobileConversationSwitcher');
@@ -21,6 +25,9 @@ test('keeps customer switching and the AI replies switch available in the mobile
   expect(pageSource).toContain('mobile-ai-replies-switch');
   expect(pageSource).toContain('InboxMobileDetailsSheet');
   expect(detailsSource).toContain('mobile-details-button');
+  expect(pageSource).toContain('if (mobileConversationSwitcherOpen) return;');
+  expect(chatRowSource).toContain('tabIndex={0}');
+  expect(chatRowSource).toContain("event.key === 'Enter'");
   expect(pageSource.indexOf('<InboxMobileDetailsSheet')).toBeGreaterThan(
     pageSource.indexOf('id="mobile-ai-replies-switch"'),
   );

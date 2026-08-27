@@ -1,8 +1,23 @@
-import type { Chat } from '@/components/ChatRow';
+import type { Chat, ConversationPlatform } from '@/components/ChatRow';
 import type { InboxUIMessage } from '@/lib/inboxOptimistic';
 import type { Id } from '../../../convex/_generated/dataModel';
 
 const demoConversationId = (value: string) => value as Id<'conversations'>;
+
+export const INBOX_DEMO_PLATFORM_LABELS: Record<ConversationPlatform, string> = {
+  whatsapp: 'WhatsApp',
+  instagram: 'Instagram',
+  messenger: 'Messenger',
+  web: 'Web',
+  avatar: 'Avatar',
+};
+
+export const INBOX_DEMO_CONTACT_DETAILS: Record<string, { phone: string; email: string }> = {
+  'demo-maya-chen': { phone: '+60 12-345 6789', email: 'maya.chen@example.com' },
+  'demo-jordan-lee': { phone: '+60 17-222 4588', email: 'jordan.lee@example.com' },
+  'demo-aisha-rahman': { phone: '+60 11-908 3312', email: 'aisha.rahman@example.com' },
+  'demo-noah-tan': { phone: '+60 16-774 1090', email: 'noah.tan@example.com' },
+};
 
 export const INBOX_DEMO_CONVERSATIONS: Chat[] = [
   {

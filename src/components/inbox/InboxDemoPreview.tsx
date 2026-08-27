@@ -7,7 +7,12 @@ import { InboxMobileConversationSwitcher } from '@/components/inbox/InboxMobileC
 import { InboxMobileDetailsSheet } from '@/components/inbox/InboxMobileDetailsSheet';
 import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
-import { INBOX_DEMO_CONVERSATIONS, INBOX_DEMO_MESSAGES } from '@/components/inbox/inboxDemoData';
+import {
+  INBOX_DEMO_CONTACT_DETAILS,
+  INBOX_DEMO_CONVERSATIONS,
+  INBOX_DEMO_MESSAGES,
+  INBOX_DEMO_PLATFORM_LABELS,
+} from '@/components/inbox/inboxDemoData';
 import type { Id } from '../../../convex/_generated/dataModel';
 
 export function InboxDemoPreview() {
@@ -92,7 +97,9 @@ export function InboxDemoPreview() {
           open={detailsOpen}
           onOpenChange={setDetailsOpen}
           customerName={selectedConversation.name}
-          platform={selectedConversation.platform}
+          platform={INBOX_DEMO_PLATFORM_LABELS[selectedConversation.platform]}
+          phone={INBOX_DEMO_CONTACT_DETAILS[selectedConversation.id as string].phone}
+          email={INBOX_DEMO_CONTACT_DETAILS[selectedConversation.id as string].email}
           status={selectedConversation.conversationStatus.replaceAll('_', ' ')}
           leadTemperature={selectedConversation.leadTemperature}
           tags={selectedConversation.tags}

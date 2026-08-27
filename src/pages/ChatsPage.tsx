@@ -621,13 +621,14 @@ export default function ChatsPage() {
   ]);
 
   useEffect(() => {
+    if (mobileConversationSwitcherOpen) return;
     if (
       selectedConversationId &&
       !filteredChats.some((c: any) => c.id === selectedConversationId)
     ) {
       setSelectedConversationId(null);
     }
-  }, [filteredChats, selectedConversationId]);
+  }, [filteredChats, mobileConversationSwitcherOpen, selectedConversationId]);
 
   const togglePin = (id: Id<'conversations'>) => {
     const key = id as string;
