@@ -427,6 +427,32 @@ export async function receive(
 
       for (const message of incomingMessages) {
         try {
+          if (message.type === "system") {
+            const system = message.system;
+            const userId = system?.user_id?.trim();
+            const previousUserId = system?.previous_user_id?.trim();
+            const isUserIdChange =
+              system?.type === "user_changed_user_id" ||
+              system?.type === "user_changed_number";
+            if (
+              isUserIdChange &&
+              userId &&
+              previousUserId &&
+              userId !== previousUserId
+            ) {
+              const phone = system.wa_id?.trim() || message.from?.trim();
+              await ctx.runMutation(
+                internal.whatsappUserIdChange.apply,
+                {
+                  phoneNumberId,
+                  previousUserId,
+                  userId,
+                  ...(phone ? { phone } : {}),
+                },
+              );
+            }
+            continue;
+          }
           const from = message.from_user_id ?? message.from;
           if (!from) continue;
           const profile = profileByContactId.get(from);
@@ -1422,6 +1448,15 @@ type WhatsAppIncomingMessage = {
   interactive?: {
     button_reply?: { id?: string; title?: string };
     list_reply?: { id?: string; title?: string };
+  };
+  system?: {
+    body?: string;
+    wa_id?: string;
+    user_id?: string;
+    previous_user_id?: string;
+    parent_user_id?: string;
+    previous_parent_user_id?: string;
+    type?: string;
   };
   error?: unknown;
   errors?: unknown;

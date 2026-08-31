@@ -3,7 +3,7 @@
 # Snapshot
 
 - 2026-08-31 [USER] Goal: support WhatsApp contacts who opt in with a username and expose only `user_id`, then create a review PR. Approved identity model persists optional `whatsappUserId` and `whatsappUsername`, joins inbound profile data with `user_id`/`from_user_id`, and sends with `recipient` rather than `to` for that identity type across replies, broadcasts, and workflow templates.
-- 2026-08-31 [USER] Now: the pending WhatsApp username-recipient PR must also handle `system.user_changed_user_id` and `system.user_changed_number` events that replace a user's BSUID. The revised design transfers the customer identity and linked conversation address without creating a chat message; implementation awaits design review.
+- 2026-08-31 [CODE] Now: `codex/whatsapp-username-recipients` also handles Meta `user_changed_user_id` and `user_changed_number` system events. A matched customer's BSUID and linked WhatsApp conversation addresses move together without creating a chat, analytics, or AI event; the update is pending PR review.
 - 2026-08-26 [USER] Goal: prevent the Workflow editor from crashing after a Send Media node is deleted.
 - 2026-08-26 [CODE] Now: authenticated workflow-media subscriptions return an empty list when their node has already been deleted; ownership and invalid-node checks remain strict. This customer-facing bug fix is UNRELEASED and must not enter the changelog until production availability is confirmed.
 - 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
@@ -49,6 +49,7 @@
 # Done (recent)
 
 - 2026-08-31 [CODE] Added WhatsApp username-contact support: inbound provider IDs and `@username` are stored without creating a synthetic phone; inbox text/media/reactions, templates, and broadcasts send those contacts using Meta's `recipient` field. This customer-facing feature is UNRELEASED and must not enter the changelog until production availability is confirmed.
+- 2026-08-31 [CODE] Added WhatsApp BSUID-change continuity: both documented system-event variants retain a customer's username, move the current provider recipient ID and linked inbox conversation address, and accept an explicitly shared new phone number. This customer-facing feature is UNRELEASED and must not enter the changelog until production availability is confirmed.
 - 2026-08-26 [CODE] New web-link discovery excludes completed URLs; newly scraped Markdown is retained in R2 and opens directly in a nearly full-screen, inset source viewer with a loading skeleton. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-26 [CODE] Overview now excludes AI Playground test conversations from customer conversation totals and AI-conversation metrics; the unshipped customer-facing fix is not in the release changelog.
 - 2026-08-26 [CODE] Prevented stale Send Media subscriptions from crashing the Workflow editor when their node is deleted; deleted-node media reads now resolve empty while protected access validation remains enforced.
@@ -75,6 +76,7 @@
 # Receipts
 
 - 2026-08-31 [TOOL] WhatsApp username-recipient verification: 15 focused tests pass under Node v22; `bunx tsc -b` and changed-backend/test lint pass; `git diff --check` is clean. `AutomationsBroadcastPage.tsx` lint retains 7 pre-existing issues outside the edited lines. Full `bun run test`: 1,752 pass and 21 unrelated failures in Agent Overview, billing-date, and web-widget coverage.
+- 2026-08-31 [TOOL] WhatsApp BSUID-change verification: red/green coverage passed for customer/conversation transfer and both webhook system-event variants. The full focused WhatsApp suite has 19 passing tests; Node v22 TypeScript, targeted lint, and `git diff --check` pass.
 - 2026-08-26 [TOOL] Merged `origin/main` into `codex/fix-workflow-media-deletion`; the continuity conflict was compacted with both lines of work retained. Node v22 verification passed 27 focused tests, TypeScript, targeted lint, and `git diff --check`.
 - 2026-08-26 [TOOL] Deleted-node media regression: focused test failed as expected before the fix with `Workflow media node not found` from `listForNode`; after the fix, 24 affected tests, TypeScript, targeted ESLint, and `git diff --check` pass with Node v22. Full `bun run test` completes 1,745 passing tests and 14 existing failures in five unchanged calendar, escalation, widget/UI, and test-discovery areas.
 - 2026-08-26 [TOOL] Google Workspace API Terms reached `origin/main`; Privacy-policy red/green coverage confirmed the same Limited Use statement was absent then present. The merged legal-content test suite passes 5 tests with targeted lint and a clean diff.

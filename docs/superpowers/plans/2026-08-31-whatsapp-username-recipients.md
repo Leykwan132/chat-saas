@@ -352,14 +352,14 @@ Expected: a PR URL ready for review.
 **Files:**
 
 - Modify: `convex/schema.ts:customers indexes`
-- Modify: `convex/customers.ts:internalApplyWhatsAppUserIdChange`
+- Create: `convex/whatsappUserIdChange.ts:apply`
 - Modify: `convex/whatsappWebhook.ts:system payload parsing and dispatch`
 - Modify: `convex/whatsappWebhookReceive.test.ts:system-event boundary`
 - Create: `convex/whatsappUserIdChange.test.ts`
 
 **Interfaces:**
 
-- Produces `internal.customers.internalApplyWhatsAppUserIdChange({ phoneNumberId, previousUserId, userId, phone })` returning `{ updated: boolean }`.
+- Produces `internal.whatsappUserIdChange.apply({ phoneNumberId, previousUserId, userId, phone })` returning `{ updated: boolean }`.
 - Consumes `system.wa_id`, `system.user_id`, `system.previous_user_id`, parent IDs, and `system.type` from `WhatsAppIncomingMessage`.
 - Produces the `customers` index `by_orgId_and_service_and_whatsappUserId`.
 
@@ -369,7 +369,7 @@ Create `convex/whatsappUserIdChange.test.ts` with a real Convex test database. I
 
 ```ts
 const result = await t.mutation(
-  internal.customers.internalApplyWhatsAppUserIdChange,
+  internal.whatsappUserIdChange.apply,
   {
     phoneNumberId: "phone-123",
     previousUserId: "US.old",
@@ -398,11 +398,11 @@ Run:
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/whatsappUserIdChange.test.ts
 ```
 
-Expected: FAIL because `internalApplyWhatsAppUserIdChange` does not exist.
+Expected: FAIL because `whatsappUserIdChange.apply` does not exist.
 
 - [ ] **Step 3: Write the minimal customer continuity mutation**
 
-Add the index and implement `internalApplyWhatsAppUserIdChange`. For WhatsApp channels with the supplied phone number ID, resolve the old user ID using the new index and then the existing `(orgId, service, contactAddress)` index. When one customer is found and the IDs differ, patch the current user ID/contact address and supplied phone only, preserving username. Patch linked WhatsApp conversations through `by_customerId`; return `{ updated: true }`. Unknown, malformed, or no-op input returns `{ updated: false }` without writes.
+Add the index and implement `apply` in `convex/whatsappUserIdChange.ts`. For WhatsApp channels with the supplied phone number ID, resolve the old user ID using the new index and then the existing `(orgId, service, contactAddress)` index. When one customer is found and the IDs differ, patch the current user ID/contact address and supplied phone only, preserving username. Patch linked WhatsApp conversations through `by_customerId`; return `{ updated: true }`. Unknown, malformed, or no-op input returns `{ updated: false }` without writes.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -457,6 +457,6 @@ Expected: PASS, including no-inbox-message assertions.
 - [ ] **Step 9: Commit the system-event continuity feature**
 
 ```bash
-git add convex/schema.ts convex/customers.ts convex/whatsappWebhook.ts convex/whatsappWebhookReceive.test.ts convex/whatsappUserIdChange.test.ts docs/superpowers/plans/2026-08-31-whatsapp-username-recipients.md
+git add convex/schema.ts convex/whatsappUserIdChange.ts convex/whatsappWebhook.ts convex/whatsappWebhookReceive.test.ts convex/whatsappUserIdChange.test.ts docs/superpowers/plans/2026-08-31-whatsapp-username-recipients.md
 git commit -m "feat: preserve WhatsApp user ID changes"
 ```

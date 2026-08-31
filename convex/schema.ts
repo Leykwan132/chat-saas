@@ -885,6 +885,11 @@ export default defineSchema({
       "service",
       "contactAddress",
     ])
+    .index("by_orgId_and_service_and_whatsappUserId", [
+      "orgId",
+      "service",
+      "whatsappUserId",
+    ])
     .index("by_userId_and_agentId_and_lastSeenAt", [
       "userId",
       "agentId",

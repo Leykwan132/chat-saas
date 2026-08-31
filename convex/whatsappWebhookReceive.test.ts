@@ -117,6 +117,128 @@ test("username-only contacts persist their provider identity and opted-in userna
   });
 });
 
+test("user ID change system events update identity without ingesting a chat message", async () => {
+  const runMutation = vi.fn().mockResolvedValue(undefined);
+  const ctx = { runMutation } as unknown as Parameters<typeof receive>[0];
+  const payload = JSON.stringify({
+    entry: [
+      {
+        changes: [
+          {
+            field: "messages",
+            value: {
+              metadata: { phone_number_id: "phone-123" },
+              messages: [
+                {
+                  id: "system-message-123",
+                  timestamp: "1700000000",
+                  type: "system",
+                  system: {
+                    type: "user_changed_user_id",
+                    user_id: "US.new",
+                    previous_user_id: "US.old",
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  const response = await receive(ctx, payload);
+  const systemChangeArgs = runMutation.mock.calls
+    .map((call) => call[1])
+    .find(
+      (args) =>
+        args !== null &&
+        typeof args === "object" &&
+        "previousUserId" in args &&
+        args.previousUserId === "US.old",
+    );
+  const inboundArgs = runMutation.mock.calls
+    .map((call) => call[1])
+    .find(
+      (args) =>
+        args !== null &&
+        typeof args === "object" &&
+        "externalId" in args &&
+        args.externalId === "system-message-123",
+    );
+
+  expect(response.status).toBe(200);
+  expect(systemChangeArgs).toMatchObject({
+    phoneNumberId: "phone-123",
+    previousUserId: "US.old",
+    userId: "US.new",
+  });
+  expect(inboundArgs).toBeUndefined();
+});
+
+test("number-change system events forward the current phone without ingesting a chat message", async () => {
+  const runMutation = vi.fn().mockResolvedValue(undefined);
+  const ctx = { runMutation } as unknown as Parameters<typeof receive>[0];
+  const payload = JSON.stringify({
+    entry: [
+      {
+        changes: [
+          {
+            field: "messages",
+            value: {
+              metadata: { phone_number_id: "phone-123" },
+              messages: [
+                {
+                  id: "system-message-456",
+                  timestamp: "1700000000",
+                  type: "system",
+                  system: {
+                    type: "user_changed_number",
+                    wa_id: "16505551111",
+                    user_id: "US.new",
+                    previous_user_id: "US.old",
+                    parent_user_id: "PARENT.new",
+                    previous_parent_user_id: "PARENT.old",
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  const response = await receive(ctx, payload);
+  const systemChangeArgs = runMutation.mock.calls
+    .map((call) => call[1])
+    .find(
+      (args) =>
+        args !== null &&
+        typeof args === "object" &&
+        "previousUserId" in args &&
+        args.previousUserId === "US.old",
+    );
+  const inboundArgs = runMutation.mock.calls
+    .map((call) => call[1])
+    .find(
+      (args) =>
+        args !== null &&
+        typeof args === "object" &&
+        "externalId" in args &&
+        args.externalId === "system-message-456",
+    );
+
+  expect(response.status).toBe(200);
+  expect(systemChangeArgs).toMatchObject({
+    phoneNumberId: "phone-123",
+    previousUserId: "US.old",
+    userId: "US.new",
+    phone: "16505551111",
+  });
+  expect(inboundArgs).toBeUndefined();
+});
+
 test("unsupported Meta messages are logged but not ingested", async () => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
   const runMutation = vi.fn();
