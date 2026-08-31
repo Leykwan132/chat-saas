@@ -2,7 +2,7 @@
 
 ## Goal
 
-Support WhatsApp users who opt in with a username and therefore expose a provider `user_id` instead of a `wa_id`/phone number. Receive their messages, retain their profile identity, and address outbound WhatsApp messages through Meta's `recipient` property.
+Support WhatsApp users who opt in with a username and therefore expose a provider `user_id` instead of a `wa_id`/phone number. Receive their messages, retain their profile identity, keep identity continuity when Meta replaces a user's BSUID, and address outbound WhatsApp messages through Meta's `recipient` property.
 
 ## Identity model
 
@@ -12,11 +12,23 @@ For a username-only webhook message, `messages[].from_user_id` is the contact id
 
 The system must not interpret a WhatsApp user ID as a telephone number or populate the phone field with it.
 
+`customers.whatsappUserId` is indexed within the organization and service so a Meta system event can find the record currently associated with a prior BSUID. The existing natural-key lookup by `contactAddress` remains as a compatibility fallback for username contacts created before that index was available.
+
 ## Inbound processing
 
 The WhatsApp webhook parser accepts both existing phone-based fields (`wa_id`, `from`) and username-only fields (`user_id`, `from_user_id`). It builds one contact-profile lookup that resolves a profile by the identifier carried by the message. A malformed username-only message that lacks `from_user_id` is ignored without affecting existing phone traffic.
 
 Customer upsert and conversation lookup continue to key on the inbound contact address. This makes repeat username-only events resolve to the same customer and conversation while leaving existing phone-number keys untouched.
+
+### Provider user-ID changes
+
+Meta may deliver a `messages[]` record with `type: "system"` and `system.type` equal to either `"user_changed_user_id"` or `"user_changed_number"`. These are identity-maintenance events, not customer chat messages. The webhook handles them only when `metadata.phone_number_id`, `system.user_id`, and `system.previous_user_id` are non-empty.
+
+The handler resolves the WhatsApp channel from `phone_number_id`, finds a WhatsApp customer in that channel's organization by `previous_user_id`, and updates the matched customer's `whatsappUserId` and `contactAddress` to `user_id`. It also updates every linked WhatsApp conversation's `contactAddress`, preserving the existing thread, assignment, status, and customer relationship so the next message under the new BSUID remains in the same inbox conversation. Historical message rows retain their original `contactAddress` as an event snapshot.
+
+If Meta shares a current phone in `system.wa_id` or message `from`, the handler refreshes `customers.phone` to that value. It does not infer or fabricate a phone number when those fields are absent, and it leaves the opted-in username unchanged because the system event does not provide one. The optional parent-BSUID fields are accepted by the payload parser but are not persisted or used for matching.
+
+No system event is inserted into the inbox, passed to analytics, or used to trigger an AI response. A malformed event, an unchanged ID, an unknown previous BSUID, or an unknown channel is a safe no-op. The next valid customer message remains independently ingestible.
 
 ## Outbound processing
 
@@ -49,6 +61,9 @@ Focused regressions cover:
 3. phone webhook compatibility;
 4. freeform and template payloads using `recipient` for username-only customers;
 5. phone payloads retaining `to` and never containing `recipient`.
+6. a `user_changed_user_id` system event transferring the current customer identity and linked conversation address to the new BSUID without creating an inbox message;
+7. the `user_changed_number` variant applying the same transfer and refreshing the shared phone number when present;
+8. malformed, unknown, and no-op system events leaving existing customers and conversations untouched.
 
 ## Constraints
 
