@@ -2,24 +2,10 @@
 
 # Snapshot
 
-- 2026-08-27 [USER] Goal: make the web inbox chat responsive on mobile; the selected customer must remain a tap-to-switch control and the AI replies switch must remain available to turn AI off.
-- 2026-08-27 [CODE] Now: mobile shows the conversation list before selection, then a full-width chat whose customer header opens the searchable conversation switcher; a visible AI on/off switch stays in that header. Desktop inbox columns are unchanged.
-- 2026-08-27 [USER] Goal: keep a navigable sidebar available in mobile mode and reduce horizontal page padding.
-- 2026-08-27 [CODE] Now: the dashboard header exposes the existing sidebar sheet trigger on mobile; non-full-height pages use compact mobile gutters and preserve larger responsive gutters on desktop.
-- 2026-08-27 [USER] Goal: keep Personal workspace agents one per mobile row and apply the compact horizontal padding there too; this supersedes the earlier two-column mobile request.
-- 2026-08-27 [CODE] Now: the workspace header exposes the same mobile sidebar trigger; agent cards use one mobile column and retain three/four/five-column layouts from `sm` upward with compact mobile gutters.
-- 2026-08-27 [USER] Goal: preview the mobile inbox with visible customer and message data while retaining the AI-replies switch.
-- 2026-08-27 [CODE] Now: local development can open `/dashboard/<agent-id>/inbox?dummyData=true` to render a mobile-only demo inbox with four conversations, selectable threads, a searchable switcher, and an interactive AI replies toggle; real Convex data remains unchanged.
-- 2026-08-27 [USER] Goal: place a mobile control beside AI replies to reveal the conversation's right-hand customer details.
-- 2026-08-27 [CODE] Now: the mobile inbox header includes a right-panel icon that opens a right-side customer details sheet with platform, status, contact fields, lead temperature, and tags for both real and demo conversations.
-- 2026-08-27 [USER] Goal: match the mobile inbox header reference by placing the expand-right icon after AI replies and removing the AI control background.
-- 2026-08-27 [CODE] Now: AI replies render as a transparent inline control, followed by the right-details icon in both real and demo mobile inbox headers.
-- 2026-08-27 [CODE] Now: mobile switcher search preserves the active chat, conversation rows support keyboard activation, and demo details use readable platform labels plus realistic contact values.
-- 2026-08-27 [CODE] Now: switcher search uses isolated mobile state and clears on close, preserving the active conversation while browsing alternate customers.
-- 2026-08-27 [USER] Goal: add Google Calendar Support as a new Kilobot “What’s new” announcement and remove the “New” marker from Model Support.
-- 2026-08-27 [CODE] Now: the What’s new panel contains a new Google Calendar Support release with calendar highlights; Model Support remains listed without a New badge.
-- 2026-08-27 [ASSUMPTION] Calendar announcement uses 2026-08-27 as its publication date; the production changelog remains unchanged until availability is confirmed.
-- 2026-08-27 [TOOL] Pull request #85 is open at `https://github.com/Leykwan132/chat-saas/pull/85` from `codex/mobile-responsive` into `main`; commits `b05dd54`, `e2d96bc`, and `4ba8a5d` contain the mobile responsive inbox/workspace work and review fixes.
+- 2026-08-31 [USER] Goal: support WhatsApp contacts who opt in with a username and expose only `user_id`, then create a review PR. Approved identity model persists optional `whatsappUserId` and `whatsappUsername`, joins inbound profile data with `user_id`/`from_user_id`, and sends with `recipient` rather than `to` for that identity type across replies, broadcasts, and workflow templates.
+- 2026-08-31 [CODE] Now: `codex/whatsapp-username-recipients` also handles Meta `user_changed_user_id` and `user_changed_number` system events. A matched customer's BSUID and linked WhatsApp conversation addresses move together without creating a chat, analytics, or AI event; the PR includes the generated Convex API and TypeScript repair required for build review.
+- 2026-08-27 [CODE] Now: mobile inboxes preserve desktop behavior while adding a full-width selected chat, searchable customer switcher, visible AI toggle, right-hand details sheet, mobile sidebar trigger, compact gutters, and one-column Personal-agent cards. Local `/dashboard/<agent-id>/inbox?dummyData=true` provides realistic responsive demo data. PR #85 is open from `codex/mobile-responsive`.
+- 2026-08-27 [CODE] Now: the What’s new panel includes Google Calendar Support and removes the Model Support New badge; this customer-facing release copy is unshipped and remains out of the production changelog.
 - 2026-08-26 [USER] Goal: prevent the Workflow editor from crashing after a Send Media node is deleted.
 - 2026-08-26 [CODE] Now: authenticated workflow-media subscriptions return an empty list when their node has already been deleted; ownership and invalid-node checks remain strict. This customer-facing bug fix is UNRELEASED and must not enter the changelog until production availability is confirmed.
 - 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
@@ -42,6 +28,7 @@
 
 # Decisions
 
+- 2026-08-31 [USER] D756 ACTIVE: Valid WhatsApp BSUID-change system events match a customer by `previous_user_id`, replace its current user ID/contact address with `user_id`, update linked WhatsApp conversation addresses to preserve the existing inbox thread, optionally refresh the shared current phone, and create no inbox, analytics, or AI event. Both `user_changed_user_id` and `user_changed_number` use this rule; parent BSUIDs are ignored.
 - 2026-08-24 [USER] D753 ACTIVE: Book a Service agent onboarding is Identity → Goal → editable availability (default Monday–Friday 9–5) with a You can edit it later reassurance → optional service with a You can add or edit your services later reassurance beneath, not inside, the appointment-scheduling card. Create Agent atomically creates selected availability, an active service assigned only to the creator, and a ready Book appointment workflow node for that service only when Enable AI appointment scheduling is on; Skip for now creates the agent directly with availability alone. New workspace members receive independent default availability for every existing agent but do not inherit creator-only onboarding services.
 - 2026-08-26 [USER] D754 ACTIVE: A completed web source is excluded only from subsequent discovery results, preserving the original converted entry and avoiding another Cloudflare `/markdown` conversion. New scraped Markdown is stored in R2 under a web-entry key and opens directly in a nearly full-screen, inset viewer when the source is clicked.
 - 2026-08-26 [USER] D755 ACTIVE: The Terms and Privacy Policy must state verbatim that raw or derived user data received from Workspace APIs adheres to the Google User Data Policy, including Limited Use requirements.
@@ -63,13 +50,10 @@
 
 # Done (recent)
 
-- 2026-08-27 [CODE] Added mobile inbox and workspace navigation: selected conversations use the full mobile canvas, the customer name opens a full-screen searchable conversation sheet, the header retains a visible AI replies on/off switch, and dashboard/workspace pages expose a mobile sidebar trigger with compact gutters and one-column mobile Personal agent cards. The unshipped customer-facing change is not in the release changelog.
-- 2026-08-27 [CODE] Added an explicit development-only mobile inbox demo preview with four realistic conversations and message threads so responsive states can be inspected without seeded inbox records. The unshipped customer-facing change is not in the release changelog.
-- 2026-08-27 [CODE] Added a mobile customer-details sheet trigger beside AI replies, including matching demo data content and an accessible `Show customer details` label. The unshipped customer-facing change is not in the release changelog.
-- 2026-08-27 [CODE] Refined the mobile inbox header order and treatment to match the supplied reference: AI replies has no container background and the expand-right control follows it. The unshipped customer-facing change is not in the release changelog.
-- 2026-08-27 [CODE] Addressed review findings for the mobile inbox: search no longer deselects the open chat, rows are keyboard accessible, and demo details contain human-readable platform/contact data. The unshipped customer-facing change is not in the release changelog.
-- 2026-08-27 [CODE] Follow-up review fix isolates mobile switcher filtering from desktop selection state and clears the query when the sheet closes. The unshipped customer-facing change is not in the release changelog.
-- 2026-08-27 [CODE] Added Google Calendar Support to Kilobot’s What’s new panel and removed the Model Support New badge; release copy is unshipped and not in the release changelog.
+- 2026-08-31 [CODE] Added WhatsApp username-contact support: inbound provider IDs and `@username` are stored without creating a synthetic phone; inbox text/media/reactions, templates, and broadcasts send those contacts using Meta's `recipient` field. This customer-facing feature is UNRELEASED and must not enter the changelog until production availability is confirmed.
+- 2026-08-31 [CODE] Added WhatsApp BSUID-change continuity: both documented system-event variants retain a customer's username, move the current provider recipient ID and linked inbox conversation address, and accept an explicitly shared new phone number. This customer-facing feature is UNRELEASED and must not enter the changelog until production availability is confirmed.
+- 2026-08-27 [CODE] Added responsive mobile inbox/workspace navigation, demo data, accessible customer details, and robust switcher search behavior. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Added Google Calendar Support to What’s new and removed the Model Support New badge; release copy is unshipped and not in the release changelog.
 - 2026-08-26 [CODE] New web-link discovery excludes completed URLs; newly scraped Markdown is retained in R2 and opens directly in a nearly full-screen, inset source viewer with a loading skeleton. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-26 [CODE] Overview now excludes AI Playground test conversations from customer conversation totals and AI-conversation metrics; the unshipped customer-facing fix is not in the release changelog.
 - 2026-08-26 [CODE] Prevented stale Send Media subscriptions from crashing the Workflow editor when their node is deleted; deleted-node media reads now resolve empty while protected access validation remains enforced.
@@ -110,6 +94,9 @@
 
 # Receipts
 
+- 2026-08-31 [TOOL] WhatsApp username-recipient verification: 15 focused tests pass under Node v22; `bunx tsc -b` and changed-backend/test lint pass; `git diff --check` is clean. `AutomationsBroadcastPage.tsx` lint retains 7 pre-existing issues outside the edited lines. Full `bun run test`: 1,752 pass and 21 unrelated failures in Agent Overview, billing-date, and web-widget coverage.
+- 2026-08-31 [TOOL] WhatsApp BSUID-change verification: red/green coverage passed for customer/conversation transfer and both webhook system-event variants. The full focused WhatsApp suite has 19 passing tests; Node v22 TypeScript, targeted lint, and `git diff --check` pass.
+- 2026-08-31 [TOOL] Build repair: `bunx convex codegen` is blocked by an unset `CONVEX_DEPLOYMENT`, so the tracked generated API declaration was updated with the new module. Node v22 TypeScript then completed without diagnostics; 19 focused tests and changed-backend lint pass. The broadcast page retains 7 pre-existing lint errors outside the edited row type.
 - 2026-08-26 [TOOL] Merged `origin/main` into `codex/fix-workflow-media-deletion`; the continuity conflict was compacted with both lines of work retained. Node v22 verification passed 27 focused tests, TypeScript, targeted lint, and `git diff --check`.
 - 2026-08-26 [TOOL] Deleted-node media regression: focused test failed as expected before the fix with `Workflow media node not found` from `listForNode`; after the fix, 24 affected tests, TypeScript, targeted ESLint, and `git diff --check` pass with Node v22. Full `bun run test` completes 1,745 passing tests and 14 existing failures in five unchanged calendar, escalation, widget/UI, and test-discovery areas.
 - 2026-08-26 [TOOL] Google Workspace API Terms reached `origin/main`; Privacy-policy red/green coverage confirmed the same Limited Use statement was absent then present. The merged legal-content test suite passes 5 tests with targeted lint and a clean diff.

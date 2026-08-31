@@ -979,6 +979,8 @@ export const ingestChannelMessageArgs = {
   contactName: v.optional(v.string()),
   contactEmail: v.optional(v.string()),
   contactPhone: v.optional(v.string()),
+  whatsappUserId: v.optional(v.string()),
+  whatsappUsername: v.optional(v.string()),
   direction: directionValidator,
   content: v.string(),
   contentType: v.optional(contentTypeValidator),
@@ -1027,6 +1029,8 @@ export type IngestChannelMessageArgs = {
   contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
+  whatsappUserId?: string;
+  whatsappUsername?: string;
   direction: "incoming" | "outgoing";
   content: string;
   contentType?: Doc<"messages">["contentType"];
@@ -1100,6 +1104,8 @@ export async function ingestChannelMessage(
       profileName: args.contactName,
       email: args.contactEmail,
       phone: args.contactPhone,
+      whatsappUserId: args.whatsappUserId,
+      whatsappUsername: args.whatsappUsername,
       userId: channel.connectedByUserId,
       agentId: channel.defaultAgentId,
     },
