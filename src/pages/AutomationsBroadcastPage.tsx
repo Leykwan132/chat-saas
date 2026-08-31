@@ -137,6 +137,7 @@ type BroadcastCustomerRow = {
   customerId: Id<'customers'>;
   name?: string;
   phone: string;
+  recipientLabel: string;
   tags: string[];
   leadTemperature?: LeadTemperature;
   service: Doc<'customers'>['service'];

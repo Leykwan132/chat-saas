@@ -188,7 +188,7 @@ export async function sendMetaReaction(
 ): Promise<ChannelSendResult> {
   switch (conversation.service) {
     case "whatsapp":
-      return sendWhatsAppReaction(conversation, channel, options);
+      return sendWhatsAppReaction(channel, options);
     case "messenger":
       return sendMessengerReaction(conversation, channel, options);
     default:
@@ -203,7 +203,7 @@ export async function removeMetaReaction(
 ): Promise<ChannelSendResult> {
   switch (conversation.service) {
     case "whatsapp":
-      return sendWhatsAppReaction(conversation, channel, {
+      return sendWhatsAppReaction(channel, {
         targetExternalId: options.targetExternalId,
         emoji: "",
       });
@@ -300,7 +300,6 @@ export async function sendMediaToChannel(
       return mediaResult;
     }
     const textResult = await sendWhatsApp(
-      conversation,
       channel,
       trimmed,
       options.whatsappCustomer,
@@ -361,7 +360,7 @@ export async function sendTextToChannel(
     case "avatar":
       return { ok: true, externalId: undefined };
     case "whatsapp":
-      return sendWhatsApp(conversation, channel, trimmed, options?.whatsappCustomer);
+      return sendWhatsApp(channel, trimmed, options?.whatsappCustomer);
     case "instagram":
       return sendInstagram(conversation, channel, trimmed, options);
     case "messenger":
@@ -635,7 +634,6 @@ async function sendMetaSenderAction(
 }
 
 async function sendWhatsApp(
-  conversation: Doc<"conversations">,
   channel: Doc<"channels">,
   trimmed: string,
   customer: SendTextToChannelOptions["whatsappCustomer"],
@@ -764,7 +762,6 @@ function buildWhatsAppMediaBody(
 }
 
 async function sendWhatsAppReaction(
-  conversation: Doc<"conversations">,
   channel: Doc<"channels">,
   options: MetaReactionOptions,
 ): Promise<ChannelSendResult> {
