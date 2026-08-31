@@ -1,6 +1,7 @@
 "use node";
 
 import type { Doc } from "../_generated/dataModel";
+import { buildWhatsAppRecipient } from "../whatsappRecipient";
 import {
   logMediaSendDone,
   logMediaSendGraphError,
@@ -73,6 +74,10 @@ export type ChannelSendResult =
 export type SendTextToChannelOptions = {
   /** When true, Messenger/Instagram may use HUMAN_AGENT tag outside the 24h window. */
   allowHumanAgentTag?: boolean;
+  whatsappCustomer?: Pick<
+    Doc<"customers">,
+    "contactAddress" | "phone" | "whatsappUserId"
+  >;
 };
 
 export type ChannelMediaItem = {
@@ -111,6 +116,10 @@ export type MetaTypingOptions = MetaMarkSeenOptions;
 export type MetaReactionOptions = {
   targetExternalId: string;
   emoji: string;
+  whatsappCustomer?: Pick<
+    Doc<"customers">,
+    "contactAddress" | "phone" | "whatsappUserId"
+  >;
 };
 
 type MetaSenderAction = "mark_seen" | "typing_on" | "typing_off";
@@ -280,11 +289,22 @@ export async function sendMediaToChannel(
   }));
 
   if (conversation.service === "whatsapp") {
-    const mediaResult = await sendWhatsAppMedia(conversation, channel, mediaItems, trimmed);
+    const mediaResult = await sendWhatsAppMedia(
+      conversation,
+      channel,
+      mediaItems,
+      trimmed,
+      options.whatsappCustomer,
+    );
     if (!mediaResult.ok || trimmed.length === 0) {
       return mediaResult;
     }
-    const textResult = await sendWhatsApp(conversation, channel, trimmed);
+    const textResult = await sendWhatsApp(
+      conversation,
+      channel,
+      trimmed,
+      options.whatsappCustomer,
+    );
     if (!textResult.ok) {
       logMediaSendResultError(
         mediaSendLogContext(conversation, channel, "whatsapp.text_after_media", mediaItems, {
@@ -341,7 +361,7 @@ export async function sendTextToChannel(
     case "avatar":
       return { ok: true, externalId: undefined };
     case "whatsapp":
-      return sendWhatsApp(conversation, channel, trimmed);
+      return sendWhatsApp(conversation, channel, trimmed, options?.whatsappCustomer);
     case "instagram":
       return sendInstagram(conversation, channel, trimmed, options);
     case "messenger":
@@ -618,6 +638,7 @@ async function sendWhatsApp(
   conversation: Doc<"conversations">,
   channel: Doc<"channels">,
   trimmed: string,
+  customer: SendTextToChannelOptions["whatsappCustomer"],
 ): Promise<ChannelSendResult> {
   if (channel.status !== "connected" || !channel.phoneNumberId) {
     return { ok: false, error: "WhatsApp channel is not connected", policy: "generic" };
@@ -631,6 +652,9 @@ async function sendWhatsApp(
       policy: "generic",
     };
   }
+  if (!customer) {
+    return { ok: false, error: "WhatsApp customer not found", policy: "generic" };
+  }
 
   const url = `${waGraphBase()}/${channel.phoneNumberId}/messages`;
   const res = await fetch(url, {
@@ -642,7 +666,7 @@ async function sendWhatsApp(
     body: JSON.stringify({
       messaging_product: "whatsapp",
       recipient_type: "individual",
-      to: conversation.contactAddress,
+      ...buildWhatsAppRecipient(customer),
       type: "text",
       text: { body: trimmed },
     }),
@@ -656,6 +680,7 @@ async function sendWhatsAppMedia(
   channel: Doc<"channels">,
   mediaItems: ChannelMediaItem[],
   bodyText: string,
+  customer: SendTextToChannelOptions["whatsappCustomer"],
 ): Promise<ChannelSendResult> {
   const context = mediaSendLogContext(conversation, channel, "whatsapp.media", mediaItems, {
     hasText: bodyText.trim().length > 0,
@@ -676,10 +701,15 @@ async function sendWhatsAppMedia(
     logMediaSendResultError(context, result);
     return result;
   }
+  if (!customer) {
+    const result = { ok: false, error: "WhatsApp customer not found", policy: "generic" } as const;
+    logMediaSendResultError(context, result);
+    return result;
+  }
 
   const externalIds: string[] = [];
   for (const [index, item] of mediaItems.entries()) {
-    const mediaBody = buildWhatsAppMediaBody(conversation, item);
+    const mediaBody = buildWhatsAppMediaBody(customer, item);
     const res = await fetch(`${waGraphBase()}/${channel.phoneNumberId}/messages`, {
       method: "POST",
       headers: {
@@ -716,7 +746,7 @@ function whatsAppMediaType(item: ChannelMediaItem): "image" | "video" | "documen
 }
 
 function buildWhatsAppMediaBody(
-  conversation: Doc<"conversations">,
+  customer: NonNullable<SendTextToChannelOptions["whatsappCustomer"]>,
   item: ChannelMediaItem,
 ) {
   const type = whatsAppMediaType(item);
@@ -727,7 +757,7 @@ function buildWhatsAppMediaBody(
   return {
     messaging_product: "whatsapp",
     recipient_type: "individual",
-    to: conversation.contactAddress,
+    ...buildWhatsAppRecipient(customer),
     type,
     [type]: mediaPayload,
   };
@@ -750,6 +780,9 @@ async function sendWhatsAppReaction(
       policy: "generic",
     };
   }
+  if (!options.whatsappCustomer) {
+    return { ok: false, error: "WhatsApp customer not found", policy: "generic" };
+  }
 
   const res = await fetch(`${waGraphBase()}/${channel.phoneNumberId}/messages`, {
     method: "POST",
@@ -760,7 +793,7 @@ async function sendWhatsAppReaction(
     body: JSON.stringify({
       messaging_product: "whatsapp",
       recipient_type: "individual",
-      to: conversation.contactAddress,
+      ...buildWhatsAppRecipient(options.whatsappCustomer),
       type: "reaction",
       reaction: {
         message_id: options.targetExternalId,
