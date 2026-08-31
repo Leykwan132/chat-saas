@@ -404,11 +404,18 @@ export async function receive(
       const phoneNumberId = value.metadata?.phone_number_id;
       if (!phoneNumberId) continue;
 
-      // Profile name lives on contacts[], wa_id is the join key.
-      const nameByWaId = new Map<string, string>();
+      const profileByContactId = new Map<
+        string,
+        { name?: string; username?: string; whatsappUserId?: string }
+      >();
       for (const c of value.contacts ?? []) {
-        if (c.wa_id && c.profile?.name) {
-          nameByWaId.set(c.wa_id, c.profile.name);
+        const contactId = c.user_id ?? c.wa_id;
+        if (contactId) {
+          profileByContactId.set(contactId, {
+            name: c.profile?.name,
+            username: c.profile?.username,
+            whatsappUserId: c.user_id,
+          });
         }
       }
 
@@ -420,6 +427,9 @@ export async function receive(
 
       for (const message of incomingMessages) {
         try {
+          const from = message.from_user_id ?? message.from;
+          if (!from) continue;
+          const profile = profileByContactId.get(from);
           if (isWhatsAppErrorMessage(message)) {
             logWhatsAppLiveErrorMessage({
               source: "messages",
@@ -432,8 +442,8 @@ export async function receive(
           if (message.type === "reaction" && message.reaction?.message_id) {
             await ctx.runMutation(internal.whatsappWebhook.handleReaction, {
               phoneNumberId,
-              from: message.from,
-              profileName: nameByWaId.get(message.from),
+              from,
+              profileName: profile?.name,
               targetExternalId: message.reaction.message_id,
               emoji: message.reaction.emoji,
             });
@@ -468,7 +478,7 @@ export async function receive(
           ) {
             const channel = await ctx.runQuery(
               internal.channels.internalGetChannelByPhoneNumberId,
-              { phoneNumberId, contactAddress: message.from },
+              { phoneNumberId, contactAddress: from },
             );
             if (channel?.accessToken) {
               const mediaOwnerId =
@@ -510,11 +520,13 @@ export async function receive(
             {
               phoneNumberId,
               externalId: message.id,
-              from: message.from,
+              from,
               timestampMs: parseTimestamp(message.timestamp),
               content: extractContent(message),
               caption: message.image?.caption,
-              profileName: nameByWaId.get(message.from),
+              profileName: profile?.name,
+              whatsappUserId: profile?.whatsappUserId,
+              whatsappUsername: profile?.username,
               images,
               files,
               mediaDescriptors,
@@ -1012,6 +1024,8 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
       content: v.string(),
       caption: v.optional(v.string()),
       profileName: v.optional(v.string()),
+      whatsappUserId: v.optional(v.string()),
+      whatsappUsername: v.optional(v.string()),
       images: v.optional(
         v.array(
           v.object({
@@ -1050,6 +1064,8 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
           externalId: args.externalId,
           contactAddress: args.from,
           contactName: args.profileName,
+          whatsappUserId: args.whatsappUserId,
+          whatsappUsername: args.whatsappUsername,
           direction: "incoming",
           content: args.content,
           contentType,
@@ -1351,7 +1367,11 @@ type WhatsAppChangeValue = {
   };
   messaging_product?: string;
   metadata?: { display_phone_number?: string; phone_number_id?: string };
-  contacts?: Array<{ wa_id?: string; profile?: { name?: string } }>;
+  contacts?: Array<{
+    wa_id?: string;
+    user_id?: string;
+    profile?: { name?: string; username?: string };
+  }>;
   messages?: WhatsAppIncomingMessage[];
   message_echoes?: WhatsAppIncomingMessage[];
   state_sync?: Array<{
@@ -1387,7 +1407,8 @@ type WhatsAppChangeValue = {
 
 type WhatsAppIncomingMessage = {
   id: string;
-  from: string;
+  from?: string;
+  from_user_id?: string;
   to?: string;
   timestamp?: string;
   type?: string;

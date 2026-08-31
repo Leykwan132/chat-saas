@@ -569,6 +569,8 @@ export const internalUpsertFromWebhook = internalMutation({
     service: channelServiceValidator,
     contactAddress: v.string(),
     profileName: v.optional(v.string()),
+    whatsappUserId: v.optional(v.string()),
+    whatsappUsername: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     customFields: v.optional(v.record(v.string(), v.string())),
@@ -593,6 +595,8 @@ async function upsertCustomer(
     service: "whatsapp" | "instagram" | "messenger" | "web" | "avatar";
     contactAddress: string;
     profileName?: string;
+    whatsappUserId?: string;
+    whatsappUsername?: string;
     email?: string;
     phone?: string;
     customFields?: Record<string, string>;
@@ -612,22 +616,35 @@ async function upsertCustomer(
     .unique();
 
   const inputEmail = args.email && !isSyntheticEmail(args.email) ? args.email.trim() : undefined;
+  const whatsappUserId =
+    args.service === "whatsapp" ? args.whatsappUserId?.trim() || undefined : undefined;
+  const whatsappUsername =
+    args.service === "whatsapp" ? args.whatsappUsername?.trim() || undefined : undefined;
 
   let resolvedName = args.profileName?.trim();
   if (args.service === "whatsapp" && (!resolvedName || resolvedName === "")) {
-    const rawPhone = args.phone?.trim() || args.contactAddress.trim();
-    resolvedName = rawPhone.startsWith("+") ? rawPhone : `+${rawPhone}`;
+    if (whatsappUserId) {
+      resolvedName = whatsappUsername ?? args.contactAddress.trim();
+    } else {
+      const rawPhone = args.phone?.trim() || args.contactAddress.trim();
+      resolvedName = rawPhone.startsWith("+") ? rawPhone : `+${rawPhone}`;
+    }
   }
 
   if (existing === null) {
     const phone =
-      args.phone?.trim() || (args.service === "whatsapp" ? args.contactAddress : undefined);
+      args.phone?.trim() ||
+      (args.service === "whatsapp" && !whatsappUserId
+        ? args.contactAddress
+        : undefined);
     return await ctx.db.insert("customers", {
       orgId: args.orgId,
       userId: args.userId,
       agentId: args.agentId,
       service: args.service,
       contactAddress: args.contactAddress,
+      whatsappUserId,
+      whatsappUsername,
       name: resolvedName,
       email: inputEmail,
       phone,
@@ -664,6 +681,12 @@ async function upsertCustomer(
   }
   if (!existing.phone && args.phone) {
     patch.phone = args.phone.trim();
+  }
+  if (whatsappUserId && existing.whatsappUserId !== whatsappUserId) {
+    patch.whatsappUserId = whatsappUserId;
+  }
+  if (whatsappUsername && existing.whatsappUsername !== whatsappUsername) {
+    patch.whatsappUsername = whatsappUsername;
   }
   if (Object.keys(args.customFields ?? {}).length > 0) {
     patch.customFields = { ...existing.customFields, ...args.customFields };

@@ -852,6 +852,8 @@ export default defineSchema({
     agentId: v.optional(v.id("agents")),
     service: customerServiceValidator,
     contactAddress: v.string(),
+    whatsappUserId: v.optional(v.string()),
+    whatsappUsername: v.optional(v.string()),
     name: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
