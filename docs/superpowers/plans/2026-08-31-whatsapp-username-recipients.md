@@ -17,6 +17,7 @@
 - Keep code files at or below 300 lines and avoid comments in production code.
 - Phone contacts send only `{ to: normalizedPhone }`; username-opted contacts send only `{ recipient: whatsappUserId }`.
 - Do not infer a phone number from a provider user ID or place one in `customers.phone`.
+- Meta `system.user_changed_user_id` and `system.user_changed_number` events update an existing matched customer's BSUID and linked WhatsApp conversation addresses without creating an inbox message.
 - This feature remains out of the release changelog until its production availability date is confirmed.
 
 ---
@@ -31,6 +32,7 @@
 - `convex/chat/channelSend.ts` and `convex/chat/inboxActions.ts`: use the recipient builder for human, AI, media, and reaction sends.
 - `convex/{broadcastPool.ts,workflowWhatsappTemplateSender.ts,whatsappBroadcast.ts,whatsappSend.ts}`: use the recipient builder for template/broadcast/freeform sends.
 - `convex/{whatsappWebhookReceive.test.ts,chat/channelSend.test.ts,workflowWhatsappTemplateSender.test.ts}`: behavioral regression coverage for the new transport contract.
+- `convex/whatsappUserIdChange.test.ts`: database-level regression coverage for BSUID-change continuity.
 
 ### Task 1: Persist and ingest username-only identity
 
@@ -296,7 +298,7 @@ git add convex/broadcastPool.ts convex/whatsappBroadcast.ts convex/customers.ts 
 git commit -m "feat: support username recipients in broadcasts"
 ```
 
-### Task 5: Verify the complete change and prepare review
+### Task 6: Verify the complete change and prepare review
 
 **Files:**
 
@@ -344,3 +346,117 @@ gh pr create --base main --head codex/whatsapp-username-recipients --title "Supp
 ```
 
 Expected: a PR URL ready for review.
+
+### Task 7: Preserve identity across Meta BSUID-change system events
+
+**Files:**
+
+- Modify: `convex/schema.ts:customers indexes`
+- Modify: `convex/customers.ts:internalApplyWhatsAppUserIdChange`
+- Modify: `convex/whatsappWebhook.ts:system payload parsing and dispatch`
+- Modify: `convex/whatsappWebhookReceive.test.ts:system-event boundary`
+- Create: `convex/whatsappUserIdChange.test.ts`
+
+**Interfaces:**
+
+- Produces `internal.customers.internalApplyWhatsAppUserIdChange({ phoneNumberId, previousUserId, userId, phone })` returning `{ updated: boolean }`.
+- Consumes `system.wa_id`, `system.user_id`, `system.previous_user_id`, parent IDs, and `system.type` from `WhatsAppIncomingMessage`.
+- Produces the `customers` index `by_orgId_and_service_and_whatsappUserId`.
+
+- [ ] **Step 1: Write the failing database continuity regression**
+
+Create `convex/whatsappUserIdChange.test.ts` with a real Convex test database. Insert a WhatsApp channel, a customer whose `contactAddress` and `whatsappUserId` equal `US.old`, and a linked WhatsApp conversation. Invoke the desired internal mutation:
+
+```ts
+const result = await t.mutation(
+  internal.customers.internalApplyWhatsAppUserIdChange,
+  {
+    phoneNumberId: "phone-123",
+    previousUserId: "US.old",
+    userId: "US.new",
+    phone: "16505551111",
+  },
+);
+
+expect(result).toEqual({ updated: true });
+expect(customer).toMatchObject({
+  contactAddress: "US.new",
+  whatsappUserId: "US.new",
+  whatsappUsername: "@testusername",
+  phone: "16505551111",
+});
+expect(conversation).toMatchObject({ contactAddress: "US.new", customerId });
+```
+
+Add a separate unknown-prior-ID case asserting `{ updated: false }` and no document changes. This catches creating a second customer/conversation, losing the username, and cross-channel updates.
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/whatsappUserIdChange.test.ts
+```
+
+Expected: FAIL because `internalApplyWhatsAppUserIdChange` does not exist.
+
+- [ ] **Step 3: Write the minimal customer continuity mutation**
+
+Add the index and implement `internalApplyWhatsAppUserIdChange`. For WhatsApp channels with the supplied phone number ID, resolve the old user ID using the new index and then the existing `(orgId, service, contactAddress)` index. When one customer is found and the IDs differ, patch the current user ID/contact address and supplied phone only, preserving username. Patch linked WhatsApp conversations through `by_customerId`; return `{ updated: true }`. Unknown, malformed, or no-op input returns `{ updated: false }` without writes.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/whatsappUserIdChange.test.ts
+```
+
+Expected: PASS for transfer and no-op cases.
+
+- [ ] **Step 5: Write the failing webhook system-event regression**
+
+Add `user_changed_user_id` and `user_changed_number` fixtures to `convex/whatsappWebhookReceive.test.ts`. Both omit top-level `from`; the number-change fixture includes `wa_id` and parent IDs. Assert each dispatches the continuity mutation with literal `phoneNumberId`, `previousUserId`, `userId`, and optional phone, and assert neither dispatches the normal incoming-message mutation.
+
+```ts
+expect(systemChangeArgs).toMatchObject({
+  phoneNumberId: "phone-123",
+  previousUserId: "US.old",
+  userId: "US.new",
+  phone: "16505551111",
+});
+expect(inboundArgs).toBeUndefined();
+```
+
+This catches requiring `from`, ingesting a system event as chat, or dropping the number-change variant.
+
+- [ ] **Step 6: Run test to verify it fails**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/whatsappWebhookReceive.test.ts
+```
+
+Expected: FAIL because the parser does not recognize and dispatch the nested system payload.
+
+- [ ] **Step 7: Parse and dispatch only supported system events**
+
+Extend `WhatsAppIncomingMessage` with a typed optional `system` object. Before resolving ordinary inbound `from`, dispatch only the two supported types when their nested IDs are non-empty and differ. Use `system.wa_id ?? message.from` as the optional phone, then continue without ingesting the record. Preserve existing ordinary-message handling.
+
+- [ ] **Step 8: Run both system-event tests to verify they pass**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/whatsappUserIdChange.test.ts convex/whatsappWebhookReceive.test.ts
+```
+
+Expected: PASS, including no-inbox-message assertions.
+
+- [ ] **Step 9: Commit the system-event continuity feature**
+
+```bash
+git add convex/schema.ts convex/customers.ts convex/whatsappWebhook.ts convex/whatsappWebhookReceive.test.ts convex/whatsappUserIdChange.test.ts docs/superpowers/plans/2026-08-31-whatsapp-username-recipients.md
+git commit -m "feat: preserve WhatsApp user ID changes"
+```
