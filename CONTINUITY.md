@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-08-31 [USER] Goal: support WhatsApp contacts who opt in with a username and expose only `user_id`, then create a review PR. Approved identity model persists optional `whatsappUserId` and `whatsappUsername`, joins inbound profile data with `user_id`/`from_user_id`, and sends with `recipient` rather than `to` for that identity type across replies, broadcasts, and workflow templates.
 - 2026-08-26 [USER] Goal: prevent the Workflow editor from crashing after a Send Media node is deleted.
 - 2026-08-26 [CODE] Now: authenticated workflow-media subscriptions return an empty list when their node has already been deleted; ownership and invalid-node checks remain strict. This customer-facing bug fix is UNRELEASED and must not enter the changelog until production availability is confirmed.
 - 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
