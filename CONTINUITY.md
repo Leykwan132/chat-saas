@@ -4,6 +4,8 @@
 
 - 2026-08-31 [USER] Goal: support WhatsApp contacts who opt in with a username and expose only `user_id`, then create a review PR. Approved identity model persists optional `whatsappUserId` and `whatsappUsername`, joins inbound profile data with `user_id`/`from_user_id`, and sends with `recipient` rather than `to` for that identity type across replies, broadcasts, and workflow templates.
 - 2026-08-31 [CODE] Now: `codex/whatsapp-username-recipients` also handles Meta `user_changed_user_id` and `user_changed_number` system events. A matched customer's BSUID and linked WhatsApp conversation addresses move together without creating a chat, analytics, or AI event; the PR includes the generated Convex API and TypeScript repair required for build review.
+- 2026-08-27 [CODE] Now: mobile inboxes preserve desktop behavior while adding a full-width selected chat, searchable customer switcher, visible AI toggle, right-hand details sheet, mobile sidebar trigger, compact gutters, and one-column Personal-agent cards. Local `/dashboard/<agent-id>/inbox?dummyData=true` provides realistic responsive demo data. PR #85 is open from `codex/mobile-responsive`.
+- 2026-08-27 [CODE] Now: the What’s new panel includes Google Calendar Support and removes the Model Support New badge; this customer-facing release copy is unshipped and remains out of the production changelog.
 - 2026-08-26 [USER] Goal: prevent the Workflow editor from crashing after a Send Media node is deleted.
 - 2026-08-26 [CODE] Now: authenticated workflow-media subscriptions return an empty list when their node has already been deleted; ownership and invalid-node checks remain strict. This customer-facing bug fix is UNRELEASED and must not enter the changelog until production availability is confirmed.
 - 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
@@ -50,6 +52,8 @@
 
 - 2026-08-31 [CODE] Added WhatsApp username-contact support: inbound provider IDs and `@username` are stored without creating a synthetic phone; inbox text/media/reactions, templates, and broadcasts send those contacts using Meta's `recipient` field. This customer-facing feature is UNRELEASED and must not enter the changelog until production availability is confirmed.
 - 2026-08-31 [CODE] Added WhatsApp BSUID-change continuity: both documented system-event variants retain a customer's username, move the current provider recipient ID and linked inbox conversation address, and accept an explicitly shared new phone number. This customer-facing feature is UNRELEASED and must not enter the changelog until production availability is confirmed.
+- 2026-08-27 [CODE] Added responsive mobile inbox/workspace navigation, demo data, accessible customer details, and robust switcher search behavior. The unshipped customer-facing change is not in the release changelog.
+- 2026-08-27 [CODE] Added Google Calendar Support to What’s new and removed the Model Support New badge; release copy is unshipped and not in the release changelog.
 - 2026-08-26 [CODE] New web-link discovery excludes completed URLs; newly scraped Markdown is retained in R2 and opens directly in a nearly full-screen, inset source viewer with a loading skeleton. The unshipped customer-facing change is not in the release changelog.
 - 2026-08-26 [CODE] Overview now excludes AI Playground test conversations from customer conversation totals and AI-conversation metrics; the unshipped customer-facing fix is not in the release changelog.
 - 2026-08-26 [CODE] Prevented stale Send Media subscriptions from crashing the Workflow editor when their node is deleted; deleted-node media reads now resolve empty while protected access validation remains enforced.
@@ -71,6 +75,21 @@
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetLeadFormSection.tsx`
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetPreview.tsx`
 - 2026-08-21 [CODE] `src/components/channels/WebWidgetSettingsPanel.tsx`
+- 2026-08-27 [CODE] `src/{pages/ChatsPage.tsx,pages/ChatsPageMobileLayout.test.ts,WorkspacePage.tsx,WorkspacePageMobileLayout.test.ts,layouts/DashboardLayout.tsx,layouts/DashboardLayoutMobileNavigation.test.ts}`, `src/components/inbox/{InboxConversationList.tsx,InboxMobileConversationSwitcher.tsx}`
+- 2026-08-27 [CODE] `src/pages/ChatsPageDemoData.test.ts`, `src/components/inbox/{InboxDemoPreview.tsx,inboxDemoData.ts}`
+- 2026-08-27 [CODE] `src/components/inbox/InboxMobileDetailsSheet.tsx`, `src/pages/ChatsPageMobileLayout.test.ts`
+
+# Receipts
+
+- 2026-08-27 [TOOL] Mobile inbox, dashboard, and workspace red/green regressions confirm the customer conversation switcher, mobile AI toggle, sidebar triggers, compact gutters, and one-column mobile agent grid; 9 focused tests pass across all changes. Targeted lint passes for the changed layout files and tests; `ChatsPage.tsx` has 10 pre-existing lint errors. `git diff --check` passes. A full production build did not complete within two 30-second execution windows.
+- 2026-08-27 [TOOL] Inbox demo regression is green: 11 focused mobile/inbox tests pass, targeted lint passes for the new demo files, and `bun run build` completes with Node v22. Demo mode is gated to development plus the explicit `dummyData=true` URL flag.
+- 2026-08-27 [TOOL] Mobile details-sheet regression is green: focused mobile tests, new-component lint, diff validation, and the Node v22 production build pass. `ChatsPage.tsx` still reports its existing 10 unrelated lint errors when linted directly.
+- 2026-08-27 [TOOL] Header refinement regression is green: 11 focused tests pass, targeted lint and diff validation pass, and the Node v22 production build exits 0.
+- 2026-08-27 [TOOL] Review-fix verification is green: focused inbox/mobile tests, targeted lint, diff validation, and the Node v22 production build pass.
+- 2026-08-27 [TOOL] Follow-up review verification is green: 11 focused tests pass, targeted lint and diff validation pass; production build is rerun before the PR update.
+- 2026-08-27 [TOOL] What’s new announcement regression is green: 4 focused tests pass, targeted ESLint passes, and `git diff --check` is clean.
+- 2026-08-27 [TOOL] Merged refreshed `origin/main` into `codex/mobile-responsive`; resolved all `CONTINUITY.md` conflicts while retaining both branches’ ledger entries, then verified 18 incoming regression tests and 4 What’s new tests with Node v22.
+- 2026-08-27 [TOOL] Final PR verification on pushed branch is green: 11 focused tests, targeted lint, diff validation, and Node v22 production build pass. Pre-existing unstaged `convex/_generated/api.d.ts` remains outside the PR.
 - 2026-08-21 [CODE] `index.html`
 
 # Receipts
@@ -86,6 +105,9 @@
 - 2026-08-26 [TOOL] Direct Markdown viewer follow-up: focused viewer regression failed before the interaction change and passes after it; the complete focused PR suite passes 14 tests and viewer-file lint is clean.
 - 2026-08-26 [TOOL] Inset Markdown viewer follow-up: red/green layout test confirmed the previous edge-to-edge geometry and now verifies 1rem/1.5rem responsive insets; 15 focused PR tests pass with a clean diff check.
 - 2026-08-26 [TOOL] Overview regression failed before the fix (test thread counted as two conversations) and passes after it; focused suite passed 3/3. Broader Overview coverage has two existing date-boundary test failures in sentiment/topic assertions, unrelated to playground filtering.
+- 2026-08-24 [TOOL] Service reassurance placement: red/green service-step render test confirmed the helper was inside the appointment-scheduling card; 10 focused tests, targeted lint, and diff validation pass.
+- 2026-08-24 [TOOL] Availability reassurance: a red/green availability-step render test confirmed the edit-later text was absent; 9 focused tests, targeted lint, and diff validation pass.
+- 2026-08-24 [TOOL] Booking toggle wording: red/green service-step render test confirmed the prior wording; 8 focused tests, targeted lint, and diff validation pass.
 - 2026-08-24 [TOOL] Booking onboarding refinements: red/green availability and service-step tests confirmed missing/incorrect reassurance placement and toggle wording; targeted lint and diff validation pass.
 - 2026-08-24 [TOOL] Booking onboarding: 31 focused backend/UI tests and targeted lint pass; production build completes with Node v22; all new or modularized source files are at or below 300 lines. Repository-wide lint remains blocked by 223 pre-existing errors in unrelated paths. The full `bun test` run is unsuitable here (1,362 pass, 174 fail, 116 loader errors) because Bun lacks Vitest `import.meta.glob` support and required Stripe environment values. Convex codegen requires an unconfigured `CONVEX_DEPLOYMENT`.
 - 2026-08-21 [TOOL] Custom-field draft boundary: red merge test confirmed confirmation had no model boundary; focused tests (9), app TypeScript, targeted ESLint, and diff validation pass. All touched code files remain below 300 lines.

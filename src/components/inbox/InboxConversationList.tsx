@@ -25,6 +25,7 @@ import type { Id } from '../../../convex/_generated/dataModel';
 export type InboxConversationSort = 'newest' | 'oldest';
 
 type InboxConversationListProps = {
+  fullWidth?: boolean;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   conversationSort: InboxConversationSort;
@@ -42,6 +43,7 @@ type InboxConversationListProps = {
 };
 
 export function InboxConversationList({
+  fullWidth = false,
   searchQuery,
   onSearchQueryChange,
   conversationSort,
@@ -65,7 +67,8 @@ export function InboxConversationList({
     <div
       className={cn(
         inboxColumnClassName,
-        'w-[300px] shrink-0 border-r border-border bg-background',
+        fullWidth ? 'w-full border-r-0' : 'w-[300px] shrink-0 border-r',
+        'bg-background',
       )}
     >
       <div className={cn(inboxColumnHeaderClassName, 'gap-2 px-3')}>
