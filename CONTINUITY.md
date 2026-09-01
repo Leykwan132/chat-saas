@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-01 [USER] Goal: restore Messenger and Instagram on Channels now that Meta app review is approved, then create a review PR. The approved scope is UI visibility only; their existing OAuth, connection, and synchronization flows remain unchanged.
+- 2026-09-01 [USER] Goal: restore Messenger and Instagram on Channels now that Meta app review is approved, then create a review PR. The approved scope is UI visibility only; their existing OAuth, connection, and synchronization flows remain unchanged. Now: committed locally as `75aa718` on `codex/restore-messenger-instagram`; push/PR creation awaits explicit authorization to send this code to `origin`.
 - 2026-08-31 [USER] Goal: support WhatsApp contacts who opt in with a username and expose only `user_id`, then create a review PR. Approved identity model persists optional `whatsappUserId` and `whatsappUsername`, joins inbound profile data with `user_id`/`from_user_id`, and sends with `recipient` rather than `to` for that identity type across replies, broadcasts, and workflow templates.
 - 2026-08-31 [CODE] Now: `codex/whatsapp-username-recipients` also handles Meta `user_changed_user_id` and `user_changed_number` system events. A matched customer's BSUID and linked WhatsApp conversation addresses move together without creating a chat, analytics, or AI event; the PR includes the generated Convex API and TypeScript repair required for build review.
 - 2026-08-27 [CODE] Now: mobile inboxes preserve desktop behavior while adding a full-width selected chat, searchable customer switcher, visible AI toggle, right-hand details sheet, mobile sidebar trigger, compact gutters, and one-column Personal-agent cards. Local `/dashboard/<agent-id>/inbox?dummyData=true` provides realistic responsive demo data. PR #85 is open from `codex/mobile-responsive`.
@@ -85,6 +85,7 @@
 # Receipts
 
 - 2026-09-01 [TOOL] Messenger/Instagram visibility regression failed as expected while both cards were in hidden wrappers, then passed after their removal. Node v22 production build and `git diff --check` pass; changed-file lint has one pre-existing `ChannelsPage.tsx` React hook-dependency warning and no errors.
+- 2026-09-01 [TOOL] Local commit `75aa718` was created; push to the configured `origin` remote was blocked pending explicit code-egress authorization.
 - 2026-08-27 [TOOL] Mobile inbox, dashboard, and workspace red/green regressions confirm the customer conversation switcher, mobile AI toggle, sidebar triggers, compact gutters, and one-column mobile agent grid; 9 focused tests pass across all changes. Targeted lint passes for the changed layout files and tests; `ChatsPage.tsx` has 10 pre-existing lint errors. `git diff --check` passes. A full production build did not complete within two 30-second execution windows.
 - 2026-08-27 [TOOL] Inbox demo regression is green: 11 focused mobile/inbox tests pass, targeted lint passes for the new demo files, and `bun run build` completes with Node v22. Demo mode is gated to development plus the explicit `dummyData=true` URL flag.
 - 2026-08-27 [TOOL] Mobile details-sheet regression is green: focused mobile tests, new-component lint, diff validation, and the Node v22 production build pass. `ChatsPage.tsx` still reports its existing 10 unrelated lint errors when linted directly.
