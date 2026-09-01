@@ -8,6 +8,7 @@ import { getAuthContext } from "./authUtils";
 import { cfUploadPool, cfDeletePool, webScraperPool, linkDiscovererPool } from "./workpool";
 import Cloudflare from "cloudflare";
 import { createWorkspaceExternalState } from "./teamDeletion/externalGuard";
+import { generateWebMarkdownKey, r2 } from "./media/r2";
 
 const cfAccountId = process.env.CF_ACCOUNT_ID!;
 const cfInstanceName = process.env.CF_AI_SEARCH_NAME!;
@@ -252,13 +253,24 @@ export const processWebUrl = action({
     }
 
     const cfItemId = await uploadWorkspaceFileToCF(ctx, markdownBlob, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
+    const markdownR2Key = generateWebMarkdownKey(auth.orgId, args.agentId, uid);
+    await createWorkspaceExternalState(
+      ctx,
+      auth.orgId,
+      "r2",
+      async () => {
+        await r2.store(ctx, markdownBlob, { key: markdownR2Key });
+        return markdownR2Key;
+      },
+      async (createdKey) => await r2.deleteObject(ctx, createdKey),
+    );
 
     await ctx.runMutation(
       internal.knowledgeBase.internalStoreWebEntryWithContent,
       {
         agentId: args.agentId,
         url,
-        markdown,
+        markdownR2Key,
         fileSize,
         cfItemId,
         parentUrl: args.parentUrl,
@@ -317,14 +329,24 @@ export const uploadWebEntry = action({
             const safeName = linkUrl.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
             const markdownBlob = new File([markdown], `${safeName}_${uid}.md`, { type: "text/markdown" });
             const cfItemId = await uploadWorkspaceFileToCF(ctx, markdownBlob, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
+            const markdownR2Key = generateWebMarkdownKey(auth.orgId, args.agentId, uid);
+            await createWorkspaceExternalState(
+              ctx,
+              auth.orgId,
+              "r2",
+              async () => {
+                await r2.store(ctx, markdownBlob, { key: markdownR2Key });
+                return markdownR2Key;
+              },
+              async (createdKey) => await r2.deleteObject(ctx, createdKey),
+            );
 
-            // Store entry with markdown in Convex storage
             await ctx.runMutation(
               internal.knowledgeBase.internalStoreWebEntryWithContent,
               {
                 agentId: args.agentId,
                 url: linkUrl,
-                markdown,
+                markdownR2Key,
                 fileSize: markdownBlob.size,
                 cfItemId,
                 parentUrl: linkUrl === url ? undefined : url,
@@ -522,7 +544,6 @@ export const deleteTextEntry = action({
     if (entry.cfItemId) {
       await deleteFromCF(entry.cfItemId);
     }
-
     await ctx.runMutation(internal.knowledgeBase.internalRemoveTextEntry, {
       entryId: args.entryId,
     });
@@ -558,6 +579,7 @@ export const deleteWebEntry = action({
     if (entry.cfItemId) {
       await deleteFromCF(entry.cfItemId);
     }
+    if (entry.markdownR2Key) await r2.deleteObject(ctx, entry.markdownR2Key);
 
     await ctx.runMutation(internal.knowledgeBase.internalRemoveWebEntry, {
       entryId: args.entryId,
@@ -588,6 +610,7 @@ export const deleteWebEntryGroup = action({
 
       await cfDeletePool.enqueueAction(ctx, internal.workpool.cfDeleteWorker, {
         cfItemId: entry.cfItemId,
+        r2Key: entry.markdownR2Key,
       }, {
         onComplete: internal.knowledgeBase.cfDeleteComplete,
         context: { entryId: entry._id, entryType: "web" },
@@ -822,6 +845,11 @@ export const enqueueDelete = action({
     cfItemId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const webEntry = args.entryType === "web"
+      ? await ctx.runQuery(internal.knowledgeBase.internalGetWebEntry, {
+        entryId: args.entryId as never,
+      })
+      : null;
     await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
       entryId: args.entryId,
       status: "deleting",
@@ -829,6 +857,7 @@ export const enqueueDelete = action({
 
     await cfDeletePool.enqueueAction(ctx, internal.workpool.cfDeleteWorker, {
       cfItemId: args.cfItemId,
+      r2Key: webEntry?.markdownR2Key,
     }, {
       onComplete: internal.knowledgeBase.cfDeleteComplete,
       context: { entryId: args.entryId, entryType: args.entryType },

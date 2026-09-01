@@ -13,6 +13,7 @@ import {
   MAX_AGENT_MEDIA,
   assertAllowedWorkflowMediaType,
   assertManageableSendMediaNode,
+  findManageableSendMediaNode,
   isAllowedWorkflowMediaTypeForNode,
   isActiveWorkflowMedia,
   listWorkflowNodeMediaRows,
@@ -30,7 +31,8 @@ function mediaUploadError(error: unknown) {
 export const listForNode = query({
   args: { agentId: v.id("agents"), nodeId: v.id("workflowNodes") },
   handler: async (ctx, args) => {
-    const { agent } = await assertManageableSendMediaNode(ctx, args.agentId, args.nodeId);
+    const { agent, node } = await findManageableSendMediaNode(ctx, args.agentId, args.nodeId);
+    if (node === null) return [];
     const rows = await listWorkflowNodeMediaRows(ctx, args.nodeId);
     return rows
       .filter((row) =>
@@ -45,7 +47,8 @@ export const listForNode = query({
 export const listLegacyUnassigned = query({
   args: { agentId: v.id("agents"), nodeId: v.id("workflowNodes") },
   handler: async (ctx, args) => {
-    const { agent, node } = await assertManageableSendMediaNode(ctx, args.agentId, args.nodeId);
+    const { agent, node } = await findManageableSendMediaNode(ctx, args.agentId, args.nodeId);
+    if (node === null) return [];
     const rows = await ctx.db
       .query("mediaUploads")
       .withIndex("by_agentId", (q) => q.eq("agentId", agent._id))

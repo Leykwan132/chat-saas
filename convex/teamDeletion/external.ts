@@ -200,7 +200,7 @@ async function deleteKnowledgePage(
   >,
   pageCursor: string | null,
 ): Promise<Page<unknown>> {
-  const page: Page<{ cfItemId?: string }> | null = await ctx.runQuery(
+  const page: Page<{ cfItemId?: string; markdownR2Key?: string }> | null = await ctx.runQuery(
     internal.teamDeletion.externalState.getKnowledgePage,
     {
       jobId,
@@ -212,6 +212,10 @@ async function deleteKnowledgePage(
   for (const row of page.page) {
     if (row.cfItemId) await deleteFromCFOrThrow(row.cfItemId);
   }
+  await deleteR2Keys(
+    ctx,
+    page.page.flatMap((row) => row.markdownR2Key ? [row.markdownR2Key] : []),
+  );
   return page;
 }
 

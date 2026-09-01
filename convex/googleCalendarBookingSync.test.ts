@@ -6,9 +6,9 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import schema from "./schema";
 import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/schema.js";
-import type { GoogleCalendarEvent } from "./googleCalendar/eventMapping";
 import { googleCalendarWriteTestDependencies } from "./googleCalendar/writeTestDependencies";
 import { AppointmentBookingSessionStatus } from "./appointmentBookingSessionStatus";
+import { createGoogleCalendarBookingSyncFetch } from "./googleCalendarBookingSyncTestHelpers";
 import {
   runBookAppointment,
   runCancelBookingSession,
@@ -52,7 +52,6 @@ const workpoolModules = {
 const startAt = Date.UTC(2026, 6, 1, 9, 0, 0);
 const endAt = startAt + 30 * 60 * 1000;
 const movedStartAt = startAt + 60 * 60 * 1000;
-const movedEndAt = movedStartAt + 30 * 60 * 1000;
 
 function createTest() {
   const t = convexTest(schema, modules);
@@ -80,9 +79,12 @@ async function createBookingFixture(t: CalendarTest, options?: {
       systemPrompt: "Test", templateKey: "blank", fileSize: 0, userId: "booking-owner", orgId: "",
       createdAt: now, updatedAt: now,
     });
-    await ctx.db.insert("userSchedules", {
+    const userScheduleId = await ctx.db.insert("userSchedules", {
       agentId, workosUserId: "booking-owner", mode: "manual", manualStatus: "available",
       timezone: "UTC", enabled: true, createdAt: now, updatedAt: now,
+    });
+    await ctx.db.insert("userShifts", {
+      userScheduleId, dayOfWeek: 3, startMinutes: 9 * 60, endMinutes: 17 * 60,
     });
     const conversationId = await ctx.db.insert("conversations", {
       orgId: "", service: "whatsapp", orgAddress: "business", contactAddress: "+60123456789",
@@ -106,13 +108,23 @@ async function createBookingFixture(t: CalendarTest, options?: {
         createdAt: now, updatedAt: now,
       });
     }
+    const selectedSlot = {
+      startAt, endAt, assignedUserId: userId, assignedWorkosUserId: "booking-owner",
+    };
+    const confirmationAt = now + 1;
+    const customerConfirmationMessageId = await ctx.db.insert("messages", {
+      orgId: "", conversationId, service: "whatsapp", orgAddress: "business",
+      contactAddress: "+60123456789", direction: "incoming", contentType: "text",
+      content: "That time works for me.",
+      reactions: [{
+        emoji: "✅", source: "ai", actorKey: "booking-agent", actorAgentId: agentId,
+        createdAt: confirmationAt, updatedAt: confirmationAt,
+      }],
+      createdAt: confirmationAt,
+    });
     const sessionId = await ctx.db.insert("appointmentBookingSessions", {
-      conversationId, agentId, serviceId,
-      status: options?.booked ? "editing" : "collecting",
-      collectedFields: {},
-      selectedSlot: options?.booked ? {
-        startAt, endAt, assignedUserId: userId, assignedWorkosUserId: "booking-owner",
-      } : undefined,
+      conversationId, agentId, serviceId, status: AppointmentBookingSessionStatus.Confirming,
+      collectedFields: {}, proposedSlots: [selectedSlot], selectedSlot, customerConfirmationMessageId,
       createdAt: now, updatedAt: now,
     });
     return { userId, teamId, agentId, conversationId, serviceId, sessionId, connectionId, now };
@@ -146,28 +158,12 @@ function bookingDependencies(
   } as BookingTestDependencies;
 }
 
-function createFetch(): typeof fetch {
-  return async (_input, init) => {
-    const body = JSON.parse(String(init?.body ?? "{}")) as GoogleCalendarEvent & { id?: string };
-    return Response.json({
-      id: body.id,
-      status: "confirmed",
-      summary: body.summary ?? "Consultation - Customer",
-      etag: '"created"',
-      organizer: { self: true },
-      start: body.start,
-      end: body.end,
-      extendedProperties: body.extendedProperties,
-    });
-  };
-}
-
 test("a never-connected assignee creates the existing local-only booking", async () => {
   const t = createTest();
   const fixture = await createBookingFixture(t);
   const result = await runBookAppointment(
     { conversationId: fixture.conversationId, serviceId: fixture.serviceId, startAt },
-    bookingDependencies(t, createFetch()),
+    bookingDependencies(t, createGoogleCalendarBookingSyncFetch()),
   );
   expect(result).toMatchObject({ success: true });
   const rows = await t.run(async (ctx) => ({
@@ -182,7 +178,7 @@ test("a never-connected assignee creates the existing local-only booking", async
 test("a connected assignee is refreshed, then Google creation succeeds before the booking reports success", async () => {
   const t = createTest();
   const fixture = await createBookingFixture(t, { connect: "healthy" });
-  const deps = bookingDependencies(t, createFetch());
+  const deps = bookingDependencies(t, createGoogleCalendarBookingSyncFetch());
   const result = await runBookAppointment(
     { conversationId: fixture.conversationId, serviceId: fixture.serviceId, startAt },
     deps,
@@ -201,7 +197,7 @@ test("a connected but unhealthy assignee returns needs_reauthorization and creat
   const fixture = await createBookingFixture(t, { connect: "unhealthy" });
   const result = await runBookAppointment(
     { conversationId: fixture.conversationId, serviceId: fixture.serviceId, startAt },
-    bookingDependencies(t, createFetch()),
+    bookingDependencies(t, createGoogleCalendarBookingSyncFetch()),
   );
   expect(result).toMatchObject({ success: false, kind: "needs_reauthorization" });
   expect(await t.run(async (ctx) => (await ctx.db.query("calendarEvents").take(1)))).toHaveLength(0);
@@ -228,7 +224,11 @@ async function insertBookedEvent(
       eventStartAt: startAt, eventEndAt: endAt, responseStatus: "accepted",
       createdAt: fixture.now, updatedAt: fixture.now,
     });
-    await ctx.db.patch(fixture.sessionId, { calendarEventId: eventId, updatedAt: fixture.now });
+    await ctx.db.patch(fixture.sessionId, {
+      calendarEventId: eventId,
+      status: AppointmentBookingSessionStatus.Editing,
+      updatedAt: fixture.now,
+    });
     return eventId;
   });
 }

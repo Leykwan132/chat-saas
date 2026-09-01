@@ -118,3 +118,36 @@ test("removeNode rejects protected entry nodes", async () => {
     }),
   ).rejects.toThrow("Cannot remove entry or end nodes");
 });
+
+test("workflow media queries return empty after their node is removed", async () => {
+  const t = initTest();
+  const workosUserId = "user-workflow-delete-media-query";
+  const { agentId } = await createPersonalAgent(t, workosUserId);
+  const authed = t.withIdentity({ subject: workosUserId });
+  const graph = await authed.mutation(api.workflows.ensureForAgent, { agentId });
+  const startNode = graph.nodes.find((node) => node.kind === "start");
+  const graphWithMediaNode = await authed.mutation(api.workflows.addNodeAfter, {
+    agentId,
+    sourceNodeId: startNode!._id,
+    kind: "sendImage",
+  });
+  const mediaNode = graphWithMediaNode.nodes.find((node) => node.kind === "sendImage");
+
+  await authed.mutation(api.workflows.removeNode, {
+    agentId,
+    nodeId: mediaNode!._id,
+  });
+
+  await expect(
+    authed.query(api.workflowMedia.listForNode, {
+      agentId,
+      nodeId: mediaNode!._id,
+    }),
+  ).resolves.toEqual([]);
+  await expect(
+    authed.query(api.workflowMedia.listLegacyUnassigned, {
+      agentId,
+      nodeId: mediaNode!._id,
+    }),
+  ).resolves.toEqual([]);
+});

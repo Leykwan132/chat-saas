@@ -1,11 +1,13 @@
 import type { TestConvex } from "convex-test";
-import { components } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { components } from "./_generated/api";
 import schema from "./schema";
+import { getStripePriceId } from "./planStripe";
 import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 
 type AppTestConvex = TestConvex<typeof schema>;
+const DEFAULT_OVERVIEW_USER_ID = "user_overview_owner";
 
 const aggregateModules = {
   "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
@@ -16,12 +18,15 @@ const aggregateModules = {
     import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
 };
 
+const stripeModules = {
+  public: () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
+  private: () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
+  "_generated/server": () =>
+    import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
+};
+
 export function registerAgentOverviewAggregateComponents(t: AppTestConvex) {
-  t.registerComponent("stripe", stripeSchema, {
-    public: () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
-    private: () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
-  });
+  t.registerComponent("stripe", stripeSchema, stripeModules);
   t.registerComponent(
     "agentOverviewAiAssistedDaily",
     aggregateSchema,
@@ -36,7 +41,7 @@ export function registerAgentOverviewAggregateComponents(t: AppTestConvex) {
 
 export async function createAgentOverviewFixture(
   t: AppTestConvex,
-  workosUserId = "overview-owner",
+  workosUserId = DEFAULT_OVERVIEW_USER_ID,
 ) {
   const ids = await t.run(async (ctx) => {
     const now = Date.now();
@@ -82,6 +87,21 @@ export async function createAgentOverviewFixture(
   };
 }
 
+export async function enableAgentOverviewTopicAnalytics(
+  t: AppTestConvex,
+  workosUserId = DEFAULT_OVERVIEW_USER_ID,
+) {
+  await t.mutation(components.stripe.private.handleSubscriptionCreated, {
+    stripeSubscriptionId: `sub-${workosUserId}`,
+    stripeCustomerId: `cus-${workosUserId}`,
+    status: "active",
+    currentPeriodEnd: Math.floor(Date.now() / 1000) + 86_400,
+    cancelAtPeriodEnd: false,
+    priceId: getStripePriceId("growth", "monthly"),
+    metadata: { orgId: workosUserId },
+  });
+}
+
 export async function insertAgentOverviewConversation(
   t: AppTestConvex,
   args: { agentId: Id<"agents">; workosUserId?: string; now: number },
@@ -89,7 +109,7 @@ export async function insertAgentOverviewConversation(
   return await t.run(async (ctx) =>
     ctx.db.insert("conversations", {
       orgId: "",
-      userId: args.workosUserId ?? "overview-owner",
+      userId: args.workosUserId ?? DEFAULT_OVERVIEW_USER_ID,
       service: "whatsapp",
       orgAddress: "business",
       contactAddress: "+60123456789",
@@ -104,20 +124,4 @@ export async function insertAgentOverviewConversation(
       updatedAt: args.now,
     }),
   );
-}
-
-export async function enableAgentOverviewTopicAnalytics(
-  t: AppTestConvex,
-  workosUserId = "overview-owner",
-) {
-  process.env.STRIPE_PRICE_GROWTH_MONTHLY = "price_growth_monthly";
-  await t.mutation(components.stripe.private.handleSubscriptionCreated, {
-    stripeSubscriptionId: `sub-${workosUserId}`,
-    stripeCustomerId: `cus-${workosUserId}`,
-    status: "active",
-    currentPeriodEnd: 1_900_000_000,
-    cancelAtPeriodEnd: false,
-    priceId: "price_growth_monthly",
-    metadata: { orgId: workosUserId },
-  });
 }

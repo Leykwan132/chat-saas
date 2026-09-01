@@ -728,6 +728,8 @@ export default defineSchema({
       v.literal("deleting"),
     )),
     cfItemId: v.optional(v.string()),
+    markdownStorageId: v.optional(v.id("_storage")),
+    markdownR2Key: v.optional(v.string()),
     parentUrl: v.optional(v.string()),
     parentId: v.optional(v.id("webEntries")),
     userId: v.string(),
@@ -1051,6 +1053,8 @@ export default defineSchema({
     agentId: v.optional(v.id("agents")),
     service: customerServiceValidator,
     contactAddress: v.string(),
+    whatsappUserId: v.optional(v.string()),
+    whatsappUsername: v.optional(v.string()),
     name: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
@@ -1081,6 +1085,11 @@ export default defineSchema({
       "orgId",
       "service",
       "contactAddress",
+    ])
+    .index("by_orgId_and_service_and_whatsappUserId", [
+      "orgId",
+      "service",
+      "whatsappUserId",
     ])
     .index("by_userId_and_agentId_and_lastSeenAt", [
       "userId",

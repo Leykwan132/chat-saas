@@ -96,10 +96,21 @@ export async function requireSendMediaNode(
   agentId: Id<"agents">,
   nodeId: Id<"workflowNodes">,
 ): Promise<WorkflowMediaNode> {
+  const node = await findSendMediaNode(ctx, agentId, nodeId);
+  if (node === null) throw new Error("Workflow media node not found");
+  return node;
+}
+
+export async function findSendMediaNode(
+  ctx: DbCtx,
+  agentId: Id<"agents">,
+  nodeId: Id<"workflowNodes">,
+): Promise<WorkflowMediaNode | null> {
   const workflow = await getWorkflowForAgent(ctx, agentId);
   if (workflow === null) throw new Error("Workflow not found");
   const node = await ctx.db.get(nodeId);
-  if (node === null || node.workflowId !== workflow._id || !isWorkflowMediaNodeKind(node.kind)) {
+  if (node === null) return null;
+  if (node.workflowId !== workflow._id || !isWorkflowMediaNodeKind(node.kind)) {
     throw new Error("Workflow media node not found");
   }
   return node as WorkflowMediaNode;
@@ -136,5 +147,15 @@ export async function assertManageableSendMediaNode(
 ) {
   const result = await assertManageableAgent(ctx, agentId);
   const node = await requireSendMediaNode(ctx, result.agent._id, nodeId);
+  return { ...result, node };
+}
+
+export async function findManageableSendMediaNode(
+  ctx: DbCtx,
+  agentId: Id<"agents">,
+  nodeId: Id<"workflowNodes">,
+) {
+  const result = await assertManageableAgent(ctx, agentId);
+  const node = await findSendMediaNode(ctx, result.agent._id, nodeId);
   return { ...result, node };
 }

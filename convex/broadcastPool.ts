@@ -12,7 +12,7 @@ import { ingestChannelMessage } from "./chat/threads";
 import { getUserByWorkosId } from "./teamHelpers";
 import { logConversationEvent } from "./conversationLogs";
 import { buildWhatsAppTemplateSendPayloadWithContent } from "./whatsappTemplateSendPayload";
-import { ensureWhatsAppRecipientPhone } from "./whatsappPhone";
+import { buildWhatsAppRecipient } from "./whatsappRecipient";
 import { formatBroadcastMessageContent } from "./broadcastChatContent";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
@@ -55,6 +55,21 @@ function resolveAccessToken(channel: Doc<"channels">): string {
     throw new Error("WhatsApp channel has no access token. Reconnect in Channels.");
   }
   return token;
+}
+
+export function buildBroadcastTemplatePayload(
+  customer: Pick<
+    Doc<"customers">,
+    "contactAddress" | "phone" | "whatsappUserId"
+  >,
+  template: unknown,
+) {
+  return {
+    messaging_product: "whatsapp",
+    ...buildWhatsAppRecipient(customer),
+    type: "template",
+    template,
+  };
 }
 
 export const getBroadcastWorkerContext = internalQuery({
@@ -109,12 +124,6 @@ export const broadcastWorker = internalAction({
     if (!phoneNumberId) {
       throw new Error("Phone number ID is missing for this channel.");
     }
-    const rawTo = customer.contactAddress.trim();
-    if (!rawTo) {
-      throw new Error(`Customer ${customer._id} has no contactAddress`);
-    }
-    const to = ensureWhatsAppRecipientPhone(rawTo);
-
     const { template, renderedContent, headerAsset } = await buildWhatsAppTemplateSendPayloadWithContent(ctx, {
       orgId: schedule.orgId,
       channelId: schedule.channelId,
@@ -140,12 +149,7 @@ export const broadcastWorker = internalAction({
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to,
-        type: "template",
-        template,
-      }),
+      body: JSON.stringify(buildBroadcastTemplatePayload(customer, template)),
     });
 
     const text = await res.text();

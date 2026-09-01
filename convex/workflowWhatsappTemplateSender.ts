@@ -3,7 +3,7 @@ import type { Doc } from './_generated/dataModel';
 import type { WorkflowWhatsappTemplateSnapshot } from '../shared/workflowAutomations';
 import type { BroadcastHeaderAsset } from '../shared/broadcastMessage';
 import { buildWhatsAppTemplateSendPayloadWithContent } from './whatsappTemplateSendPayload';
-import { ensureWhatsAppRecipientPhone } from './whatsappPhone';
+import { buildWhatsAppRecipient } from './whatsappRecipient';
 
 const DEFAULT_GRAPH_VERSION = 'v22.0';
 
@@ -63,8 +63,7 @@ export async function sendWorkflowWhatsappTemplate(
   if (!accessToken) throw new Error('WhatsApp channel has no access token');
   const phoneNumberId = args.channel.phoneNumberId?.trim();
   if (!phoneNumberId) throw new Error('WhatsApp channel has no phone number ID');
-  const rawRecipient = args.customer.contactAddress.trim() || args.customer.phone?.trim();
-  if (!rawRecipient) throw new Error('Customer has no WhatsApp phone number');
+  const recipient = buildWhatsAppRecipient(args.customer);
   const graphVersion = process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
   const response = await fetch(`https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`, {
     method: 'POST',
@@ -74,7 +73,7 @@ export async function sendWorkflowWhatsappTemplate(
     },
     body: JSON.stringify({
       messaging_product: 'whatsapp',
-      to: ensureWhatsAppRecipientPhone(rawRecipient),
+      ...recipient,
       type: 'template',
       template,
     }),

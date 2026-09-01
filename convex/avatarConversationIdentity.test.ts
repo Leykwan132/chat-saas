@@ -18,7 +18,7 @@ describe('Avatar conversation identity', () => {
     expect(selectReusableInboxConversation(conversation('closed'), 'avatar')).toBeNull();
   });
 
-  it('starts a fresh web conversation after the prior conversation closes', () => {
+  it('creates a new web conversation after the prior conversation closes', () => {
     expect(selectReusableInboxConversation(conversation('closed'), 'web')).toBeNull();
   });
 });

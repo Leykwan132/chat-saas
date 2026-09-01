@@ -895,7 +895,12 @@ export const internalGetSendContext = internalQuery({
     if (conv === null || !conv.channelId) return null;
     const channel = await ctx.db.get(conv.channelId);
     if (channel === null) return null;
-    return { conversation: conv, channel };
+    const customer = conv.customerId ? await ctx.db.get(conv.customerId) : null;
+    return {
+      conversation: conv,
+      channel,
+      customer: customer?.orgId === conv.orgId ? customer : null,
+    };
   },
 });
 

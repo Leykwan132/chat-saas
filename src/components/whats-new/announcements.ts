@@ -1,4 +1,4 @@
-import { Orbit, type LucideIcon } from 'lucide-react';
+import { CalendarDays, Orbit, type LucideIcon } from 'lucide-react';
 
 export type Announcement = {
   id: string;
@@ -12,6 +12,7 @@ export type Announcement = {
   }>;
   retiredModels: string[];
   modelCosts: Array<{ cost: string; models: string[] }>;
+  highlights?: Array<{ title: string; description: string }>;
   publishedAt: string;
   isNew: boolean;
   icon: LucideIcon;
@@ -59,7 +60,34 @@ export const ANNOUNCEMENTS: Announcement[] = [
         models: ['GPT-5.6 Luna'],
       },
     ],
-    isNew: true,
+    isNew: false,
     icon: Orbit,
+  },
+  {
+    id: 'google-calendar-support',
+    title: 'Google Calendar Support',
+    summary:
+      'Connect Google Calendar to keep customer bookings and availability in sync.',
+    publishedAt: '2026-08-27',
+    releaseTitle: 'Google Calendar integration is here.',
+    releaseSummary:
+      'Connect your Google Calendar to manage availability and keep bookings in sync.',
+    highlights: [
+      {
+        title: 'Connect your calendar',
+        description:
+          'Link Google Calendar to your Kilobot agent and keep your availability in one place.',
+      },
+      {
+        title: 'Stay in sync',
+        description:
+          'Your calendar events stay aligned with customer bookings made through Kilobot.',
+      },
+    ],
+    newModels: [],
+    retiredModels: [],
+    modelCosts: [],
+    isNew: true,
+    icon: CalendarDays,
   },
 ];

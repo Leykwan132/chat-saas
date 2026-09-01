@@ -390,6 +390,7 @@ import type * as whatsappTemplateUpdateHelpers from "../whatsappTemplateUpdateHe
 import type * as whatsappTemplateWebhook from "../whatsappTemplateWebhook.js";
 import type * as whatsappTemplates from "../whatsappTemplates.js";
 import type * as whatsappTemplatesAction from "../whatsappTemplatesAction.js";
+import type * as whatsappUserIdChange from "../whatsappUserIdChange.js";
 import type * as whatsappWebhook from "../whatsappWebhook.js";
 import type * as whiteLabel_access from "../whiteLabel/access.js";
 import type * as whiteLabel_admin from "../whiteLabel/admin.js";
@@ -856,6 +857,7 @@ declare const fullApi: ApiFromModules<{
   whatsappTemplateWebhook: typeof whatsappTemplateWebhook;
   whatsappTemplates: typeof whatsappTemplates;
   whatsappTemplatesAction: typeof whatsappTemplatesAction;
+  whatsappUserIdChange: typeof whatsappUserIdChange;
   whatsappWebhook: typeof whatsappWebhook;
   "whiteLabel/access": typeof whiteLabel_access;
   "whiteLabel/admin": typeof whiteLabel_admin;

@@ -4,6 +4,7 @@ import { expect, test } from "vitest";
 import { api } from "./_generated/api";
 import {
   createAgentOverviewFixture as createFixture,
+  enableAgentOverviewTopicAnalytics,
   insertAgentOverviewConversation as insertConversation,
   registerAgentOverviewAggregateComponents,
 } from "./agentOverviewTestHelpers";
@@ -201,7 +202,7 @@ test("counts AI escalation events for the agent", async () => {
   const t = createOverviewTest();
   const { authed, agentId, now } = await createFixture(t);
   const conversationId = await insertConversation(t, { agentId, now });
-  const secondConversationId = await insertConversation(t, {
+  await insertConversation(t, {
     agentId,
     now: now + 1,
   });
@@ -222,4 +223,80 @@ test("counts AI escalation events for the agent", async () => {
 
   expect(summary.escalations).toBe(1);
   expect(summary.daily.some((row) => row.escalations === 1)).toBe(true);
+});
+test("returns customer sentiment distribution for analyzed conversations", async () => {
+  const t = createOverviewTest();
+  const { authed, agentId, now } = await createFixture(t);
+  await enableAgentOverviewTopicAnalytics(t);
+  const positiveConversationId = await insertConversation(t, { agentId, now });
+  const negativeConversationId = await insertConversation(t, { agentId, now: now + 1 });
+
+  await t.run(async (ctx) => {
+    await ctx.db.patch(positiveConversationId, {
+      customerSentiment: "positive",
+      sentimentAnalyzedAt: now,
+      sentimentSourceMessageMaxCreatedAt: now,
+    });
+    await ctx.db.patch(negativeConversationId, {
+      customerSentiment: "negative",
+      sentimentAnalyzedAt: now,
+      sentimentSourceMessageMaxCreatedAt: now,
+    });
+  });
+
+  const summary = await authed.query(api.agentOverview.getSummary, { agentId });
+
+  expect(summary.sentimentDistribution).toEqual({
+    positive: 1,
+    neutral: 0,
+    negative: 1,
+  });
+});
+
+test("returns trending topics for agent conversations in the period", async () => {
+  const t = createOverviewTest();
+  const { authed, agentId, now } = await createFixture(t);
+  await enableAgentOverviewTopicAnalytics(t);
+  const conversationId = await insertConversation(t, { agentId, now });
+  const secondConversationId = await insertConversation(t, {
+    agentId,
+    now: now + 1,
+  });
+
+  await t.run(async (ctx) => {
+    const topicId = await ctx.db.insert("conversationTopics", {
+      orgId: "",
+      name: "Pricing",
+      slug: "pricing",
+      totalCount: 1,
+      weekCount: 1,
+      lastSeenAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("conversationTopicAssignments", {
+      orgId: "",
+      conversationId,
+      topicId,
+      confidence: 0.9,
+      detectedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("conversationTopicAssignments", {
+      orgId: "",
+      conversationId: secondConversationId,
+      topicId,
+      confidence: 0.9,
+      detectedAt: now + 1,
+      createdAt: now + 1,
+      updatedAt: now + 1,
+    });
+  });
+
+  const summary = await authed.query(api.agentOverview.getSummary, { agentId });
+
+  expect(summary.trendingTopics).toEqual([
+    expect.objectContaining({ topic: "Pricing", count: 1 }),
+  ]);
 });
