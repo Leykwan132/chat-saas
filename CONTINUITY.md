@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-01 [USER] Goal: restore Messenger and Instagram on Channels now that Meta app review is approved, then create a review PR. The approved scope is UI visibility only; their existing OAuth, connection, and synchronization flows remain unchanged.
 - 2026-08-31 [USER] Goal: support WhatsApp contacts who opt in with a username and expose only `user_id`, then create a review PR. Approved identity model persists optional `whatsappUserId` and `whatsappUsername`, joins inbound profile data with `user_id`/`from_user_id`, and sends with `recipient` rather than `to` for that identity type across replies, broadcasts, and workflow templates.
 - 2026-08-31 [CODE] Now: `codex/whatsapp-username-recipients` also handles Meta `user_changed_user_id` and `user_changed_number` system events. A matched customer's BSUID and linked WhatsApp conversation addresses move together without creating a chat, analytics, or AI event; the PR includes the generated Convex API and TypeScript repair required for build review.
 - 2026-08-27 [CODE] Now: mobile inboxes preserve desktop behavior while adding a full-width selected chat, searchable customer switcher, visible AI toggle, right-hand details sheet, mobile sidebar trigger, compact gutters, and one-column Personal-agent cards. Local `/dashboard/<agent-id>/inbox?dummyData=true` provides realistic responsive demo data. PR #85 is open from `codex/mobile-responsive`.
@@ -46,10 +47,11 @@
 - 2026-08-21 [USER] D751 ACTIVE: Visitor messages use a black, high-contrast bubble. AI and human replies use neutral bubbles with a sender label above: `AI Agent` for automated replies and only the team member name for human inbox replies when the member profile has a name. Every visitor, AI, and human message includes its local `hour:minute` timestamp below the bubble. Bubbles shrink to message width while retaining an 82–84% cap for long text. The dashboard preview follows the same visual treatment.
 - 2026-08-21 [USER] D752 ACTIVE: A visitor profile completed with the same browser-stored widget visitor ID bypasses an enabled visitor form on every later widget open and enters chat directly. The widget handles either profile/config load order; resetting a chat does not erase the profile.
 - 2026-08-20 [USER] D734 ACTIVE: Channel management is agent-scoped; a channel assigned to one agent must not appear on another agent’s Channels page.
-- 2026-08-20 [USER] D735–D739 ACTIVE: Messenger setup shows safe progress/errors and its setup cards are currently hidden while Website/KiloBot remains visible.
+- 2026-09-01 [USER] D735–D739 AMENDED: Messenger setup keeps its safe progress/errors, and approval now restores visible Messenger and Instagram available/connected cards alongside Website/KiloBot.
 
 # Done (recent)
 
+- 2026-09-01 [CODE] Restored visible Messenger and Instagram channel cards without changing their OAuth, connection, or synchronization behavior. This customer-facing change is UNRELEASED and must not enter the production changelog until availability is confirmed.
 - 2026-08-31 [CODE] Added WhatsApp username-contact support: inbound provider IDs and `@username` are stored without creating a synthetic phone; inbox text/media/reactions, templates, and broadcasts send those contacts using Meta's `recipient` field. This customer-facing feature is UNRELEASED and must not enter the changelog until production availability is confirmed.
 - 2026-08-31 [CODE] Added WhatsApp BSUID-change continuity: both documented system-event variants retain a customer's username, move the current provider recipient ID and linked inbox conversation address, and accept an explicitly shared new phone number. This customer-facing feature is UNRELEASED and must not enter the changelog until production availability is confirmed.
 - 2026-08-27 [CODE] Added responsive mobile inbox/workspace navigation, demo data, accessible customer details, and robust switcher search behavior. The unshipped customer-facing change is not in the release changelog.
@@ -64,6 +66,7 @@
 
 # Working set
 
+- 2026-09-01 [CODE] `src/{pages/ChannelsPage.tsx,components/channels/AvailableChannelCard.test.ts}`
 - 2026-08-26 [CODE] `convex/{agentOverviewModel.ts,agentOverviewMessages.ts,agentOverviewAggregates.ts,agentOverviewAiHandled.test.ts,workflowMedia.ts,workflowMediaShared.ts,workflowNodeDeletion.test.ts}`
 - 2026-08-26 [CODE] `convex/{schema.ts,knowledgeBase.ts,cloudflare.ts,workpool.ts,media/r2.ts,teamDeletion/external.ts,webScraperMarkdownPersistence.test.ts}`, `shared/webEntryUrl.ts`, `src/components/knowledge-base/{WebSection.tsx,WebEntryDetails.tsx,WebEntryDetailsModalLayout.test.tsx}`, `src/content/{privacyPolicyProviderSections.tsx,termsUserContentSections.tsx,legalConstants.ts,legalDocumentContent.test.tsx}`
 - 2026-08-21 [CODE] `shared/webWidgetExperience.ts`
@@ -81,6 +84,7 @@
 
 # Receipts
 
+- 2026-09-01 [TOOL] Messenger/Instagram visibility regression failed as expected while both cards were in hidden wrappers, then passed after their removal. Node v22 production build and `git diff --check` pass; changed-file lint has one pre-existing `ChannelsPage.tsx` React hook-dependency warning and no errors.
 - 2026-08-27 [TOOL] Mobile inbox, dashboard, and workspace red/green regressions confirm the customer conversation switcher, mobile AI toggle, sidebar triggers, compact gutters, and one-column mobile agent grid; 9 focused tests pass across all changes. Targeted lint passes for the changed layout files and tests; `ChatsPage.tsx` has 10 pre-existing lint errors. `git diff --check` passes. A full production build did not complete within two 30-second execution windows.
 - 2026-08-27 [TOOL] Inbox demo regression is green: 11 focused mobile/inbox tests pass, targeted lint passes for the new demo files, and `bun run build` completes with Node v22. Demo mode is gated to development plus the explicit `dummyData=true` URL flag.
 - 2026-08-27 [TOOL] Mobile details-sheet regression is green: focused mobile tests, new-component lint, diff validation, and the Node v22 production build pass. `ChatsPage.tsx` still reports its existing 10 unrelated lint errors when linted directly.
