@@ -1,3 +1,5 @@
+import { getPartnerAuthJwtProvider } from "./partnerAuthConfig";
+
 const clientId = process.env.WORKOS_CLIENT_ID;
 
 const authConfig = {
@@ -15,6 +17,7 @@ const authConfig = {
       algorithm: "RS256",
       jwks: `https://api.workos.com/sso/jwks/${clientId}`,
     },
+    getPartnerAuthJwtProvider(process.env),
   ],
 };
 
