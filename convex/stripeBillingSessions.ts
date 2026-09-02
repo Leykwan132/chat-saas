@@ -2,6 +2,7 @@ import { StripeSubscriptions } from '@convex-dev/stripe';
 import type { ActionCtx } from './_generated/server';
 import { components, internal } from './_generated/api';
 import { getBillingWorkosUserId } from './billingScope';
+import { getAuthContext } from './authUtils';
 import {
   getExtraCreditsPack,
   getExtraCreditsPriceId,
@@ -50,6 +51,13 @@ export async function createCheckoutForBillingUser(
   ctx: ActionCtx,
   args: CreateCheckoutArgs,
 ): Promise<{ url: string | null }> {
+  const auth = await getAuthContext(ctx);
+  const billingBlocked = await ctx.runQuery(internal.whiteLabel.billing.isBillingBlockedForTeam, {
+    teamId: auth.activeTeamId,
+  });
+  if (billingBlocked) {
+    throw new Error('Billing is managed by your partner.');
+  }
   const userId = await getBillingWorkosUserId(ctx);
   const user = (await ctx.runQuery(internal.stripe.internalGetUser, {
     userId,
@@ -120,6 +128,13 @@ export async function createPortalForBillingUser(
   ctx: ActionCtx,
   args: CreatePortalArgs,
 ): Promise<{ url: string }> {
+  const auth = await getAuthContext(ctx);
+  const billingBlocked = await ctx.runQuery(internal.whiteLabel.billing.isBillingBlockedForTeam, {
+    teamId: auth.activeTeamId,
+  });
+  if (billingBlocked) {
+    throw new Error('Billing is managed by your partner.');
+  }
   const userId = await getBillingWorkosUserId(ctx);
   const user = (await ctx.runQuery(internal.stripe.internalGetUser, {
     userId,

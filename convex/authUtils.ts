@@ -17,6 +17,7 @@ import {
 } from "./teamHelpers";
 import type { EnsureUserAccountArgs } from "./teamHelpers";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
+import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
 
 export const PERSONAL_ORG_FALLBACK = PERSONAL_ORG_ID;
 
@@ -48,6 +49,7 @@ type WorkOSClaims = {
 export type AuthContext = {
   userId: string;
   userDbId: Id<"users">;
+  email: string;
   activeTeamId: Id<"teams">;
   orgId: string;
   role: string | null;
@@ -95,6 +97,16 @@ async function buildAuthContextFromDb(
   let activeTeamId: Id<"teams">;
 
   if (overrideOrgId !== undefined) {
+    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(
+      ctx,
+      user.workosUserId,
+    );
+    if (
+      assignedWorkspace !== null &&
+      overrideOrgId !== teamToOrgId(assignedWorkspace.team)
+    ) {
+      throw new Error("Partner customers can only access their assigned workspace");
+    }
     if (!(await canProcessWorkspaceActivity(ctx, overrideOrgId))) {
       throw new Error("Workspace unavailable");
     }
@@ -118,6 +130,7 @@ async function buildAuthContextFromDb(
   return {
     userId: identity.subject,
     userDbId: user._id,
+    email: user.email.trim().toLowerCase(),
     activeTeamId,
     orgId,
     role,
@@ -180,11 +193,10 @@ export async function getAuthContext(
           activeOrgIdOverride,
         });
         return retryResult;
-      } catch (upsertError) {
-        console.error("[getAuthContext] Action failed to auto-upsert user:", upsertError);
+      } catch {
+        throw error;
       }
     }
-    console.error("[getAuthContext] Action failed to resolve auth scope via query:", error);
     throw error;
   }
 }

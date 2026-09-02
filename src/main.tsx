@@ -69,6 +69,7 @@ import {
 } from '@/router/AppRouteComponents'
 import { QuickRepliesFeatureRoute } from '@/router/QuickRepliesFeatureRoute'
 import { ReferralFeatureRoute } from '@/router/ReferralFeatureRoute'
+import { PartnerFeatureRoute } from '@/router/PartnerFeatureRoute'
 import {
   AvatarCreateFeatureRoute,
   AvatarEmbedFeatureRoute,
@@ -124,6 +125,7 @@ const router = createBrowserRouter(
         <Route path="invitations" element={<InvitationsPage />} />
         <Route path="usage" element={<WorkspaceUsagePage />} />
         <Route path="referrals" element={<ReferralFeatureRoute />} />
+        <Route path="partner" element={<PartnerFeatureRoute />} />
         <Route path="account" element={<Navigate to="../settings" replace />} />
       </Route>
       <Route path="/create-agent" element={<CreateAgentPage />} />

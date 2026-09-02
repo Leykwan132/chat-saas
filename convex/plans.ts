@@ -5,8 +5,11 @@ import type { Doc } from "./_generated/dataModel";
 import { components } from "./_generated/api";
 import {
   getActiveTeamForUser,
+  getTeamByWorkosOrgId,
   teamToOrgId,
 } from "./teamHelpers";
+import { getPartnerCreditBalance } from "./whiteLabel/creditLedger";
+import { getWhiteLabelPartnerOrganizationForTeam, getWhiteLabelPlanForTeam } from "./whiteLabel/planResolver";
 import {
   PLAN_CATALOG,
   PLAN_ORDER,
@@ -70,6 +73,14 @@ export async function getPlanFromStripe(
   status?: string;
   currentPeriodEnd?: number;
 }> {
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_workosUserId", (q) => q.eq("workosUserId", entityId))
+    .unique();
+  if (user?.activeTeamId) {
+    const whiteLabelPlan = await getWhiteLabelPlanForTeam(ctx, user.activeTeamId);
+    if (whiteLabelPlan !== null) return { plan: whiteLabelPlan };
+  }
   const subscriptions = await ctx.runQuery(
     components.stripe.public.listSubscriptionsByOrgId,
     { orgId: entityId }
@@ -167,6 +178,14 @@ export async function getChannelLimitForOrg(
   orgId: string,
   userId?: string,
 ): Promise<number> {
+  const team = await getTeamByWorkosOrgId(ctx, orgId);
+  if (team !== null) {
+    const whiteLabelPlan = await getWhiteLabelPlanForTeam(ctx, team._id);
+    if (whiteLabelPlan !== null) {
+      const limit = PLAN_CATALOG[whiteLabelPlan].maxChannels;
+      return limit === "unlimited" ? 999999 : limit;
+    }
+  }
   const stripeInfo = await getTeamStripePlanHelper(ctx, { workosOrgId: orgId, userId });
   const planConfig = PLAN_CATALOG[stripeInfo.plan] || PLAN_CATALOG.free;
   return planConfig.maxChannels === "unlimited" ? 999999 : planConfig.maxChannels;
@@ -186,13 +205,47 @@ export const getPlanAndUsage = query({
       return null;
     }
 
+    const activeTeam = await getActiveTeamForUser(ctx, user);
+    const partnerOrganization = await getWhiteLabelPartnerOrganizationForTeam(ctx, activeTeam._id);
+    if (partnerOrganization !== null) {
+      const plan = await getWhiteLabelPlanForTeam(ctx, activeTeam._id);
+      if (plan === null) throw new Error("Customer organization plan not found.");
+      const balance = await getPartnerCreditBalance(ctx, partnerOrganization._id);
+      const planConfig = getPlan(plan);
+      const channelLimit = planConfig.maxChannels === "unlimited" ? 999999 : planConfig.maxChannels;
+      return {
+        orgName: activeTeam.name,
+        isTeam: true,
+        canManageBilling: false,
+        plan,
+        planConfig,
+        entitlements: getPlanEntitlements(plan),
+        credits: balance.remainingCredits,
+        monthlyCredits: balance.monthlyCredits,
+        monthlyAllowance: balance.period?.grantedCredits ?? planConfig.monthlyCredits,
+        monthlyUsed: balance.period?.usedCredits ?? 0,
+        purchasedCredits: balance.manualCredits,
+        purchasedCreditsGranted: balance.balance?.manualGrantedCredits ?? 0,
+        additionalCredits: balance.manualCredits,
+        additionalCreditsGranted: balance.balance?.manualGrantedCredits ?? 0,
+        referralCredits: 0,
+        referralCreditsGranted: 0,
+        periodStartMs: balance.period?.periodStart ?? null,
+        periodEndMs: balance.period?.periodEnd ?? null,
+        stripeSubscriptionStatus: undefined,
+        stripeSubscriptionCurrentPeriodEnd: undefined,
+        memberCount: 1,
+        allPlans: PLANS,
+        channelLimit,
+      };
+    }
+
     const { billingUser, isTeam, teamName } = await getBillingEntityForUser(ctx, user);
 
     const stripeInfo = await getPlanFromStripe(ctx, billingUser.workosUserId);
     const planConfig = getPlan(stripeInfo.plan);
     const snapshot = await snapshotUserCredit(ctx, billingUser._id);
 
-    const activeTeam = await getActiveTeamForUser(ctx, user);
     const orgId = teamToOrgId(activeTeam);
     const channelLimit = await getChannelLimitForOrg(ctx, orgId, user.workosUserId);
 

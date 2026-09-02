@@ -14,6 +14,8 @@ import {
   setActiveTeamForUser,
   teamToOrgId,
 } from "./teamHelpers";
+import { getWhiteLabelPlanForTeam, isWhiteLabelTeam } from "./whiteLabel/planResolver";
+import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
 
 export type TeamListItem = {
   _id: string;
@@ -37,8 +39,10 @@ export type TeamListItem = {
 
 async function resolveOrgPlan(
   ctx: QueryCtx | MutationCtx,
-  team: { ownerId?: Id<"users"> },
+  team: { _id: Id<"teams">; ownerId?: Id<"users"> },
 ): Promise<PlanKey> {
+  const whiteLabelPlan = await getWhiteLabelPlanForTeam(ctx, team._id);
+  if (whiteLabelPlan !== null) return whiteLabelPlan;
   if (!team.ownerId) return "free";
   const owner = await ctx.db.get(team.ownerId);
   if (!owner) return "free";
@@ -98,11 +102,19 @@ async function listTeamsForCurrentUser(ctx: QueryCtx) {
   if (userRow === null) return [];
 
   const activeTeam = await getActiveTeamForUser(ctx, userRow);
-
-  const memberships = await ctx.db
-    .query("teamMemberships")
-    .withIndex("by_userId", (q) => q.eq("userId", userRow._id))
-    .collect();
+  const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(ctx, userId);
+  const memberships = assignedWorkspace === null
+    ? await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_userId", (q) => q.eq("userId", userRow._id))
+      .collect()
+    : await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_userId_and_teamId", (q) =>
+        q.eq("userId", userRow._id).eq("teamId", assignedWorkspace.team._id),
+      )
+      .unique()
+      .then((membership) => membership === null ? [] : [membership]);
 
   const teams = (
     await Promise.all(memberships.map((membership) => ctx.db.get(membership.teamId)))
@@ -221,12 +233,20 @@ export const updateActiveTeamTimeZone = mutation({
 export const canCreateOrgTeam = query({
   args: {},
   handler: async (ctx) => {
-    const { userId } = await getAuthContext(ctx);
+    const { userId, activeTeamId } = await getAuthContext(ctx);
     const userRow = await getUserByWorkosId(ctx, userId);
     if (userRow === null) {
       return {
         allowed: false,
         reason: "User not found.",
+        requiresPlanUpgrade: false,
+      };
+    }
+
+    if (await isWhiteLabelTeam(ctx, activeTeamId)) {
+      return {
+        allowed: false,
+        reason: "Partner-managed workspaces can only be created from the Partner portal.",
         requiresPlanUpgrade: false,
       };
     }
@@ -268,6 +288,16 @@ export const canInviteMembers = query({
         reason: "Team not found.",
         requiresPlanUpgrade: false,
         memberCount: 0,
+        maxMembers: 0,
+      };
+    }
+
+    if (await isWhiteLabelTeam(ctx, team._id)) {
+      return {
+        allowed: false,
+        reason: "Partner-managed workspaces can only be staffed from the Partner portal.",
+        requiresPlanUpgrade: false,
+        memberCount: await countTeamMembers(ctx, team._id),
         maxMembers: 0,
       };
     }

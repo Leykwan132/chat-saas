@@ -87,6 +87,13 @@ async function available(
   }));
 }
 
+test("manual availability does not require configured shifts", async () => {
+  const t = convexTest(schema, modules);
+  const fixture = await setup(t);
+
+  expect(await available(t, fixture, fixture.now + day)).not.toBeNull();
+});
+
 test(">100 historical cancelled legacy assignments do not block a future interval", async () => {
   const t = convexTest(schema, modules);
   const fixture = await setup(t);

@@ -98,6 +98,13 @@ async function listAllOrganizationMemberships(
 }
 
 async function assertCanManageTeamMembers(ctx: ActionCtx, teamId: Id<"teams">) {
+  const isPartnerManaged = await ctx.runQuery(
+    internal.whiteLabel.billing.isBillingBlockedForTeam,
+    { teamId },
+  );
+  if (isPartnerManaged) {
+    throw new Error("Partner-managed workspaces can only be staffed from the Partner portal.");
+  }
   const team = await ctx.runQuery(api.teams.getTeamDetail, { teamId });
   if (team === null) {
     throw new Error("Team not found.");

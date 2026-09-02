@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
+import { usePartnerManagedWorkspace } from '@/hooks/usePartnerManagedWorkspace';
 
 type TeamType = {
   _id: string;
@@ -52,14 +53,15 @@ export function TeamSwitcher({
   const teams = useQuery(api.teams.listForCurrentUser);
   const canInviteMembers = useQuery(api.teams.canInviteMembers);
   const canCreateOrgTeam = useQuery(api.teams.canCreateOrgTeam);
+  const isPartnerManagedWorkspace = usePartnerManagedWorkspace();
   const { openUpgradeModal } = useUpgradeModal();
 
   const [switchingTeamId, setSwitchingTeamId] = useState<string | null>(null);
 
   const orgTeams = teams?.filter((team: TeamType) => team.type === 'organizational') ?? [];
+  const personalTeam = teams?.find((team: TeamType) => team.type === 'personal');
 
   const handleSwitchToPersonal = async () => {
-    const personalTeam = teams?.find((team: TeamType) => team.type === 'personal');
     if (!personalTeam || isPersonal || switchingTeamId !== null) return;
 
     setSwitchingTeamId('personal');
@@ -173,23 +175,25 @@ export function TeamSwitcher({
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuItem
-              onSelect={() => void handleSwitchToPersonal()}
-              disabled={switchingTeamId === 'personal'}
-              className={teamMenuItemClassName}
-            >
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <User className="size-4 text-muted-foreground shrink-0" />
-                <span className="truncate text-sm">Personal</span>
-                {isPersonal ? (
-                  switchingTeamId === 'personal' ? (
-                    <Spinner className="size-4 shrink-0 ml-auto" />
-                  ) : (
-                    <Check className="size-4 shrink-0 text-primary ml-auto" />
-                  )
-                ) : null}
-              </div>
-            </DropdownMenuItem>
+            {personalTeam ? (
+              <DropdownMenuItem
+                onSelect={() => void handleSwitchToPersonal()}
+                disabled={switchingTeamId === 'personal'}
+                className={teamMenuItemClassName}
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <User className="size-4 text-muted-foreground shrink-0" />
+                  <span className="truncate text-sm">Personal</span>
+                  {isPersonal ? (
+                    switchingTeamId === 'personal' ? (
+                      <Spinner className="size-4 shrink-0 ml-auto" />
+                    ) : (
+                      <Check className="size-4 shrink-0 text-primary ml-auto" />
+                    )
+                  ) : null}
+                </div>
+              </DropdownMenuItem>
+            ) : null}
 
             {orgTeams.length > 0 && (
               <>
@@ -229,15 +233,19 @@ export function TeamSwitcher({
               </>
             )}
 
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={handleCreateTeam} className={teamMenuItemClassName}>
-              <Plus className="mr-2 size-4" />
-              Create a team
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleInvitePeople} className={teamMenuItemClassName}>
-              <UserPlus className="mr-2 size-4" />
-              Invite people
-            </DropdownMenuItem>
+            {isPartnerManagedWorkspace === false ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={handleCreateTeam} className={teamMenuItemClassName}>
+                  <Plus className="mr-2 size-4" />
+                  Create a team
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={handleInvitePeople} className={teamMenuItemClassName}>
+                  <UserPlus className="mr-2 size-4" />
+                  Invite people
+                </DropdownMenuItem>
+              </>
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </BreadcrumbItem>

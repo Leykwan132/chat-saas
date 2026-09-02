@@ -18,6 +18,15 @@ function createOverviewTest() {
   return t;
 }
 
+test("loads an overview for a personal workspace without a WorkOS organization", async () => {
+  const t = createOverviewTest();
+  const { authed, agentId } = await createFixture(t);
+
+  const summary = await authed.query(api.agentOverview.getSummary, { agentId });
+
+  expect(summary.totalMessagesSent).toBe(0);
+});
+
 test("returns empty overview for an agent with no activity", async () => {
   const t = createOverviewTest();
   const { authed, agentId } = await createFixture(t);
@@ -215,7 +224,6 @@ test("counts AI escalation events for the agent", async () => {
   expect(summary.escalations).toBe(1);
   expect(summary.daily.some((row) => row.escalations === 1)).toBe(true);
 });
-
 test("returns customer sentiment distribution for analyzed conversations", async () => {
   const t = createOverviewTest();
   const { authed, agentId, now } = await createFixture(t);

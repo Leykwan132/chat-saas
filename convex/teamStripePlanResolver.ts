@@ -4,6 +4,7 @@ import {
   resolvePlanKeyFromStripePriceId,
   type PlanKey,
 } from "./planCatalog";
+import { getWhiteLabelPlanForTeam } from "./whiteLabel/planResolver";
 
 function safelyResolvePlanKeyFromStripePriceId(priceId: string): PlanKey {
   try {
@@ -98,6 +99,11 @@ export async function getTeamStripePlanHelper(
 
   if (!team) {
     throw new Error(`Team not found for organization ${args.workosOrgId}`);
+  }
+
+  const whiteLabelPlan = await getWhiteLabelPlanForTeam(ctx, team._id);
+  if (whiteLabelPlan !== null) {
+    return { plan: whiteLabelPlan };
   }
 
   const deletingPlan = resolveDeletingTeamPlan(team);

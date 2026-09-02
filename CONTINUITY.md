@@ -2,127 +2,51 @@
 
 # Snapshot
 
-- 2026-09-01 [USER] Goal: restore Messenger and Instagram on Channels now that Meta app review is approved, then create a review PR. The approved scope is UI visibility only; their existing OAuth, connection, and synchronization flows remain unchanged. Now: review PR #87 is open from `codex/restore-messenger-instagram` into `main`.
-- 2026-08-31 [USER] Goal: support WhatsApp contacts who opt in with a username and expose only `user_id`, then create a review PR. Approved identity model persists optional `whatsappUserId` and `whatsappUsername`, joins inbound profile data with `user_id`/`from_user_id`, and sends with `recipient` rather than `to` for that identity type across replies, broadcasts, and workflow templates.
-- 2026-08-31 [CODE] Now: `codex/whatsapp-username-recipients` also handles Meta `user_changed_user_id` and `user_changed_number` system events. A matched customer's BSUID and linked WhatsApp conversation addresses move together without creating a chat, analytics, or AI event; the PR includes the generated Convex API and TypeScript repair required for build review.
-- 2026-08-27 [CODE] Now: mobile inboxes preserve desktop behavior while adding a full-width selected chat, searchable customer switcher, visible AI toggle, right-hand details sheet, mobile sidebar trigger, compact gutters, and one-column Personal-agent cards. Local `/dashboard/<agent-id>/inbox?dummyData=true` provides realistic responsive demo data. PR #85 is open from `codex/mobile-responsive`.
-- 2026-08-27 [CODE] Now: the What’s new panel includes Google Calendar Support and removes the Model Support New badge; this customer-facing release copy is unshipped and remains out of the production changelog.
-- 2026-08-26 [USER] Goal: prevent the Workflow editor from crashing after a Send Media node is deleted.
-- 2026-08-26 [CODE] Now: authenticated workflow-media subscriptions return an empty list when their node has already been deleted; ownership and invalid-node checks remain strict. This customer-facing bug fix is UNRELEASED and must not enter the changelog until production availability is confirmed.
-- 2026-08-26 [USER] Goal: state Google Workspace API raw or derived user-data compliance with the Google User Data Policy and Limited Use requirements in the Privacy Policy.
-- 2026-08-26 [TOOL] Now: review PR #83 adds the exact required statement in a dedicated Privacy Policy section; `origin/main` already contains the corresponding Terms section.
-- 2026-08-26 [USER] Goal: omit pages already converted to Markdown from new web-link discoveries and display a selected page’s scraped Markdown in an expanded, readable drawer.
-- 2026-08-26 [CODE] Now: review PR #83 is open from `codex/web-markdown-preview` into `main`; it filters completed URLs before Cloudflare `/markdown`, stores new scrape Markdown in R2, and opens a completed source directly in a nearly full-screen Markdown viewer with a loading skeleton.
-- 2026-08-26 [ASSUMPTION] Legacy completed web entries have no stored Markdown, so the drawer can display Markdown for new scrapes only; the existing converted entries remain intact and are not re-scraped.
-- 2026-08-26 [USER] Goal: Overview AI-conversation analytics must exclude AI Playground test conversations.
-- 2026-08-26 [TOOL] Now: review PR #83 also excludes `playground` conversations from Overview rows, AI-message fallback metrics, and new AI-conversation aggregate facts.
-- 2026-08-24 [USER] Goal: add Book a Service onboarding to agent creation: editable weekday 9–5 availability, optional self-only first service, and an optional ready appointment-booking workflow action; create a review PR.
-- 2026-08-24 [TOOL] Now: booking-agent onboarding review PR #80 is open from `codex/booking-agent-onboarding` into `main`.
-- 2026-08-24 [USER] Next: review the PR. Availability is always created; new invited workspace members receive independent Mon–Fri 9–5 schedules for existing agents and are not added automatically to creator-only onboarding services.
-- 2026-08-21 [USER] Goal: ship an AI-powered Kilobot iframe widget that opens directly into an optional visitor form or chat, while preserving the Traditional widget and embed contract.
-- 2026-08-21 [CODE] Now: `codex/iframe-widget-home` contains broad uncommitted widget work. The live iframe and dashboard preview share direct entry, a compact Geist chat, opt-in suggestions, reset confirmation, loading state, optional branding, and compact desktop/mobile frames.
-- 2026-08-21 [CODE] Now: Visitor-form settings use one bordered collection container without helper copy. Standard Name, Email, and Phone fields remain selectable; custom-field edits stay local drafts until Confirm merges them into the form, then compact rows expose Edit, requirement, and delete controls. Answers are saved on the customer record.
-- 2026-08-21 [CODE] Now: Appearance uses compact Name/avatar plus Remove Kilobot branding in the left desktop column, with Theme in the right column. A Save appearance action is shown only for a valid unsaved Name edit and hides after success.
-- 2026-08-23 [TOOL] Now: PR #79 is open from `codex/iframe-widget-home` into `main` at commit `6380a4f`.
-- 2026-08-23 [CODE] Next: review PR #79; the local-only `index.html` iframe snippet was removed from the shipping tree.
-- 2026-08-21 [TOOL] Convex code generation cannot reach its external service from this environment; run `bunx convex codegen` or `bunx convex dev` locally when network access is available.
+- 2026-09-01 [USER] Goal: test the white-label Partner Programme locally on `codex/white-label-partner-portal`.
+- 2026-09-01 [TOOL] Now: merging current `origin/main` into the white-label branch; concurrent Overview-test and Workspace-page edits are being reconciled without removing partner access controls.
+- 2026-08-31 [CODE] Now: `origin/main` adds WhatsApp username recipients and BSUID-change continuity; both remain unshipped.
+- 2026-08-27 [CODE] Now: mobile inbox/workspace behaviour and Google Calendar What’s new copy are present on `origin/main`; those customer-facing changes remain unshipped.
+- 2026-08-26 [CODE] Now: partner-customer provisioning, workspace access, retained credentials, deletion, role control, and permission-state work is committed locally as `734c0e9`; it remains unshipped.
+- 2026-08-26 [CODE] Next: deploy the committed Convex changes only with explicit approval; Convex code generation requires explicit outbound-data approval.
+- 2026-08-19 [ASSUMPTION] White-label work is unshipped; no release-changelog entry has been added.
 
 # Decisions
 
-- 2026-08-31 [USER] D756 ACTIVE: Valid WhatsApp BSUID-change system events match a customer by `previous_user_id`, replace its current user ID/contact address with `user_id`, update linked WhatsApp conversation addresses to preserve the existing inbox thread, optionally refresh the shared current phone, and create no inbox, analytics, or AI event. Both `user_changed_user_id` and `user_changed_number` use this rule; parent BSUIDs are ignored.
-- 2026-08-24 [USER] D753 ACTIVE: Book a Service agent onboarding is Identity → Goal → editable availability (default Monday–Friday 9–5) with a You can edit it later reassurance → optional service with a You can add or edit your services later reassurance beneath, not inside, the appointment-scheduling card. Create Agent atomically creates selected availability, an active service assigned only to the creator, and a ready Book appointment workflow node for that service only when Enable AI appointment scheduling is on; Skip for now creates the agent directly with availability alone. New workspace members receive independent default availability for every existing agent but do not inherit creator-only onboarding services.
-- 2026-08-26 [USER] D754 ACTIVE: A completed web source is excluded only from subsequent discovery results, preserving the original converted entry and avoiding another Cloudflare `/markdown` conversion. New scraped Markdown is stored in R2 under a web-entry key and opens directly in a nearly full-screen, inset viewer when the source is clicked.
-- 2026-08-26 [USER] D755 ACTIVE: The Terms and Privacy Policy must state verbatim that raw or derived user data received from Workspace APIs adheres to the Google User Data Policy, including Limited Use requirements.
-- 2026-08-21 [USER] D740 ACTIVE: Reset retires the visitor’s prior AI thread; their next message creates a fresh conversation and AI context.
-- 2026-08-21 [USER] D741 ACTIVE: Suggestions have an explicit enable switch that is off for new widgets; existing configured suggestions stay enabled. When disabled, their three dashboard inputs and helper copy are hidden. When enabled, three configured non-empty suggestions render as vertical content-sized pills only before the first visitor message and send immediately as that visitor message; Save suggestions appears only after edits.
-- 2026-08-21 [USER] D742 ACTIVE: AI-powered widgets always use the fixed `Ask a question…` placeholder; legacy stored values are ignored.
-- 2026-08-21 [USER] D743 ACTIVE: Appearance is one compact group with Name/avatar and a close-coupled Remove Kilobot branding switch in the desktop left column, Theme in the right column, and no generic branding helper text or separators. A custom avatar has its own adjacent trash action that removes it and returns the live widget and both closed/open preview states to the default icon.
-- 2026-08-21 [USER] D745 ACTIVE: Appearance saves follow the same edit-driven pattern as suggestions and visitor form: Save appearance is visible only after a valid Name change and clears immediately after a successful save.
-- 2026-08-21 [USER] D744 ACTIVE: Visitor-form configuration appears below Suggestions and exposes Name, Email, and Phone as full-width vertical rows. The standard-field switch controls Required versus Optional while the field remains visible in the form; a trash action removes it. New forms include Phone as visible Optional. Standard form copy is not configurable; Save form is shown only for pending valid edits and disappears immediately after a successful save; the title has a green, white-text Recommended badge.
-- 2026-08-21 [USER] D746 ACTIVE: Visitor-form configuration groups only configured fields in one container, with Add field and Save form outside it, and allows removable custom fields. Standard and custom field switches are labelled Required or Optional to reflect their state; all visitor-form trash actions are red. New and edited custom fields stay as local drafts until Confirm merges a valid field into the form and collapses it into a compact row; Edit restores a draft. They are Short text or Dropdown, and dropdowns require at least two configured options. Required standard and custom labels show a red `*` in the live form and preview. Submitted answers are stored on the customer as custom fields, and no required-fields helper copy is shown. Live and preview dropdown fields use one minimal shadcn Select trigger/popover rather than the browser-native menu.
-- 2026-08-23 [USER] D747 ACTIVE: The live visitor form and dashboard preview use Geist for their title and description, use a medium-weight title with a deliberate top inset, neutral light-theme input borders, place a fully rounded Continue button after the configured fields with a small gap, and scroll their form body for long field lists. Live and preview text inputs and dropdown triggers share a 12px horizontal inset.
-- 2026-08-21 [USER] D748 ACTIVE: Custom visitor fields support Short text, Email, Phone number, Number, Website URL, and Dropdown. Email, number, and website inputs use native browser controls and backend validation; phone accepts international formats without a restrictive server pattern. Dropdowns use the shared shadcn Select with native required-form participation. The dashboard type picker pairs every option with a clear icon and uses a more legible text size.
-- 2026-08-21 [USER] D749 ACTIVE: The chat thinking state is an unframed inline status: its label matches normal message text size, sits one pixel lower for optical centering, has a 10px gap from the dot grid, and uses a subtle reduced-motion-safe shimmer.
-- 2026-08-21 [USER] D750 ACTIVE: While the widget chat is open, it refreshes its public message list every two seconds so human and AI replies sent from the inbox appear without a visitor refresh or another visitor message. The faster 750ms loop remains only while awaiting an AI reply.
-- 2026-08-21 [USER] D751 ACTIVE: Visitor messages use a black, high-contrast bubble. AI and human replies use neutral bubbles with a sender label above: `AI Agent` for automated replies and only the team member name for human inbox replies when the member profile has a name. Every visitor, AI, and human message includes its local `hour:minute` timestamp below the bubble. Bubbles shrink to message width while retaining an 82–84% cap for long text. The dashboard preview follows the same visual treatment.
-- 2026-08-21 [USER] D752 ACTIVE: A visitor profile completed with the same browser-stored widget visitor ID bypasses an enabled visitor form on every later widget open and enters chat directly. The widget handles either profile/config load order; resetting a chat does not erase the profile.
-- 2026-08-20 [USER] D734 ACTIVE: Channel management is agent-scoped; a channel assigned to one agent must not appear on another agent’s Channels page.
-- 2026-09-01 [USER] D735–D739 AMENDED: Messenger setup keeps its safe progress/errors, and approval now restores visible Messenger and Instagram available/connected cards alongside Website/KiloBot.
+- 2026-08-19 [USER] D734 ACTIVE: white-label state is isolated in dedicated partner tables; existing user, team, Stripe, and admin-session records change only through ID relationships.
+- 2026-08-19 [USER] D735 ACTIVE: shared plan limits take effect immediately; only the new monthly allowance starts at the organization’s next credit cycle.
+- 2026-08-19 [USER] D736 ACTIVE: partner-created workspaces use their organization wallet and manual grants; Stripe payment and top-up paths are blocked.
+- 2026-08-19 [USER] D742 ACTIVE: Partner Programme has Overview, Customers, and Branding in a subtle vertical ghost navigation.
+- 2026-08-19 [USER] D743–D760 ACTIVE: custom hostnames use the configured Cloudflare SaaS zone, CNAME-only subdomains, DCV delegation, explicit DNS confirmations, concise polling, and expandable completed setup steps.
+- 2026-08-24 [USER] D763 ACTIVE: Customers has separate organization and customer tables; organization counts include pending and accepted invitations, active has a green dot, and suspension requires confirmation.
+- 2026-08-24 [USER] D770 ACTIVE: partner-provisioned passwords are encrypted at rest, revealed only by an authorized row action, and marked historical after WorkOS emits `password_reset.succeeded`.
+- 2026-08-25 [USER] D771 ACTIVE: a partner-created customer skips onboarding and may access only their assigned organization; personal and other workspace switching is server-blocked.
+- 2026-08-25 [USER] D773 ACTIVE: partners can change active customer roles and WorkOS/local membership records update together.
+- 2026-08-25 [USER] D774–D775 ACTIVE: members without agent-create access see an explanatory empty state; partner-managed workspaces hide Get Free Credits.
+- 2026-08-25 [USER] D776 ACTIVE: partner-created customers authenticate only through their assigned connected partner hostname; native Kilobot sign-in rejects them while native users retain AuthKit.
+- 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
 
 # Done (recent)
 
-- 2026-09-01 [CODE] Restored visible Messenger and Instagram channel cards without changing their OAuth, connection, or synchronization behavior. This customer-facing change is UNRELEASED and must not enter the production changelog until availability is confirmed.
-- 2026-08-31 [CODE] Added WhatsApp username-contact support: inbound provider IDs and `@username` are stored without creating a synthetic phone; inbox text/media/reactions, templates, and broadcasts send those contacts using Meta's `recipient` field. This customer-facing feature is UNRELEASED and must not enter the changelog until production availability is confirmed.
-- 2026-08-31 [CODE] Added WhatsApp BSUID-change continuity: both documented system-event variants retain a customer's username, move the current provider recipient ID and linked inbox conversation address, and accept an explicitly shared new phone number. This customer-facing feature is UNRELEASED and must not enter the changelog until production availability is confirmed.
-- 2026-08-27 [CODE] Added responsive mobile inbox/workspace navigation, demo data, accessible customer details, and robust switcher search behavior. The unshipped customer-facing change is not in the release changelog.
-- 2026-08-27 [CODE] Added Google Calendar Support to What’s new and removed the Model Support New badge; release copy is unshipped and not in the release changelog.
-- 2026-08-26 [CODE] New web-link discovery excludes completed URLs; newly scraped Markdown is retained in R2 and opens directly in a nearly full-screen, inset source viewer with a loading skeleton. The unshipped customer-facing change is not in the release changelog.
-- 2026-08-26 [CODE] Overview now excludes AI Playground test conversations from customer conversation totals and AI-conversation metrics; the unshipped customer-facing fix is not in the release changelog.
-- 2026-08-26 [CODE] Prevented stale Send Media subscriptions from crashing the Workflow editor when their node is deleted; deleted-node media reads now resolve empty while protected access validation remains enforced.
-- 2026-08-24 [CODE] Added Book a Service agent onboarding: an editable weekday 9–5 availability step, optional self-only service creation, and an opt-in ready Book appointment workflow node. Booking requires a post-availability customer message plus the agent’s recorded reaction before the selected slot can be created. Skipping service creation creates the agent with availability alone.
-- 2026-08-25 [CODE] Added a dedicated Google Workspace API data Terms section and updated the Terms last-updated date; verified with the focused legal-content regression test and pending review PR.
-- 2026-08-21 [CODE] Completed the locally uncommitted AI-widget redesign and visitor-form refinement: direct iframe UX, prompt composer, reset, branding, sender-aware chat, editable field drafts, returning-profile routing, and aligned live/preview controls.
-- 2026-08-21 [CODE] Added opt-in suggestions, compact appearance controls, flexible custom visitor-field types, accessible dropdowns, and reactive avatar removal across dashboard and widget experiences.
+- 2026-08-31 [CODE] Added WhatsApp username recipients and BSUID-change continuity; both customer-facing changes are unshipped.
+- 2026-08-27 [CODE] Added responsive mobile inbox/workspace navigation, demo data, accessible customer details, and robust switcher search behaviour; unshipped.
+- 2026-08-27 [CODE] Added Google Calendar Support to What’s new and removed the Model Support New badge; unshipped.
+- 2026-08-26 [CODE] Prevented deleted Send Media nodes from crashing the Workflow editor; unshipped.
+- 2026-08-26 [CODE] Completed partner provisioning, assigned-workspace-only access, credentials, deletion, role controls, and permissions work in local commit `734c0e9`; unshipped.
 
 # Working set
 
-- 2026-09-01 [CODE] `src/{pages/ChannelsPage.tsx,components/channels/AvailableChannelCard.test.ts}`
-- 2026-08-26 [CODE] `convex/{agentOverviewModel.ts,agentOverviewMessages.ts,agentOverviewAggregates.ts,agentOverviewAiHandled.test.ts,workflowMedia.ts,workflowMediaShared.ts,workflowNodeDeletion.test.ts}`
-- 2026-08-26 [CODE] `convex/{schema.ts,knowledgeBase.ts,cloudflare.ts,workpool.ts,media/r2.ts,teamDeletion/external.ts,webScraperMarkdownPersistence.test.ts}`, `shared/webEntryUrl.ts`, `src/components/knowledge-base/{WebSection.tsx,WebEntryDetails.tsx,WebEntryDetailsModalLayout.test.tsx}`, `src/content/{privacyPolicyProviderSections.tsx,termsUserContentSections.tsx,legalConstants.ts,legalDocumentContent.test.tsx}`
-- 2026-08-21 [CODE] `shared/webWidgetExperience.ts`
-- 2026-08-21 [CODE] `convex/{webWidget.ts,webWidgetAdmin.ts,webWidgetPublic.ts,webWidgetValidators.ts,http.ts}`
-- 2026-08-21 [CODE] `public/widget/ai.js`
-- 2026-08-21 [CODE] `src/widget/{Widget.tsx,widgetEntryScreen.ts,WidgetVisitorForm.tsx,styles.css}`
-- 2026-08-21 [CODE] `src/components/channels/WebWidgetAiSettingsControls.tsx`
-- 2026-08-21 [CODE] `src/components/channels/WebWidgetAppearanceSection.tsx`
-- 2026-08-21 [CODE] `src/components/channels/WebWidgetLeadFormSection.tsx`
-- 2026-08-21 [CODE] `src/components/channels/WebWidgetPreview.tsx`
-- 2026-08-21 [CODE] `src/components/channels/WebWidgetSettingsPanel.tsx`
-- 2026-08-27 [CODE] `src/{pages/ChatsPage.tsx,pages/ChatsPageMobileLayout.test.ts,WorkspacePage.tsx,WorkspacePageMobileLayout.test.ts,layouts/DashboardLayout.tsx,layouts/DashboardLayoutMobileNavigation.test.ts}`, `src/components/inbox/{InboxConversationList.tsx,InboxMobileConversationSwitcher.tsx}`
-- 2026-08-27 [CODE] `src/pages/ChatsPageDemoData.test.ts`, `src/components/inbox/{InboxDemoPreview.tsx,inboxDemoData.ts}`
-- 2026-08-27 [CODE] `src/components/inbox/InboxMobileDetailsSheet.tsx`, `src/pages/ChatsPageMobileLayout.test.ts`
+- 2026-09-01 [CODE] `convex/whiteLabel/`
+- 2026-09-01 [CODE] `convex/{schema.ts,authUtils.ts,teamHelpers.ts}`
+- 2026-09-01 [CODE] `src/{pages/PartnerPage.tsx,pages/WorkspacePage.tsx,components/partner/}`
+- 2026-09-01 [CODE] `src/lib/whiteLabelApi.ts`
+- 2026-09-01 [CODE] `convex/{agentOverview.test.ts,agentOverviewTestHelpers.ts,avatarConversationIdentity.test.ts}`
+- 2026-09-01 [CODE] `docs/superpowers/specs/2026-08-19-partner-custom-hostnames-design.md`
+- 2026-09-01 [CODE] `docs/superpowers/specs/2026-08-24-partner-active-customer-accounts-design.md`
 
 # Receipts
 
-- 2026-09-01 [TOOL] Messenger/Instagram visibility regression failed as expected while both cards were in hidden wrappers, then passed after their removal. Node v22 production build and `git diff --check` pass; changed-file lint has one pre-existing `ChannelsPage.tsx` React hook-dependency warning and no errors.
-- 2026-09-01 [TOOL] Local commit `75aa718` was created; push to the configured `origin` remote was blocked pending explicit code-egress authorization.
-- 2026-09-01 [TOOL] User authorized code egress; branch push succeeded and review PR #87 was created at `https://github.com/Leykwan132/chat-saas/pull/87`.
-- 2026-08-27 [TOOL] Mobile inbox, dashboard, and workspace red/green regressions confirm the customer conversation switcher, mobile AI toggle, sidebar triggers, compact gutters, and one-column mobile agent grid; 9 focused tests pass across all changes. Targeted lint passes for the changed layout files and tests; `ChatsPage.tsx` has 10 pre-existing lint errors. `git diff --check` passes. A full production build did not complete within two 30-second execution windows.
-- 2026-08-27 [TOOL] Inbox demo regression is green: 11 focused mobile/inbox tests pass, targeted lint passes for the new demo files, and `bun run build` completes with Node v22. Demo mode is gated to development plus the explicit `dummyData=true` URL flag.
-- 2026-08-27 [TOOL] Mobile details-sheet regression is green: focused mobile tests, new-component lint, diff validation, and the Node v22 production build pass. `ChatsPage.tsx` still reports its existing 10 unrelated lint errors when linted directly.
-- 2026-08-27 [TOOL] Header refinement regression is green: 11 focused tests pass, targeted lint and diff validation pass, and the Node v22 production build exits 0.
-- 2026-08-27 [TOOL] Review-fix verification is green: focused inbox/mobile tests, targeted lint, diff validation, and the Node v22 production build pass.
-- 2026-08-27 [TOOL] Follow-up review verification is green: 11 focused tests pass, targeted lint and diff validation pass; production build is rerun before the PR update.
-- 2026-08-27 [TOOL] What’s new announcement regression is green: 4 focused tests pass, targeted ESLint passes, and `git diff --check` is clean.
-- 2026-08-27 [TOOL] Merged refreshed `origin/main` into `codex/mobile-responsive`; resolved all `CONTINUITY.md` conflicts while retaining both branches’ ledger entries, then verified 18 incoming regression tests and 4 What’s new tests with Node v22.
-- 2026-08-27 [TOOL] Final PR verification on pushed branch is green: 11 focused tests, targeted lint, diff validation, and Node v22 production build pass. Pre-existing unstaged `convex/_generated/api.d.ts` remains outside the PR.
-- 2026-08-21 [CODE] `index.html`
-
-# Receipts
-
-- 2026-08-31 [TOOL] WhatsApp username-recipient verification: 15 focused tests pass under Node v22; `bunx tsc -b` and changed-backend/test lint pass; `git diff --check` is clean. `AutomationsBroadcastPage.tsx` lint retains 7 pre-existing issues outside the edited lines. Full `bun run test`: 1,752 pass and 21 unrelated failures in Agent Overview, billing-date, and web-widget coverage.
-- 2026-08-31 [TOOL] WhatsApp BSUID-change verification: red/green coverage passed for customer/conversation transfer and both webhook system-event variants. The full focused WhatsApp suite has 19 passing tests; Node v22 TypeScript, targeted lint, and `git diff --check` pass.
-- 2026-08-31 [TOOL] Build repair: `bunx convex codegen` is blocked by an unset `CONVEX_DEPLOYMENT`, so the tracked generated API declaration was updated with the new module. Node v22 TypeScript then completed without diagnostics; 19 focused tests and changed-backend lint pass. The broadcast page retains 7 pre-existing lint errors outside the edited row type.
-- 2026-08-26 [TOOL] Merged `origin/main` into `codex/fix-workflow-media-deletion`; the continuity conflict was compacted with both lines of work retained. Node v22 verification passed 27 focused tests, TypeScript, targeted lint, and `git diff --check`.
-- 2026-08-26 [TOOL] Deleted-node media regression: focused test failed as expected before the fix with `Workflow media node not found` from `listForNode`; after the fix, 24 affected tests, TypeScript, targeted ESLint, and `git diff --check` pass with Node v22. Full `bun run test` completes 1,745 passing tests and 14 existing failures in five unchanged calendar, escalation, widget/UI, and test-discovery areas.
-- 2026-08-26 [TOOL] Google Workspace API Terms reached `origin/main`; Privacy-policy red/green coverage confirmed the same Limited Use statement was absent then present. The merged legal-content test suite passes 5 tests with targeted lint and a clean diff.
-- 2026-08-26 [TOOL] Review PR #83 at `https://github.com/Leykwan132/chat-saas/pull/83` includes completed-URL discovery filtering, persisted scraped Markdown, an expandable source-detail drawer, and the Privacy Policy statement; local Vite preview is `http://127.0.0.1:5178`.
-- 2026-08-26 [TOOL] R2 Markdown follow-up: 14 focused tests and targeted lint pass; integration-file lint reports 13 pre-existing issues in `convex/cloudflare.ts` and `WebSection.tsx`. Diff check passes and source files remain within the line cap.
-- 2026-08-26 [TOOL] Direct Markdown viewer follow-up: focused viewer regression failed before the interaction change and passes after it; the complete focused PR suite passes 14 tests and viewer-file lint is clean.
-- 2026-08-26 [TOOL] Inset Markdown viewer follow-up: red/green layout test confirmed the previous edge-to-edge geometry and now verifies 1rem/1.5rem responsive insets; 15 focused PR tests pass with a clean diff check.
-- 2026-08-26 [TOOL] Overview regression failed before the fix (test thread counted as two conversations) and passes after it; focused suite passed 3/3. Broader Overview coverage has two existing date-boundary test failures in sentiment/topic assertions, unrelated to playground filtering.
-- 2026-08-24 [TOOL] Service reassurance placement: red/green service-step render test confirmed the helper was inside the appointment-scheduling card; 10 focused tests, targeted lint, and diff validation pass.
-- 2026-08-24 [TOOL] Availability reassurance: a red/green availability-step render test confirmed the edit-later text was absent; 9 focused tests, targeted lint, and diff validation pass.
-- 2026-08-24 [TOOL] Booking toggle wording: red/green service-step render test confirmed the prior wording; 8 focused tests, targeted lint, and diff validation pass.
-- 2026-08-24 [TOOL] Booking onboarding refinements: red/green availability and service-step tests confirmed missing/incorrect reassurance placement and toggle wording; targeted lint and diff validation pass.
-- 2026-08-24 [TOOL] Booking onboarding: 31 focused backend/UI tests and targeted lint pass; production build completes with Node v22; all new or modularized source files are at or below 300 lines. Repository-wide lint remains blocked by 223 pre-existing errors in unrelated paths. The full `bun test` run is unsuitable here (1,362 pass, 174 fail, 116 loader errors) because Bun lacks Vitest `import.meta.glob` support and required Stripe environment values. Convex codegen requires an unconfigured `CONVEX_DEPLOYMENT`.
-- 2026-08-21 [TOOL] Custom-field draft boundary: red merge test confirmed confirmation had no model boundary; focused tests (9), app TypeScript, targeted ESLint, and diff validation pass. All touched code files remain below 300 lines.
-- 2026-08-21 [TOOL] Required markers: red render tests confirmed both live and preview forms omitted markers; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
-- 2026-08-21 [TOOL] Visitor-form layout: red render tests confirmed absent scroll/font classes; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
-- 2026-08-21 [TOOL] Visitor-form header spacing: red preview render test confirmed the prior padding and semibold title; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
-- 2026-08-21 [TOOL] Visitor-form top inset and Continue styling: red preview render test confirmed the compact top inset and rounded Continue styling; 19 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
-- 2026-08-21 [TOOL] Custom field types: red shared and rendered-form tests confirmed missing normalization and native input types; 21 focused tests, app TypeScript, targeted ESLint, and diff validation pass. Touched code files remain below 300 lines.
-- 2026-08-21 [TOOL] Custom-field type-picker icons: 18 focused tests, app TypeScript, targeted ESLint, and diff validation pass; the row remains below 300 lines.
-- 2026-08-21 [TOOL] Thinking-indicator refinement: 40 focused tests, app TypeScript, targeted ESLint, and diff validation pass; its CSS remains below 300 lines.
-- 2026-08-21 [TOOL] Thinking-indicator optical alignment: red/green test confirmed the prior 6px gap; 40 focused tests, app TypeScript, targeted ESLint, and diff validation pass.
-- 2026-08-21 [TOOL] Inbox-to-widget reply refresh: red widget test confirmed no chat-open polling; 34 focused widget/Convex tests, app TypeScript, targeted ESLint, and diff validation pass. `Widget.tsx` remains below 300 lines.
+- 2026-08-31 [TOOL] WhatsApp username-recipient focused suite passed 19 tests, Node v22 TypeScript, changed-backend lint, and diff validation; unrelated full-suite failures remain.
+- 2026-08-27 [TOOL] Mobile inbox/workspace focused tests, targeted lint, diff validation, and Node v22 production build passed.
+- 2026-08-26 [TOOL] Before `734c0e9`, 15 focused partner/workspace regressions and Node v22 TypeScript passed.
+- 2026-08-25 [TOOL] Partner-created customer workspace regression, related auth/workspace suites, Node v22 production build, targeted lint, and diff validation passed.
+- 2026-08-25 [TOOL] A bounded partner-customer workspace migration ran successfully against the configured Convex development deployment and its temporary entrypoint was removed.

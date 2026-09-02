@@ -3,6 +3,13 @@ import type { Doc, Id } from "./_generated/dataModel";
 
 import { PLAN_CATALOG, type PlanKey } from "./planCatalog";
 import { ensureReferralCodeForUser } from "./referralCodeRecords";
+import {
+  assertPartnerCustomerTeam,
+  getPartnerCustomerActiveTeam,
+  markPartnerCustomerOnboarded,
+} from "./whiteLabel/customerWorkspace";
+
+export { ensureOrganizationalTeam } from "./organizationalTeamProvisioning";
 
 export const PERSONAL_ORG_ID = "";
 
@@ -117,6 +124,9 @@ export async function getActiveTeamForUser(
   ctx: QueryCtx | MutationCtx,
   user: Doc<"users">,
 ): Promise<Doc<"teams">> {
+  const partnerTeam = await getPartnerCustomerActiveTeam(ctx, user);
+  if (partnerTeam !== null) return partnerTeam;
+
   if (user.activeTeamId !== undefined) {
     const team = await ctx.db.get(user.activeTeamId);
     if (team !== null) {
@@ -152,6 +162,8 @@ export async function setActiveTeamForUser(
   user: Doc<"users">,
   teamId: Id<"teams">,
 ): Promise<Doc<"teams">> {
+  await assertPartnerCustomerTeam(ctx, user.workosUserId, teamId);
+
   const membership = await ctx.db
     .query("teamMemberships")
     .withIndex("by_userId_and_teamId", (q) =>
@@ -223,7 +235,6 @@ export type EnsureUserAccountArgs = {
   timeZone?: string;
 };
 
-/** Creates or updates the app user row and always ensures a personal team exists. */
 export async function ensureUserAccount(
   ctx: MutationCtx,
   args: EnsureUserAccountArgs,
@@ -256,7 +267,6 @@ export async function ensureUserAccount(
     ) {
       patch.profilePictureUrl = args.profilePictureUrl;
     }
-
     if (
       patch.email !== undefined ||
       patch.firstName !== undefined ||
@@ -266,7 +276,11 @@ export async function ensureUserAccount(
       await ctx.db.patch(existing._id, patch);
     }
 
-    if ((await getPersonalTeamForUser(ctx, existing._id)) === null) {
+    const isPartnerCustomer = await markPartnerCustomerOnboarded(ctx, {
+      userId: existing._id,
+      workosUserId: args.workosUserId,
+    });
+    if (!isPartnerCustomer && (await getPersonalTeamForUser(ctx, existing._id)) === null) {
       await createPersonalTeamForUser(ctx, existing._id, args.timeZone);
     }
     await ensureReferralCodeForUser(ctx, existing._id);
@@ -283,48 +297,13 @@ export async function ensureUserAccount(
     createdAt: now,
     updatedAt: now,
   });
-  await createPersonalTeamForUser(ctx, userId, args.timeZone);
+  const isPartnerCustomer = await markPartnerCustomerOnboarded(ctx, {
+    userId,
+    workosUserId: args.workosUserId,
+  });
+  if (!isPartnerCustomer) {
+    await createPersonalTeamForUser(ctx, userId, args.timeZone);
+  }
   await ensureReferralCodeForUser(ctx, userId);
   return userId;
-}
-
-export async function ensureOrganizationalTeam(
-  ctx: MutationCtx,
-  args: {
-    workosOrgId: string;
-    name: string;
-    stripeSubscriptionId?: string;
-    ownerUserId: Id<"users">;
-    timeZone?: string;
-  },
-) {
-  const now = Date.now();
-  let team = await getTeamByWorkosOrgId(ctx, args.workosOrgId);
-  if (team === null) {
-    const teamId = await ctx.db.insert("teams", {
-      type: "organizational",
-      name: args.name,
-      stripeSubscriptionId: args.stripeSubscriptionId,
-      ownerId: args.ownerUserId,
-      workosOrgId: args.workosOrgId,
-      timeZone: normalizeTimeZone(args.timeZone),
-      createdAt: now,
-      updatedAt: now,
-    });
-    team = (await ctx.db.get(teamId))!;
-  } else if (team.name !== args.name || (team.timeZone === undefined && args.timeZone !== undefined)) {
-    await ctx.db.patch(team._id, {
-      name: args.name,
-      timeZone: team.timeZone ?? normalizeTimeZone(args.timeZone),
-      updatedAt: now,
-    });
-  }
-
-  await ensureTeamMembership(ctx, {
-    teamId: team._id,
-    userId: args.ownerUserId,
-    role: "owner",
-  });
-
-  return team._id;
 }
