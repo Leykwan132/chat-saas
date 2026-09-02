@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { ArrowRight } from 'lucide-react';
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import { SiteHeaderActions } from '@/components/site-header/SiteHeaderActions';

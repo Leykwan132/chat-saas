@@ -21,6 +21,14 @@ import {
 const http = httpRouter();
 authKit.registerRoutes(http);
 
+http.route({
+  path: "/partner-auth/jwks",
+  method: "GET",
+  handler: httpAction(async (ctx) => Response.json(
+    await ctx.runAction(internal.whiteLabel.partnerAuthNode.getJwks, {}),
+  )),
+});
+
 import { components } from "./_generated/api";
 import { registerRoutes } from "@convex-dev/stripe";
 import {

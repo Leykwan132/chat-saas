@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from 'convex/react';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
 import {

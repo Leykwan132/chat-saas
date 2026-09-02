@@ -1,31 +1,28 @@
 import { expect, test } from "vitest";
 
-test("requires explicit issuer and JWKS configuration for partner surface tokens", async () => {
+test("requires the existing Convex site URL for partner surface tokens", async () => {
   const config = await import("./partnerAuthConfig");
 
   expect(() =>
     config.getPartnerAuthJwtProvider({
-      PARTNER_AUTH_JWT_ISSUER: "",
-      PARTNER_AUTH_JWKS_URL: "https://auth.kilobot.app/_partner-auth/jwks",
       WORKOS_CLIENT_ID: "client_test",
     }),
-  ).toThrow("PARTNER_AUTH_JWT_ISSUER is not configured");
+  ).toThrow("CONVEX_SITE_URL is not configured");
 });
 
-test("builds a Convex custom JWT provider for Worker surface tokens", async () => {
+test("builds a Convex custom JWT provider for partner surface tokens", async () => {
   const config = await import("./partnerAuthConfig");
 
   expect(
     config.getPartnerAuthJwtProvider({
-      PARTNER_AUTH_JWT_ISSUER: "https://auth.kilobot.app",
-      PARTNER_AUTH_JWKS_URL: "https://auth.kilobot.app/_partner-auth/jwks",
+      CONVEX_SITE_URL: "https://example.convex.site/",
       WORKOS_CLIENT_ID: "client_test",
     }),
   ).toEqual({
     type: "customJwt",
-    issuer: "https://auth.kilobot.app",
+    issuer: "kilobot-partner-auth",
     algorithm: "RS256",
-    jwks: "https://auth.kilobot.app/_partner-auth/jwks",
+    jwks: "https://example.convex.site/partner-auth/jwks",
     applicationID: "client_test",
   });
 });

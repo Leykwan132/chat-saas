@@ -37,9 +37,9 @@ The current workspace resolver treats a partner-created user as globally partner
 
 ### Authentication gateway
 
-Replace the asset-only Cloudflare Worker deployment with a module Worker that serves static SPA assets for normal requests and owns same-origin `/_partner-auth/*` routes. The Worker is reached by `kilobot.app` and each Cloudflare SaaS custom hostname. `storage.kilobot.app/*` remains a no-script route so R2 traffic bypasses this Worker.
+Custom hostnames continue serving the static SPA without a dedicated application Worker. The partner sign-in page calls Convex directly for branding and email/password authentication. `storage.kilobot.app/*` remains a no-script route for R2 traffic.
 
-The Worker uses the incoming Cloudflare request hostname, not a client-supplied hostname, to resolve the current surface. It calls a protected Convex HTTP endpoint using a shared service secret. The endpoint returns only the safe information needed by the Worker:
+Convex resolves the requested hostname, authenticates the password with WorkOS, and validates active membership. The direct browser hostname is an input rather than an edge-verified request attribute, so authorization remains bound to the authenticated member and partner organization but the hostname is not an independently verified network boundary.
 
 - whether this is the Kilobot hostname or a connected active partner hostname;
 - partner ID, partner display name, and logo URL for a connected partner hostname;
@@ -49,17 +49,16 @@ The browser never calls this protected endpoint and cannot choose a partner ID o
 
 ### Session types
 
-Convex must receive a short-lived, hostname-scoped JWT rather than a raw WorkOS access token. The Worker becomes the issuer for this app token and serves its public JWKS. Convex adds that issuer alongside the existing WorkOS issuers.
+Convex receives a short-lived, hostname-scoped JWT only for partner-host sessions. The Worker becomes the issuer for this app token and serves its public JWKS. Convex adds that issuer alongside the existing WorkOS issuers. Kilobot keeps passing its existing AuthKit token directly to Convex.
 
 Every app token includes:
 
 - the WorkOS user ID as `sub`;
 - an expiry no longer than five minutes;
-- `surface: "kilobot" | "partner"`;
-- for partner sessions, the connected hostname, partner ID, and partner organization ID;
-- the existing identity fields required for user lookup.
+- `surface: "partner"`;
+- the connected hostname, partner ID, and partner organization ID.
 
-The Worker signs tokens with a private JWK held only as a Cloudflare Worker secret. It seals a host-only, secure, HttpOnly, SameSite=Lax session cookie using a separate encryption key. The cookie is never valid on another hostname and does not contain the app JWT. The SPA obtains a fresh short-lived app token through a same-origin session endpoint and keeps it in memory for the Convex provider.
+Convex signs seven-day tokens with a private JWK held in its environment. The partner-host SPA stores the token and minimal user profile in local storage, scoped by the browser to that hostname. It is discarded on sign-out or expiry; Kilobot continues using its existing AuthKit session and does not use this storage.
 
 The Worker validates active membership before issuing or refreshing a partner-surface app token. Convex independently verifies the token's partner organization claim still matches an active local membership and connected hostname before returning partner data. Removing a membership therefore invalidates new tokens immediately and denies existing short-lived tokens at the data boundary.
 
@@ -74,17 +73,17 @@ On a custom hostname, `/sign-in` first requests `/_partner-auth/branding`. Until
 
 There is no card-style shell, marketing copy, alternate authentication method, reset link, or link to a different hostname.
 
-The form posts same-origin credentials to `/_partner-auth/login`. The Worker calls WorkOS password authentication with its server-side WorkOS API key, resolves the account against the request hostname, and creates a sealed partner-host session only when the person is an active member of that partner organization. It then returns a success response; the SPA obtains an app token and routes to `/workspace` on the current origin.
+The form calls a Convex action with the current hostname, email, and password. Convex calls WorkOS password authentication with its server-side API key, resolves the account against the supplied hostname, and returns a five-minute app token only when the person is an active member of that partner organization. The SPA routes to `/workspace` on the current origin.
 
 Invalid credentials, a normal Kilobot user, an inactive member, an account assigned to a different partner, and an unknown hostname all receive the same generic sign-in failure. This prevents email and partner-membership enumeration.
 
 ### Kilobot sign-in
 
-`kilobot.app/sign-in` keeps the existing WorkOS AuthKit route and callback. Once AuthKit has an authenticated WorkOS access token, a same-origin Worker bridge validates it and establishes a sealed Kilobot-surface session. The SPA then switches its Convex authentication source from the raw AuthKit token to the short-lived Worker-issued Kilobot app token.
+`kilobot.app/sign-in` keeps the existing WorkOS AuthKit route, callback, and direct Convex authentication. It does not create a partner Worker session.
 
 For a person who has only been created by a partner, that app token still has `surface: "kilobot"`. The backend creates their personal Kilobot context and the current onboarding flow runs as it does for any new personal user. Kilobot otherwise retains every native personal and organizational team the user belongs to. Partner root organizations and teams created through a partner hostname are not returned to the Kilobot switcher, plan queries, billing views, or any other native product API.
 
-Existing Kilobot users retain their current AuthKit experience. At deployment, an existing AuthKit session is bridged on its next app load without forcing a password entry.
+Existing Kilobot users retain their current AuthKit experience without a forced password entry.
 
 ### Workspace resolution
 
@@ -109,9 +108,9 @@ Every team-specific query, mutation, and action uses one shared surface-aware ac
 
 ### Logout and expiry
 
-Signing out on a partner hostname clears only that hostname's sealed session and in-memory app token. It does not clear a Kilobot session on a separate host. Signing out on Kilobot retains its current AuthKit logout behavior and also clears the Kilobot-surface Worker session.
+Signing out on a partner hostname clears the in-memory app token. It does not clear a Kilobot AuthKit session on a separate host. Signing out on Kilobot retains its current AuthKit logout behavior.
 
-When an app token expires, the SPA requests a replacement from the same-origin Worker. If the sealed session is absent, expired, invalid, or no longer authorized for that surface, the SPA clears local auth state and returns to that origin's `/sign-in`.
+When a partner app token expires after seven days, the SPA clears its local session and returns to that origin's `/sign-in` on the next protected navigation or request. A page refresh restores a still-valid stored session.
 
 ## Interfaces and data
 
@@ -119,12 +118,9 @@ When an app token expires, the SPA requests a replacement from the same-origin W
 
 All Worker routes are same-origin and reject cross-origin browser calls:
 
-- `GET /_partner-auth/branding` returns connected partner name and logo for the request hostname only.
-- `POST /_partner-auth/login` accepts email and password only on an active partner hostname.
-- `POST /_partner-auth/kilobot-session` accepts the current AuthKit access token only on `kilobot.app` and establishes a Kilobot surface session.
-- `GET /_partner-auth/session` returns a fresh short-lived app token for the current host-bound session.
-- `POST /_partner-auth/logout` clears the current host-bound session.
-- `GET /_partner-auth/jwks` exposes the public key set used by Convex to verify app tokens.
+- `whiteLabel/partnerAuthGateway:getBrandingForHostname` returns connected partner name and logo for the supplied hostname.
+- `whiteLabel/partnerAuth:signIn` accepts hostname, email, and password, then returns a short-lived partner app token.
+- `GET /partner-auth/jwks` is a Convex HTTP endpoint that exposes the public key set used by Convex to verify app tokens.
 
 No route returns WorkOS refresh tokens, sealed session contents, private signing material, partner membership lists, or another hostname's brand data.
 
@@ -132,7 +128,7 @@ No route returns WorkOS refresh tokens, sealed session contents, private signing
 
 Add a custom JWT provider for the Worker issuer in `convex/auth.config.ts`. The issuer and JWKS URL are explicit environment values; they have no fallback.
 
-Add protected internal/HTTP functions that the Worker can call using a shared secret. They resolve a hostname and enforce the user-to-partner-organization relationship. They do not become public Convex client functions.
+Add bounded Convex functions that resolve a hostname and enforce the authenticated user-to-partner-organization relationship. The Worker uses the WorkOS access token for the membership call; no static Worker-to-Convex shared secret is needed.
 
 The existing white-label partner and organization tables remain the source of truth. No password, refresh token, reset token, or long-lived app session is stored in Convex for this phase.
 
@@ -140,29 +136,21 @@ Add `whiteLabelPartnerManagedTeams` for teams created from a partner hostname. E
 
 ### Required configuration
 
-Cloudflare Worker secrets:
-
-- `WORKOS_API_KEY`
-- `PARTNER_AUTH_CONVEX_SHARED_SECRET`
-- `PARTNER_AUTH_SESSION_ENCRYPTION_KEY`
-- `PARTNER_AUTH_JWT_PRIVATE_JWK`
-- `CONVEX_PARTNER_AUTH_URL`
-
 Convex environment values:
 
-- `PARTNER_AUTH_CONVEX_SHARED_SECRET`
-- `PARTNER_AUTH_JWT_ISSUER`
-- `PARTNER_AUTH_JWKS_URL`
+- `WORKOS_API_KEY`
+- `WORKOS_CLIENT_ID`
+- `PARTNER_AUTH_JWT_PRIVATE_JWK`
 
 The current WorkOS client ID remains configured for AuthKit. No email-sending configuration is required in this phase.
 
-Cloudflare must route the Kilobot application and active custom hostnames to the module Worker. The exact `storage.kilobot.app/*` no-script route remains in place before the broad application route so R2 requests continue to bypass application authentication.
+Cloudflare continues routing the Kilobot application and active custom hostnames to static assets. The exact `storage.kilobot.app/*` no-script route remains in place.
 
 ## Error handling and safety
 
 - Only a custom hostname that is both connected in Cloudflare and active in the partner record may render partner branding or attempt partner sign-in.
 - The Worker applies a Cloudflare rate-limit rule to `POST /_partner-auth/login` before password authentication reaches WorkOS.
-- Credentials, WorkOS refresh tokens, app tokens, sealed cookies, shared secrets, and signing keys are never logged, returned in URLs, or persisted in browser storage.
+- Credentials, WorkOS refresh tokens, app tokens, sealed cookies, and signing keys are never logged, returned in URLs, or persisted in browser storage.
 - All return paths are fixed internal paths; no open redirect is accepted.
 - Partner membership and organization status are checked at token issuance and again when Convex resolves the workspace.
 - Generic error responses do not disclose whether an email exists, which partner owns it, or whether a membership is suspended.
@@ -172,7 +160,7 @@ Cloudflare must route the Kilobot application and active custom hostnames to the
 
 - Worker tests cover hostname resolution, unknown and disconnected hosts, branding output, generic login failures, cookie attributes, host-bound refresh, logout, rate-limit response handling, and no secret/token logging.
 - Tests cover partner password authentication success only for a member assigned to the resolved partner organization.
-- Tests cover Kilobot AuthKit bridge success for an existing native user and a partner-created user.
+- Tests cover Kilobot native AuthKit access and partner token isolation for a partner-created user.
 - Convex auth-context tests cover partner token validation, native token exclusion of partner teams, personal onboarding for a partner-created user on Kilobot, and rejection of stale membership and forged surface claims.
 - UI tests cover partner brand loading, spinner state, email/password-only controls, no password-reset UI, submission loading, and same-origin workspace routing.
 - Regression tests prove partner root and managed teams, their plan, wallet, credits, and organization data never appear in Kilobot while all native teams remain available there; personal billing and onboarding never appear on a partner hostname.

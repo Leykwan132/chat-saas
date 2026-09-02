@@ -5,7 +5,7 @@ import schema from "../../convex/schema";
 
 const modules = import.meta.glob("/convex/**/*.ts");
 
-test("identifies the current partner customer workspace as managed", async () => {
+test("does not expose a partner customer workspace from Kilobot", async () => {
   const t = convexTest(schema, modules);
   const workosUserId = "customer-owner";
   const workosOrgId = "org-customer";
@@ -26,7 +26,20 @@ test("identifies the current partner customer workspace as managed", async () =>
       createdAt: now,
       updatedAt: now,
     });
-    await ctx.db.patch(userId, { activeTeamId: teamId });
+    const personalTeamId = await ctx.db.insert("teams", {
+      type: "personal",
+      name: "Personal",
+      ownerId: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.patch(userId, { activeTeamId: personalTeamId });
+    await ctx.db.insert("teamMemberships", {
+      teamId: personalTeamId,
+      userId,
+      role: "owner",
+      createdAt: now,
+    });
     await ctx.db.insert("teamMemberships", {
       teamId,
       userId,
@@ -57,10 +70,10 @@ test("identifies the current partner customer workspace as managed", async () =>
     })
     .query(api.whiteLabel.billing.isPartnerManagedCurrentWorkspace, {});
 
-  expect(managed).toBe(true);
+  expect(managed).toBe(false);
 });
 
-test("blocks customer members from normal workspace invitations", async () => {
+test("keeps a partner customer on their native personal workspace in Kilobot", async () => {
   const t = convexTest(schema, modules);
   const workosUserId = "customer-admin";
   const workosOrgId = "org-managed";
@@ -81,7 +94,20 @@ test("blocks customer members from normal workspace invitations", async () => {
       createdAt: now,
       updatedAt: now,
     });
-    await ctx.db.patch(userId, { activeTeamId: teamId });
+    const personalTeamId = await ctx.db.insert("teams", {
+      type: "personal",
+      name: "Personal",
+      ownerId: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.patch(userId, { activeTeamId: personalTeamId });
+    await ctx.db.insert("teamMemberships", {
+      teamId: personalTeamId,
+      userId,
+      role: "owner",
+      createdAt: now,
+    });
     await ctx.db.insert("teamMemberships", {
       teamId,
       userId,
@@ -115,6 +141,6 @@ test("blocks customer members from normal workspace invitations", async () => {
   expect(gate).toMatchObject({
     allowed: false,
     requiresPlanUpgrade: false,
-    reason: "Partner-managed workspaces can only be staffed from the Partner portal.",
+    reason: "Switch to a team to manage members.",
   });
 });

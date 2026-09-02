@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 
 /**

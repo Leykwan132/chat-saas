@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { useMutation, useQuery } from 'convex/react';
 import { Plus } from 'lucide-react';
 import { Navigate, Outlet, useNavigate, useSearchParams } from 'react-router';

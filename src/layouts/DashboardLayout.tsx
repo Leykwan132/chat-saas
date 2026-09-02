@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Navigate, useParams, useNavigate, useLocation } from 'react-router';
 import { useQuery } from 'convex/react';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { Bot, ChevronDown } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';

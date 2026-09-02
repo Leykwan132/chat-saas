@@ -15,7 +15,7 @@ import {
   teamToOrgId,
 } from "./teamHelpers";
 import { getWhiteLabelPlanForTeam, isWhiteLabelTeam } from "./whiteLabel/planResolver";
-import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
+import { assertManagedTeamBelongsToPartner, getPartnerOrganizationForManagedTeam } from "./whiteLabel/managedTeams";
 
 export type TeamListItem = {
   _id: string;
@@ -97,28 +97,30 @@ function buildTeamListItem(args: {
 }
 
 async function listTeamsForCurrentUser(ctx: QueryCtx) {
-  const { userId } = await getAuthContext(ctx);
+  const auth = await getAuthContext(ctx);
+  const { userId } = auth;
   const userRow = await getUserByWorkosId(ctx, userId);
   if (userRow === null) return [];
 
-  const activeTeam = await getActiveTeamForUser(ctx, userRow);
-  const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(ctx, userId);
-  const memberships = assignedWorkspace === null
-    ? await ctx.db
-      .query("teamMemberships")
-      .withIndex("by_userId", (q) => q.eq("userId", userRow._id))
-      .collect()
-    : await ctx.db
-      .query("teamMemberships")
-      .withIndex("by_userId_and_teamId", (q) =>
-        q.eq("userId", userRow._id).eq("teamId", assignedWorkspace.team._id),
-      )
-      .unique()
-      .then((membership) => membership === null ? [] : [membership]);
+  const activeTeam = await ctx.db.get(auth.activeTeamId);
+  if (activeTeam === null) return [];
+  const memberships = await ctx.db
+    .query("teamMemberships")
+    .withIndex("by_userId", (q) => q.eq("userId", userRow._id))
+    .collect();
 
-  const teams = (
+  const membershipTeams = (
     await Promise.all(memberships.map((membership) => ctx.db.get(membership.teamId)))
   ).filter((team): team is NonNullable<typeof team> => team !== null);
+  const teams = (await Promise.all(membershipTeams.map(async (team) => ({
+    team,
+    partnerOrganization: await getPartnerOrganizationForManagedTeam(ctx, team._id),
+  })))).filter(({ partnerOrganization }) => {
+    if (auth.surface.kind === "partner") {
+      return partnerOrganization?._id === auth.surface.partnerOrganizationId;
+    }
+    return partnerOrganization === null;
+  }).map(({ team }) => team);
 
   const items = await Promise.all(
     teams.map(async (team) => {
@@ -177,13 +179,9 @@ export const getTeamDetail = query({
 export const getActiveTeam = query({
   args: {},
   handler: async (ctx) => {
-    const { userId } = await getAuthContext(ctx);
-    const userRow = await getUserByWorkosId(ctx, userId);
-    if (userRow === null) return null;
-
-    const activeTeam = await getActiveTeamForUser(ctx, userRow);
+    const { activeTeamId } = await getAuthContext(ctx);
     const teams = await listTeamsForCurrentUser(ctx);
-    return teams.find((team) => team._id === activeTeam._id) ?? null;
+    return teams.find((team) => team._id === activeTeamId) ?? null;
   },
 });
 
@@ -192,10 +190,22 @@ export const switchActiveTeam = mutation({
     teamId: v.id("teams"),
   },
   handler: async (ctx, args) => {
-    const { userId } = await getAuthContext(ctx);
+    const auth = await getAuthContext(ctx);
+    const { userId } = auth;
     const userRow = await getUserByWorkosId(ctx, userId);
     if (userRow === null) {
       throw new Error("User not found");
+    }
+
+    const partnerOrganization = await getPartnerOrganizationForManagedTeam(ctx, args.teamId);
+    if (auth.surface.kind === "partner") {
+      await assertManagedTeamBelongsToPartner(
+        ctx,
+        args.teamId,
+        auth.surface.partnerOrganizationId,
+      );
+    } else if (partnerOrganization !== null) {
+      throw new Error("Partner workspaces are unavailable on Kilobot");
     }
 
     const team = await setActiveTeamForUser(ctx, userRow, args.teamId);
@@ -233,7 +243,8 @@ export const updateActiveTeamTimeZone = mutation({
 export const canCreateOrgTeam = query({
   args: {},
   handler: async (ctx) => {
-    const { userId, activeTeamId } = await getAuthContext(ctx);
+    const auth = await getAuthContext(ctx);
+    const { userId, activeTeamId } = auth;
     const userRow = await getUserByWorkosId(ctx, userId);
     if (userRow === null) {
       return {
@@ -241,6 +252,10 @@ export const canCreateOrgTeam = query({
         reason: "User not found.",
         requiresPlanUpgrade: false,
       };
+    }
+
+    if (auth.surface.kind === "partner") {
+      return { allowed: true, reason: null, requiresPlanUpgrade: false };
     }
 
     if (await isWhiteLabelTeam(ctx, activeTeamId)) {

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { AuthKitProvider, useAuth } from '@workos-inc/authkit-react';
+import { AuthKitProvider, useAuth as useWorkosAuth } from '@workos-inc/authkit-react';
 import { ConvexProviderWithAuthKit } from '@convex-dev/workos';
-import { useQuery, type ConvexReactClient } from 'convex/react';
+import { ConvexProviderWithAuth, useQuery, type ConvexReactClient } from 'convex/react';
 import { Navigate, Outlet, useParams } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import { POST_LOGIN_REDIRECT } from '@/constants';
@@ -18,6 +18,8 @@ import {
   type PlanKey,
 } from '../../shared/planCatalog';
 import { Permission } from '../../shared/permissions';
+import { NativeAppAuthProvider, useAuth } from '@/partnerAuth/AppAuthProvider';
+import { PartnerAuthProvider } from '@/partnerAuth/PartnerAuthProvider';
 
 export function OldAgentRedirect() {
   const { agentId } = useParams();
@@ -131,26 +133,55 @@ export function AppRootLayout({
   workosClientId: string;
   workosRedirectUri?: string;
 }) {
+  const isKilobotHost = window.location.hostname === 'kilobot.app' ||
+    window.location.hostname === 'localhost' ||
+    window.location.hostname.endsWith('.localhost');
+
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <AuthKitProvider
-        clientId={workosClientId}
-        redirectUri={workosRedirectUri}
-        devMode={true}
-      >
-        <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
-          <TooltipProvider>
-            <AdjustPlanProvider>
-              <UpgradeModalProvider>
-                <PostHogIdentifier />
-                <ScrollToTop />
-                <Outlet />
-                <Toaster />
-              </UpgradeModalProvider>
-            </AdjustPlanProvider>
-          </TooltipProvider>
-        </ConvexProviderWithAuthKit>
-      </AuthKitProvider>
+      {isKilobotHost ? (
+        <AuthKitProvider
+          clientId={workosClientId}
+          redirectUri={workosRedirectUri}
+          devMode={true}
+        >
+          <NativeAppAuthProvider>
+            <ConvexProviderWithAuthKit client={convex} useAuth={useWorkosAuth}>
+              <AppContent />
+            </ConvexProviderWithAuthKit>
+          </NativeAppAuthProvider>
+        </AuthKitProvider>
+      ) : (
+        <PartnerAuthProvider>
+          <ConvexProviderWithAuth client={convex} useAuth={usePartnerConvexAuth}>
+            <AppContent />
+          </ConvexProviderWithAuth>
+        </PartnerAuthProvider>
+      )}
     </ThemeProvider>
+  );
+}
+
+function usePartnerConvexAuth() {
+  const { isLoading, user, getAccessToken } = useAuth();
+  return {
+    isLoading,
+    isAuthenticated: user !== null,
+    fetchAccessToken: async () => await getAccessToken(),
+  };
+}
+
+function AppContent() {
+  return (
+    <TooltipProvider>
+      <AdjustPlanProvider>
+        <UpgradeModalProvider>
+          <PostHogIdentifier />
+          <ScrollToTop />
+          <Outlet />
+          <Toaster />
+        </UpgradeModalProvider>
+      </AdjustPlanProvider>
+    </TooltipProvider>
   );
 }

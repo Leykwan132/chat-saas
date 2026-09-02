@@ -118,17 +118,22 @@ async function createTeamHandler(
     timeZone?: string;
   },
 ): Promise<{ organizationId: string; name: string; teamId: string }> {
-  const { userId } = await getAuthContext(ctx);
+  const auth = await getAuthContext(ctx);
+  const { userId } = auth;
 
-  const gate = await ctx.runQuery(api.teams.canCreateOrgTeam, {});
-  if (!gate.allowed) {
-    throw new Error(gate.reason ?? "You cannot create a team on your current plan.");
+  if (auth.surface.kind === "kilobot") {
+    const gate = await ctx.runQuery(api.teams.canCreateOrgTeam, {});
+    if (!gate.allowed) {
+      throw new Error(gate.reason ?? "You cannot create a team on your current plan.");
+    }
   }
 
-  const subscription = await ctx.runQuery(
-    components.stripe.public.getSubscriptionByOrgId,
-    { orgId: userId },
-  );
+  const subscription = auth.surface.kind === "kilobot"
+    ? await ctx.runQuery(
+      components.stripe.public.getSubscriptionByOrgId,
+      { orgId: userId },
+    )
+    : null;
 
   const result = await createWorkOSTeam(userId, args);
 
@@ -141,6 +146,9 @@ async function createTeamHandler(
     companySize: args.companySize,
     domain: result.domain,
     timeZone: args.timeZone,
+    partnerOrganizationId: auth.surface.kind === "partner"
+      ? auth.surface.partnerOrganizationId
+      : undefined,
   });
 
   return { ...result, teamId };
@@ -156,6 +164,7 @@ export const persistCreatedTeam = internalMutation({
     domain: v.optional(v.string()),
     timeZone: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
+    partnerOrganizationId: v.optional(v.id("whiteLabelPartnerOrganizations")),
   },
   handler: async (ctx, args) => {
     const user = await getUserByWorkosId(ctx, args.workosUserId);
@@ -184,6 +193,16 @@ export const persistCreatedTeam = internalMutation({
       userId: user._id,
       role: "owner",
     });
+
+    if (args.partnerOrganizationId !== undefined) {
+      await ctx.db.insert("whiteLabelPartnerManagedTeams", {
+        partnerOrganizationId: args.partnerOrganizationId,
+        teamId,
+        createdByUserId: user._id,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
     await setActiveTeamForUser(ctx, user, teamId);
 

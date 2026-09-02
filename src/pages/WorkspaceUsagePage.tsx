@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from 'convex/react';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { api } from '../../convex/_generated/api';
 import { PlanUsageCard } from '@/components/analytics/PlanUsageCard';
 import { CreditUsagePanel, type CreditTimeRange } from '@/components/analytics/CreditUsagePanel';

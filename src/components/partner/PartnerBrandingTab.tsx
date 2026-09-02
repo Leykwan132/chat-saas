@@ -3,6 +3,7 @@ import { Globe2 } from "lucide-react";
 import { PartnerPanel } from "@/components/partner/PartnerPanel";
 import { PartnerCustomDomainDialog } from "@/components/partner/PartnerCustomDomainDialog";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   CardContent,
   CardDescription,
@@ -12,6 +13,24 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { type PartnerProfile } from "@/lib/whiteLabelApi";
+
+function getDomainSetupButtonState(domain: PartnerProfile["domain"]) {
+  const setupState = domain?.setupState;
+
+  if (setupState === "connected") {
+    return { isInProgress: false, label: "Custom domain connected" };
+  }
+
+  if (setupState === "failed") {
+    return { isInProgress: false, label: "Domain setup needs attention" };
+  }
+
+  if (setupState && setupState !== "draft") {
+    return { isInProgress: true, label: "DNS setup in progress" };
+  }
+
+  return { isInProgress: false, label: "Set up custom domain" };
+}
 
 export function PartnerBrandingTab({
   partner,
@@ -33,6 +52,7 @@ export function PartnerBrandingTab({
   onRestartCustomHostname: () => Promise<unknown>;
 }) {
   const [domainDialogOpen, setDomainDialogOpen] = useState(false);
+  const domainSetupButtonState = getDomainSetupButtonState(partner.domain);
 
   return (
     <>
@@ -60,22 +80,18 @@ export function PartnerBrandingTab({
               </p>
             </Field>
           </FieldGroup>
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1">
-              <p className="font-medium">Custom domain</p>
-              <p className="text-sm text-muted-foreground">
-                {partner.domain?.setupState === "connected"
-                  ? `${partner.domain.hostname} is connected.`
-                  : "Connect a subdomain through the guided DNS setup."}
-              </p>
-            </div>
+          <div>
             <Button
               variant="outline"
               className="w-fit"
               onClick={() => setDomainDialogOpen(true)}
             >
-              <Globe2 data-icon="inline-start" />
-              Set up custom domain
+              {domainSetupButtonState.isInProgress ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <Globe2 data-icon="inline-start" />
+              )}
+              {domainSetupButtonState.label}
             </Button>
           </div>
         </CardContent>

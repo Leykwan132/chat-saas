@@ -17,7 +17,8 @@ import {
 } from "./teamHelpers";
 import type { EnsureUserAccountArgs } from "./teamHelpers";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
-import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
+import { getPartnerCustomerActiveTeam } from "./whiteLabel/customerWorkspace";
+import { getAuthSurface, type AuthSurface } from "./whiteLabel/authSurface";
 
 export const PERSONAL_ORG_FALLBACK = PERSONAL_ORG_ID;
 
@@ -55,6 +56,7 @@ export type AuthContext = {
   role: string | null;
   roles: string[];
   permissions: string[];
+  surface: AuthSurface;
   identity: NonNullable<Awaited<ReturnType<QueryCtx["auth"]["getUserIdentity"]>>>;
 };
 
@@ -93,20 +95,22 @@ async function buildAuthContextFromDb(
   }
 
   const overrideOrgId = resolveOrgIdOverride(activeOrgIdOverride);
+  const surface = getAuthSurface(identity);
   let orgId: string;
   let activeTeamId: Id<"teams">;
 
-  if (overrideOrgId !== undefined) {
-    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(
+  if (surface.kind === "partner") {
+    const partnerTeam = await getPartnerCustomerActiveTeam(
       ctx,
-      user.workosUserId,
+      user,
+      surface.partnerOrganizationId,
     );
-    if (
-      assignedWorkspace !== null &&
-      overrideOrgId !== teamToOrgId(assignedWorkspace.team)
-    ) {
-      throw new Error("Partner customers can only access their assigned workspace");
+    if (partnerTeam === null) {
+      throw new Error("Partner workspace is unavailable");
     }
+    orgId = teamToOrgId(partnerTeam);
+    activeTeamId = partnerTeam._id;
+  } else if (overrideOrgId !== undefined) {
     if (!(await canProcessWorkspaceActivity(ctx, overrideOrgId))) {
       throw new Error("Workspace unavailable");
     }
@@ -136,6 +140,7 @@ async function buildAuthContextFromDb(
     role,
     roles,
     permissions,
+    surface,
     identity,
   };
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAction, useQuery } from 'convex/react';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { usePostHog } from '@posthog/react';
 import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';

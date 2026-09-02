@@ -12,7 +12,7 @@ type PartnerAuthSurface = {
 type PartnerAuthBrand = {
   hostname: string;
   partnerName: string;
-  logoStorageId: Id<"_storage"> | null;
+  logoUrl: string | null;
 };
 
 function normalizeHostname(hostname: string) {
@@ -42,7 +42,9 @@ export async function resolvePartnerBrandForHostname(
   return {
     hostname: connectedDomain.domain.hostname,
     partnerName: connectedDomain.partner.name,
-    logoStorageId: connectedDomain.partner.logoStorageId ?? null,
+    logoUrl: connectedDomain.partner.logoStorageId
+      ? await ctx.storage.getUrl(connectedDomain.partner.logoStorageId)
+      : null,
   };
 }
 

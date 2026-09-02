@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { ArrowRight } from 'lucide-react';
 import { ModeToggle } from '@/components/mode-toggle';
 import { SiteFooter } from '@/components/SiteFooter';

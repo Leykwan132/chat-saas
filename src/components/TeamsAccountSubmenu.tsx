@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { useQuery } from 'convex/react';
 import { Building2, Plus, UserPlus, Users, Settings } from 'lucide-react';
 import { toast } from 'sonner';
