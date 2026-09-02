@@ -1,7 +1,7 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-09-02 [USER] Goal: configure the Avatar feature with LiveAvatar's Gemini Live connector. Persist the returned Gemini secret ID, let users create/update a LiveAvatar context on the Avatar page, and attach its ID when creating fast LITE-mode Gemini sessions. Now: `codex/gemini-live-connector` was created from `main`; `HEYGEN_GEMINI_SECRET_ID` is configured locally and design approval is pending.
+- 2026-09-02 [USER] Goal: configure the Avatar feature with LiveAvatar's Gemini Live connector. Persist the returned Gemini secret ID, let users create/update a LiveAvatar context on the Avatar page, and attach its ID when creating fast LITE-mode Gemini sessions. Now: approved design is committed as `9f2dfe2`; the user approved its written review and implementation plan is ready for inline test-first execution.
 - 2026-08-18 [USER] Goal: make each AI-to-human escalation traceable to the exact triggering customer message in the inbox and action history.
 - 2026-08-18 [CODE] Now: source-message metadata, a neutral expandable inbox divider with readable escalation details, and shared production Action History rendering with a neutral View in chat pill are implemented and verified locally.
 - 2026-08-18 [CODE] Next: review draft PR #68; do not add a release changelog entry until production availability is confirmed.
