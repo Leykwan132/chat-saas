@@ -1,5 +1,5 @@
 import type { Id } from "../_generated/dataModel";
-import { partnerAuthIssuer } from "../partnerAuthConfig";
+import { getPartnerAuthIssuer } from "../partnerAuthConfig";
 
 type Identity = {
   issuer: string;
@@ -17,7 +17,7 @@ export type AuthSurface =
   };
 
 export function getAuthSurface(identity: Identity): AuthSurface {
-  if (identity.issuer !== partnerAuthIssuer) {
+  if (identity.issuer !== getPartnerAuthIssuer(process.env)) {
     return { kind: "kilobot" };
   }
 

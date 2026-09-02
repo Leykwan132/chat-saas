@@ -5,6 +5,18 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { getPartnerAuthJwks, issuePartnerAuthToken } from "./partnerAuthToken";
+import type { PartnerAuthSurface, PartnerSignInResult } from "./partnerAuthTypes";
+
+const partnerSignInValidator = v.object({
+  token: v.string(),
+  user: v.object({
+    id: v.string(),
+    email: v.string(),
+    firstName: v.union(v.string(), v.null()),
+    lastName: v.union(v.string(), v.null()),
+    profilePictureUrl: v.union(v.string(), v.null()),
+  }),
+});
 
 function getWorkosClient() {
   const apiKey = process.env.WORKOS_API_KEY;
@@ -22,7 +34,8 @@ export const getJwks = internalAction({
 
 export const signIn = internalAction({
   args: { hostname: v.string(), email: v.string(), password: v.string() },
-  handler: async (ctx, args) => {
+  returns: partnerSignInValidator,
+  handler: async (ctx, args): Promise<PartnerSignInResult> => {
     const email = args.email.trim().toLowerCase();
     if (email.length === 0 || args.password.length === 0) {
       throw new Error("Unable to sign in with those credentials.");
@@ -33,7 +46,7 @@ export const signIn = internalAction({
         email,
         password: args.password,
       });
-      const surface = await ctx.runQuery(internal.whiteLabel.partnerAuth.resolveSurface, {
+      const surface: PartnerAuthSurface | null = await ctx.runQuery(internal.whiteLabel.partnerAuth.resolveSurface, {
         workosUserId: authentication.user.id,
         hostname: args.hostname,
       });

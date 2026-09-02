@@ -1,7 +1,7 @@
 "use node";
 
 import { createPrivateKey, sign } from "node:crypto";
-import { partnerAuthIssuer } from "../partnerAuthConfig";
+import { getPartnerAuthIssuer } from "../partnerAuthConfig";
 
 type PartnerTokenInput = {
   userId: string;
@@ -46,7 +46,7 @@ export function issuePartnerAuthToken(input: PartnerTokenInput) {
   const unsignedToken = [
     encode({ alg: "RS256", typ: "JWT", kid: "partner-auth-v1" }),
     encode({
-      iss: partnerAuthIssuer,
+      iss: getPartnerAuthIssuer(process.env),
       aud: getAudience(),
       sub: input.userId,
       email: input.email,

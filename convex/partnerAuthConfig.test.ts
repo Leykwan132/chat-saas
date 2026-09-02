@@ -20,7 +20,7 @@ test("builds a Convex custom JWT provider for partner surface tokens", async () 
     }),
   ).toEqual({
     type: "customJwt",
-    issuer: "kilobot-partner-auth",
+    issuer: "https://example.convex.site/partner-auth",
     algorithm: "RS256",
     jwks: "https://example.convex.site/partner-auth/jwks",
     applicationID: "client_test",

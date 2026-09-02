@@ -11,6 +11,7 @@ export default defineConfig({
     environment: "edge-runtime",
     exclude: [...configDefaults.exclude, "kilobot-docs/**", "src/googleAdsTag.test.mjs"],
     env: {
+      CONVEX_SITE_URL: "https://test.convex.site",
       STRIPE_PRICE_FREE_MONTHLY: "mock_free_mo",
       STRIPE_PRICE_FREE_ANNUAL: "mock_free_yr",
       STRIPE_PRICE_STARTER_MONTHLY: "mock_std_mo",
