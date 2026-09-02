@@ -90,7 +90,8 @@ test("provisions a partner customer directly into its assigned workspace", async
       .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
       .unique();
     expect(customer).not.toBeNull();
-    expect(customer?.onboarded).toBeUndefined();
+    expect(customer?.onboarded).toBe(true);
+    expect(customer?.activeTeamId).toBe(assignedTeamId);
 
     const personalTeam = await ctx.db
       .query("teams")
@@ -98,8 +99,7 @@ test("provisions a partner customer directly into its assigned workspace", async
         q.eq("ownerId", customer!._id).eq("type", "personal"),
       )
       .first();
-    expect(personalTeam).not.toBeNull();
-    expect(customer?.activeTeamId).toBe(personalTeam?._id);
+    expect(personalTeam).toBeNull();
 
     const assignedMembership = await ctx.db
       .query("teamMemberships")
@@ -132,11 +132,20 @@ test("provisions a partner customer directly into its assigned workspace", async
     email: "customer@example.com",
     orgId: "customer-org",
   });
+  const currentUser = await customer.query(api.users.currentUser, {});
+  expect(currentUser?.onboarded).toBe(true);
+  expect(currentUser?.plan).toBe("starter");
+  expect(currentUser?.isPartnerManaged).toBe(true);
+
+  const teams = await customer.query(api.teams.listForCurrentUser, {});
+  expect(teams).toHaveLength(1);
+  expect(teams[0]._id).toBe(assignedTeamId);
+
   await expect(
     customer.run(async (ctx) => await getAuthContext(ctx, "other-org")),
-  ).resolves.toMatchObject({ orgId: "other-org" });
+  ).rejects.toThrow("Partner customers can only access their assigned workspace");
 
   await expect(
     customer.mutation(api.teams.switchActiveTeam, { teamId: otherTeamId }),
-  ).resolves.toMatchObject({ teamId: otherTeamId });
+  ).rejects.toThrow("Partner customers can only access their assigned workspace");
 });

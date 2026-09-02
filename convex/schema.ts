@@ -471,15 +471,6 @@ export default defineSchema({
     .index("by_partnerId_and_status", ["partnerId", "status"])
     .index("by_teamId", ["teamId"])
     .index("by_partnerId_and_teamId", ["partnerId", "teamId"]),
-  whiteLabelPartnerManagedTeams: defineTable({
-    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
-    teamId: v.id("teams"),
-    createdByUserId: v.id("users"),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_teamId", ["teamId"])
-    .index("by_partnerOrganizationId", ["partnerOrganizationId"]),
   whiteLabelPartnerOrganizationAccounts: defineTable({
     partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
     workosUserId: v.string(),

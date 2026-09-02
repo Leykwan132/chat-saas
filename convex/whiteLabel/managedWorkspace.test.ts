@@ -5,7 +5,7 @@ import schema from "../../convex/schema";
 
 const modules = import.meta.glob("/convex/**/*.ts");
 
-test("does not expose a partner customer workspace from Kilobot", async () => {
+test("identifies the current partner customer workspace as managed", async () => {
   const t = convexTest(schema, modules);
   const workosUserId = "customer-owner";
   const workosOrgId = "org-customer";
@@ -26,20 +26,7 @@ test("does not expose a partner customer workspace from Kilobot", async () => {
       createdAt: now,
       updatedAt: now,
     });
-    const personalTeamId = await ctx.db.insert("teams", {
-      type: "personal",
-      name: "Personal",
-      ownerId: userId,
-      createdAt: now,
-      updatedAt: now,
-    });
-    await ctx.db.patch(userId, { activeTeamId: personalTeamId });
-    await ctx.db.insert("teamMemberships", {
-      teamId: personalTeamId,
-      userId,
-      role: "owner",
-      createdAt: now,
-    });
+    await ctx.db.patch(userId, { activeTeamId: teamId });
     await ctx.db.insert("teamMemberships", {
       teamId,
       userId,
@@ -70,10 +57,10 @@ test("does not expose a partner customer workspace from Kilobot", async () => {
     })
     .query(api.whiteLabel.billing.isPartnerManagedCurrentWorkspace, {});
 
-  expect(managed).toBe(false);
+  expect(managed).toBe(true);
 });
 
-test("keeps a partner customer on their native personal workspace in Kilobot", async () => {
+test("blocks customer members from normal workspace invitations", async () => {
   const t = convexTest(schema, modules);
   const workosUserId = "customer-admin";
   const workosOrgId = "org-managed";
@@ -94,20 +81,7 @@ test("keeps a partner customer on their native personal workspace in Kilobot", a
       createdAt: now,
       updatedAt: now,
     });
-    const personalTeamId = await ctx.db.insert("teams", {
-      type: "personal",
-      name: "Personal",
-      ownerId: userId,
-      createdAt: now,
-      updatedAt: now,
-    });
-    await ctx.db.patch(userId, { activeTeamId: personalTeamId });
-    await ctx.db.insert("teamMemberships", {
-      teamId: personalTeamId,
-      userId,
-      role: "owner",
-      createdAt: now,
-    });
+    await ctx.db.patch(userId, { activeTeamId: teamId });
     await ctx.db.insert("teamMemberships", {
       teamId,
       userId,
@@ -141,6 +115,6 @@ test("keeps a partner customer on their native personal workspace in Kilobot", a
   expect(gate).toMatchObject({
     allowed: false,
     requiresPlanUpgrade: false,
-    reason: "Switch to a team to manage members.",
+    reason: "Partner-managed workspaces can only be staffed from the Partner portal.",
   });
 });

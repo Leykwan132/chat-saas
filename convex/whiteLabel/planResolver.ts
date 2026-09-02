@@ -1,7 +1,6 @@
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import type { PlanKey } from "../planCatalog";
-import { getPartnerOrganizationForManagedTeam } from "./managedTeams";
 
 type DbCtx = QueryCtx | MutationCtx;
 
@@ -9,7 +8,10 @@ export async function getWhiteLabelPlanForTeam(
   ctx: DbCtx,
   teamId: Id<"teams">,
 ): Promise<PlanKey | null> {
-  const partnerOrganization = await getPartnerOrganizationForManagedTeam(ctx, teamId);
+  const partnerOrganization = await ctx.db
+    .query("whiteLabelPartnerOrganizations")
+    .withIndex("by_teamId", (q) => q.eq("teamId", teamId))
+    .unique();
   if (partnerOrganization === null || partnerOrganization.status !== "active") return null;
   const plan = await ctx.db
     .query("whiteLabelPartnerOrganizationPlans")
@@ -24,12 +26,12 @@ export async function isWhiteLabelTeam(
   ctx: DbCtx,
   teamId: Id<"teams">,
 ) {
-  return (await getPartnerOrganizationForManagedTeam(ctx, teamId)) !== null;
+  return (await ctx.db.query("whiteLabelPartnerOrganizations").withIndex("by_teamId", (q) => q.eq("teamId", teamId)).unique()) !== null;
 }
 
 export async function getWhiteLabelPartnerOrganizationForTeam(
   ctx: DbCtx,
   teamId: Id<"teams">,
 ) {
-  return await getPartnerOrganizationForManagedTeam(ctx, teamId);
+  return await ctx.db.query("whiteLabelPartnerOrganizations").withIndex("by_teamId", (q) => q.eq("teamId", teamId)).unique();
 }

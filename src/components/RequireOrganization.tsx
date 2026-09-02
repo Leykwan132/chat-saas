@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useRef } from 'react';
-import { useAuth } from '@/partnerAuth/AppAuthProvider';
+import { useAuth } from '@workos-inc/authkit-react';
 import { useConvexAuth, useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
@@ -12,7 +12,7 @@ type RequireOrganizationProps = {
 };
 
 export function RequireOrganization({ children }: RequireOrganizationProps) {
-  const { isLoading: isAuthLoading, user: authUser, surface } = useAuth();
+  const { isLoading: isAuthLoading, user: authUser } = useAuth();
   const { isLoading: isConvexAuthLoading, isAuthenticated } = useConvexAuth();
   const currentUser = useQuery(api.users.currentUser);
   const ensureCurrentUser = useMutation(api.users.ensureCurrentUser);
@@ -65,7 +65,7 @@ export function RequireOrganization({ children }: RequireOrganizationProps) {
     );
   }
 
-  if (surface === 'kilobot' && !canAccessOrganization(currentUser)) {
+  if (!canAccessOrganization(currentUser)) {
     return <Navigate to="/onboarding" replace />;
   }
 

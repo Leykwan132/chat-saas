@@ -1,6 +1,6 @@
 import { useLocation, useSearchParams } from 'react-router';
 import { useState } from 'react';
-import { useAuth } from '@/partnerAuth/AppAuthProvider';
+import { useAuth } from '@workos-inc/authkit-react';
 import { useAction, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { Building2, CreditCard, User, BarChart3 } from 'lucide-react';

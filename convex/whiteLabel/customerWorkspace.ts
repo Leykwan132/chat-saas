@@ -1,6 +1,5 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import { getPartnerOrganizationForManagedTeam } from "./managedTeams";
 
 type DatabaseCtx = QueryCtx | MutationCtx;
 
@@ -26,35 +25,12 @@ export async function getAssignedPartnerCustomerWorkspace(
 export async function getPartnerCustomerActiveTeam(
   ctx: DatabaseCtx,
   user: Doc<"users">,
-  partnerOrganizationId?: Id<"whiteLabelPartnerOrganizations">,
 ) {
   const workspace = await getAssignedPartnerCustomerWorkspace(
     ctx,
     user.workosUserId,
   );
   if (workspace === null) return null;
-  if (
-    partnerOrganizationId !== undefined &&
-    workspace.account.partnerOrganizationId !== partnerOrganizationId
-  ) {
-    return null;
-  }
-
-  if (user.activeTeamId !== undefined) {
-    const activeTeam = await ctx.db.get(user.activeTeamId);
-    if (activeTeam !== null) {
-      const owner = await getPartnerOrganizationForManagedTeam(ctx, activeTeam._id);
-      const membership = await ctx.db
-        .query("teamMemberships")
-        .withIndex("by_userId_and_teamId", (q) =>
-          q.eq("userId", user._id).eq("teamId", activeTeam._id),
-        )
-        .unique();
-      if (owner?._id === workspace.account.partnerOrganizationId && membership !== null) {
-        return activeTeam;
-      }
-    }
-  }
 
   const membership = await ctx.db
     .query("teamMemberships")
@@ -64,6 +40,15 @@ export async function getPartnerCustomerActiveTeam(
     .unique();
   if (membership === null) {
     throw new Error("Assigned partner workspace is unavailable");
+  }
+  if (
+    user.activeTeamId !== workspace.team._id &&
+    typeof (ctx.db as MutationCtx["db"]).patch === "function"
+  ) {
+    await (ctx.db as MutationCtx["db"]).patch(user._id, {
+      activeTeamId: workspace.team._id,
+      updatedAt: Date.now(),
+    });
   }
   return workspace.team;
 }
@@ -77,6 +62,19 @@ export async function assertPartnerCustomerTeam(
   if (workspace !== null && teamId !== workspace.team._id) {
     throw new Error("Partner customers can only access their assigned workspace");
   }
+}
+
+export async function markPartnerCustomerOnboarded(
+  ctx: MutationCtx,
+  args: { userId: Id<"users">; workosUserId: string },
+) {
+  const workspace = await getAssignedPartnerCustomerWorkspace(
+    ctx,
+    args.workosUserId,
+  );
+  if (workspace === null) return false;
+  await ctx.db.patch(args.userId, { onboarded: true, updatedAt: Date.now() });
+  return true;
 }
 
 async function getUserId(
@@ -116,6 +114,37 @@ async function ensureAssignedMembership(
   }
 }
 
+async function removePersonalWorkspace(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+) {
+  const personalTeam = await ctx.db
+    .query("teams")
+    .withIndex("by_ownerId_and_type", (q) =>
+      q.eq("ownerId", userId).eq("type", "personal"),
+    )
+    .first();
+  if (personalTeam === null) return;
+
+  const membership = await ctx.db
+    .query("teamMemberships")
+    .withIndex("by_userId_and_teamId", (q) =>
+      q.eq("userId", userId).eq("teamId", personalTeam._id),
+    )
+    .unique();
+  if (membership !== null) {
+    await ctx.db.delete(membership._id);
+  }
+
+  const remainingMembership = await ctx.db
+    .query("teamMemberships")
+    .withIndex("by_teamId", (q) => q.eq("teamId", personalTeam._id))
+    .take(1);
+  if (remainingMembership.length === 0) {
+    await ctx.db.delete(personalTeam._id);
+  }
+}
+
 export async function reconcilePartnerCustomerWorkspace(
   ctx: MutationCtx,
   workosUserId: string,
@@ -131,5 +160,11 @@ export async function reconcilePartnerCustomerWorkspace(
     userId,
     role: workspace.account.role,
   });
+  await ctx.db.patch(userId, {
+    onboarded: true,
+    activeTeamId: workspace.team._id,
+    updatedAt: Date.now(),
+  });
+  await removePersonalWorkspace(ctx, userId);
   return true;
 }

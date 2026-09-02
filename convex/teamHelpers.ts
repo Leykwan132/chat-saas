@@ -3,7 +3,11 @@ import type { Doc, Id } from "./_generated/dataModel";
 
 import { PLAN_CATALOG, type PlanKey } from "./planCatalog";
 import { ensureReferralCodeForUser } from "./referralCodeRecords";
-import { getPartnerOrganizationForManagedTeam } from "./whiteLabel/managedTeams";
+import {
+  assertPartnerCustomerTeam,
+  getPartnerCustomerActiveTeam,
+  markPartnerCustomerOnboarded,
+} from "./whiteLabel/customerWorkspace";
 
 export { ensureOrganizationalTeam } from "./organizationalTeamProvisioning";
 
@@ -120,16 +124,12 @@ export async function getActiveTeamForUser(
   ctx: QueryCtx | MutationCtx,
   user: Doc<"users">,
 ): Promise<Doc<"teams">> {
+  const partnerTeam = await getPartnerCustomerActiveTeam(ctx, user);
+  if (partnerTeam !== null) return partnerTeam;
+
   if (user.activeTeamId !== undefined) {
     const team = await ctx.db.get(user.activeTeamId);
     if (team !== null) {
-      if ((await getPartnerOrganizationForManagedTeam(ctx, team._id)) !== null) {
-        const personalTeam = await getPersonalTeamForUser(ctx, user._id);
-        if (personalTeam === null) {
-          throw new Error("Personal team not found");
-        }
-        return personalTeam;
-      }
       const membership = await ctx.db
         .query("teamMemberships")
         .withIndex("by_userId_and_teamId", (q) =>
@@ -162,6 +162,8 @@ export async function setActiveTeamForUser(
   user: Doc<"users">,
   teamId: Id<"teams">,
 ): Promise<Doc<"teams">> {
+  await assertPartnerCustomerTeam(ctx, user.workosUserId, teamId);
+
   const membership = await ctx.db
     .query("teamMemberships")
     .withIndex("by_userId_and_teamId", (q) =>
@@ -274,7 +276,11 @@ export async function ensureUserAccount(
       await ctx.db.patch(existing._id, patch);
     }
 
-    if ((await getPersonalTeamForUser(ctx, existing._id)) === null) {
+    const isPartnerCustomer = await markPartnerCustomerOnboarded(ctx, {
+      userId: existing._id,
+      workosUserId: args.workosUserId,
+    });
+    if (!isPartnerCustomer && (await getPersonalTeamForUser(ctx, existing._id)) === null) {
       await createPersonalTeamForUser(ctx, existing._id, args.timeZone);
     }
     await ensureReferralCodeForUser(ctx, existing._id);
@@ -291,7 +297,13 @@ export async function ensureUserAccount(
     createdAt: now,
     updatedAt: now,
   });
-  await createPersonalTeamForUser(ctx, userId, args.timeZone);
+  const isPartnerCustomer = await markPartnerCustomerOnboarded(ctx, {
+    userId,
+    workosUserId: args.workosUserId,
+  });
+  if (!isPartnerCustomer) {
+    await createPersonalTeamForUser(ctx, userId, args.timeZone);
+  }
   await ensureReferralCodeForUser(ctx, userId);
   return userId;
 }
