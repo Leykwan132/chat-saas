@@ -16,17 +16,6 @@ export function createLiveAvatarSessionClient(token: string): AvatarSessionClien
       };
       const userSpeechStarted = () => handlers.userSpeechStarted();
       const userSpeechEnded = () => handlers.userSpeechEnded();
-      const userTranscription = (event: {
-        event_id: string;
-        source_event_id?: string;
-        text: string;
-      }) => {
-        handlers.userTranscription({
-          eventId: event.event_id,
-          sourceEventId: event.source_event_id ?? null,
-          text: event.text,
-        });
-      };
       const avatarSpeechStarted = () => handlers.avatarSpeechStarted();
       const avatarSpeechEnded = () => handlers.avatarSpeechEnded();
       const stopped = (event: {
@@ -44,7 +33,6 @@ export function createLiveAvatarSessionClient(token: string): AvatarSessionClien
       session.on(SessionEvent.SESSION_DISCONNECTED, disconnected);
       session.on(AgentEventsEnum.USER_SPEAK_STARTED, userSpeechStarted);
       session.on(AgentEventsEnum.USER_SPEAK_ENDED, userSpeechEnded);
-      session.on(AgentEventsEnum.USER_TRANSCRIPTION, userTranscription);
       session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, avatarSpeechStarted);
       session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, avatarSpeechEnded);
       session.on(AgentEventsEnum.SESSION_STOPPED, stopped);
@@ -53,7 +41,6 @@ export function createLiveAvatarSessionClient(token: string): AvatarSessionClien
         session.off(SessionEvent.SESSION_DISCONNECTED, disconnected);
         session.off(AgentEventsEnum.USER_SPEAK_STARTED, userSpeechStarted);
         session.off(AgentEventsEnum.USER_SPEAK_ENDED, userSpeechEnded);
-        session.off(AgentEventsEnum.USER_TRANSCRIPTION, userTranscription);
         session.off(AgentEventsEnum.AVATAR_SPEAK_STARTED, avatarSpeechStarted);
         session.off(AgentEventsEnum.AVATAR_SPEAK_ENDED, avatarSpeechEnded);
         session.off(AgentEventsEnum.SESSION_STOPPED, stopped);

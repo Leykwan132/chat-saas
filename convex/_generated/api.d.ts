@@ -89,6 +89,7 @@ import type * as auth from "../auth.js";
 import type * as authUtils from "../authUtils.js";
 import type * as avatar from "../avatar.js";
 import type * as avatarConversation from "../avatarConversation.js";
+import type * as avatarContext from "../avatarContext.js";
 import type * as avatarCore from "../avatarCore.js";
 import type * as avatarEmbed from "../avatarEmbed.js";
 import type * as avatarProvider from "../avatarProvider.js";
@@ -520,6 +521,7 @@ declare const fullApi: ApiFromModules<{
   authUtils: typeof authUtils;
   avatar: typeof avatar;
   avatarConversation: typeof avatarConversation;
+  avatarContext: typeof avatarContext;
   avatarCore: typeof avatarCore;
   avatarEmbed: typeof avatarEmbed;
   avatarProvider: typeof avatarProvider;

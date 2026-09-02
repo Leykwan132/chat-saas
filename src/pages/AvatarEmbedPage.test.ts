@@ -53,18 +53,17 @@ describe('Avatar embed runtime', () => {
     expect(stageSource).toContain('End chat');
   });
 
-  it('keeps visitor-started sessions and verbatim speech in the shared runtime', () => {
+  it('keeps Gemini-owned conversations out of the KiloBot runtime', () => {
     expect(sessionHookSource).toContain('api.avatarSession.begin');
-    expect(sessionHookSource).toContain('api.avatarConversation.receiveTranscript');
-    expect(sessionHookSource).toContain('api.avatarConversation.listMessages');
-    expect(runtimeSource).toContain('this.client.repeat(');
+    expect(sessionHookSource).not.toContain('api.avatarConversation.receiveTranscript');
+    expect(sessionHookSource).not.toContain('api.avatarConversation.listMessages');
+    expect(runtimeSource).not.toContain('this.client.repeat(');
     expect(source).not.toContain('.message(');
   });
 
-  it('handles transcription and interruption events', () => {
-    expect(runtimeSource).toContain('receiveTranscript(this.snapshot.identity, event)');
-    expect(runtimeSource).toContain('this.client.interrupt()');
-    expect(runtimeSource).toContain('message.sourceEventId !== this.activeSourceEventId');
+  it('keeps connector session lifecycle events', () => {
+    expect(runtimeSource).toContain('startVoiceChat');
+    expect(runtimeSource).toContain('recordEvent');
   });
 
   it('keeps sandbox mode in the backend without exposing it in the UI or public session result', () => {

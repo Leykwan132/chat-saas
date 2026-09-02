@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
-import { useAction, useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
-import { getAvatarVisitorId, splitAvatarSpeech } from '@/lib/avatarEmbed';
+import { getAvatarVisitorId } from '@/lib/avatarEmbed';
 import { AvatarSessionRuntime } from './avatarSessionRuntime';
 import type { AvatarSessionServices } from './avatarSessionRuntime';
 import { createLiveAvatarSessionClient } from './liveAvatarSessionClient';
 
 export function useAvatarSession(publicKey: string) {
   const beginSession = useAction(api.avatarSession.begin);
-  const receiveTranscript = useMutation(api.avatarConversation.receiveTranscript);
   const recordEvent = useMutation(api.avatarConversation.recordEvent);
   const services = useMemo<AvatarSessionServices>(() => ({
     begin: async () => {
@@ -20,14 +19,7 @@ export function useAvatarSession(publicKey: string) {
       const access = await beginSession({ publicKey, visitorId });
       return { publicKey, visitorId, ...access };
     },
-    receiveTranscript: async (identity, event) => {
-      await receiveTranscript({
-        ...identity,
-        eventId: event.eventId,
-        sourceEventId: event.sourceEventId ?? undefined,
-        text: event.text,
-      });
-    },
+    receiveTranscript: async () => {},
     recordEvent: async (identity, event) => {
       await recordEvent({
         ...identity,
@@ -38,24 +30,15 @@ export function useAvatarSession(publicKey: string) {
       });
     },
     createClient: createLiveAvatarSessionClient,
-    splitSpeech: splitAvatarSpeech,
+    splitSpeech: () => [],
     now: Date.now,
-  }), [beginSession, publicKey, receiveTranscript, recordEvent]);
+  }), [beginSession, publicKey, recordEvent]);
   const runtime = useMemo(() => new AvatarSessionRuntime(services), [services]);
   const snapshot = useSyncExternalStore(
     runtime.subscribe,
     runtime.getSnapshot,
     runtime.getSnapshot,
   );
-  const messages = useQuery(
-    api.avatarConversation.listMessages,
-    snapshot.identity ?? 'skip',
-  );
-
-  useEffect(() => {
-    if (messages) runtime.syncMessages(messages);
-  }, [messages, runtime]);
-
   useEffect(() => () => {
     void runtime.destroy();
   }, [runtime]);

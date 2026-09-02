@@ -1,7 +1,7 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-09-02 [USER] Goal: configure the Avatar feature with LiveAvatar's Gemini Live connector. Persist the returned Gemini secret ID, let users create/update a LiveAvatar context on the Avatar page, and attach its ID when creating fast LITE-mode Gemini sessions. Now: approved design is committed as `9f2dfe2`; the user approved its written review and implementation plan is ready for inline test-first execution.
+- 2026-09-02 [CODE] Gemini Live Avatar connector is implemented locally: a manager saves a LiveAvatar context, token issuance uses LITE Gemini with the server-only `HEYGEN_GEMINI_SECRET_ID`, and browser turns no longer call KiloBot. Now: focused regression suite (27 tests) and Node 22 production build pass. Next: configure a local Convex deployment and manually exercise a sandbox session.
 - 2026-08-18 [USER] Goal: make each AI-to-human escalation traceable to the exact triggering customer message in the inbox and action history.
 - 2026-08-18 [CODE] Now: source-message metadata, a neutral expandable inbox divider with readable escalation details, and shared production Action History rendering with a neutral View in chat pill are implemented and verified locally.
 - 2026-08-18 [CODE] Next: review draft PR #68; do not add a release changelog entry until production availability is confirmed.
@@ -24,6 +24,7 @@
 - 2026-08-16 [USER] D637–D700 ACTIVE: Google Calendar remains individual and primary-calendar-only; connected writes fail closed and manual/CSV customers retain active-agent scope.
 
 # Done (recent)
+- 2026-09-02 [CODE] Added LiveAvatar Gemini connector session tokens, manager-editable provider context, and direct connector-owned Avatar conversations. This customer-facing feature is UNRELEASED and must not enter the production changelog until availability is confirmed.
 - 2026-08-18 [CODE] Removed the custom CTA conversion helper and all four public CTA calls; WorkOS sign-up starts immediately while the Google tag remains installed.
 - 2026-08-18 [CODE] AI-to-human escalations now persist their source message, render an inbox divider immediately after it, and expose a View in chat action-history link; `?dummyData=true` previews the divider in development.
 - 2026-08-18 [CODE] Escalation dividers now expand to show their stored reason, and Action History is rendered by a shared production component.
@@ -52,6 +53,7 @@
 - 2026-08-18 [CODE] `CONTINUITY.md`
 
 # Receipts
+- 2026-09-02 [TOOL] Node v22 focused Gemini Avatar tests pass (27 tests across 5 files), `bun run build` exits 0, and `git diff --check` passes. `bunx convex codegen` is blocked because this worktree has no `CONVEX_DEPLOYMENT` configured.
 - 2026-08-18 [TOOL] The regression test failed before removal because all CTA owners still called `reportGoogleAdsConversion`; it passed after the helper and calls were removed.
 - 2026-08-18 [TOOL] Node v22.22.0 `bun run build` passed after the removal, with only existing unset Meta app ID and large-chunk Vite warnings.
 - 2026-08-18 [TOOL] `origin/main` at `32a2ebe` contains merged PR #66; the removal branch is resolving that merge in favor of D727.

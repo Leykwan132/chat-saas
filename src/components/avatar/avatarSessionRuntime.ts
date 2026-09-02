@@ -41,13 +41,6 @@ export class AvatarSessionRuntime {
   private unbind: (() => void) | null = null;
   private video: HTMLMediaElement | null = null;
   private generation = 0;
-  private startedAt = 0;
-  private activeSourceEventId: string | null = null;
-  private turn = 0;
-  private pendingSpeech: string[] = [];
-  private spokenIds = new Set<string>();
-  private speechResolver: (() => void) | null = null;
-  private draining = false;
   private voiceStarting = false;
   private cleanupPromise: Promise<void> | null = null;
 
@@ -66,11 +59,6 @@ export class AvatarSessionRuntime {
   start = async () => {
     if (['starting', 'active', 'stopping'].includes(this.snapshot.phase)) return;
     const generation = ++this.generation;
-    this.startedAt = this.services.now();
-    this.activeSourceEventId = null;
-    this.turn = 0;
-    this.pendingSpeech = [];
-    this.spokenIds = new Set();
     this.publish({ ...initialSnapshot, phase: 'starting' });
     try {
       const access = await this.services.begin();
@@ -119,21 +107,7 @@ export class AvatarSessionRuntime {
     this.publish({ ...this.snapshot, muted: false });
   };
 
-  syncMessages = (messages: AvatarSessionMessage[]) => {
-    if (!this.activeSourceEventId || !this.snapshot.identity) return;
-    for (const message of messages) {
-      if (
-        message.direction !== 'outgoing'
-        || message.contentType !== 'text'
-        || message.createdAt < this.startedAt
-        || message.sourceEventId !== this.activeSourceEventId
-        || this.spokenIds.has(message.id)
-      ) continue;
-      this.spokenIds.add(message.id);
-      this.pendingSpeech.push(...this.services.splitSpeech(message.content));
-    }
-    this.startSpeechDrain(this.generation, this.turn);
-  };
+  syncMessages = (_messages: AvatarSessionMessage[]) => {};
 
   destroy = async () => this.stop();
   private handlers(generation: number): AvatarSessionHandlers {
@@ -149,30 +123,18 @@ export class AvatarSessionRuntime {
       },
       userSpeechStarted: () => {
         if (!current() || !this.client) return;
-        this.turn += 1;
-        this.activeSourceEventId = null;
-        this.pendingSpeech = [];
-        this.releaseSpeechWait();
-        this.client.interrupt();
         this.publish({ ...this.snapshot, userSpeaking: true });
       },
       userSpeechEnded: () => {
         if (current()) this.publish({ ...this.snapshot, userSpeaking: false });
       },
-      userTranscription: (event) => {
-        if (!current() || !this.snapshot.identity) return;
-        this.activeSourceEventId = event.eventId;
-        void this.services
-          .receiveTranscript(this.snapshot.identity, event)
-          .catch((error) => this.fail(generation, error));
-      },
+      userTranscription: () => {},
       avatarSpeechStarted: () => {
         if (current()) this.publish({ ...this.snapshot, avatarSpeaking: true });
       },
       avatarSpeechEnded: () => {
         if (!current()) return;
         this.publish({ ...this.snapshot, avatarSpeaking: false });
-        this.releaseSpeechWait();
       },
       stopped: (event) => {
         if (current()) void this.handleStopped(generation, event);
@@ -191,35 +153,6 @@ export class AvatarSessionRuntime {
       await this.fail(generation, error);
     } finally {
       this.voiceStarting = false;
-    }
-  }
-
-  private startSpeechDrain(generation: number, turn: number) {
-    void this.drainSpeech(generation, turn).catch((error) => this.fail(generation, error));
-  }
-
-  private async drainSpeech(generation: number, turn: number) {
-    if (this.draining) return;
-    this.draining = true;
-    try {
-      while (
-        generation === this.generation
-        && turn === this.turn
-        && this.pendingSpeech.length > 0
-        && this.client
-      ) {
-        const text = this.pendingSpeech.shift();
-        if (!text) continue;
-        this.client.repeat(text);
-        await new Promise<void>((resolve) => {
-          this.speechResolver = resolve;
-        });
-      }
-    } finally {
-      this.draining = false;
-      if (this.pendingSpeech.length > 0) {
-        this.startSpeechDrain(this.generation, this.turn);
-      }
     }
   }
 
@@ -262,20 +195,12 @@ export class AvatarSessionRuntime {
     this.publish({ ...this.snapshot, phase: 'error', error: message });
   }
 
-  private releaseSpeechWait() {
-    const resolver = this.speechResolver;
-    this.speechResolver = null;
-    resolver?.();
-  }
-
   private async cleanup() {
     if (this.cleanupPromise) return this.cleanupPromise;
     const client = this.client;
     const unbind = this.unbind;
     this.client = null;
     this.unbind = null;
-    this.pendingSpeech = [];
-    this.releaseSpeechWait();
     const cleanupPromise = (async () => {
       if (!client) {
         unbind?.();

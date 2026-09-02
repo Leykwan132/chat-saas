@@ -187,6 +187,25 @@ export const saveProviderEmbed = internalMutation({
   },
 });
 
+export const saveProviderContext = internalMutation({
+  args: {
+    configurationId: v.id('avatarConfigurations'),
+    contextId: v.string(),
+    prompt: v.string(),
+    openingText: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const configuration = await ctx.db.get(args.configurationId);
+    if (!configuration) throw new Error('Avatar configuration not found');
+    await ctx.db.patch(configuration._id, {
+      providerContextId: args.contextId,
+      providerContextPrompt: args.prompt,
+      providerContextOpeningText: args.openingText,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 export const publicGetConfig = query({
   args: { publicKey: v.string() },
   returns: v.union(
