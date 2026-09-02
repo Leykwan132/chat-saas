@@ -11,6 +11,12 @@ export const POSTHOG_FEATURE_FLAGS = {
 
 export type ProductFeatureFlagState = boolean | undefined;
 
+const AVATAR_ALLOWED_EMAIL = 'leykwan132@gmail.com';
+
+export function isAvatarUserAllowed(email: string | null | undefined) {
+  return email?.trim().toLowerCase() === AVATAR_ALLOWED_EMAIL;
+}
+
 export function isProductFeatureEnabled(
   state: ProductFeatureFlagState,
 ): state is true {
