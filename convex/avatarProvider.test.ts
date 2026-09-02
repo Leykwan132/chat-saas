@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import * as avatarProvider from './avatarProvider';
-import { buildLiveAvatarTokenRequest, parseSandboxMode } from './avatarProvider';
+import { buildGeminiLiveTokenRequest, buildLiveAvatarTokenRequest, parseSandboxMode } from './avatarProvider';
 
 describe('LiveAvatar provider configuration', () => {
   it('configures validated metadata without creating a provider context or embedding', () => {
@@ -49,6 +49,27 @@ describe('LiveAvatar provider configuration', () => {
       avatar_id: 'dd73ea75-1218-4ef3-92ce-606d5f7fbc0a',
       max_session_duration: 60,
       avatar_persona: { voice_id: 'voice-id', language: 'en' },
+    });
+  });
+
+  it('builds a sandbox Gemini Live connector token without a FULL persona', () => {
+    expect(buildGeminiLiveTokenRequest({
+      sandbox: true,
+      avatarId: 'production-avatar',
+      contextId: 'context-id',
+      secretId: 'secret-id',
+    })).toEqual({
+      mode: 'LITE',
+      is_sandbox: true,
+      avatar_id: 'dd73ea75-1218-4ef3-92ce-606d5f7fbc0a',
+      max_session_duration: 60,
+      gemini_realtime_config: {
+        secret_id: 'secret-id',
+        context_id: 'context-id',
+        voice: 'Puck',
+        model: 'gemini-3.1-flash-live-preview',
+        temperature: 0.8,
+      },
     });
   });
 

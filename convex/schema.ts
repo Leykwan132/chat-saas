@@ -658,6 +658,8 @@ export default defineSchema({
     voiceGender: v.optional(v.string()),
     language: v.string(),
     providerContextId: v.optional(v.string()),
+    providerContextPrompt: v.optional(v.string()),
+    providerContextOpeningText: v.optional(v.string()),
     providerEmbedId: v.optional(v.string()),
     providerEmbedUrl: v.optional(v.string()),
     providerEmbedScript: v.optional(v.string()),

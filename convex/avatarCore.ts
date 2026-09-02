@@ -74,6 +74,8 @@ export function dashboardAvatarConfiguration(configuration: Doc<'avatarConfigura
     voiceLanguage: configuration.voiceLanguage,
     voiceGender: configuration.voiceGender,
     language: configuration.language,
+    providerContextPrompt: configuration.providerContextPrompt,
+    providerContextOpeningText: configuration.providerContextOpeningText,
     embedUrl: configuration.providerEmbedUrl,
     embedScript: configuration.providerEmbedScript,
     updatedAt: configuration.updatedAt,
