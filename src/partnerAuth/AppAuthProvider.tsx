@@ -39,11 +39,18 @@ export function NativeAppAuthProvider({ children }: { children: ReactNode }) {
     signIn: async (options) => await workosAuth.signIn(options),
     signUp: async (options) => await workosAuth.signUp(options),
     signOut: async (options) => {
-      const result = workosAuth.signOut({
+      if (options?.navigate === true) {
+        workosAuth.signOut({
+          returnTo: options.returnTo,
+          navigate: true,
+        });
+        return;
+      }
+
+      await workosAuth.signOut({
         returnTo: options?.returnTo,
-        navigate: options?.navigate ?? false,
+        navigate: false,
       });
-      await result;
     },
     switchToOrganization: async (options) => await workosAuth.switchToOrganization(options),
   }), [workosAuth]);

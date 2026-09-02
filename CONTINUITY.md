@@ -53,3 +53,4 @@
 - 2026-08-25 [TOOL] Partner-created customer workspace regression, related auth/workspace suites, Node v22 production build, targeted lint, and diff validation passed.
 - 2026-08-25 [TOOL] A bounded partner-customer workspace migration ran successfully against the configured Convex development deployment and its temporary entrypoint was removed.
 - 2026-09-03 [TOOL] Focused customer-workspace regression passed for the explicit no-additional-workspace guard.
+- 2026-09-03 [TOOL] Node v22 production build passed after resolving the WorkOS sign-out overload in the partner-auth provider.
