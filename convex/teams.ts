@@ -246,7 +246,7 @@ export const canCreateOrgTeam = query({
     if (await isWhiteLabelTeam(ctx, activeTeamId)) {
       return {
         allowed: false,
-        reason: "Partner-managed workspaces can only be created from the Partner portal.",
+        reason: "Partner customers cannot create additional workspaces.",
         requiresPlanUpgrade: false,
       };
     }
