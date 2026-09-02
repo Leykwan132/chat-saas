@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { usePaginatedQuery, useQuery } from "convex/react";
-import { useAuth } from "@workos-inc/authkit-react";
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { usePostHog } from "@posthog/react";
 import { Gift, Share2, UserPlus } from "lucide-react";
 import { toast } from "sonner";

@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getTeamDisplayName } from '@/lib/teamDisplay';
 import { TeamOrganizationActions } from '@/components/teams/TeamOrganizationActions';
 import { usePermissions } from '@/hooks/usePermissions';
+import { usePartnerManagedWorkspace } from '@/hooks/usePartnerManagedWorkspace';
 import { Permission } from '../../../shared/permissions';
 
 type TeamDetailSectionProps = {
@@ -35,6 +36,7 @@ export function TeamDetailSection({ teamId, onBack }: TeamDetailSectionProps) {
   const team = useQuery(api.teams.getTeamDetail, { teamId });
   const canInviteMembers = useQuery(api.teams.canInviteMembers);
   const { can } = usePermissions();
+  const isPartnerManagedWorkspace = usePartnerManagedWorkspace();
 
   if (team === undefined) {
     return <TeamDetailSkeleton />;
@@ -58,12 +60,14 @@ export function TeamDetailSection({ teamId, onBack }: TeamDetailSectionProps) {
   const canManageTeamPermission = can(Permission.TEAM_MANAGE);
   const hasFullControl = can(Permission.FULL_CONTROL);
   // team:manage → invitations; full-control → roles & permissions.
-  const canSeeInvitations = isOrgTeam && canManageTeamPermission;
-  const canSeeRolesAndPermissions = isOrgTeam && hasFullControl;
-  const canManageTeam = isOrgTeam && canManageTeamPermission && team.isActive;
+  const canSeeInvitations = isOrgTeam && canManageTeamPermission && isPartnerManagedWorkspace === false;
+  const canSeeRolesAndPermissions = isOrgTeam && hasFullControl && isPartnerManagedWorkspace === false;
+  const canManageTeam = isOrgTeam && canManageTeamPermission && team.isActive && isPartnerManagedWorkspace === false;
   const manageDisabledReason = !can(Permission.TEAM_MANAGE)
     ? 'Only team admins can manage this section.'
-    : !team.isActive
+    : isPartnerManagedWorkspace === true
+      ? 'This workspace is managed from the Partner portal.'
+      : !team.isActive
       ? 'Switch to this team to manage roles, permissions, and members.'
       : null;
 

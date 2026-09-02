@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Outlet, Navigate, useParams, useNavigate, useLocation } from 'react-router';
 import { useQuery } from 'convex/react';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { Bot, ChevronDown } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AppSidebar } from '@/components/app-sidebar';
 import { RequireOrganization } from '@/components/RequireOrganization';
@@ -60,6 +60,7 @@ function DashboardHeader({
 
   return (
     <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/50 bg-background px-4">
+      <SidebarTrigger className="-ml-1 md:hidden" aria-label="Open navigation" />
       <Breadcrumb>
         <BreadcrumbList>
           <TeamSwitcher
@@ -231,7 +232,7 @@ function DashboardContent() {
             className={
               isFullHeightPage
                 ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-0'
-                : 'flex-1 overflow-auto px-14 py-8 md:px-12 lg:px-28'
+                 : 'flex-1 overflow-auto px-4 py-6 sm:px-6 md:px-12 md:py-8 lg:px-28'
             }
           >
             <div className={cn('animate-fade-in', isFullHeightPage && 'flex h-full min-h-0 flex-1 flex-col')}>

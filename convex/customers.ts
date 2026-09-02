@@ -12,6 +12,7 @@ import { getCustomerAgentForCurrentWorkspace } from "./customerAgentScope";
 import { logConversationEvent } from "./conversationLogs";
 import { customerSearchText } from "./customerSearch";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
+import { customerRecipientLabel } from "./customerRecipientPresentation";
 
 const customerServiceValidator = v.union(
   v.literal("whatsapp"),
@@ -37,20 +38,6 @@ function assertNotLeadTemperatureTag(tag: string) {
   }
 }
 
-function resolveBroadcastPhone(customer: Doc<"customers">): string | null {
-  const phone = customer.phone?.trim();
-  if (phone) {
-    return phone;
-  }
-  if (customer.service === "whatsapp") {
-    const addr = customer.contactAddress.trim();
-    if (addr) {
-      return addr;
-    }
-  }
-  return null;
-}
-
 // Org customer list for WhatsApp broadcast recipient pickers (scoped via agent auth).
 export const listForAgentBroadcast = query({
   args: { agentId: v.id("agents") },
@@ -73,6 +60,7 @@ export const listForAgentBroadcast = query({
       customerId: Id<"customers">;
       name: string | undefined;
       phone: string;
+      recipientLabel: string;
       tags: string[];
       leadTemperature: "Hot" | "Warm" | "Cold" | undefined;
       service: Doc<"customers">["service"];
@@ -83,10 +71,13 @@ export const listForAgentBroadcast = query({
     }> = [];
 
     for (const cust of rows) {
-      const phone = resolveBroadcastPhone(cust);
-      if (!phone) {
+      const recipientLabel = customerRecipientLabel(cust);
+      if (!recipientLabel) {
         continue;
       }
+      const phone =
+        cust.phone?.trim() ||
+        (cust.whatsappUserId ? "" : cust.contactAddress.trim());
 
       let assignedUserId: string | undefined = undefined;
       let assignToAiAgent: boolean | undefined = undefined;
@@ -110,6 +101,7 @@ export const listForAgentBroadcast = query({
         customerId: cust._id,
         name: cust.name?.trim() || undefined,
         phone,
+        recipientLabel,
         tags: cust.tags ?? [],
         leadTemperature: cust.leadTemperature,
         service: cust.service,
@@ -121,7 +113,7 @@ export const listForAgentBroadcast = query({
     }
 
     out.sort((a, b) =>
-      (a.name ?? a.phone ?? "").localeCompare(b.name ?? b.phone ?? "", undefined, {
+      (a.name ?? a.recipientLabel).localeCompare(b.name ?? b.recipientLabel, undefined, {
         sensitivity: "base",
       }),
     );
@@ -170,6 +162,7 @@ export const listWhatsAppBroadcastCandidates = query({
       customerId: Id<"customers"> | undefined;
       name: string | undefined;
       phone: string;
+      recipientLabel: string;
       tags: string[];
     }> = [];
 
@@ -182,6 +175,7 @@ export const listWhatsAppBroadcastCandidates = query({
             customerId: cust._id,
             name: cust.name?.trim() || c.contactName,
             phone: (cust.phone?.trim() || phone) as string,
+            recipientLabel: customerRecipientLabel(cust),
             tags: cust.tags ?? [],
           });
           continue;
@@ -191,12 +185,13 @@ export const listWhatsAppBroadcastCandidates = query({
         customerId: undefined,
         name: c.contactName,
         phone,
+        recipientLabel: phone,
         tags: [],
       });
     }
 
     out.sort((a, b) =>
-      (a.name ?? a.phone).localeCompare(b.name ?? b.phone, undefined, {
+      (a.name ?? a.recipientLabel).localeCompare(b.name ?? b.recipientLabel, undefined, {
         sensitivity: "base",
       }),
     );
@@ -231,9 +226,9 @@ export const getSidebarDetailsForConversation = query({
       "Unnamed customer";
 
     let phone: string | null = null;
-    const custPhone = customer?.phone?.trim();
-    if (custPhone) {
-      phone = custPhone;
+    const custRecipientLabel = customer ? customerRecipientLabel(customer) : "";
+    if (custRecipientLabel) {
+      phone = custRecipientLabel;
     } else if (conv.service === "whatsapp") {
       phone = conv.contactAddress.trim() || null;
     }
@@ -393,6 +388,7 @@ export const addManually = mutation({
     name: v.string(),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
+    customFields: v.optional(v.record(v.string(), v.string())),
     tags: v.optional(v.array(v.string())),
     leadTemperature: v.optional(v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"))),
   },
@@ -568,8 +564,11 @@ export const internalUpsertFromWebhook = internalMutation({
     service: channelServiceValidator,
     contactAddress: v.string(),
     profileName: v.optional(v.string()),
+    whatsappUserId: v.optional(v.string()),
+    whatsappUsername: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
+    customFields: v.optional(v.record(v.string(), v.string())),
     userId: v.optional(v.string()),
     agentId: v.optional(v.id("agents")),
   },
@@ -591,8 +590,11 @@ async function upsertCustomer(
     service: "whatsapp" | "instagram" | "messenger" | "web" | "avatar";
     contactAddress: string;
     profileName?: string;
+    whatsappUserId?: string;
+    whatsappUsername?: string;
     email?: string;
     phone?: string;
+    customFields?: Record<string, string>;
     userId?: string;
     agentId?: Id<"agents">;
   },
@@ -609,25 +611,42 @@ async function upsertCustomer(
     .unique();
 
   const inputEmail = args.email && !isSyntheticEmail(args.email) ? args.email.trim() : undefined;
+  const whatsappUserId =
+    args.service === "whatsapp" ? args.whatsappUserId?.trim() || undefined : undefined;
+  const whatsappUsername =
+    args.service === "whatsapp" ? args.whatsappUsername?.trim() || undefined : undefined;
 
   let resolvedName = args.profileName?.trim();
   if (args.service === "whatsapp" && (!resolvedName || resolvedName === "")) {
-    const rawPhone = args.phone?.trim() || args.contactAddress.trim();
-    resolvedName = rawPhone.startsWith("+") ? rawPhone : `+${rawPhone}`;
+    if (whatsappUserId) {
+      resolvedName = whatsappUsername ?? args.contactAddress.trim();
+    } else {
+      const rawPhone = args.phone?.trim() || args.contactAddress.trim();
+      resolvedName = rawPhone.startsWith("+") ? rawPhone : `+${rawPhone}`;
+    }
   }
 
   if (existing === null) {
     const phone =
-      args.phone?.trim() || (args.service === "whatsapp" ? args.contactAddress : undefined);
+      args.phone?.trim() ||
+      (args.service === "whatsapp" && !whatsappUserId
+        ? args.contactAddress
+        : undefined);
     return await ctx.db.insert("customers", {
       orgId: args.orgId,
       userId: args.userId,
       agentId: args.agentId,
       service: args.service,
       contactAddress: args.contactAddress,
+      whatsappUserId,
+      whatsappUsername,
       name: resolvedName,
       email: inputEmail,
       phone,
+      customFields:
+        Object.keys(args.customFields ?? {}).length > 0
+          ? args.customFields
+          : undefined,
       searchText: customerSearchText({
         name: resolvedName,
         email: inputEmail,
@@ -657,6 +676,15 @@ async function upsertCustomer(
   }
   if (!existing.phone && args.phone) {
     patch.phone = args.phone.trim();
+  }
+  if (whatsappUserId && existing.whatsappUserId !== whatsappUserId) {
+    patch.whatsappUserId = whatsappUserId;
+  }
+  if (whatsappUsername && existing.whatsappUsername !== whatsappUsername) {
+    patch.whatsappUsername = whatsappUsername;
+  }
+  if (Object.keys(args.customFields ?? {}).length > 0) {
+    patch.customFields = { ...existing.customFields, ...args.customFields };
   }
   patch.searchText = customerSearchText({
     name: (patch.name as string | undefined) ?? existing.name,

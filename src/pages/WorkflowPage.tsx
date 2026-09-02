@@ -170,6 +170,7 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
         nodes={flow.nodes}
         edges={flow.edges}
         onSelectNode={setSelectedNodeId}
+        onNodeMoved={(nodeId, position) => void messageActions.moveNode(nodeId, position)}
         onNodesConnected={(sourceNodeId, targetNodeId) =>
           void messageActions.connectNodes(sourceNodeId, targetNodeId)
         }

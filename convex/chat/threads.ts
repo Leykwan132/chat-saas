@@ -683,12 +683,19 @@ export function buildAgent(
       inputSchema: z.object({
         serviceId: z.string().describe("The selected Services service ID."),
         startTimeIso: z.string().describe("Confirmed appointment start time as an ISO timestamp from checkAvailability."),
+        customerConfirmed: z.literal(true).describe("Set only after the customer explicitly confirms this offered slot."),
       }),
       execute: async (ctx, input) => {
         const startAt = Date.parse(input.startTimeIso);
         if (!Number.isFinite(startAt)) {
           return { success: false, message: "Invalid appointment start time." };
         }
+        const confirmation = await ctx.runMutation(internal.appointmentBooking.sessions.confirmBookingSlot, {
+          conversationId,
+          serviceId: input.serviceId as Id<"appointmentServices">,
+          startAt,
+        });
+        if (!confirmation.success) return confirmation;
         return await ctx.runAction(internal.appointmentBooking.bookAppointment.bookAppointment, {
           conversationId,
           serviceId: input.serviceId as Id<"appointmentServices">,
@@ -972,6 +979,8 @@ export const ingestChannelMessageArgs = {
   contactName: v.optional(v.string()),
   contactEmail: v.optional(v.string()),
   contactPhone: v.optional(v.string()),
+  whatsappUserId: v.optional(v.string()),
+  whatsappUsername: v.optional(v.string()),
   direction: directionValidator,
   content: v.string(),
   contentType: v.optional(contentTypeValidator),
@@ -1020,6 +1029,8 @@ export type IngestChannelMessageArgs = {
   contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
+  whatsappUserId?: string;
+  whatsappUsername?: string;
   direction: "incoming" | "outgoing";
   content: string;
   contentType?: Doc<"messages">["contentType"];
@@ -1093,6 +1104,8 @@ export async function ingestChannelMessage(
       profileName: args.contactName,
       email: args.contactEmail,
       phone: args.contactPhone,
+      whatsappUserId: args.whatsappUserId,
+      whatsappUsername: args.whatsappUsername,
       userId: channel.connectedByUserId,
       agentId: channel.defaultAgentId,
     },
@@ -1458,5 +1471,7 @@ export function selectReusableInboxConversation(
   latest: Doc<"conversations"> | null,
   service: Doc<"conversations">["service"],
 ) {
-  return latest?.status === "closed" && service === "avatar" ? null : latest;
+  return latest?.status === "closed" && (service === "avatar" || service === "web")
+    ? null
+    : latest;
 }

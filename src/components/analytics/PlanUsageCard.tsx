@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useQuery } from 'convex/react';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { Info, Settings } from 'lucide-react';
 import { api } from '../../../convex/_generated/api';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';

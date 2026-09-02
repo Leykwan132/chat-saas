@@ -2,7 +2,7 @@ import type { KeyboardEvent, MouseEvent } from 'react';
 import { CircleArrowUp, Plus } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 import { useQuery } from 'convex/react';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';

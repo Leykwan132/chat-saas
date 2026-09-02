@@ -34,6 +34,10 @@ const MAX_OVERVIEW_ROWS = 5000;
 
 export type OverviewTimeRange = AnalyticsTimeRange;
 
+function excludeTestConversations(conversations: Doc<"conversations">[]) {
+  return conversations.filter((conversation) => conversation.service !== "playground");
+}
+
 async function getBillingPeriod(ctx: QueryCtx) {
   const { userDbId } = await getAuthContext(ctx);
   const user = await ctx.db.get(userDbId);
@@ -63,7 +67,7 @@ async function listPeriodConversations(
   periodEndMs: number,
 ) {
   if (agent.orgId && agent.orgId !== "personal") {
-    return await ctx.db
+    const conversations = await ctx.db
       .query("conversations")
       .withIndex("by_orgId_and_assignedAgentId_and_lastMessageAt", (q) =>
         q
@@ -73,9 +77,10 @@ async function listPeriodConversations(
           .lt("lastMessageAt", periodEndMs),
       )
       .take(MAX_OVERVIEW_ROWS);
+    return excludeTestConversations(conversations);
   }
 
-  return await ctx.db
+  const conversations = await ctx.db
     .query("conversations")
     .withIndex("by_userId_and_assignedAgentId_and_lastMessageAt", (q) =>
       q
@@ -85,6 +90,7 @@ async function listPeriodConversations(
         .lt("lastMessageAt", periodEndMs),
     )
     .take(MAX_OVERVIEW_ROWS);
+  return excludeTestConversations(conversations);
 }
 
 async function listAiBookings(
@@ -151,7 +157,13 @@ export async function getAgentOverviewSummary(
   );
   const aiMessages = useAiAssistedAggregate
     ? []
-    : await listAiMessagesForAgent(ctx, agentId, rangeStartMs, rangeEndMs);
+    : await listAiMessagesForAgent(
+      ctx,
+      agentId,
+      rangeStartMs,
+      rangeEndMs,
+      new Set(conversations.map((conversation) => conversation._id)),
+    );
   const bookings = await listAiBookings(
     ctx,
     agentId,

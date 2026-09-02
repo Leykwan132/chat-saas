@@ -27,6 +27,7 @@ export async function appendTeammateToAgentServices(
   const now = Date.now();
   for (const service of services) {
     if (service.archivedAt !== undefined || service.assignedWorkosUserIds === undefined) continue;
+    if (service.autoAssignNewMembers === false) continue;
     if (service.assignedWorkosUserIds.includes(workosUserId)) continue;
     await ctx.db.patch(service._id, {
       assignedWorkosUserIds: [...service.assignedWorkosUserIds, workosUserId],

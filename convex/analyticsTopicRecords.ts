@@ -1,11 +1,28 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 
 const TOPIC_CONTEXT_MESSAGE_LIMIT = 80;
 const MAX_TOPICS_PER_CONVERSATION = 5;
 const TOPIC_ASSIGNMENT_READ_LIMIT = 20;
+
+export type TopicDetectionContext = {
+  conversation: Doc<"conversations">;
+  sourceMessageMaxCreatedAt: number | undefined;
+  transcript: Array<{
+    direction: "incoming" | "outgoing";
+    contentType: Doc<"messages">["contentType"];
+    content: string;
+    createdAt: number;
+  }>;
+  existingTopics: Array<{
+    id: Id<"conversationTopics">;
+    name: string;
+    slug: string;
+    description: string | undefined;
+  }>;
+};
 
 function topicSlug(name: string) {
   return name

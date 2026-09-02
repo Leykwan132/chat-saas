@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAction } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { usePostHog } from '@posthog/react';
 import { api } from '../../convex/_generated/api';
@@ -20,11 +20,13 @@ import { PlanComparisonTable } from '@/components/pricing/PlanComparisonTable';
 import { PricingFaqSection } from '@/components/pricing/PricingFaqSection';
 import { SiteFooter } from '@/components/SiteFooter';
 import { POST_LOGIN_REDIRECT } from '../constants';
+import { whiteLabelApi } from '@/lib/whiteLabelApi';
 
 export default function PricingPage() {
   const { user, signUp } = useAuth();
   const posthog = usePostHog();
   const hasSession = Boolean(user);
+  const billingBlocked = useQuery(whiteLabelApi.billing.isBillingBlockedForCurrentWorkspace, hasSession ? {} : 'skip');
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
   const [submitting, setSubmitting] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
@@ -35,6 +37,10 @@ export default function PricingPage() {
   const returnTo = { state: { returnTo: POST_LOGIN_REDIRECT } };
 
   const handlePlanSelect = async (plan: PlanKey) => {
+    if (billingBlocked) {
+      toast.error('Billing is managed by your partner.');
+      return;
+    }
     if (submitting) return;
 
     posthog?.capture('plan_selected', { plan, billing_interval: billingInterval });
@@ -87,6 +93,7 @@ export default function PricingPage() {
       <SiteHeader />
 
       <main className="flex flex-1 flex-col items-center px-5 py-32 sm:px-6 sm:py-40">
+        {billingBlocked ? <div className="w-full max-w-xl rounded-xl border p-6 text-center"><h1 className="text-xl font-semibold">Billing is managed by your partner</h1><p className="mt-2 text-sm text-muted-foreground">Your workspace plan and credits are provided through your partner portal.</p></div> :
         <div className="flex w-full max-w-[96rem] flex-col gap-28 sm:gap-32">
           <PlanSelectionLayout>
             <SubscriptionPlanPicker
@@ -128,6 +135,7 @@ export default function PricingPage() {
             className="scroll-mt-28"
           />
         </div>
+        }
       </main>
 
       <SiteFooter />

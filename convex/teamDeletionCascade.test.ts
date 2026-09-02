@@ -5,6 +5,7 @@ import schema from "./schema";
 import { deleteDescendantPage } from "./teamDeletion/localDescendants";
 import { deleteLocalPage } from "./teamDeletion/local";
 import { finalizeTeamDeletion } from "./teamDeletion/verify";
+import { deleteWhiteLabelPartnerOrganizationPage } from "./teamDeletion/whiteLabelCleanup";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -313,5 +314,135 @@ test("deletes descendants beyond the first parent page", async () => {
         .withIndex("by_orgId", (q) => q.eq("orgId", "org_many"))
         .first(),
     ).toBeNull();
+  });
+});
+
+test("deletes all partner organization records during workspace cleanup", async () => {
+  const t = convexTest(schema, modules);
+  const fixture = await t.run(async (ctx) => {
+    const now = Date.now();
+    const userId = await ctx.db.insert("users", {
+      workosUserId: "user_partner",
+      email: "partner@example.com",
+      createdAt: now,
+      updatedAt: now,
+    });
+    const teamId = await ctx.db.insert("teams", {
+      type: "organizational",
+      name: "Customer workspace",
+      workosOrgId: "org_customer",
+      createdAt: now,
+      updatedAt: now,
+    });
+    const partnerId = await ctx.db.insert("whiteLabelPartners", {
+      name: "Partner",
+      status: "active",
+      createdAt: now,
+      updatedAt: now,
+    });
+    const organizationId = await ctx.db.insert("whiteLabelPartnerOrganizations", {
+      partnerId,
+      teamId,
+      status: "active",
+      createdByUserId: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("whiteLabelPartnerOrganizationAccounts", {
+      partnerOrganizationId: organizationId,
+      workosUserId: "user_customer",
+      workosOrganizationMembershipId: "om_customer",
+      email: "customer@example.com",
+      role: "member",
+      status: "active",
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("teamInvitationRecords", {
+      workosInvitationId: "inv_customer",
+      email: "invitee@example.com",
+      workosOrgId: "org_customer",
+      state: "pending",
+      workosCreatedAt: new Date(now).toISOString(),
+      workosUpdatedAt: new Date(now).toISOString(),
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("whiteLabelPartnerOrganizationPlans", {
+      partnerOrganizationId: organizationId,
+      activePlanKey: "starter",
+      creditPlanKey: "starter",
+      updatedByUserId: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("whiteLabelPartnerOrganizationPlanAssignments", {
+      partnerOrganizationId: organizationId,
+      planKey: "starter",
+      appliesAt: now,
+      assignedByUserId: userId,
+      createdAt: now,
+    });
+    await ctx.db.insert("whiteLabelPartnerOrganizationCreditPeriods", {
+      partnerOrganizationId: organizationId,
+      planKey: "starter",
+      periodStart: now,
+      periodEnd: now + 1000,
+      grantedCredits: 2000,
+      usedCredits: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("whiteLabelPartnerOrganizationCreditGrants", {
+      partnerOrganizationId: organizationId,
+      grantedCredits: 10,
+      usedCredits: 0,
+      grantedByUserId: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("whiteLabelPartnerOrganizationCreditBalances", {
+      partnerOrganizationId: organizationId,
+      manualGrantedCredits: 10,
+      manualUsedCredits: 0,
+      grantCount: 1,
+      updatedAt: now,
+    });
+    await ctx.db.insert("whiteLabelPartnerOrganizationCreditLedger", {
+      partnerOrganizationId: organizationId,
+      event: "manual_grant",
+      credits: 10,
+      actorUserId: userId,
+      createdAt: now,
+    });
+    return { organizationId, teamId };
+  });
+
+  for (let page = 0; page < 20; page += 1) {
+    const deleted = await t.run(async (ctx) =>
+      deleteWhiteLabelPartnerOrganizationPage(ctx, {
+        teamId: fixture.teamId,
+        workosOrgId: "org_customer",
+      }),
+    );
+    if (!deleted) break;
+  }
+
+  await t.run(async (ctx) => {
+    expect(await ctx.db.get(fixture.organizationId)).toBeNull();
+    expect(
+      await ctx.db
+        .query("whiteLabelPartnerOrganizationAccounts")
+        .withIndex("by_partnerOrganizationId", (q) =>
+          q.eq("partnerOrganizationId", fixture.organizationId),
+        )
+        .take(1),
+    ).toEqual([]);
+    expect(
+      await ctx.db
+        .query("teamInvitationRecords")
+        .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", "org_customer"))
+        .take(1),
+    ).toEqual([]);
   });
 });

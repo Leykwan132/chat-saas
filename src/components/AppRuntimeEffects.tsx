@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import posthog from 'posthog-js';
 import { useLocation } from 'react-router';
 

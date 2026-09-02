@@ -1,4 +1,4 @@
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -9,7 +9,7 @@ type SwitchTeamArgs = {
 };
 
 export function useActiveTeam() {
-  const { switchToOrganization, getAccessToken } = useAuth();
+  const { switchToOrganization, getAccessToken, surface } = useAuth();
   const activeTeam = useQuery(api.teams.getActiveTeam);
   const switchActiveTeam = useMutation(api.teams.switchActiveTeam);
 
@@ -21,7 +21,7 @@ export function useActiveTeam() {
     // we skip the WorkOS org switch entirely — calling it with an empty string
     // causes the WorkOS SDK to fail the session refresh and redirect to the
     // login page.
-    if (result.workosOrgId) {
+    if (surface === 'kilobot' && result.workosOrgId) {
       try {
         await switchToOrganization({
           organizationId: result.workosOrgId,
@@ -34,7 +34,7 @@ export function useActiveTeam() {
           // Token refresh failed too — the user's session may be expired.
         }
       }
-    } else {
+    } else if (surface === 'kilobot') {
       // Personal team: just refresh the token to update the Convex auth state
       try {
         await getAccessToken({ forceRefresh: true });

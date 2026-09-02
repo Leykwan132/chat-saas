@@ -612,6 +612,7 @@ export const generateAiReplyWorker = internalAction({
     });
     if (
       conv === null ||
+      conv.status === "closed" ||
       !conv.assignToAiAgent ||
       !conv.assignedAgentId
     ) {
@@ -754,8 +755,10 @@ export const generateAiReplyWorker = internalAction({
         { conversationId: args.conversationId },
       );
       if (
-        convAfterGeneration?.status === "requires_user_input" &&
-        convAfterGeneration.escalation
+        convAfterGeneration === null ||
+        convAfterGeneration.status === "closed" ||
+        (convAfterGeneration.status === "requires_user_input" &&
+          convAfterGeneration.escalation)
       ) {
         return;
       }
@@ -892,7 +895,12 @@ export const internalGetSendContext = internalQuery({
     if (conv === null || !conv.channelId) return null;
     const channel = await ctx.db.get(conv.channelId);
     if (channel === null) return null;
-    return { conversation: conv, channel };
+    const customer = conv.customerId ? await ctx.db.get(conv.customerId) : null;
+    return {
+      conversation: conv,
+      channel,
+      customer: customer?.orgId === conv.orgId ? customer : null,
+    };
   },
 });
 

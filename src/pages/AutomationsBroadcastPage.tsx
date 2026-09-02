@@ -137,6 +137,7 @@ type BroadcastCustomerRow = {
   customerId: Id<'customers'>;
   name?: string;
   phone: string;
+  recipientLabel: string;
   tags: string[];
   leadTemperature?: LeadTemperature;
   service: Doc<'customers'>['service'];
@@ -405,7 +406,7 @@ export default function AutomationsBroadcastPage() {
 
       if (!q) return true;
 
-      const haystack = [c.name, c.email, c.phone]
+      const haystack = [c.name, c.email, c.recipientLabel]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
@@ -1169,7 +1170,7 @@ export default function AutomationsBroadcastPage() {
                                       className="rounded border-border cursor-pointer text-primary"
                                       checked={isSelected}
                                       onChange={() => toggleCustomer(row.customerId)}
-                                      aria-label={`Select ${row.name ?? row.phone}`}
+                                      aria-label={`Select ${row.name ?? row.recipientLabel}`}
                                     />
                                   </td>
                                   <td className="px-3 py-2.5 font-semibold text-foreground">
@@ -1208,7 +1209,7 @@ export default function AutomationsBroadcastPage() {
                                     )}
                                   </td>
                                   <td className="px-3 py-2.5 font-mono text-2xs text-muted-foreground">
-                                    {row.phone}
+                                    {row.recipientLabel}
                                   </td>
                                   <td className="px-3 py-2.5">
                                     <Badge variant="outline" className="text-[10px] font-medium">

@@ -54,6 +54,9 @@ export const startBookingSession = internalMutation({
       serviceId: service._id,
       collectedFields,
       status: nextStatus,
+      proposedSlots: undefined,
+      selectedSlot: undefined,
+      customerConfirmationMessageId: undefined,
       updatedAt: now,
     });
 
@@ -162,6 +165,8 @@ export const checkAvailability = internalMutation({
       serviceId: service._id,
       collectedFields,
       proposedSlots: slots,
+      selectedSlot: undefined,
+      customerConfirmationMessageId: undefined,
       status: AppointmentBookingSessionStatus.Confirming,
       updatedAt: now,
     });
@@ -177,5 +182,58 @@ export const checkAvailability = internalMutation({
         ? "Slots ready for the booking update. Call updateBookingAppointment after the customer confirms."
         : undefined,
     };
+  },
+});
+
+export const confirmBookingSlot = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+    serviceId: v.id("appointmentServices"),
+    startAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const conversation = await ctx.db.get(args.conversationId);
+    if (conversation === null || conversation.assignedAgentId === undefined) {
+      throw new Error("Conversation is not assigned to an agent");
+    }
+    const session = await getActiveSession(ctx, conversation._id);
+    if (session === undefined) {
+      return { success: false, message: "No active booking session. Call startBookingSession first." };
+    }
+    if (session.serviceId !== args.serviceId) {
+      return { success: false, message: "The active booking session is for a different service." };
+    }
+    if (session.status !== AppointmentBookingSessionStatus.Confirming) {
+      return { success: false, message: "Check availability before confirming a booking slot." };
+    }
+    const selectedSlot = session.proposedSlots?.find((slot) => slot.startAt === args.startAt);
+    if (selectedSlot === undefined) {
+      return { success: false, message: "Confirm a slot returned by checkAvailability." };
+    }
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_conversationId_and_createdAt", (q) => q.eq("conversationId", conversation._id))
+      .order("desc")
+      .take(50);
+    const confirmationMessage = messages.find((message) => message.direction === "incoming");
+    const confirmationReaction = confirmationMessage?.reactions?.find(
+      (reaction) =>
+        reaction.source === "ai" &&
+        reaction.actorAgentId === conversation.assignedAgentId &&
+        reaction.updatedAt >= session.updatedAt,
+    );
+    if (
+      confirmationReaction === undefined ||
+      confirmationMessage === undefined ||
+      confirmationMessage.createdAt <= session.updatedAt
+    ) {
+      return { success: false, message: "React to the customer's confirmation before booking the selected slot." };
+    }
+    await ctx.db.patch(session._id, {
+      selectedSlot,
+      customerConfirmationMessageId: confirmationMessage._id,
+      updatedAt: Date.now(),
+    });
+    return { success: true, selectedSlot };
   },
 });

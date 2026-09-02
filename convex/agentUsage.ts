@@ -14,6 +14,10 @@ import {
 import {
   getCalendarMonthsFromEarliestToLatest,
 } from "./usageMonthKey";
+import { resolveAgentCostUsd } from "./agentCostAggregateModel";
+import { getTeamByWorkosOrgId } from "./teamHelpers";
+import { getWhiteLabelPartnerOrganizationForTeam } from "./whiteLabel/planResolver";
+import { recordPartnerUsage } from "./whiteLabel/partnerUsage";
 
 export async function assertAgentAccess(ctx: QueryCtx, agentId: Id<"agents">) {
   const { userId, orgId } = await getAuthContext(ctx);
@@ -146,6 +150,25 @@ export const insertRawUsage = internalMutation({
       providerMetadata: args.providerMetadata,
       createdAt: Date.now(),
     });
+
+    if (agent?.orgId) {
+      const team = await getTeamByWorkosOrgId(ctx, agent.orgId);
+      const partnerOrganization = team === null
+        ? null
+        : await getWhiteLabelPartnerOrganizationForTeam(ctx, team._id);
+      const costUsd = resolveAgentCostUsd({
+        model: args.model,
+        usage: args.usage,
+        providerMetadata: args.providerMetadata,
+      });
+      if (partnerOrganization !== null) {
+        await recordPartnerUsage(ctx, {
+          partnerId: partnerOrganization.partnerId,
+          totalTokens: args.usage.totalTokens,
+          costUsd: costUsd ?? 0,
+        });
+      }
+    }
 
     return { workosUserId };
   },

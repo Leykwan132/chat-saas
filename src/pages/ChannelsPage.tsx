@@ -49,6 +49,7 @@ import {
   isSupportedChannelService,
   type SupportedChannelService,
 } from '@/lib/channelServiceMeta';
+import { getCustomerSafeMessengerConnectionFailureMessage } from '@/lib/messengerConnectionFeedback';
 
 const CONNECTABLE_SERVICES: SupportedChannelService[] = [
   'whatsapp',
@@ -171,8 +172,11 @@ function useMetaChannelCallbackParams() {
         posthog?.capture('channel_connected', { channel_type: 'messenger' });
         toast.success('Messenger account connected');
       } else {
-        const message = searchParams.get('message') ?? 'Unknown error';
-        toast.error(`Messenger connect failed: ${message}`);
+        toast.error(
+          getCustomerSafeMessengerConnectionFailureMessage(
+            searchParams.get('message'),
+          ),
+        );
       }
       const next = new URLSearchParams(searchParams);
       next.delete('messenger');
@@ -184,7 +188,10 @@ function useMetaChannelCallbackParams() {
 
 export default function ChannelsPage() {
   const { agentId } = useParams();
-  const channels = useQuery(api.channels.listForCurrentOrg, {});
+  const channels = useQuery(
+    api.channels.listForCurrentOrg,
+    agentId ? { agentId: agentId as Id<'agents'> } : {},
+  );
   const openWhatsAppAttempt = useQuery(
     api.whatsappEmbeddedSignup.getOpenConnectionAttempt,
     {},

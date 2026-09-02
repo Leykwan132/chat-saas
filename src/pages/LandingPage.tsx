@@ -1,4 +1,4 @@
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { usePostHog } from '@posthog/react';
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import { SiteHeader } from '@/components/SiteHeader';

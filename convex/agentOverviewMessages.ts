@@ -18,6 +18,7 @@ export async function listAiMessagesForAgent(
   agentId: Id<"agents">,
   periodStartMs: number,
   periodEndMs: number,
+  includedConversationIds: ReadonlySet<Id<"conversations">>,
 ) {
   const rows = await ctx.db
     .query("messages")
@@ -29,7 +30,11 @@ export async function listAiMessagesForAgent(
     )
     .take(MAX_OVERVIEW_MESSAGE_ROWS);
 
-  return rows.filter((message) => isAiMessageForAgent(message, agentId));
+  return rows.filter(
+    (message) =>
+      includedConversationIds.has(message.conversationId) &&
+      isAiMessageForAgent(message, agentId),
+  );
 }
 
 export async function getOutgoingMessageCountsForConversations(

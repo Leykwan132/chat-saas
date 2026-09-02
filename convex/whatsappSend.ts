@@ -8,6 +8,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { handleWorkflowFollowUpOutbound } from "./workflowFollowUpRuntime";
+import { buildWhatsAppRecipient } from "./whatsappRecipient";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
 
@@ -42,7 +43,7 @@ export const sendText = action({
     if (ctxData === null) {
       throw new Error("Conversation not found");
     }
-    const { conversation, channel } = ctxData;
+    const { conversation, channel, customer } = ctxData;
     if (conversation.service !== "whatsapp" || channel.service !== "whatsapp") {
       throw new Error("Not a WhatsApp conversation");
     }
@@ -59,7 +60,7 @@ export const sendText = action({
     const payload = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
-      to: conversation.contactAddress,
+      ...buildWhatsAppRecipient(customer),
       type: "text",
       text: { body: trimmed },
     };
@@ -115,6 +116,7 @@ export const sendText = action({
 type SendContext = {
   conversation: Doc<"conversations">;
   channel: Doc<"channels">;
+  customer: Doc<"customers">;
 };
 
 export const internalGetSendContext = internalQuery({
@@ -130,7 +132,10 @@ export const internalGetSendContext = internalQuery({
     const channel = await ctx.db.get(conv.channelId);
     if (channel === null || channel.orgId !== args.orgId) return null;
     if (channel.service !== "whatsapp") return null;
-    return { conversation: conv, channel };
+    if (!conv.customerId) return null;
+    const customer = await ctx.db.get(conv.customerId);
+    if (customer === null || customer.orgId !== args.orgId) return null;
+    return { conversation: conv, channel, customer };
   },
 });
 

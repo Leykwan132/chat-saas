@@ -1,8 +1,3 @@
-import {
-  Field,
-  FieldDescription,
-  FieldLabel,
-} from '@/components/ui/field';
 import { Switch } from '@/components/ui/switch';
 
 type WebWidgetBrandingSectionProps = {
@@ -23,17 +18,15 @@ export function WebWidgetBrandingSection({
   const checked = canHideBranding && hidePoweredBy;
 
   return (
-    <Field>
-      <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card px-4 py-3">
-        <div className="space-y-1">
-          <FieldLabel>Remove Kilobot Branding</FieldLabel>
-          <FieldDescription>
-            Remove Powered by Kilobot from the website widget.
-          </FieldDescription>
-        </div>
+    <div className="space-y-2">
+      <div className="flex items-center gap-3">
+        <p className="text-sm font-medium text-foreground">
+          Remove Kilobot branding
+        </p>
         <Switch
           checked={checked}
           disabled={saving}
+          aria-label="Remove Kilobot branding"
           onCheckedChange={(nextChecked) => {
             if (nextChecked && !canHideBranding) {
               onRequestUpgrade();
@@ -52,6 +45,6 @@ export function WebWidgetBrandingSection({
           Saving branding preference.
         </p>
       ) : null}
-    </Field>
+    </div>
   );
 }

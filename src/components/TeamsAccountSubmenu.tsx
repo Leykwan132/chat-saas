@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { useQuery } from 'convex/react';
 import { Building2, Plus, UserPlus, Users, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
+import { usePartnerManagedWorkspace } from '@/hooks/usePartnerManagedWorkspace';
 import { handleCreateTeamGate } from '@/lib/teamCreationGate';
 import { useUpgradeModal } from '@/components/upgradeModalContext';
 import { Spinner } from '@/components/ui/spinner';
@@ -109,6 +110,7 @@ export function TeamsAccountSubmenu({ settingsPath }: TeamsAccountSubmenuProps) 
   const teams = useQuery(api.teams.listForCurrentUser);
   const canInviteMembers = useQuery(api.teams.canInviteMembers);
   const canCreateOrgTeam = useQuery(api.teams.canCreateOrgTeam);
+  const isPartnerManagedWorkspace = usePartnerManagedWorkspace();
   const { openUpgradeModal } = useUpgradeModal();
 
   const [switchingTeamId, setSwitchingTeamId] = useState<string | null>(null);
@@ -278,15 +280,19 @@ export function TeamsAccountSubmenu({ settingsPath }: TeamsAccountSubmenuProps) 
             })
           )}
 
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={handleCreateTeam} className={teamMenuItemClassName}>
-            <Plus className="size-4" />
-            Create a team
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={handleInvitePeople} className={teamMenuItemClassName}>
-            <UserPlus className="size-4" />
-            Invite people
-          </DropdownMenuItem>
+          {isPartnerManagedWorkspace === false ? (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={handleCreateTeam} className={teamMenuItemClassName}>
+                <Plus className="size-4" />
+                Create a team
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={handleInvitePeople} className={teamMenuItemClassName}>
+                <UserPlus className="size-4" />
+                Invite people
+              </DropdownMenuItem>
+            </>
+          ) : null}
         </DropdownMenuSubContent>
       </DropdownMenuSub>
     </>

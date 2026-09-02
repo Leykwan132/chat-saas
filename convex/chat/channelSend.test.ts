@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { Doc } from "../_generated/dataModel";
-import { sendMediaToChannel } from "./channelSend";
+import { sendMediaToChannel, sendMetaReaction } from "./channelSend";
 
 function whatsappConversation() {
   return {
@@ -15,6 +15,13 @@ function whatsappChannel() {
     phoneNumberId: "1234567890",
     accessToken: "test-token",
   } as unknown as Doc<"channels">;
+}
+
+function whatsappCustomer(overrides: Record<string, unknown> = {}) {
+  return {
+    contactAddress: "60123456789",
+    ...overrides,
+  } as Doc<"customers">;
 }
 
 function messengerConversation() {
@@ -73,6 +80,7 @@ test("sends multiple WhatsApp photo/video URLs before the text response", async 
       },
     ],
     text: "Here you go.",
+    whatsappCustomer: whatsappCustomer(),
   });
 
   expect(result).toEqual({
@@ -89,24 +97,63 @@ test("sends multiple WhatsApp photo/video URLs before the text response", async 
   expect(calls[0]!.body).toMatchObject({
     messaging_product: "whatsapp",
     recipient_type: "individual",
-    to: "60123456789",
+    to: "+60123456789",
     type: "image",
     image: { link: "https://cdn.example.com/first.jpg" },
   });
+  expect(calls[0]!.body).not.toHaveProperty("recipient");
   expect(calls[1]!.body).toMatchObject({
     messaging_product: "whatsapp",
     recipient_type: "individual",
-    to: "60123456789",
+    to: "+60123456789",
     type: "video",
     video: { link: "https://cdn.example.com/second.mp4" },
   });
+  expect(calls[1]!.body).not.toHaveProperty("recipient");
   expect(calls[2]!.body).toMatchObject({
     messaging_product: "whatsapp",
     recipient_type: "individual",
-    to: "60123456789",
+    to: "+60123456789",
     type: "text",
     text: { body: "Here you go." },
   });
+  expect(calls[2]!.body).not.toHaveProperty("recipient");
+});
+
+test("sends WhatsApp media, text, and reactions to a username recipient", async () => {
+  const calls: Array<Record<string, unknown>> = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      calls.push(parseBody(init));
+      return new Response(JSON.stringify({ messages: [{ id: `wamid.${calls.length}` }] }), {
+        status: 200,
+      });
+    }),
+  );
+  const customer = whatsappCustomer({
+    contactAddress: "US.13491208655302741918",
+    whatsappUserId: "US.13491208655302741918",
+  });
+
+  const sendResult = await sendMediaToChannel(whatsappConversation(), whatsappChannel(), {
+    mediaItems: [{ url: "https://cdn.example.com/photo.jpg", mediaType: "image/jpeg" }],
+    text: "Hello",
+    whatsappCustomer: customer,
+  });
+  const reactionResult = await sendMetaReaction(whatsappConversation(), whatsappChannel(), {
+    targetExternalId: "wamid.inbound",
+    emoji: "👍",
+    whatsappCustomer: customer,
+  });
+
+  expect(sendResult).toMatchObject({ ok: true });
+  expect(reactionResult).toMatchObject({ ok: true });
+  expect(calls).toHaveLength(3);
+  for (const body of calls) {
+    expect(body).toMatchObject({ recipient: "US.13491208655302741918" });
+    expect(body).not.toHaveProperty("to");
+  }
 });
 
 test("does not send WhatsApp text when image delivery fails first", async () => {
@@ -124,6 +171,7 @@ test("does not send WhatsApp text when image delivery fails first", async () => 
   const result = await sendMediaToChannel(whatsappConversation(), whatsappChannel(), {
     imageUrls: ["https://cdn.example.com/broken.jpg"],
     text: "Here you go.",
+    whatsappCustomer: whatsappCustomer(),
   });
 
   expect(result).toEqual({

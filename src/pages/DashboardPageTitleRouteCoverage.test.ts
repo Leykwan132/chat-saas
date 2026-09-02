@@ -62,7 +62,7 @@ const dashboardExcludedRoutes = [
 ];
 
 const workspaceCoveredRoutes = ['settings', 'invitations', 'usage', 'referrals'];
-const workspaceExcludedRoutes = ['account'];
+const workspaceExcludedRoutes = ['account', 'partner'];
 
 test('accounts for every authenticated route in the page-title design', () => {
   const mainSource = sourceFile('../main.tsx');

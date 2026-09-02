@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { useMutation, useQuery } from 'convex/react';
 import { Plus } from 'lucide-react';
 import { Navigate, Outlet, useNavigate, useSearchParams } from 'react-router';
@@ -12,6 +12,7 @@ import {
   AgentCardSkeleton,
   CreateAgentCard,
 } from '@/components/workspace/AgentCards';
+import { AgentCreationPermissionEmptyState } from '@/components/workspace/AgentCreationPermissionEmptyState';
 import { ModeToggle } from '@/components/mode-toggle';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { TeamSwitcher } from '@/components/TeamSwitcher';
@@ -24,7 +25,7 @@ import {
   Breadcrumb,
   BreadcrumbList,
 } from '@/components/ui/breadcrumb';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Spinner } from '@/components/ui/spinner';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -36,6 +37,7 @@ function WorkspaceShell() {
       <AgentsSidebar />
       <SidebarInset>
         <header className="flex h-14 items-center gap-2 px-4 sticky top-0 z-10 bg-background border-b border-border/50">
+          <SidebarTrigger className="-ml-1 md:hidden" aria-label="Open navigation" />
           <Breadcrumb>
             <BreadcrumbList>
               <TeamSwitcher settingsPath="/workspace/settings" />
@@ -51,7 +53,7 @@ function WorkspaceShell() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto px-14 py-8 md:px-12 lg:px-28">
+        <main className="flex-1 overflow-auto px-4 py-6 sm:px-6 md:px-12 md:py-8 lg:px-28">
           <div className="animate-fade-in">
             <Outlet />
           </div>
@@ -122,19 +124,21 @@ export function AgentsIndex() {
       )}
 
       {agents === undefined ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           <AgentCardSkeleton />
           <AgentCardSkeleton />
           <AgentCardSkeleton />
         </div>
       ) : agents.length === 0 ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {can(Permission.AGENTS_CREATE) && (
+        can(Permission.AGENTS_CREATE) ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             <CreateAgentCard onClick={handleNewAgent} />
-          )}
-        </div>
+          </div>
+        ) : (
+          <AgentCreationPermissionEmptyState />
+        )
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {agents.map((agent: Doc<'agents'>) => (
             <AgentCard
               key={agent._id}

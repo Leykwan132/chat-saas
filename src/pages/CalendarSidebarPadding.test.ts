@@ -6,9 +6,9 @@ const source = readFileSync(
   'utf8',
 );
 
-test('gives calendar controls the same wider horizontal inset', () => {
+test('keeps the calendar month and filters aligned in the sidebar', () => {
   expect(source).toContain('<div className="px-4 py-[0.45rem]">');
-  expect(source).toContain('<div className="px-4 pb-3">');
-  expect(source).toContain('className="h-11 w-full gap-2 px-5 py-3"');
-  expect(source).not.toContain('className="mt-2 h-11 w-full gap-2 px-5 py-3"');
+  expect(source).toContain('data-calendar-sidebar-section="month"');
+  expect(source).toContain('className="flex justify-center pb-[0.675rem]"');
+  expect(source).toContain('<CalendarSidebarFilterSection title="View">');
 });

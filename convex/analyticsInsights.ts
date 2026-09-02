@@ -14,6 +14,7 @@ import {
   buildAnalyticsInsightsSystemPrompt,
 } from "./analyticsInsightsContract";
 import { advancedAnalyticsPool } from "./analyticsInsightsPool";
+import type { TopicDetectionContext } from "./analyticsTopicRecords";
 
 const temperatureMap = {
   hot: "Hot",
@@ -37,7 +38,7 @@ export const processConversation = internalAction({
       conversationId: args.conversationId,
     });
     try {
-      const context = await ctx.runQuery(
+      const context: TopicDetectionContext | null = await ctx.runQuery(
         internal.analyticsTopicRecords.getTopicDetectionContext,
         { conversationId: args.conversationId },
       );

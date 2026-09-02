@@ -199,6 +199,34 @@ test("addNodeAfter adds child nodes without rewiring existing children", async (
   ).toBe(false);
 });
 
+test("a moved workflow node keeps its saved position when the graph reloads", async () => {
+  const t = initTest();
+  const workosUserId = "user-workflow-position";
+  const { agentId } = await createPersonalAgent(t, workosUserId);
+  const authed = t.withIdentity({ subject: workosUserId });
+  const initial = await authed.mutation(api.workflows.ensureForAgent, { agentId });
+  const created = await authed.mutation(api.workflows.addNodeAfter, {
+    agentId,
+    sourceNodeId: initial.nodes[0]._id,
+    kind: "sendText",
+  });
+  const createdNode = created.nodes.find((node) => node.kind === "sendText");
+  expect(createdNode).toBeDefined();
+
+  await authed.mutation(api.workflows.updateNode, {
+    agentId,
+    nodeId: createdNode!._id,
+    positionX: 480,
+    positionY: 320,
+  });
+
+  const reloaded = await authed.query(api.workflows.getForAgent, { agentId });
+  const reloadedNode = reloaded?.nodes.find(
+    (node) => node._id === createdNode!._id,
+  );
+  expect(reloadedNode).toMatchObject({ positionX: 480, positionY: 320 });
+});
+
 test("removeEdge deletes a selected workflow edge", async () => {
   const t = initTest();
   const workosUserId = "user-workflow-remove-edge";

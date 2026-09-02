@@ -14,7 +14,10 @@ import {
 } from "./workflowValidators";
 import {
   webWidgetLayoutValidator,
+  webWidgetHomeValidator,
+  webWidgetLeadFormValidator,
   webWidgetModeValidator,
+  webWidgetSuggestionsValidator,
   webWidgetThemeValidator,
 } from "./webWidgetValidators";
 import {
@@ -214,6 +217,53 @@ const appointmentBookingSlotValidator = v.object({
   assignedDisplayName: v.optional(v.string()),
 });
 
+const whiteLabelPlanKeyValidator = v.union(
+  v.literal("free"),
+  v.literal("starter"),
+  v.literal("growth"),
+  v.literal("business"),
+);
+
+const whiteLabelPartnerStatusValidator = v.union(
+  v.literal("active"),
+  v.literal("suspended"),
+);
+
+const whiteLabelPartnerAccessStatusValidator = v.union(
+  v.literal("active"),
+  v.literal("revoked"),
+);
+
+const whiteLabelOrganizationStatusValidator = v.union(
+  v.literal("active"),
+  v.literal("suspended"),
+);
+
+const whiteLabelDomainStatusValidator = v.union(
+  v.literal("pending"),
+  v.literal("active"),
+  v.literal("suspended"),
+  v.literal("failed"),
+);
+
+const whiteLabelCustomHostnameSetupStateValidator = v.union(
+  v.literal("draft"),
+  v.literal("ownership_pending"),
+  v.literal("ownership_checking"),
+  v.literal("dcv_pending"),
+  v.literal("certificate_checking"),
+  v.literal("cutover_pending"),
+  v.literal("connection_checking"),
+  v.literal("connected"),
+  v.literal("failed"),
+);
+
+const whiteLabelCreditLedgerEventValidator = v.union(
+  v.literal("monthly_allowance"),
+  v.literal("manual_grant"),
+  v.literal("usage_deduction"),
+);
+
 export default defineSchema({
   users: defineTable({
     workosUserId: v.string(),
@@ -307,6 +357,7 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_teamId", ["teamId"])
+    .index("by_userId_and_role", ["userId", "role"])
     .index("by_userId_and_teamId", ["userId", "teamId"]),
   workspaceSetupChecklistStates: defineTable({
     userId: v.id("users"),
@@ -385,6 +436,159 @@ export default defineSchema({
     expiresAt: v.number(),
     createdAt: v.number(),
   }).index("by_token", ["token"]),
+  whiteLabelPartners: defineTable({
+    controlTeamId: v.optional(v.id("teams")),
+    name: v.string(),
+    logoStorageId: v.optional(v.id("_storage")),
+    status: whiteLabelPartnerStatusValidator,
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_controlTeamId", ["controlTeamId"])
+    .index("by_status", ["status"]),
+  whiteLabelPartnerAccess: defineTable({
+    partnerId: v.id("whiteLabelPartners"),
+    email: v.optional(v.string()),
+    workosUserId: v.optional(v.string()),
+    role: v.literal("owner"),
+    status: whiteLabelPartnerAccessStatusValidator,
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_partnerId", ["partnerId"])
+    .index("by_workosUserId", ["workosUserId"])
+    .index("by_workosUserId_and_status", ["workosUserId", "status"])
+    .index("by_email_and_status", ["email", "status"])
+    .index("by_partnerId_and_workosUserId", ["partnerId", "workosUserId"]),
+  whiteLabelPartnerOrganizations: defineTable({
+    partnerId: v.id("whiteLabelPartners"),
+    teamId: v.id("teams"),
+    status: whiteLabelOrganizationStatusValidator,
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_partnerId_and_status", ["partnerId", "status"])
+    .index("by_teamId", ["teamId"])
+    .index("by_partnerId_and_teamId", ["partnerId", "teamId"]),
+  whiteLabelPartnerOrganizationAccounts: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    workosUserId: v.string(),
+    workosOrganizationMembershipId: v.string(),
+    email: v.string(),
+    role: v.union(
+      v.literal("owner"),
+      v.literal("admin"),
+      v.literal("member"),
+    ),
+    status: v.literal("active"),
+    passwordResetAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_partnerOrganizationId", ["partnerOrganizationId"])
+    .index("by_workosUserId", ["workosUserId"])
+    .index("by_partnerOrganizationId_and_workosUserId", [
+      "partnerOrganizationId",
+    "workosUserId",
+  ]),
+  whiteLabelPartnerCustomerCredentials: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    workosUserId: v.string(),
+    ciphertext: v.string(),
+    initializationVector: v.string(),
+    authenticationTag: v.string(),
+    keyVersion: v.literal("v1"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_partnerOrganizationId_and_workosUserId", [
+    "partnerOrganizationId",
+    "workosUserId",
+  ]),
+  whiteLabelPartnerOrganizationPlans: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    activePlanKey: whiteLabelPlanKeyValidator,
+    creditPlanKey: whiteLabelPlanKeyValidator,
+    pendingCreditPlanKey: v.optional(whiteLabelPlanKeyValidator),
+    pendingCreditPlanEffectiveAt: v.optional(v.number()),
+    updatedByUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_partnerOrganizationId", ["partnerOrganizationId"]),
+  whiteLabelPartnerOrganizationPlanAssignments: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    planKey: whiteLabelPlanKeyValidator,
+    appliesAt: v.number(),
+    assignedByUserId: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_partnerOrganizationId_and_createdAt", ["partnerOrganizationId", "createdAt"]),
+  whiteLabelPartnerOrganizationCreditPeriods: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    planKey: whiteLabelPlanKeyValidator,
+    periodStart: v.number(),
+    periodEnd: v.number(),
+    grantedCredits: v.number(),
+    usedCredits: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_partnerOrganizationId_and_periodStart", ["partnerOrganizationId", "periodStart"]),
+  whiteLabelPartnerOrganizationCreditGrants: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    grantedCredits: v.number(),
+    usedCredits: v.number(),
+    grantedByUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_partnerOrganizationId_and_createdAt", ["partnerOrganizationId", "createdAt"]),
+  whiteLabelPartnerOrganizationCreditBalances: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    manualGrantedCredits: v.number(),
+    manualUsedCredits: v.number(),
+    grantCount: v.number(),
+    lastGrantAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_partnerOrganizationId", ["partnerOrganizationId"]),
+  whiteLabelPartnerOrganizationCreditLedger: defineTable({
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    event: whiteLabelCreditLedgerEventValidator,
+    credits: v.number(),
+    actorUserId: v.optional(v.id("users")),
+    createdAt: v.number(),
+  }).index("by_partnerOrganizationId_and_createdAt", ["partnerOrganizationId", "createdAt"]),
+  whiteLabelPartnerDomains: defineTable({
+    partnerId: v.id("whiteLabelPartners"),
+    hostname: v.string(),
+    cloudflareHostnameId: v.optional(v.string()),
+    dnsTarget: v.optional(v.string()),
+    status: whiteLabelDomainStatusValidator,
+    validationError: v.optional(v.string()),
+    setupState: v.optional(whiteLabelCustomHostnameSetupStateValidator),
+    ownershipRecordName: v.optional(v.string()),
+    ownershipRecordType: v.optional(v.literal("TXT")),
+    ownershipRecordValue: v.optional(v.string()),
+    delegatedDcvRecordName: v.optional(v.string()),
+    delegatedDcvRecordTarget: v.optional(v.string()),
+    hostnameStatus: v.optional(v.string()),
+    certificateStatus: v.optional(v.string()),
+    pollGeneration: v.optional(v.number()),
+    pollAttempt: v.optional(v.number()),
+    lastCheckedAt: v.optional(v.number()),
+    ownershipConfirmedAt: v.optional(v.number()),
+    dcvConfirmedAt: v.optional(v.number()),
+    cutoverConfirmedAt: v.optional(v.number()),
+    connectedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_partnerId", ["partnerId"])
+    .index("by_hostname", ["hostname"]),
+  whiteLabelPartnerUsageTotals: defineTable({
+    partnerId: v.id("whiteLabelPartners"),
+    totalTokens: v.number(),
+    totalCostUsd: v.number(),
+    requestCount: v.number(),
+    updatedAt: v.number(),
+  }).index("by_partnerId", ["partnerId"]),
   agents: defineTable({
     name: v.string(),
     provider: v.union(
@@ -524,6 +728,8 @@ export default defineSchema({
       v.literal("deleting"),
     )),
     cfItemId: v.optional(v.string()),
+    markdownStorageId: v.optional(v.id("_storage")),
+    markdownR2Key: v.optional(v.string()),
     parentUrl: v.optional(v.string()),
     parentId: v.optional(v.id("webEntries")),
     userId: v.string(),
@@ -625,8 +831,12 @@ export default defineSchema({
     enabled: v.boolean(),
     agentDisplayName: v.string(),
     placeholder: v.optional(v.string()),
+    suggestions: v.optional(webWidgetSuggestionsValidator),
+    suggestionsEnabled: v.optional(v.boolean()),
     layout: v.optional(webWidgetLayoutValidator),
     theme: v.optional(webWidgetThemeValidator),
+    home: v.optional(webWidgetHomeValidator),
+    leadForm: v.optional(webWidgetLeadFormValidator),
     iconStorageId: v.optional(v.id("_storage")),
     hidePoweredBy: v.optional(v.boolean()),
     mode: v.optional(webWidgetModeValidator),
@@ -845,6 +1055,8 @@ export default defineSchema({
     agentId: v.optional(v.id("agents")),
     service: customerServiceValidator,
     contactAddress: v.string(),
+    whatsappUserId: v.optional(v.string()),
+    whatsappUsername: v.optional(v.string()),
     name: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
@@ -875,6 +1087,11 @@ export default defineSchema({
       "orgId",
       "service",
       "contactAddress",
+    ])
+    .index("by_orgId_and_service_and_whatsappUserId", [
+      "orgId",
+      "service",
+      "whatsappUserId",
     ])
     .index("by_userId_and_agentId_and_lastSeenAt", [
       "userId",
@@ -1518,6 +1735,7 @@ export default defineSchema({
     assignmentStrategy: appointmentAssignmentStrategyValidator,
     specificWorkosUserId: v.optional(v.string()),
     assignedWorkosUserIds: v.optional(v.array(v.string())),
+    autoAssignNewMembers: v.optional(v.boolean()),
     lastAssignedWorkosUserId: v.optional(v.string()),
     lastAssignedAt: v.optional(v.number()),
     createdAt: v.number(),
@@ -1534,6 +1752,7 @@ export default defineSchema({
     collectedFields: v.record(v.string(), appointmentCollectedValueValidator),
     proposedSlots: v.optional(v.array(appointmentBookingSlotValidator)),
     selectedSlot: v.optional(appointmentBookingSlotValidator),
+    customerConfirmationMessageId: v.optional(v.id("messages")),
     calendarEventId: v.optional(v.id("calendarEvents")),
     createdAt: v.number(),
     updatedAt: v.number(),

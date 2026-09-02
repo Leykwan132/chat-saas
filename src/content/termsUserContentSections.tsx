@@ -54,6 +54,16 @@ export const termsUserContentSections: LegalSection[] = [
     ),
   },
   {
+    id: 'google-workspace-api-data',
+    title: 'Google Workspace API data',
+    body: (
+      <p>
+        The use of raw or derived user data received from Workspace APIs will adhere to the Google
+        User Data Policy, including the Limited Use requirements.
+      </p>
+    ),
+  },
+  {
     id: 'ai-features',
     title: 'AI-powered features',
     body: (

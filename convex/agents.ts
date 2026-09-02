@@ -1,11 +1,11 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
-import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
-import { getModelProvider, isEnabledModel } from "./llm/modelPricing";
+import { getAuthContext } from "./authUtils";
+import { getModelProvider } from "./llm/modelPricing";
 import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe, getPlan } from "./plans";
 import { provisionOrgMemberSchedulesForAgent } from "./leadRouting/provision";
-import { ensureUserScheduleForAgent } from "./leadRouting/schedules";
 import { ensureWorkflowForAgent } from "./workflowCore";
+import { applyAgentBookingOnboarding } from "./agentBookingOnboarding";
 import { DEFAULT_AGENT_MODEL } from "../shared/agentModelDefaults";
 import {
   buildAgentSystemPrompt,
@@ -17,37 +17,9 @@ import {
   getOwnedAgent,
 } from "./agentAccess";
 import { deleteSubscriptionsForAgent } from "./telegramNotifications/subscriptionAccess";
-import { mutation, query, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { mutation, query, internalQuery } from "./_generated/server";
 import { agentGoalValidator, templateKeyValidator } from "./agentValidators";
-
-async function assertEnabledModel(modelId: string) {
-  if (!isEnabledModel(modelId)) {
-    throw new Error("Selected model is not available");
-  }
-}
-
-async function listAgentsForContext(
-  ctx: QueryCtx | MutationCtx,
-  userId: string,
-  orgId: string | null,
-) {
-  const normalizedOrgId =
-    !orgId || orgId === "personal" ? PERSONAL_ORG_FALLBACK : orgId;
-
-  if (!orgId || orgId === "personal") {
-    return await ctx.db
-      .query("agents")
-      .withIndex("by_userId_and_orgId", (q) =>
-        q.eq("userId", userId).eq("orgId", normalizedOrgId),
-      )
-      .collect();
-  }
-
-  return await ctx.db
-    .query("agents")
-    .withIndex("by_orgId", (q) => q.eq("orgId", normalizedOrgId))
-    .collect();
-}
+import { assertEnabledAgentModel, listAgentsForCreationContext } from "./agentCreationAccess";
 
 export const list = query({
   args: {},
@@ -96,7 +68,7 @@ export const canCreate = query({
     const stripeInfo = await getPlanFromStripe(ctx, userId);
     const plan = stripeInfo.plan;
     const planConfig = getPlan(plan);
-    const currentAgents = await listAgentsForContext(ctx, userId, orgId);
+    const currentAgents = await listAgentsForCreationContext(ctx, userId, orgId);
 
     return {
       allowed: checkAgentCreationLimit(plan, currentAgents.length),
@@ -121,6 +93,21 @@ export const create = mutation({
     emojiUse: v.optional(v.union(v.literal("never"), v.literal("occasional"), v.literal("frequent"))),
     formality: v.optional(v.union(v.literal("casual"), v.literal("conversational"), v.literal("professional"))),
     humorLevel: v.optional(v.union(v.literal("none"), v.literal("light"), v.literal("playful"))),
+    bookingOnboarding: v.optional(v.object({
+      availability: v.object({
+        timezone: v.string(),
+        shifts: v.array(v.object({
+          dayOfWeek: v.number(),
+          startMinutes: v.number(),
+          endMinutes: v.number(),
+        })),
+      }),
+      service: v.optional(v.object({
+        name: v.string(),
+        durationMinutes: v.number(),
+        appointmentBookingEnabled: v.boolean(),
+      })),
+    })),
   },
   returns: v.id("agents"),
   handler: async (ctx, args) => {
@@ -132,7 +119,7 @@ export const create = mutation({
     const stripeInfo = await getPlanFromStripe(ctx, userId);
     const plan = stripeInfo.plan;
 
-    const currentAgents = await listAgentsForContext(ctx, userId, orgId);
+    const currentAgents = await listAgentsForCreationContext(ctx, userId, orgId);
 
     if (!checkAgentCreationLimit(plan, currentAgents.length)) {
       throw new Error(`Your plan (${plan ?? "free"}) limit exceeded for agents.`);
@@ -152,9 +139,12 @@ export const create = mutation({
     if (!businessDescription) {
       throw new Error("Business description is required");
     }
+    if (args.goal !== "bookService" && args.bookingOnboarding !== undefined) {
+      throw new Error("Booking onboarding requires the Book a Service goal");
+    }
 
     const model = DEFAULT_AGENT_MODEL;
-    await assertEnabledModel(model);
+    await assertEnabledAgentModel(model);
 
     if (!checkModelAccess(plan, model)) {
       throw new Error(`Your plan (${plan ?? "free"}) does not have access to model: ${model}`);
@@ -188,21 +178,20 @@ export const create = mutation({
       updatedAt: now,
     });
 
-    await ensureUserScheduleForAgent(ctx, {
-      agentId,
-      workosUserId: userId,
-      enabled: true,
-    });
-
-    if (orgId && orgId !== "personal") {
-      await provisionOrgMemberSchedulesForAgent(ctx, agentId, orgId);
-    }
-
     const agent = await ctx.db.get(agentId);
     if (agent === null) {
       throw new Error("Agent not found after create");
     }
     await ensureWorkflowForAgent(ctx, agent);
+    await applyAgentBookingOnboarding(ctx, {
+      agent,
+      creatorWorkosUserId: userId,
+      bookingOnboarding: args.bookingOnboarding,
+    });
+
+    if (orgId && orgId !== "personal") {
+      await provisionOrgMemberSchedulesForAgent(ctx, agentId, orgId);
+    }
 
     return agentId;
   },
@@ -250,7 +239,7 @@ export const update = mutation({
       throw new Error("System prompt is required");
     }
 
-    await assertEnabledModel(model);
+    await assertEnabledAgentModel(model);
 
     if (!checkModelAccess(plan, model)) {
       throw new Error(`Your plan (${plan ?? "free"}) does not have access to model: ${model}`);

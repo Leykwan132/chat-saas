@@ -19,7 +19,7 @@ describe('full-week availability drafts', () => {
     expect(isFullWeekAllDay([...allDay, { ...allDay[0]!, key: 'duplicate' }])).toBe(false);
   });
 
-  it('builds complete all-day and standard weekly drafts', () => {
+  it('builds complete all-day and weekday business-hour drafts', () => {
     expect(createAllDayShiftDrafts()).toEqual(
       Array.from({ length: 7 }, (_, dayOfWeek) => ({
         key: `shift-${dayOfWeek}-0-1440-${dayOfWeek}`,
@@ -29,8 +29,8 @@ describe('full-week availability drafts', () => {
       })),
     );
     expect(createStandardShiftDrafts()).toEqual(
-      Array.from({ length: 7 }, (_, dayOfWeek) => ({
-        key: `shift-${dayOfWeek}-540-1020-${dayOfWeek}`,
+      [1, 2, 3, 4, 5].map((dayOfWeek, index) => ({
+        key: `shift-${dayOfWeek}-540-1020-${index}`,
         dayOfWeek,
         startMinutes: 540,
         endMinutes: 1020,

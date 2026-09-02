@@ -118,7 +118,7 @@ export const sendReply = action({
       throw new Error("Conversation not found");
     }
 
-    const { conversation, channel } = ctxData;
+    const { conversation, channel, customer } = ctxData;
     if (conversation.assignedAgentId === undefined) {
       throw new Error("Conversation has no assigned agent");
     }
@@ -141,7 +141,10 @@ export const sendReply = action({
         : [];
 
     const imageUrls = readyUploads.map((u: { publicUrl: string }) => u.publicUrl);
-    const channelSendOptions = { allowHumanAgentTag: true as const };
+    const channelSendOptions = {
+      allowHumanAgentTag: true as const,
+      whatsappCustomer: customer ?? undefined,
+    };
     const persistImages = readyUploads.map((u: { publicUrl: string; mediaType: string }) => ({
       publicUrl: u.publicUrl,
       mediaType: u.mediaType,
@@ -232,7 +235,10 @@ export const internalSendText = internalAction({
       ctxData.conversation,
       ctxData.channel,
       args.content,
-      { allowHumanAgentTag: args.allowHumanAgentTag ?? false },
+      {
+        allowHumanAgentTag: args.allowHumanAgentTag ?? false,
+        whatsappCustomer: ctxData.customer ?? undefined,
+      },
     );
   },
 });
@@ -490,6 +496,7 @@ export const internalSendAndPersistReaction = internalAction({
       {
         targetExternalId: args.targetExternalId,
         emoji: args.emoji,
+        whatsappCustomer: ctxData.customer ?? undefined,
       },
     );
     if (!sendResult.ok) {
@@ -539,7 +546,10 @@ export const internalRemoveAndPersistReaction = internalAction({
     const sendResult = await removeMetaReaction(
       ctxData.conversation,
       ctxData.channel,
-      { targetExternalId: args.targetExternalId },
+      {
+        targetExternalId: args.targetExternalId,
+        whatsappCustomer: ctxData.customer ?? undefined,
+      },
     );
     if (!sendResult.ok) {
       console.warn("Failed to remove Meta reaction", {
@@ -576,6 +586,7 @@ type AiReplySendResult = {
 async function sendAiReplyContent(
   conversation: Doc<"conversations">,
   channel: Doc<"channels">,
+  customer: Doc<"customers"> | null,
   args: {
     content: string;
     mediaUrls: string[];
@@ -583,7 +594,10 @@ async function sendAiReplyContent(
     allowHumanAgentTag?: boolean;
   },
 ): Promise<AiReplySendResult> {
-  const options = { allowHumanAgentTag: args.allowHumanAgentTag ?? false };
+  const options = {
+    allowHumanAgentTag: args.allowHumanAgentTag ?? false,
+    whatsappCustomer: customer ?? undefined,
+  };
   const content = normalizeCustomerFacingResponseFormatting(args.content);
   const mediaItems = args.mediaItems ?? args.mediaUrls.map((url) => ({ url }));
 
@@ -638,7 +652,12 @@ export const internalSendAiReply = internalAction({
     if (ctxData === null) {
       return { ok: false, error: "Conversation not found", policy: "generic" };
     }
-    return await sendAiReplyContent(ctxData.conversation, ctxData.channel, args);
+    return await sendAiReplyContent(
+      ctxData.conversation,
+      ctxData.channel,
+      ctxData.customer,
+      args,
+    );
   },
 });
 
@@ -685,6 +704,7 @@ export const internalSendAiReplyMessages = internalAction({
       const mediaResult = await sendAiReplyContent(
         ctxData.conversation,
         ctxData.channel,
+        ctxData.customer,
         {
           content: "",
           mediaUrls: args.mediaUrls,
@@ -709,6 +729,7 @@ export const internalSendAiReplyMessages = internalAction({
       const result = await sendAiReplyContent(
         ctxData.conversation,
         ctxData.channel,
+        ctxData.customer,
         {
           content,
           mediaUrls: [],

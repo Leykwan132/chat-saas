@@ -25,6 +25,7 @@ import {
   fetchWorkosUserById,
 } from "./workosClient";
 import { requestTeamDeletion } from "./teamDeletion/request";
+import { reconcilePartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
 
 // POST /webhook/workos
 // Verifies the WorkOS-Signature header against WORKOS_WEBHOOK_SECRET, dedupes
@@ -135,6 +136,9 @@ export const dispatch = internalMutation({
         case "invitation.accepted":
           await handleInvitationAccepted(ctx, data);
           break;
+        case "password_reset.succeeded":
+          await recordCompletedPasswordReset(ctx, data);
+          break;
         default:
           // Unhandled events are still recorded so retries of the same delivery
           // dedupe correctly.
@@ -203,6 +207,27 @@ async function deleteUserByWorkosId(ctx: MutationCtx, workosUserId?: string) {
   }
 
   await ctx.db.delete(user._id);
+}
+
+async function recordCompletedPasswordReset(ctx: MutationCtx, data: unknown) {
+  const workosUserId =
+    typeof data === "object" &&
+    data !== null &&
+    "user_id" in data &&
+    typeof data.user_id === "string"
+      ? data.user_id
+      : null;
+  if (!workosUserId) {
+    return;
+  }
+  const accounts = await ctx.db
+    .query("whiteLabelPartnerOrganizationAccounts")
+    .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
+    .take(100);
+  const now = Date.now();
+  for (const account of accounts) {
+    await ctx.db.patch(account._id, { passwordResetAt: now, updatedAt: now });
+  }
 }
 
 async function upsertOrganization(ctx: MutationCtx, data: any) {
@@ -288,6 +313,7 @@ async function applyMembership(ctx: MutationCtx, data: any) {
     userId,
     role: finalRole,
   });
+  await reconcilePartnerCustomerWorkspace(ctx, workosUserId);
 
   if (isNewMember) {
     const user = await ctx.db.get(userId);

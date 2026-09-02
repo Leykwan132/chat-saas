@@ -13,6 +13,14 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        app: path.resolve(__dirname, "index.html"),
+        widget: path.resolve(__dirname, "widget.html"),
+      },
+    },
+  },
   // ngrok (and similar tunnels) send a Host header like *.ngrok-free.dev.
   // Vite blocks unknown hosts by default; strings starting with "." allow
   // that domain and all its subdomains.

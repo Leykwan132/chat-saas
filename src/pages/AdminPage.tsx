@@ -9,6 +9,7 @@ import { isValidEmailFormat } from '../../shared/emailValidation';
 import { AdminAuthPanel } from '@/components/admin/AdminAuthPanel';
 import { AdminContactRequestsTab } from '@/components/admin/AdminContactRequestsTab';
 import { AdminUsageCostsTab } from '@/components/admin/AdminUsageCostsTab';
+import { AdminPartnersTab } from '@/components/admin/AdminPartnersTab';
 import {
   type AdminSession,
   clearStoredAdminSession,
@@ -16,7 +17,7 @@ import {
   storeAdminSession,
 } from '@/components/admin/adminSession';
 
-type AdminTab = 'contacts' | 'costs';
+type AdminTab = 'contacts' | 'costs' | 'partners';
 
 export default function AdminPage() {
   const convex = useConvex();
@@ -168,12 +169,16 @@ export default function AdminPage() {
           <TabsList variant="line">
             <TabsTrigger value="contacts">Contacts</TabsTrigger>
             <TabsTrigger value="costs">Costs</TabsTrigger>
+            <TabsTrigger value="partners">Partners</TabsTrigger>
           </TabsList>
           <TabsContent value="contacts" className="pt-6">
             <AdminContactRequestsTab sessionToken={sessionToken} enabled={canLoadAdminData} />
           </TabsContent>
           <TabsContent value="costs" className="pt-6">
             <AdminUsageCostsTab sessionToken={sessionToken} enabled={canLoadAdminData} />
+          </TabsContent>
+          <TabsContent value="partners" className="pt-6">
+            <AdminPartnersTab sessionToken={sessionToken} enabled={canLoadAdminData} />
           </TabsContent>
         </Tabs>
       </main>

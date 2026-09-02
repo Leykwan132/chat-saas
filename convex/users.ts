@@ -10,6 +10,7 @@ import {
 import { getBillingEntityForUser } from "./plans";
 import { ensureUserAccount } from "./teamHelpers";
 import { redeemReferralDuringOnboarding } from "./referralRedemption";
+import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
 
 /** Debug / introspection: Convex auth identity (WorkOS JWT claims) for the current socket. */
 export const getAuthUser = query({
@@ -63,10 +64,14 @@ export const currentUser = query({
     if (!user) return null;
 
     const stripeInfo = await getPlanFromStripe(ctx, identity.subject);
+    const isPartnerManaged =
+      (await getAssignedPartnerCustomerWorkspace(ctx, user.workosUserId)) !==
+      null;
     return {
       ...user,
       plan: stripeInfo.plan,
       stripeSubscriptionStatus: stripeInfo.status,
+      isPartnerManaged,
     };
   },
 });

@@ -69,6 +69,21 @@ export const prepareBook = internalMutation({
         result: { success: false, message: "The active booking session is for a different service." },
       };
     }
+    const selectedProposedSlot = session.proposedSlots?.find((slot) => slot.startAt === args.startAt);
+    if (
+      session.status !== AppointmentBookingSessionStatus.Confirming ||
+      selectedProposedSlot === undefined ||
+      session.selectedSlot?.startAt !== args.startAt ||
+      session.customerConfirmationMessageId === undefined
+    ) {
+      return {
+        kind: "failed" as const,
+        result: {
+          success: false,
+          message: "The customer must confirm a slot returned by checkAvailability before booking.",
+        },
+      };
+    }
     const collectedFields = session.collectedFields;
     const missing = missingServiceFields(service, collectedFields);
     if (missing.length > 0) {
@@ -90,7 +105,7 @@ export const prepareBook = internalMutation({
       rangeEndAt: args.startAt + service.durationMinutes * 60 * 1000,
       limit: 1,
     };
-    let selectedSlot = (await generateSlots(ctx, slotArgs)).find((slot) => slot.startAt === args.startAt);
+    const selectedSlot = (await generateSlots(ctx, slotArgs)).find((slot) => slot.startAt === args.startAt);
     if (selectedSlot === undefined) {
       const unhealthySlot = (await generateSlots(ctx, { ...slotArgs, ignoreGoogleHealth: true }))
         .find((slot) => slot.startAt === args.startAt);

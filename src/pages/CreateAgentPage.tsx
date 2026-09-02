@@ -1,4 +1,4 @@
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { Navigate } from 'react-router';
 import { CreateAgentWizard } from '@/components/create-agent/CreateAgentWizard';
 import { RequireOrganization } from '@/components/RequireOrganization';

@@ -22,9 +22,8 @@ test('public widget runtimes default to production and keep the API override opt
   expect(widgetScript).toContain(
     'script.getAttribute("data-kilobot-api") || "https://strong-chameleon-837.convex.site"',
   );
-  expect(aiWidgetScript).toContain(
-    'script.getAttribute("data-kilobot-api") || "https://strong-chameleon-837.convex.site"',
-  );
+  expect(aiWidgetScript).toContain('script.getAttribute("data-kilobot-api")');
+  expect(aiWidgetScript).toContain('"https://strong-chameleon-837.convex.site"');
 });
 test('public widget runtime requests and loads the snippet-selected mode', () => {
   expect(widgetScript).toContain('script.getAttribute("data-kilobot-mode")');

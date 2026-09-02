@@ -6,6 +6,7 @@ export const POSTHOG_FEATURE_FLAGS = {
   enableAvatarFeature: 'enable_avatar_feature',
   enableReferralProgram: 'enable_referral_program',
   enableGoogleCalendarConnect: 'enable_google_calendar_connect',
+  enablePartnerPortal: 'enable_partner_portal',
 } as const;
 
 export type ProductFeatureFlagState = boolean | undefined;
@@ -34,4 +35,8 @@ export function useEnableReferralProgram(): ProductFeatureFlagState {
 
 export function useEnableGoogleCalendarConnect(): ProductFeatureFlagState {
   return useFeatureFlagEnabled(POSTHOG_FEATURE_FLAGS.enableGoogleCalendarConnect);
+}
+
+export function useEnablePartnerPortal(): ProductFeatureFlagState {
+  return useFeatureFlagEnabled(POSTHOG_FEATURE_FLAGS.enablePartnerPortal);
 }

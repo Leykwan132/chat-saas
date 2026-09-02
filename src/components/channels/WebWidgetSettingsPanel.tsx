@@ -1,33 +1,31 @@
-import { useCallback, useState } from 'react';
-import { useMutation } from 'convex/react';
-import { toast } from 'sonner';
-import { api } from '../../../convex/_generated/api';
-import type { Id } from '../../../convex/_generated/dataModel';
-import type { WebWidgetLayout } from '../../../shared/webWidgetLayouts';
-import type { WebWidgetTheme } from '../../../shared/webWidgetThemes';
-import { DEFAULT_WEB_WIDGET_THEME } from '../../../shared/webWidgetThemes';
-import { useUpgradeModal } from '@/components/upgradeModalContext';
-import { WebWidgetAppearanceSection } from '@/components/channels/WebWidgetAppearanceSection';
-import { WebWidgetBrandingSection } from '@/components/channels/WebWidgetBrandingSection';
-import { WebWidgetLayoutPicker } from '@/components/channels/WebWidgetLayoutPicker';
-import { WebWidgetPreview } from '@/components/channels/WebWidgetPreview';
-import { WebWidgetScriptArtifact } from '@/components/channels/WebWidgetScriptArtifact';
-import { buildWebWidgetSnippet } from '@/components/channels/webWidgetSnippet';
+import { useCallback, useState } from "react";
+import { useMutation } from "convex/react";
+import { toast } from "sonner";
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from '@/components/ui/field';
-import type { TraditionalWidgetSettings } from './WebWidgetTraditionalPanel';
+  isWebWidgetLeadFormValid,
+  type WebWidgetLeadForm,
+} from "../../../shared/webWidgetExperience";
+import type { WebWidgetLayout } from "../../../shared/webWidgetLayouts";
+import type { WebWidgetSuggestions } from "../../../shared/webWidgetSuggestions";
+import type { WebWidgetTheme } from "../../../shared/webWidgetThemes";
+import { useUpgradeModal } from "@/components/upgradeModalContext";
+import { WebWidgetAiSettingsControls } from "@/components/channels/WebWidgetAiSettingsControls";
+import { buildWebWidgetSnippet } from "@/components/channels/webWidgetSnippet";
+import { useWebWidgetIconActions } from "@/components/channels/useWebWidgetIconActions";
+import type { TraditionalWidgetSettings } from "./WebWidgetTraditionalPanel";
 
 export type WebWidgetSettings = {
-  channelId: Id<'channels'>;
+  channelId: Id<"channels">;
   publicKey: string;
   enabled: boolean;
   agentDisplayName: string;
-  placeholder: string;
+  suggestions: WebWidgetSuggestions;
+  suggestionsEnabled: boolean;
   layout: WebWidgetLayout;
   theme: WebWidgetTheme;
+  leadForm: WebWidgetLeadForm;
   iconUrl?: string;
   poweredBy: boolean;
   hidePoweredBy: boolean;
@@ -37,11 +35,16 @@ export type WebWidgetSettings = {
 };
 
 type WebWidgetSettingsPanelProps = {
-  agentId: Id<'agents'> | undefined;
+  agentId: Id<"agents"> | undefined;
   settings: WebWidgetSettings;
-  updateSettings: ReturnType<typeof useMutation<typeof api.webWidget.updateSettings>>;
-  generateIconUploadUrl: ReturnType<typeof useMutation<typeof api.webWidget.generateIconUploadUrl>>;
+  updateSettings: ReturnType<
+    typeof useMutation<typeof api.webWidget.updateSettings>
+  >;
+  generateIconUploadUrl: ReturnType<
+    typeof useMutation<typeof api.webWidget.generateIconUploadUrl>
+  >;
   saveIcon: ReturnType<typeof useMutation<typeof api.webWidget.saveIcon>>;
+  removeIcon: ReturnType<typeof useMutation<typeof api.webWidget.removeIcon>>;
 };
 
 export function WebWidgetSettingsPanel({
@@ -50,51 +53,141 @@ export function WebWidgetSettingsPanel({
   updateSettings,
   generateIconUploadUrl,
   saveIcon,
+  removeIcon,
 }: WebWidgetSettingsPanelProps) {
   const { openUpgradeModal } = useUpgradeModal();
-  const [agentDisplayName, setAgentDisplayName] = useState(settings.agentDisplayName);
-  const [placeholderText, setPlaceholderText] = useState(settings.placeholder);
-  const [placementLayout, setPlacementLayout] = useState(settings.layout);
+  const [agentDisplayName, setAgentDisplayName] = useState(
+    settings.agentDisplayName,
+  );
+  const [savedAgentDisplayName, setSavedAgentDisplayName] = useState(
+    settings.agentDisplayName,
+  );
+  const [suggestions, setSuggestions] = useState(settings.suggestions);
+  const [suggestionsEnabled, setSuggestionsEnabled] = useState(
+    settings.suggestionsEnabled,
+  );
+  const [savedSuggestions, setSavedSuggestions] = useState(settings.suggestions);
+  const [savedSuggestionsEnabled, setSavedSuggestionsEnabled] = useState(
+    settings.suggestionsEnabled,
+  );
+  const [leadForm, setLeadForm] = useState(settings.leadForm);
+  const [savedLeadForm, setSavedLeadForm] = useState(settings.leadForm);
+  const [theme, setTheme] = useState(settings.theme);
   const [hidePoweredBy, setHidePoweredBy] = useState(settings.hidePoweredBy);
   const [savingAppearance, setSavingAppearance] = useState(false);
-  const [savingPlacement, setSavingPlacement] = useState(false);
+  const [savingSuggestions, setSavingSuggestions] = useState(false);
+  const [savingLeadForm, setSavingLeadForm] = useState(false);
+  const [savingTheme, setSavingTheme] = useState(false);
   const [savingBranding, setSavingBranding] = useState(false);
-  const [uploadingIcon, setUploadingIcon] = useState(false);
-  const snippet = buildWebWidgetSnippet(settings.publicKey, 'ai_powered');
+  const snippet = buildWebWidgetSnippet(settings.publicKey, "ai_powered");
   const normalizedAgentName = agentDisplayName.trim();
-  const normalizedPlaceholder = placeholderText.trim();
-  const previewPoweredBy = !(settings.canHideBranding && hidePoweredBy);
+  const appearanceDirty = normalizedAgentName !== savedAgentDisplayName;
+  const normalizedSuggestions = suggestions.map((suggestion) => suggestion.trim()) as WebWidgetSuggestions;
+  const suggestionsDirty =
+    suggestionsEnabled !== savedSuggestionsEnabled ||
+    JSON.stringify(normalizedSuggestions) !== JSON.stringify(savedSuggestions);
+  const leadFormDirty =
+    JSON.stringify(leadForm) !== JSON.stringify(savedLeadForm);
+  const leadFormValid = isWebWidgetLeadFormValid(leadForm);
+  const { clearIcon, uploadingIcon, uploadIcon } = useWebWidgetIconActions({
+    agentId,
+    canUseCustomIcon: settings.canUseCustomIcon,
+    generateIconUploadUrl,
+    removeIcon,
+    saveIcon,
+  });
 
   const saveAppearance = useCallback(() => {
     if (!agentId) return;
-    const nameChanged = normalizedAgentName !== settings.agentDisplayName;
-    const placeholderChanged = normalizedPlaceholder !== settings.placeholder;
     if (
       savingAppearance ||
       !normalizedAgentName ||
-      !normalizedPlaceholder ||
-      (!nameChanged && !placeholderChanged)
-    ) {
+      !appearanceDirty
+    )
       return;
-    }
     setSavingAppearance(true);
     void updateSettings({
       agentId,
-      ...(nameChanged ? { agentDisplayName: normalizedAgentName } : {}),
-      ...(placeholderChanged ? { placeholder: normalizedPlaceholder } : {}),
+      agentDisplayName: normalizedAgentName,
     })
-      .then(() => toast.success('Web widget appearance updated'))
-      .catch((error) => toast.error(error instanceof Error ? error.message : String(error)))
+      .then(() => {
+        setSavedAgentDisplayName(normalizedAgentName);
+        toast.success("Web widget appearance updated");
+      })
+      .catch((error) =>
+        toast.error(error instanceof Error ? error.message : String(error)),
+      )
       .finally(() => setSavingAppearance(false));
   }, [
     agentId,
+    appearanceDirty,
     normalizedAgentName,
-    normalizedPlaceholder,
     savingAppearance,
-    settings.agentDisplayName,
-    settings.placeholder,
     updateSettings,
   ]);
+
+  const saveLeadForm = useCallback(() => {
+    if (!agentId || savingLeadForm || !leadFormDirty || !leadFormValid) return;
+    setSavingLeadForm(true);
+    void updateSettings({ agentId, leadForm })
+      .then(() => {
+        setSavedLeadForm(leadForm);
+        toast.success("Visitor form updated");
+      })
+      .catch((error) =>
+        toast.error(error instanceof Error ? error.message : String(error)),
+      )
+      .finally(() => setSavingLeadForm(false));
+  }, [
+    agentId,
+    leadFormDirty,
+    leadFormValid,
+    leadForm,
+    savingLeadForm,
+    updateSettings,
+  ]);
+
+  const saveSuggestions = useCallback(() => {
+    if (!agentId || savingSuggestions || !suggestionsDirty) return;
+    setSavingSuggestions(true);
+    void updateSettings({
+      agentId,
+      suggestions: normalizedSuggestions,
+      suggestionsEnabled,
+    })
+      .then(() => {
+        setSavedSuggestions(normalizedSuggestions);
+        setSavedSuggestionsEnabled(suggestionsEnabled);
+        toast.success("Widget suggestions updated");
+      })
+      .catch((error) =>
+        toast.error(error instanceof Error ? error.message : String(error)),
+      )
+      .finally(() => setSavingSuggestions(false));
+  }, [
+    agentId,
+    normalizedSuggestions,
+    savingSuggestions,
+    suggestionsDirty,
+    suggestionsEnabled,
+    updateSettings,
+  ]);
+
+  const saveTheme = useCallback(
+    (nextTheme: WebWidgetTheme) => {
+      if (!agentId || nextTheme === theme || savingTheme) return;
+      setTheme(nextTheme);
+      setSavingTheme(true);
+      void updateSettings({ agentId, theme: nextTheme })
+        .then(() => toast.success("Widget theme updated"))
+        .catch((error) => {
+          setTheme(settings.theme);
+          toast.error(error instanceof Error ? error.message : String(error));
+        })
+        .finally(() => setSavingTheme(false));
+    },
+    [agentId, savingTheme, settings.theme, theme, updateSettings],
+  );
 
   const saveBranding = useCallback(
     (nextHidePoweredBy: boolean) => {
@@ -106,15 +199,12 @@ export function WebWidgetSettingsPanel({
       setHidePoweredBy(nextHidePoweredBy);
       if (nextHidePoweredBy === settings.hidePoweredBy) return;
       setSavingBranding(true);
-      void updateSettings({
-        agentId,
-        hidePoweredBy: nextHidePoweredBy,
-      })
+      void updateSettings({ agentId, hidePoweredBy: nextHidePoweredBy })
         .then(() =>
           toast.success(
             nextHidePoweredBy
-              ? 'Powered by branding removed'
-              : 'Powered by branding shown',
+              ? "Powered by branding removed"
+              : "Powered by branding shown",
           ),
         )
         .catch((error) => {
@@ -132,130 +222,60 @@ export function WebWidgetSettingsPanel({
     ],
   );
 
-  const savePlacement = useCallback(
-    (nextLayout: WebWidgetLayout) => {
-      if (!agentId || nextLayout === placementLayout || savingPlacement) return;
-      setPlacementLayout(nextLayout);
-      setSavingPlacement(true);
-      void updateSettings({
-        agentId,
-        layout: nextLayout,
-      })
-        .then(() => toast.success('Web widget placement updated'))
-        .catch((error) => {
-          setPlacementLayout(settings.layout);
-          toast.error(error instanceof Error ? error.message : String(error));
-        })
-        .finally(() => setSavingPlacement(false));
-    },
-    [
-      agentId,
-      placementLayout,
-      savingPlacement,
-      settings.layout,
-      updateSettings,
-    ],
-  );
-
   const copySnippet = useCallback(() => {
     void navigator.clipboard
       .writeText(snippet)
-      .then(() => toast.success('Installation copied'))
-      .catch(() => toast.error('Could not copy installation'));
+      .then(() => toast.success("Installation copied"))
+      .catch(() => toast.error("Could not copy installation"));
   }, [snippet]);
 
   const downloadSnippet = useCallback(() => {
-    const blob = new Blob([snippet], { type: 'text/html;charset=utf-8' });
+    const blob = new Blob([snippet], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
+    const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = 'kilobot-widget.html';
+    anchor.download = "kilobot-widget.html";
     anchor.click();
     URL.revokeObjectURL(url);
   }, [snippet]);
 
-  const uploadIcon = useCallback(
-    (file: File | undefined) => {
-      if (!file || !agentId || !settings.canUseCustomIcon) return;
-      setUploadingIcon(true);
-      void (async () => {
-        const uploadUrl = await generateIconUploadUrl({ agentId });
-        const response = await fetch(uploadUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': file.type || 'application/octet-stream' },
-          body: file,
-        });
-        if (!response.ok) {
-          throw new Error('Icon upload failed');
-        }
-        const { storageId } = (await response.json()) as { storageId: Id<'_storage'> };
-        await saveIcon({ agentId, storageId });
-        toast.success('Icon updated');
-      })()
-        .catch((error) => toast.error(error instanceof Error ? error.message : String(error)))
-        .finally(() => setUploadingIcon(false));
-    },
-    [agentId, generateIconUploadUrl, saveIcon, settings.canUseCustomIcon],
-  );
-
   return (
-    <>
-      <div className="grid min-h-0 gap-0 overflow-y-auto lg:grid-cols-[minmax(360px,0.9fr)_1.1fr] lg:overflow-hidden">
-        <div className="flex flex-col gap-6 border-b border-border px-8 pt-4 pb-8 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-10 lg:pt-4 lg:pb-10">
-          <FieldGroup>
-            <WebWidgetAppearanceSection
-              agentDisplayName={agentDisplayName}
-              savedAgentDisplayName={settings.agentDisplayName}
-              placeholderText={placeholderText}
-              savedPlaceholder={settings.placeholder}
-              canUseCustomIcon={settings.canUseCustomIcon}
-              iconUrl={settings.iconUrl}
-              uploadingIcon={uploadingIcon}
-              onAgentDisplayNameChange={setAgentDisplayName}
-              onPlaceholderChange={setPlaceholderText}
-              onSaveAppearance={saveAppearance}
-              onIconFileSelected={uploadIcon}
-            />
-
-            <WebWidgetLayoutPicker
-              value={placementLayout}
-              saving={savingPlacement}
-              onChange={savePlacement}
-            />
-
-            <WebWidgetBrandingSection
-              hidePoweredBy={hidePoweredBy}
-              canHideBranding={settings.canHideBranding}
-              saving={savingBranding}
-              onChange={saveBranding}
-              onRequestUpgrade={openUpgradeModal}
-            />
-
-            <Field>
-              <FieldLabel>Installation</FieldLabel>
-              <WebWidgetScriptArtifact
-                code={snippet}
-                onCopy={copySnippet}
-                onDownload={downloadSnippet}
-              />
-            </Field>
-          </FieldGroup>
-        </div>
-
-        <div className="flex min-h-0 flex-col gap-6 px-8 pt-4 pb-8 lg:overflow-y-auto lg:px-10 lg:pt-4 lg:pb-10">
-          <WebWidgetPreview
-            className="min-h-[620px] lg:min-h-0"
-            agentName={agentDisplayName || settings.agentDisplayName}
-            enabled
-            placeholder={placeholderText.trim() || settings.placeholder}
-            iconUrl={settings.iconUrl}
-            layout={placementLayout}
-            theme={DEFAULT_WEB_WIDGET_THEME}
-            poweredBy={previewPoweredBy}
-            publicKey={settings.publicKey}
-          />
-        </div>
-      </div>
-    </>
+    <WebWidgetAiSettingsControls
+      agentDisplayName={agentDisplayName}
+      canHideBranding={settings.canHideBranding}
+      canSaveAppearance={appearanceDirty && Boolean(normalizedAgentName)}
+      canSaveLeadForm={leadFormDirty && leadFormValid}
+      canUseCustomIcon={settings.canUseCustomIcon}
+      hidePoweredBy={hidePoweredBy}
+      iconUrl={settings.iconUrl}
+      leadForm={leadForm}
+      suggestions={suggestions}
+      suggestionsEnabled={suggestionsEnabled}
+      savedAgentDisplayName={settings.agentDisplayName}
+      savedSuggestions={savedSuggestions}
+      savedSuggestionsEnabled={savedSuggestionsEnabled}
+      savingBranding={savingBranding}
+      savingAppearance={savingAppearance}
+      savingLeadForm={savingLeadForm}
+      savingSuggestions={savingSuggestions}
+      savingTheme={savingTheme}
+      snippet={snippet}
+      theme={theme}
+      uploadingIcon={uploadingIcon}
+      onAgentDisplayNameChange={setAgentDisplayName}
+      onCopySnippet={copySnippet}
+      onDownloadSnippet={downloadSnippet}
+      onHidePoweredByChange={saveBranding}
+      onIconFileSelected={uploadIcon}
+      onIconRemove={clearIcon}
+      onLeadFormChange={setLeadForm}
+      onLeadFormSave={saveLeadForm}
+      onSuggestionsChange={setSuggestions}
+      onSuggestionsEnabledChange={setSuggestionsEnabled}
+      onSuggestionsSave={saveSuggestions}
+      onRequestUpgrade={openUpgradeModal}
+      onSaveAppearance={saveAppearance}
+      onThemeChange={saveTheme}
+    />
   );
 }
