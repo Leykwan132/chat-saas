@@ -413,7 +413,6 @@ import type * as whiteLabel_customerAccounts from "../whiteLabel/customerAccount
 import type * as whiteLabel_customerCredentialEncryption from "../whiteLabel/customerCredentialEncryption.js";
 import type * as whiteLabel_customerRoleRecords from "../whiteLabel/customerRoleRecords.js";
 import type * as whiteLabel_customerWorkspace from "../whiteLabel/customerWorkspace.js";
-import type * as whiteLabel_managedTeams from "../whiteLabel/managedTeams.js";
 import type * as whiteLabel_partnerAuth from "../whiteLabel/partnerAuth.js";
 import type * as whiteLabel_partnerAuthGateway from "../whiteLabel/partnerAuthGateway.js";
 import type * as whiteLabel_partnerAuthNode from "../whiteLabel/partnerAuthNode.js";
@@ -891,7 +890,6 @@ declare const fullApi: ApiFromModules<{
   "whiteLabel/customerCredentialEncryption": typeof whiteLabel_customerCredentialEncryption;
   "whiteLabel/customerRoleRecords": typeof whiteLabel_customerRoleRecords;
   "whiteLabel/customerWorkspace": typeof whiteLabel_customerWorkspace;
-  "whiteLabel/managedTeams": typeof whiteLabel_managedTeams;
   "whiteLabel/partnerAuth": typeof whiteLabel_partnerAuth;
   "whiteLabel/partnerAuthGateway": typeof whiteLabel_partnerAuthGateway;
   "whiteLabel/partnerAuthNode": typeof whiteLabel_partnerAuthNode;
