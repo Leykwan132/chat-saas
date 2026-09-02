@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import { cn } from '@/lib/utils';
 import { KILOBOT_DOCS_URL } from '@/lib/docsLinks';

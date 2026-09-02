@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { useQuery } from 'convex/react';
 import { LogOut, Settings } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';

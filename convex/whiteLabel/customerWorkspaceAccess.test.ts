@@ -141,6 +141,13 @@ test("provisions a partner customer directly into its assigned workspace", async
   expect(teams).toHaveLength(1);
   expect(teams[0]._id).toBe(assignedTeamId);
 
+  const teamCreation = await customer.query(api.teams.canCreateOrgTeam, {});
+  expect(teamCreation).toEqual({
+    allowed: false,
+    reason: "Partner customers cannot create additional workspaces.",
+    requiresPlanUpgrade: false,
+  });
+
   await expect(
     customer.run(async (ctx) => await getAuthContext(ctx, "other-org")),
   ).rejects.toThrow("Partner customers can only access their assigned workspace");

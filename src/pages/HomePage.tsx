@@ -1,4 +1,4 @@
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import LandingPage from '@/pages/LandingPage';
 
 export default function HomePage() {

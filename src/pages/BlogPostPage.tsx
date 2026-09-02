@@ -1,5 +1,5 @@
 import { Link, Navigate, useParams } from 'react-router';
-import { useAuth } from '@workos-inc/authkit-react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { usePostHog } from '@posthog/react';
 import Markdown from 'react-markdown';
 import { BlogPostLayout } from '@/components/BlogPostLayout';
