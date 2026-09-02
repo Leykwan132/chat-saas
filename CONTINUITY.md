@@ -1,12 +1,14 @@
 # CONTINUITY.md
 
 # Snapshot
+- 2026-09-02 [USER] Goal: configure the Avatar feature with LiveAvatar's Gemini Live connector. Persist the returned Gemini secret ID, let users create/update a LiveAvatar context on the Avatar page, and attach its ID when creating fast LITE-mode Gemini sessions. Now: `codex/gemini-live-connector` was created from `main`; `HEYGEN_GEMINI_SECRET_ID` is configured locally and design approval is pending.
 - 2026-08-18 [USER] Goal: make each AI-to-human escalation traceable to the exact triggering customer message in the inbox and action history.
 - 2026-08-18 [CODE] Now: source-message metadata, a neutral expandable inbox divider with readable escalation details, and shared production Action History rendering with a neutral View in chat pill are implemented and verified locally.
 - 2026-08-18 [CODE] Next: review draft PR #68; do not add a release changelog entry until production availability is confirmed.
 - 2026-08-18 [ASSUMPTION] The removal is unshipped; do not add a release changelog entry until production availability is confirmed.
 
 # Decisions
+- 2026-09-02 [USER] D757 ACTIVE: Gemini credentials are registered externally with LiveAvatar. The app reads only the opaque `HEYGEN_GEMINI_SECRET_ID` server-side and never persists or exposes the Gemini API key.
 - 2026-08-18 [USER] D727 ACTIVE: the app does not send Google Ads conversion events; the installed Google tag measures the configured onboarding conversion.
 - 2026-08-18 [USER] D728 ACTIVE: an AI escalation links to the exact incoming message used as the AI turn prompt; action history jumps to that marker in the conversation.
 - 2026-08-18 [USER] D733 ACTIVE: Inbox-only dummy preview code is removed; escalation dividers use neutral styling and disclose the stored customer request plus AI handoff context on click.
