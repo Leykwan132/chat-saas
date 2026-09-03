@@ -163,6 +163,58 @@ async function createActiveRuntimeHarness() {
 }
 
 describe('AvatarSessionRuntime', () => {
+  it('ends an inactive active session after eight seconds', async () => {
+    vi.useFakeTimers();
+    try {
+      const harness = createRuntimeHarness();
+      await harness.runtime.start();
+      const streamReady = harness.client.emitStreamReady();
+      await vi.advanceTimersByTimeAsync(0);
+      await streamReady;
+
+      expect(harness.runtime.getSnapshot().phase).toBe('active');
+      await vi.advanceTimersByTimeAsync(7_999);
+      expect(harness.runtime.getSnapshot().phase).toBe('active');
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(harness.runtime.getSnapshot().phase).toBe('ended');
+      expect(harness.recordEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ sessionId: 'session-1' }),
+        expect.objectContaining({ eventType: 'session.stopped', endReason: 'idle_timeout' }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('resets the inactivity timeout while the user is speaking', async () => {
+    vi.useFakeTimers();
+    try {
+      const harness = createRuntimeHarness();
+      await harness.runtime.start();
+      const streamReady = harness.client.emitStreamReady();
+      await vi.advanceTimersByTimeAsync(0);
+      await streamReady;
+
+      await vi.advanceTimersByTimeAsync(7_000);
+      harness.client.emitUserSpeechStarted();
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(harness.runtime.getSnapshot().phase).toBe('active');
+      harness.client.boundHandlers.userSpeechEnded();
+      await vi.advanceTimersByTimeAsync(7_999);
+      expect(harness.runtime.getSnapshot().phase).toBe('active');
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(harness.runtime.getSnapshot().phase).toBe('ended');
+      expect(harness.recordEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ sessionId: 'session-1' }),
+        expect.objectContaining({ eventType: 'session.stopped', endReason: 'idle_timeout' }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('allows only one start and activates after stream readiness', async () => {
     const harness = createRuntimeHarness();
     const first = harness.runtime.start();
