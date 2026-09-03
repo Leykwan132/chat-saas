@@ -7,6 +7,7 @@ import type { Id } from '../../convex/_generated/dataModel';
 import { AvatarEmbedCard } from '@/components/avatar/AvatarEmbedCard';
 import { AvatarLiveLink } from '@/components/avatar/AvatarLiveLink';
 import { AvatarContextEditor } from '@/components/avatar/AvatarContextEditor';
+import { AvatarBackgroundEditor } from '@/components/avatar/AvatarBackgroundEditor';
 import { AvatarGeminiVoiceSelector } from '@/components/avatar/AvatarGeminiVoiceSelector';
 import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
 import { Badge } from '@/components/ui/badge';
@@ -58,7 +59,16 @@ export default function AvatarPage() {
                 <AvatarVideoStage
                   publicKey={configuration.publicKey}
                   previewUrl={configuration.avatarPreviewUrl}
+                  backgroundUrl={configuration.backgroundUrl}
+                  backgroundType={configuration.backgroundType}
                 />
+                {canManage ? (
+                  <AvatarBackgroundEditor
+                    agentId={typedAgentId}
+                    backgroundUrl={configuration.backgroundUrl}
+                    backgroundType={configuration.backgroundType}
+                  />
+                ) : null}
               </div>
             </section>
             <section className="flex min-w-0 flex-col gap-4">

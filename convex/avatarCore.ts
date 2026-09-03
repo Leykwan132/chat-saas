@@ -63,6 +63,7 @@ export async function generateAvatarPublicKey(ctx: MutationCtx) {
 export function dashboardAvatarConfiguration(
   configuration: Doc<'avatarConfigurations'>,
   coverImageUrl?: string,
+  background?: { url: string; type: 'image' | 'video' },
 ) {
   return {
     publicKey: configuration.publicKey,
@@ -71,6 +72,7 @@ export function dashboardAvatarConfiguration(
     avatarName: configuration.avatarName,
     avatarPreviewUrl: configuration.avatarPreviewUrl,
     ...(coverImageUrl ? { coverImageUrl } : {}),
+    ...(background ? { backgroundUrl: background.url, backgroundType: background.type } : {}),
     voiceName: configuration.voiceName,
     voiceLanguage: configuration.voiceLanguage,
     voiceGender: configuration.voiceGender,

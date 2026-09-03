@@ -54,4 +54,14 @@ describe('Avatar video stage', () => {
     expect(source).toContain('absolute inset-0 z-20 flex items-center justify-center');
     expect(source).toContain('bg-black/45');
   });
+
+  it('composites an uploaded image or video background behind the keyed avatar stream', () => {
+    expect(source).toContain('backgroundUrl');
+    expect(source).toContain('backgroundType');
+    expect(source).toContain('useAvatarBackgroundCompositor');
+    expect(source).toContain('<canvas');
+    expect(source).toContain('autoPlay');
+    expect(source).toContain('loop');
+    expect(source).toContain('muted');
+  });
 });

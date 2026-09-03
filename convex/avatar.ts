@@ -30,7 +30,13 @@ export const getForAgent = query({
     const coverImageUrl = configuration.coverImageR2Key
       ? getPublicMediaUrl(configuration.coverImageR2Key)
       : undefined;
-    return dashboardAvatarConfiguration(configuration, coverImageUrl);
+    const background = configuration.backgroundR2Key && configuration.backgroundType
+      ? {
+        url: getPublicMediaUrl(configuration.backgroundR2Key),
+        type: configuration.backgroundType,
+      }
+      : undefined;
+    return dashboardAvatarConfiguration(configuration, coverImageUrl, background);
   },
 });
 
@@ -210,6 +216,8 @@ export const publicGetConfig = query({
       language: v.string(),
       avatarPreviewUrl: v.optional(v.string()),
       coverImageUrl: v.optional(v.string()),
+      backgroundUrl: v.optional(v.string()),
+      backgroundType: v.optional(v.union(v.literal('image'), v.literal('video'))),
     }),
   ),
   handler: async (ctx, args) => {
@@ -226,6 +234,12 @@ export const publicGetConfig = query({
         : {}),
       ...(configuration.coverImageR2Key
         ? { coverImageUrl: getPublicMediaUrl(configuration.coverImageR2Key) }
+        : {}),
+      ...(configuration.backgroundR2Key && configuration.backgroundType
+        ? {
+          backgroundUrl: getPublicMediaUrl(configuration.backgroundR2Key),
+          backgroundType: configuration.backgroundType,
+        }
         : {}),
     };
   },

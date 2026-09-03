@@ -24,6 +24,8 @@ export default function AvatarEmbedPage() {
       <AvatarVideoStage
         publicKey={publicKey}
         previewUrl={config.avatarPreviewUrl}
+        backgroundUrl={config.backgroundUrl}
+        backgroundType={config.backgroundType}
         fullScreen
       />
     </main>

@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-03 [CODE] Avatar managers can upload PNG/JPEG/WebP or MP4/WebM backgrounds to R2; public Avatar sessions composite them behind keyed LiveAvatar streams in the browser. Unshipped.
 - 2026-09-03 [CODE] Avatar setup now shows four background-free Default choices, then remaining eligible Landscape and Portrait choices; the legacy Language and Voice step is removed for Gemini Live. Unshipped.
 - 2026-09-03 [CODE] Supersedes the prior Avatar settings order: Opening text and Voice now share a responsive row above Instructions. Unshipped.
 - 2026-09-03 [CODE] Avatar cover-image controls and preview handoff are hidden from dashboard/public UI while the R2 storage, schema, and editor implementation remain available for future reuse. Unshipped.
@@ -35,6 +36,7 @@
 # Decisions
 
 - 2026-09-03 [USER] D778 ACTIVE: Avatar cover images are stored in R2 under agent-scoped keys and served through the configured media CDN URL.
+- 2026-09-03 [CODE] D779 ACTIVE: Avatar background media uses separate agent-scoped R2 keys and a stored image/video type; LiveAvatar background replacement is browser-side chroma-key compositing.
 - 2026-09-02 [USER] D757 ACTIVE: Gemini credentials are externally registered with LiveAvatar. The app reads only opaque `HEYGEN_GEMINI_SECRET_ID` server-side and never persists or exposes the Gemini API key.
 - 2026-08-19 [USER] D734 ACTIVE: white-label state is isolated in dedicated partner tables; existing user, team, Stripe, and admin-session records change only through ID relationships.
 - 2026-08-19 [USER] D735 ACTIVE: shared plan limits take effect immediately; only the new monthly allowance starts at the organization’s next credit cycle.
@@ -52,6 +54,7 @@
 
 # Done (recent)
 
+- 2026-09-03 [CODE] Added R2-backed Avatar background image/video upload, replacement, removal, dashboard controls, and full-screen/public-stage compositing; unshipped.
 - 2026-09-03 [CODE] Simplified Avatar creation to curated background-free avatar choices with four Defaults and removed legacy setup voice/language selection; avatar-only persistence now supports Gemini Live.
 - 2026-09-03 [CODE] Reordered Avatar Opening text and Voice into a shared responsive row above Instructions.
 - 2026-09-03 [CODE] Hid the Avatar cover-image controls and preview handoff while preserving the R2-backed implementation for later reuse.
@@ -88,7 +91,7 @@
 # Working set
 
 - 2026-09-03 [CODE] `convex/{avatar.ts,avatarContext.ts,avatarCore.ts,avatarProvider.ts,avatarSession.ts,avatarLifecycle.ts,schema.ts}`
-- 2026-09-03 [CODE] `convex/{avatarCover.ts,avatarSessionCapacity.ts,media/r2.ts}` and `src/components/avatar/AvatarCoverImageEditor.tsx`
+- 2026-09-03 [CODE] `convex/{avatarCover.ts,avatarSessionCapacity.ts,media/r2.ts}` and `src/components/avatar/{AvatarCoverImageEditor.tsx,AvatarBackgroundEditor.tsx,avatarBackgroundCompositor.ts}`
 - 2026-09-03 [CODE] `shared/geminiLiveVoices.ts`
 - 2026-09-03 [CODE] `src/{pages/AvatarPage.tsx,pages/AvatarCreatePage.tsx,components/avatar/{AvatarLiveLink.tsx,AvatarGeminiVoiceSelector.tsx,avatarOrientation.ts},lib/avatarEmbed.ts}`
 - 2026-09-01 [CODE] `convex/whiteLabel/`
@@ -137,3 +140,4 @@
 - 2026-09-03 [TOOL] Cover-image UI hiding checks passed 95 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-03 [TOOL] Avatar settings order checks passed 95 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-03 [TOOL] Gemini Live Avatar setup checks passed 99 focused tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
+- 2026-09-03 [TOOL] Avatar background media checks passed 69 focused tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.

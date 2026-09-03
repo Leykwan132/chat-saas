@@ -49,6 +49,24 @@ test('dashboard Avatar configuration exposes the public cover image URL', () => 
   expect(result.coverImageUrl).toBe('https://cdn.example.com/avatar-cover.png');
 });
 
+test('dashboard Avatar configuration exposes the public background media', () => {
+  const result = dashboardAvatarConfiguration(
+    {
+      publicKey: 'avatar_public',
+      enabled: true,
+      language: 'en',
+      updatedAt: 1,
+    } as never,
+    undefined,
+    { url: 'https://cdn.example.com/avatar-background.mp4', type: 'video' },
+  );
+
+  expect(result).toMatchObject({
+    backgroundUrl: 'https://cdn.example.com/avatar-background.mp4',
+    backgroundType: 'video',
+  });
+});
+
 test('persists a selected Gemini Live voice for an Avatar manager', async () => {
   const t = convexTest(schema, modules);
   const agentId = await createAgent(t, 'voice_owner');
@@ -110,6 +128,39 @@ test('Avatar setup is stable and creates an Avatar channel', async () => {
   expect(stored.channels).toHaveLength(1);
   expect(stored.channels[0]?.service).toBe('avatar');
   expect(stored.configurations).toHaveLength(1);
+});
+
+test('public Avatar config exposes the uploaded background media', async () => {
+  const previousBaseUrl = process.env.MEDIA_CDN_BASE_URL;
+  process.env.MEDIA_CDN_BASE_URL = 'https://cdn.example.com';
+  try {
+    const t = convexTest(schema, modules);
+    const agentId = await createAgent(t, 'background_owner');
+    const setup = await t.withIdentity({ subject: 'background_owner' }).mutation(
+      api.avatar.ensureForAgent,
+      { agentId },
+    );
+    await t.run(async (ctx) => {
+      const configuration = await ctx.db
+        .query('avatarConfigurations')
+        .withIndex('by_publicKey', (q) => q.eq('publicKey', setup.publicKey))
+        .unique();
+      if (!configuration) throw new Error('Avatar configuration not found');
+      await ctx.db.patch(configuration._id, {
+        enabled: true,
+        backgroundR2Key: 'avatar-backgrounds/personal/agent/background.mp4',
+        backgroundType: 'video',
+      });
+    });
+
+    await expect(t.query(api.avatar.publicGetConfig, { publicKey: setup.publicKey })).resolves.toMatchObject({
+      backgroundUrl: 'https://cdn.example.com/avatar-backgrounds/personal/agent/background.mp4',
+      backgroundType: 'video',
+    });
+  } finally {
+    if (previousBaseUrl === undefined) delete process.env.MEDIA_CDN_BASE_URL;
+    else process.env.MEDIA_CDN_BASE_URL = previousBaseUrl;
+  }
 });
 
 test('validated Avatar metadata configures the Web SDK runtime without an embed', async () => {

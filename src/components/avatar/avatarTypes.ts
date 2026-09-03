@@ -23,6 +23,8 @@ export type AvatarConfiguration = {
   avatarName?: string;
   avatarPreviewUrl?: string;
   coverImageUrl?: string;
+  backgroundUrl?: string;
+  backgroundType?: 'image' | 'video';
   voiceName?: string;
   voiceLanguage?: string;
   voiceGender?: string;
