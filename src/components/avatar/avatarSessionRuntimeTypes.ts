@@ -18,7 +18,7 @@ export type AvatarSessionEvent = {
 };
 
 export type AvatarStoppedEvent = AvatarSessionEvent & { stopReason: string };
-export type AvatarTranscriptionEvent = AvatarSessionEvent & { text: string };
+export type AvatarTranscriptionEvent = AvatarSessionEvent & { text: string; isChunk?: boolean };
 export type AvatarSessionMessage = { id: string; direction: 'incoming' | 'outgoing'; content: string; contentType: string; sourceEventId?: string; createdAt: number };
 
 export type AvatarSessionSnapshot = {
@@ -26,6 +26,7 @@ export type AvatarSessionSnapshot = {
   muted: boolean;
   userSpeaking: boolean;
   avatarSpeaking: boolean;
+  subtitle: string | null;
   error: string | null;
   identity: AvatarSessionIdentity | null;
 };
@@ -36,6 +37,7 @@ export type AvatarSessionHandlers = {
   userSpeechStarted: () => void;
   userSpeechEnded: () => void;
   userTranscription: (event: AvatarTranscriptionEvent) => void;
+  avatarTranscription: (event: AvatarTranscriptionEvent) => void;
   avatarSpeechStarted: () => void;
   avatarSpeechEnded: () => void;
   stopped: (event: AvatarStoppedEvent) => void;

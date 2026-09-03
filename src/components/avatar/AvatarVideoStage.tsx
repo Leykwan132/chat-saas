@@ -22,6 +22,7 @@ export function AvatarVideoStage({
     phase,
     muted,
     avatarSpeaking,
+    subtitle,
     error,
     videoRef,
     start,
@@ -60,7 +61,15 @@ export function AvatarVideoStage({
           {error}
         </p>
       ) : null}
-      <div className="absolute inset-x-0 bottom-6 flex justify-center gap-3 px-4 sm:bottom-8">
+      {active && subtitle ? (
+        <p
+          aria-live="polite"
+          className="pointer-events-none absolute inset-x-8 bottom-20 text-center text-lg font-semibold leading-relaxed text-white [-webkit-text-stroke:1px_black] [text-shadow:0_2px_2px_black] sm:bottom-24"
+        >
+          {subtitle}
+        </p>
+      ) : null}
+      <div className="absolute bottom-6 right-6 top-6 flex flex-col items-end sm:bottom-8">
         {active ? (
           <>
             <StageControl
@@ -70,25 +79,29 @@ export function AvatarVideoStage({
             >
               {muted ? <MicOff /> : <Mic />}
             </StageControl>
-            <StageControl
-              label="End chat"
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={phase === 'stopping'}
-              onClick={() => void stop()}
-            >
-              <PhoneOff />
-            </StageControl>
+            <div className="mt-auto">
+              <StageControl
+                label="End chat"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={phase === 'stopping'}
+                onClick={() => void stop()}
+              >
+                <PhoneOff />
+              </StageControl>
+            </div>
           </>
         ) : (
-          <Button
-            variant="secondary"
-            className="min-w-28 shadow-lg"
-            disabled={starting}
-            onClick={() => void start()}
-          >
-            {starting ? <Spinner /> : null}
-            {starting ? 'Starting…' : 'Start Chat'}
-          </Button>
+          <div className="mt-auto">
+            <Button
+              variant="secondary"
+              className="min-w-28 shadow-lg"
+              disabled={starting}
+              onClick={() => void start()}
+            >
+              {starting ? <Spinner /> : null}
+              {starting ? 'Starting…' : 'Start Chat'}
+            </Button>
+          </div>
         )}
       </div>
     </section>

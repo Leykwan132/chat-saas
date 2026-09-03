@@ -4,12 +4,13 @@ import { describe, expect, it } from 'vitest';
 const source = readFileSync(new URL('./AvatarVideoStage.tsx', import.meta.url), 'utf8');
 
 describe('Avatar video stage', () => {
-  it('uses the approved neutral bottom-center Start Chat control', () => {
+  it('uses the approved neutral right-aligned Start Chat control', () => {
     expect(source).toContain('Start Chat');
     expect(source).toContain('variant="secondary"');
-    expect(source).toContain('inset-x-0');
+    expect(source).toContain('right-6');
     expect(source).toContain('bottom-6');
-    expect(source).toContain('justify-center');
+    expect(source).toContain('top-6');
+    expect(source).toContain('mt-auto');
     expect(source).not.toContain('Start conversation');
     expect(source).not.toContain('Start again');
   });
@@ -22,6 +23,9 @@ describe('Avatar video stage', () => {
     expect(source).toContain('End chat');
     expect(source).toContain('KiloBot is speaking');
     expect(source).toContain('Listening');
+    expect(source).toContain('subtitle ?');
+    expect(source).toContain('text-white');
+    expect(source).toContain('-webkit-text-stroke');
     expect(source).not.toContain('Type a message');
     expect(source).not.toContain('Connection quality');
     expect(source).not.toContain('Sandbox');

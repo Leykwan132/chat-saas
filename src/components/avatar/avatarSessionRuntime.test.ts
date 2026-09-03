@@ -85,6 +85,14 @@ class FakeAvatarSessionClient implements AvatarSessionClient {
     await settle();
   }
 
+  emitAvatarTranscription(event: {
+    eventId: string;
+    sourceEventId: string | null;
+    text: string;
+  }) {
+    this.boundHandlers.avatarTranscription(event);
+  }
+
   async emitDisconnected(reason: string) {
     this.boundHandlers.disconnected(reason);
     await settle();
@@ -245,6 +253,21 @@ describe('AvatarSessionRuntime', () => {
     expect(harness.client.interruptCalls).toBe(0);
     await harness.client.emitAvatarSpeechEnded();
     expect(harness.client.repeated).toEqual([]);
+  });
+
+  it('shows the current Avatar response as a subtitle while it speaks', async () => {
+    const harness = await createActiveRuntimeHarness();
+
+    harness.client.emitAvatarTranscription({
+      eventId: 'reply-1',
+      sourceEventId: null,
+      text: 'Hello, how can I help?',
+    });
+    expect(harness.runtime.getSnapshot().subtitle).toBe('Hello, how can I help?');
+
+    await harness.client.emitAvatarSpeechEnded();
+
+    expect(harness.runtime.getSnapshot().subtitle).toBeNull();
   });
 
   it('cleans up and exposes a retryable error when voice start fails', async () => {

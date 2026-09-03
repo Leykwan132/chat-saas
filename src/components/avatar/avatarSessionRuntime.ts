@@ -25,6 +25,7 @@ const initialSnapshot: AvatarSessionSnapshot = {
   muted: false,
   userSpeaking: false,
   avatarSpeaking: false,
+  subtitle: null,
   error: null,
   identity: null,
 };
@@ -42,6 +43,7 @@ export class AvatarSessionRuntime {
   private video: HTMLMediaElement | null = null;
   private generation = 0;
   private voiceStarting = false;
+  private subtitleSourceEventId: string | null = null;
   private cleanupPromise: Promise<void> | null = null;
 
   constructor(services: AvatarSessionServices) { this.services = services; }
@@ -59,6 +61,7 @@ export class AvatarSessionRuntime {
   start = async () => {
     if (['starting', 'active', 'stopping'].includes(this.snapshot.phase)) return;
     const generation = ++this.generation;
+    this.subtitleSourceEventId = null;
     this.publish({ ...initialSnapshot, phase: 'starting' });
     try {
       const access = await this.services.begin();
@@ -100,6 +103,7 @@ export class AvatarSessionRuntime {
         muted: false,
         userSpeaking: false,
         avatarSpeaking: false,
+        subtitle: null,
         error: null,
       });
     } catch (error) {
@@ -146,7 +150,18 @@ export class AvatarSessionRuntime {
       },
       avatarSpeechEnded: () => {
         if (!current()) return;
-        this.publish({ ...this.snapshot, avatarSpeaking: false });
+        this.subtitleSourceEventId = null;
+        this.publish({ ...this.snapshot, avatarSpeaking: false, subtitle: null });
+      },
+      avatarTranscription: (event) => {
+        if (!current()) return;
+        const sourceEventId = event.sourceEventId ?? this.subtitleSourceEventId ?? event.eventId;
+        const previous = this.subtitleSourceEventId === sourceEventId
+          ? this.snapshot.subtitle ?? ''
+          : '';
+        const text = event.isChunk ? `${previous}${event.text}` : event.text;
+        this.subtitleSourceEventId = sourceEventId;
+        this.publish({ ...this.snapshot, subtitle: text.trim() || null });
       },
       stopped: (event) => {
         if (current()) void this.handleStopped(generation, event);
@@ -185,7 +200,8 @@ export class AvatarSessionRuntime {
       this.publish({ ...this.snapshot, phase: 'error', error: errorMessage(failure.reason) });
       return;
     }
-    this.publish({ ...this.snapshot, phase: 'ended', avatarSpeaking: false });
+    this.subtitleSourceEventId = null;
+    this.publish({ ...this.snapshot, phase: 'ended', avatarSpeaking: false, subtitle: null });
   }
 
   private async fail(generation: number, error: unknown) {
@@ -193,6 +209,7 @@ export class AvatarSessionRuntime {
     const identity = this.snapshot.identity;
     const message = errorMessage(error);
     ++this.generation;
+    this.subtitleSourceEventId = null;
     await Promise.allSettled([
       this.cleanup(),
       identity
@@ -204,7 +221,7 @@ export class AvatarSessionRuntime {
         })
         : Promise.resolve(),
     ]);
-    this.publish({ ...this.snapshot, phase: 'error', error: message });
+    this.publish({ ...this.snapshot, phase: 'error', subtitle: null, error: message });
   }
 
   private recordClientStopped(identity: NonNullable<AvatarSessionSnapshot['identity']>) {
