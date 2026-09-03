@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-03 [CODE] Supersedes the prior Avatar settings order: Opening text and Voice now share a responsive row above Instructions. Unshipped.
 - 2026-09-03 [CODE] Avatar cover-image controls and preview handoff are hidden from dashboard/public UI while the R2 storage, schema, and editor implementation remain available for future reuse. Unshipped.
 - 2026-09-03 [CODE] Avatar settings now show a compact, title-only Cover image block below Preview, with Preview matching Instructions typography. Unshipped.
 - 2026-09-03 [CODE] Avatar settings now support manager-uploaded R2 cover images, and dashboard/public previews show a centered “Connecting...” overlay while a LiveAvatar session starts. Unshipped.
@@ -50,6 +51,7 @@
 
 # Done (recent)
 
+- 2026-09-03 [CODE] Reordered Avatar Opening text and Voice into a shared responsive row above Instructions.
 - 2026-09-03 [CODE] Hid the Avatar cover-image controls and preview handoff while preserving the R2-backed implementation for later reuse.
 - 2026-09-02 [CODE] Added LiveAvatar Gemini connector session tokens, manager-editable provider context, and direct connector-owned Avatar conversations; unshipped.
 - 2026-09-03 [CODE] Added R2-backed Avatar cover image upload, replacement, removal, and preview handoff plus a loading overlay during session startup; unshipped.
@@ -131,3 +133,4 @@
 - 2026-09-03 [TOOL] R2 cover-image and connecting-overlay coverage passed 94 focused Avatar tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Compact Cover image and Preview typography checks passed 95 focused Avatar tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Cover-image UI hiding checks passed 95 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
+- 2026-09-03 [TOOL] Avatar settings order checks passed 95 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.

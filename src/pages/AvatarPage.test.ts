@@ -31,6 +31,7 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('<AvatarGeminiVoiceSelector');
     expect(pageSource).not.toContain('<AvatarCoverImageEditor');
     expect(pageSource).toContain('geminiVoice={configuration.geminiVoice}');
+    expect(pageSource).toContain('voiceSlot={<AvatarGeminiVoiceSelector');
     expect(pageSource.indexOf('<AvatarContextEditor')).toBeLessThan(pageSource.indexOf('<AvatarGeminiVoiceSelector'));
     expect(pageSource).not.toContain('updateSettings');
     expect(pageSource).not.toContain('enabledOverride');
