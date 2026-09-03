@@ -8,6 +8,7 @@ import type { Id } from '../../convex/_generated/dataModel';
 import { AvatarLanguageFlag } from '@/components/avatar/AvatarLanguageFlag';
 import { AvatarPreviewMedia } from '@/components/avatar/AvatarPreviewMedia';
 import { avatarSetupFieldClassName } from '@/components/avatar/avatarSetupStyles';
+import { loadAvatarOrientations, type OrientedAvatarOption } from '@/components/avatar/avatarOrientation';
 import type { AvatarOption, LanguageOption, VoiceOption } from '@/components/avatar/avatarTypes';
 import { AvatarVoicePickerDialog } from '@/components/avatar/AvatarVoicePickerDialog';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,7 @@ export default function AvatarCreatePage() {
   const listOptions = useAction(api.avatarEmbed.listOptions);
   const configureAvatar = useAction(api.avatarEmbed.configure);
   const [step, setStep] = useState<1 | 2>(1);
-  const [avatars, setAvatars] = useState<AvatarOption[]>();
+  const [avatars, setAvatars] = useState<OrientedAvatarOption[]>();
   const [voices, setVoices] = useState<VoiceOption[]>();
   const [languages, setLanguages] = useState<LanguageOption[]>();
   const [selectedAvatarId, setSelectedAvatarId] = useState('');
@@ -46,12 +47,13 @@ export default function AvatarCreatePage() {
   useEffect(() => {
     if (!canManage || !configuration) return;
     let active = true;
-    void listOptions({ agentId: typedAgentId }).then((result) => {
+    void listOptions({ agentId: typedAgentId }).then(async (result) => {
+      const orientedAvatars = await loadAvatarOrientations(result.avatars);
       if (!active) return;
-      setAvatars(result.avatars);
+      setAvatars(orientedAvatars);
       setVoices(result.voices);
       setLanguages(result.languages);
-      setSelectedAvatarId((current) => result.avatars.find((avatar) =>
+      setSelectedAvatarId((current) => orientedAvatars.find((avatar) =>
         avatar.id === current || avatar.name === configuration.avatarName,
       )?.id ?? '');
       const configuredLanguage = result.languages.find(
@@ -85,7 +87,14 @@ export default function AvatarCreatePage() {
   };
 
   const selectedAvatar = avatars?.find((avatar) => avatar.id === selectedAvatarId);
+  const landscapeAvatars = avatars?.filter((avatar) => avatar.orientation === 'landscape') ?? [];
+  const portraitAvatars = avatars?.filter((avatar) => avatar.orientation === 'portrait') ?? [];
   const selectedLanguage = languages?.find((option) => option.code === language);
+
+  const selectAvatar = (avatarId: string) => {
+    setSelectedAvatarId(avatarId);
+    setStep(2);
+  };
 
   if (permissionsLoading || (canManage && configuration === undefined)) return <AvatarSetupSkeleton />;
   if (!canManage) return <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">You do not have permission to configure Avatar.</div>;
@@ -102,13 +111,9 @@ export default function AvatarCreatePage() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-1"><h1 className="text-2xl font-semibold">Choose your avatar</h1><p className="text-sm text-muted-foreground">Select the face visitors will see during a conversation. You can change this later.</p></div>
           {avatars === undefined ? <AvatarGridSkeleton /> : avatars.length === 0 ? <CatalogEmpty kind="avatars" /> : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {avatars.map((avatar) => (
-                <AvatarChoice key={avatar.id} avatar={avatar} selected={selectedAvatarId === avatar.id} onSelect={() => {
-                  setSelectedAvatarId(avatar.id);
-                  setStep(2);
-                }} />
-              ))}
+            <div className="flex flex-col gap-8">
+              {landscapeAvatars.length ? <AvatarOrientationSection title="Landscape" avatars={landscapeAvatars} selectedAvatarId={selectedAvatarId} onSelect={selectAvatar} /> : null}
+              {portraitAvatars.length ? <AvatarOrientationSection title="Portrait" avatars={portraitAvatars} selectedAvatarId={selectedAvatarId} onSelect={selectAvatar} /> : null}
             </div>
           )}
         </div>
@@ -160,7 +165,11 @@ function SelectedAvatarSummary({ avatar }: { avatar: AvatarOption }) {
   return <div className="flex items-center gap-3"><AvatarPreviewMedia previewUrl={avatar.previewUrl} className="w-[270px] max-w-full shrink rounded-lg" /><div className="min-w-0"><p className="text-xs text-muted-foreground">Selected avatar</p><p className="truncate text-sm font-medium">{avatar.name}</p></div></div>;
 }
 
-function AvatarChoice({ avatar, selected, onSelect }: { avatar: AvatarOption; selected: boolean; onSelect: () => void }) {
+function AvatarOrientationSection({ title, avatars, selectedAvatarId, onSelect }: { title: string; avatars: OrientedAvatarOption[]; selectedAvatarId: string; onSelect: (avatarId: string) => void }) {
+  return <section className="flex flex-col gap-3"><h2 className="text-lg font-semibold">{title}</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{avatars.map((avatar) => <AvatarChoice key={avatar.id} avatar={avatar} selected={selectedAvatarId === avatar.id} onSelect={() => onSelect(avatar.id)} />)}</div></section>;
+}
+
+function AvatarChoice({ avatar, selected, onSelect }: { avatar: OrientedAvatarOption; selected: boolean; onSelect: () => void }) {
   return <button type="button" aria-pressed={selected} onClick={onSelect} className={cn('overflow-hidden rounded-lg border text-left transition hover:border-foreground/30', selected && 'border-primary ring-2 ring-primary/20')}><AvatarPreviewMedia previewUrl={avatar.previewUrl} /><div className="p-3 text-sm font-medium"><span className="truncate">{avatar.name}</span></div></button>;
 }
 

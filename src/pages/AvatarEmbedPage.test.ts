@@ -53,6 +53,8 @@ describe('Avatar embed runtime', () => {
     expect(stageSource).toContain('End chat');
     expect(stageSource).toContain('right-6');
     expect(stageSource).toContain('top-1/2');
+    expect(stageSource).toContain('[&_img]:object-contain');
+    expect(stageSource).not.toContain('[&_img]:object-cover');
   });
 
   it('keeps Gemini-owned conversations out of the KiloBot runtime', () => {
@@ -113,9 +115,13 @@ describe('Avatar setup', () => {
     expect(createSource).toContain('Choose your avatar');
     expect(createSource).toContain('Select the face visitors will see during a conversation. You can change this later.');
     expect(createSource).toContain('AvatarGridSkeleton');
+    expect(createSource).toContain('loadAvatarOrientations');
+    expect(createSource).toContain('title="Landscape"');
+    expect(createSource).toContain('title="Portrait"');
+    expect(createSource.indexOf('title="Landscape"')).toBeLessThan(createSource.indexOf('title="Portrait"'));
     expect(createSource).toContain('VoiceFormSkeleton');
     expect(createSource).toContain('<Skeleton');
-    expect(createSource).toContain('setSelectedAvatarId(avatar.id);');
+    expect(createSource).toContain('setSelectedAvatarId(avatarId);');
     expect(createSource).toContain('setStep(2)');
     expect(createSource).toContain('setStep(1)');
     expect(createSource).toContain('Create avatar');

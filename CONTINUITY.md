@@ -12,6 +12,7 @@
 - 2026-09-03 [CODE] Avatar settings now show only the single-line Voice, Instructions, and Opening text labels; the extra Voice and Context headings are removed. Unshipped.
 - 2026-09-03 [CODE] Avatar Instructions and Opening text labels now match Voice typography, and the Voice dropdown sizes to its content. Unshipped.
 - 2026-09-03 [CODE] Avatar context saves now include the provider-required `opening_text` field while retaining the opening message in the system prompt. Unshipped.
+- 2026-09-03 [CODE] Avatar setup now groups catalog choices into Landscape-first and Portrait sections using preview aspect ratios, and portrait previews fit without cropping. Unshipped.
 - 2026-09-03 [CODE] Removed the explanatory sentence beneath the Avatar Context heading for a cleaner settings layout. Unshipped.
 - 2026-09-01 [USER] Goal: test the white-label Partner Programme locally on `codex/white-label-partner-portal`.
 - 2026-09-01 [TOOL] Now: merging current `origin/main` into the white-label branch; concurrent Overview-test and Workspace-page edits are being reconciled without removing partner access controls.
@@ -46,6 +47,7 @@
 - 2026-09-03 [CODE] Flattened the Avatar settings labels and removed the redundant Voice and Context headings.
 - 2026-09-03 [CODE] Matched Avatar setting label sizes and made the Voice selector intrinsic-width.
 - 2026-09-03 [CODE] Fixed LiveAvatar context saves by restoring the required provider opening-text field.
+- 2026-09-03 [CODE] Added aspect-ratio-based Avatar orientation grouping and non-cropping portrait preview rendering.
 - 2026-09-03 [CODE] Removed the redundant Avatar Context description text.
 - 2026-09-03 [CODE] Hardened Avatar teardown so explicit End releases the backend session slot; unshipped.
 - 2026-09-03 [CODE] Simplified the Avatar context editor presentation and renamed its prompt label to “Instructions”; unshipped.
@@ -68,7 +70,7 @@
 
 - 2026-09-03 [CODE] `convex/{avatar.ts,avatarContext.ts,avatarCore.ts,avatarProvider.ts,avatarSession.ts,avatarLifecycle.ts,schema.ts}`
 - 2026-09-03 [CODE] `shared/geminiLiveVoices.ts`
-- 2026-09-03 [CODE] `src/{pages/AvatarPage.tsx,components/avatar/AvatarGeminiVoiceSelector.tsx}`
+- 2026-09-03 [CODE] `src/{pages/AvatarPage.tsx,pages/AvatarCreatePage.tsx,components/avatar/AvatarGeminiVoiceSelector.tsx,components/avatar/avatarOrientation.ts}`
 - 2026-09-01 [CODE] `convex/whiteLabel/`
 - 2026-09-01 [CODE] `convex/{schema.ts,authUtils.ts,teamHelpers.ts}`
 - 2026-09-01 [CODE] `src/{pages/PartnerPage.tsx,pages/WorkspacePage.tsx,components/partner/}`
@@ -103,3 +105,4 @@
 - 2026-09-03 [TOOL] Avatar settings label flattening passed 72 focused tests, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Avatar settings typography and intrinsic Voice-width checks passed 72 focused tests, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Provider opening-text fix passed 72 Avatar-focused tests, Convex TypeScript, targeted ESLint, diff validation, and the Node v22 production build; no deployment was configured locally.
+- 2026-09-03 [TOOL] Avatar orientation grouping and portrait preview checks passed 73 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.

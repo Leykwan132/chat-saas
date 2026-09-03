@@ -39,7 +39,7 @@ export function AvatarVideoStage({
       {!active ? (
         <AvatarPreviewMedia
           previewUrl={previewUrl}
-          className="absolute inset-0 size-full rounded-none [&_img]:object-cover"
+          className="absolute inset-0 size-full rounded-none [&_img]:object-contain"
         />
       ) : null}
       {error ? (
