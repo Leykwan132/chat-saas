@@ -142,7 +142,7 @@ export function AvatarVideoStage({
         <div className="pointer-events-none absolute inset-0 z-30">
           <Button
             variant="secondary"
-            className="absolute bottom-6 left-1/2 min-w-28 -translate-x-1/2 shadow-lg border-4 border-emerald-500 pointer-events-auto hover:border-emerald-400"
+            className="absolute bottom-6 left-1/2 min-w-36 min-h-12 -translate-x-1/2 shadow-lg border-4 border-emerald-500 bg-gradient-to-r from-emerald-800 via-emerald-600 to-emerald-300 text-white pointer-events-auto hover:border-emerald-400"
             disabled={starting}
             onClick={() => void start()}
           >

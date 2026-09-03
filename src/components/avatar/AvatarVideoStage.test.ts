@@ -13,7 +13,7 @@ describe('Avatar video stage', () => {
   it('uses the approved neutral bottom-centered Start Chat control', () => {
     expect(source).toContain('Start Chat');
     expect(source).toContain('variant="secondary"');
-    expect(source).toContain('absolute bottom-6 left-1/2 min-w-28 -translate-x-1/2 shadow-lg');
+    expect(source).toContain('absolute bottom-6 left-1/2 min-w-36 min-h-12 -translate-x-1/2 shadow-lg');
     expect(source).not.toContain('absolute left-1/2 top-1/2 min-w-28 -translate-x-1/2 -translate-y-1/2 shadow-lg');
     expect(source).not.toContain('Start conversation');
     expect(source).not.toContain('Start again');
@@ -80,5 +80,13 @@ describe('Avatar video stage', () => {
   it('dims the idle cover image so the start control remains the visual focus', () => {
     expect(source).toContain('bg-zinc-950/40');
     expect(source).toContain('aria-hidden="true"');
+  });
+
+  it('uses a larger horizontal green gradient for Start Chat', () => {
+    expect(source).toContain('min-w-36');
+    expect(source).toContain('min-h-12');
+    expect(source).toContain('bg-gradient-to-r');
+    expect(source).toContain('from-emerald-800');
+    expect(source).toContain('to-emerald-300');
   });
 });
