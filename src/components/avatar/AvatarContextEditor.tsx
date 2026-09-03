@@ -48,9 +48,9 @@ export function AvatarContextEditor({
   };
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border p-5">
+    <section className="flex flex-col gap-4">
       <div><h2 className="text-sm font-semibold">Context</h2><p className="mt-1 text-sm text-muted-foreground">Instructions Gemini uses for every Avatar conversation.</p></div>
-      <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-prompt">System instructions</Label><Textarea id="avatar-context-prompt" value={prompt} onChange={(event) => setPrompt(event.target.value)} className="min-h-36" placeholder="Describe the role, tone, knowledge, and boundaries." /></div>
+      <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-prompt">Instructions</Label><Textarea id="avatar-context-prompt" value={prompt} onChange={(event) => setPrompt(event.target.value)} className="min-h-36" placeholder="Describe the role, tone, knowledge, and boundaries." /></div>
       <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-opening">Opening text</Label><Input id="avatar-context-opening" value={openingText} onChange={(event) => setOpeningText(event.target.value)} placeholder="Hello, how can I help?" /></div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex justify-end"><Button onClick={() => void save()} disabled={!canSave}>{saving ? 'Saving…' : 'Save context'}</Button></div>
