@@ -25,6 +25,7 @@ export default function AvatarEmbedPage() {
         publicKey={publicKey}
         previewUrl={config.avatarPreviewUrl}
         coverImageUrl={config.coverImageUrl}
+        coverImageType={config.coverImageType}
         backgroundUrl={config.backgroundUrl}
         backgroundType={config.backgroundType}
         fullScreen

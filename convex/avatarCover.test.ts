@@ -9,6 +9,12 @@ describe('Avatar media upload ownership', () => {
     expect(source).toContain('generateAvatarBackgroundKey(configuration.orgId, configuration.agentId, mimeType)');
   });
 
+  it('accepts video cover media and persists its media type', () => {
+    expect(source).toContain("'video/mp4'");
+    expect(source).toContain("'video/webm'");
+    expect(source).toContain('coverImageType: mimeType.startsWith(\'video/\') ? \'video\' : \'image\'');
+  });
+
   it('validates saved media against the same configuration-owned namespace', () => {
     expect(source).toContain('orgId: configuration.orgId,\n      agentId: configuration.agentId');
   });

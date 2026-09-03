@@ -62,6 +62,7 @@ export default function AvatarPage() {
                   publicKey={configuration.publicKey}
                   previewUrl={configuration.avatarPreviewUrl}
                   coverImageUrl={configuration.coverImageUrl}
+                  coverImageType={configuration.coverImageType}
                   backgroundUrl={configuration.backgroundUrl}
                   backgroundType={configuration.backgroundType}
                 />
@@ -78,7 +79,11 @@ export default function AvatarPage() {
               <Separator className="lg:hidden" />
               <Separator orientation="vertical" className="hidden lg:block" />
               <div className="flex min-w-0 flex-col gap-6">
-                <AvatarCoverImageEditor agentId={typedAgentId} coverImageUrl={configuration.coverImageUrl} />
+                <AvatarCoverImageEditor
+                  agentId={typedAgentId}
+                  coverImageUrl={configuration.coverImageUrl}
+                  coverImageType={configuration.coverImageType}
+                />
                 <AvatarBackgroundEditor agentId={typedAgentId} backgroundUrl={configuration.backgroundUrl} backgroundType={configuration.backgroundType} />
               </div>
             </div>

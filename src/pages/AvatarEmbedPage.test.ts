@@ -40,6 +40,7 @@ describe('Avatar embed runtime', () => {
     expect(source).toContain('publicKey={publicKey}');
     expect(source).toContain('previewUrl={config.avatarPreviewUrl}');
     expect(source).toContain('coverImageUrl={config.coverImageUrl}');
+    expect(source).toContain('coverImageType={config.coverImageType}');
     expect(source).toContain('backgroundUrl={config.backgroundUrl}');
     expect(source).toContain('backgroundType={config.backgroundType}');
     expect(source).not.toContain('useAvatarSession(publicKey)');
@@ -98,6 +99,8 @@ describe('Avatar setup', () => {
   it('contains portrait previews inside a horizontal frame', () => {
     expect(previewMediaSource).toContain('aspect-video');
     expect(previewMediaSource).toContain('object-contain');
+    expect(previewMediaSource).toContain('previewType');
+    expect(previewMediaSource).toContain('<video');
   });
 
   it('keeps creation on a separate route and uses an empty overview', () => {

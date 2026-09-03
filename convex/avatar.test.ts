@@ -44,9 +44,12 @@ test('dashboard Avatar configuration exposes the public cover image URL', () => 
     enabled: true,
     language: 'en',
     updatedAt: 1,
-  } as never, 'https://cdn.example.com/avatar-cover.png');
+  } as never, 'https://cdn.example.com/avatar-cover.mp4', undefined, 'video');
 
-  expect(result.coverImageUrl).toBe('https://cdn.example.com/avatar-cover.png');
+  expect(result).toMatchObject({
+    coverImageUrl: 'https://cdn.example.com/avatar-cover.mp4',
+    coverImageType: 'video',
+  });
 });
 
 test('dashboard Avatar configuration exposes the public background media', () => {

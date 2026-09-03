@@ -25,6 +25,7 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('backgroundUrl={configuration.backgroundUrl}');
     expect(pageSource).toContain('backgroundType={configuration.backgroundType}');
     expect(pageSource).toContain('coverImageUrl={configuration.coverImageUrl}');
+    expect(pageSource).toContain('coverImageType={configuration.coverImageType}');
     expect(pageSource).toContain('<section className="flex min-w-0 flex-col gap-4">\n              <div className="flex flex-col gap-3">');
     expect(pageSource).toContain('<AvatarLiveLink publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('<AvatarEmbedCard publicKey={configuration.publicKey} />');
@@ -32,6 +33,7 @@ describe('Avatar configured overview', () => {
     expect(pageSource.indexOf('<AvatarEmbedCard publicKey={configuration.publicKey} />')).toBeLessThan(pageSource.indexOf('<AvatarLiveLink publicKey={configuration.publicKey} />'));
     expect(pageSource).toContain('<AvatarGeminiVoiceSelector');
     expect(pageSource).toContain('<AvatarCoverImageEditor');
+    expect(pageSource).toContain('coverImageType={configuration.coverImageType}');
     expect(pageSource).toContain('<AvatarBackgroundEditor');
     expect(pageSource).toContain("import { Separator } from '@/components/ui/separator';");
     expect(pageSource).toContain('lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]');

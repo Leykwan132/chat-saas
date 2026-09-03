@@ -49,7 +49,9 @@ describe('Avatar video stage', () => {
 
   it('uses the configured cover image and shows a connecting overlay', () => {
     expect(source).toContain('coverImageUrl');
+    expect(source).toContain('coverImageType');
     expect(source).toContain('previewUrl={coverImageUrl ?? previewUrl}');
+    expect(source).toContain('previewType={coverImageUrl ? coverImageType : \'image\'}');
     expect(source).toContain('Connecting...');
     expect(source).toContain('absolute inset-0 z-20 flex items-center justify-center');
     expect(source).toContain('bg-black/45');

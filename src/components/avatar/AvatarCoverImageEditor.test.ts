@@ -9,12 +9,14 @@ describe('Avatar cover image editor', () => {
     expect(source).toContain('api.avatarCover.saveCoverImage');
     expect(source).toContain('uploadWithProgress');
     expect(source).toContain('await saveCoverImage({ agentId, key, mimeType });');
-    expect(source).toContain('accept="image/png,image/jpeg,image/webp"');
+    expect(source).toContain('accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"');
   });
 
   it('uses one upload tile for the cover image', () => {
     expect(source).toContain('Cover image');
     expect(source).toContain('object-cover');
+    expect(source).toContain('coverImageType');
+    expect(source).toContain('<video');
     expect(source).toContain('Click to replace');
     expect(source).toContain('group-hover:opacity-100');
     expect(source).not.toContain('removeCoverImage');

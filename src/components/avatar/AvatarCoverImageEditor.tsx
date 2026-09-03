@@ -9,14 +9,23 @@ import { Spinner } from '@/components/ui/spinner';
 import { uploadWithProgress } from '@/lib/r2Upload';
 
 const MAX_COVER_IMAGE_BYTES = 5_000_000;
-const COVER_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+const MAX_COVER_VIDEO_BYTES = 50_000_000;
+const COVER_MEDIA_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'video/mp4',
+  'video/webm',
+]);
 
 export function AvatarCoverImageEditor({
   agentId,
   coverImageUrl,
+  coverImageType,
 }: {
   agentId: Id<'agents'>;
   coverImageUrl?: string;
+  coverImageType?: 'image' | 'video';
 }) {
   const generateUploadUrl = useMutation(api.avatarCover.generateCoverUploadUrl);
   const saveCoverImage = useAction(api.avatarCover.saveCoverImage);
@@ -26,12 +35,14 @@ export function AvatarCoverImageEditor({
   const selectFile = async (file: File | undefined) => {
     if (!file) return;
     const mimeType = file.type.trim().toLowerCase();
-    if (!COVER_IMAGE_TYPES.has(mimeType)) {
-      setError('Cover images must be PNG, JPEG, or WebP files');
+    const isVideo = mimeType.startsWith('video/');
+    if (!COVER_MEDIA_TYPES.has(mimeType)) {
+      setError('Cover media must be PNG, JPEG, WebP, MP4, or WebM files');
       return;
     }
-    if (file.size <= 0 || file.size > MAX_COVER_IMAGE_BYTES) {
-      setError('Cover images must be smaller than 5 MB');
+    const maxBytes = isVideo ? MAX_COVER_VIDEO_BYTES : MAX_COVER_IMAGE_BYTES;
+    if (file.size <= 0 || file.size > maxBytes) {
+      setError(isVideo ? 'Cover videos must be smaller than 50 MB' : 'Cover images must be smaller than 5 MB');
       return;
     }
     setUploading(true);
@@ -44,7 +55,7 @@ export function AvatarCoverImageEditor({
       });
       await uploadWithProgress(url, file);
       await saveCoverImage({ agentId, key, mimeType });
-      toast.success('Avatar cover image updated');
+      toast.success('Avatar cover updated');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not upload cover image');
     } finally {
@@ -63,7 +74,7 @@ export function AvatarCoverImageEditor({
         <input
           id="avatar-cover-image"
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
           className="sr-only"
           disabled={uploading}
           onChange={(event) => {
@@ -72,11 +83,13 @@ export function AvatarCoverImageEditor({
           }}
         />
         {coverImageUrl ? (
-          <img src={coverImageUrl} alt="Avatar cover" className="size-full object-cover" />
+          coverImageType === 'video'
+            ? <video src={coverImageUrl} autoPlay loop muted playsInline aria-label="Avatar cover video" className="size-full object-cover" />
+            : <img src={coverImageUrl} alt="Avatar cover" className="size-full object-cover" />
         ) : (
           <div className="flex flex-col items-center gap-2 text-muted-foreground">
             <ImagePlus className="size-7" />
-            <span className="text-sm font-medium">Upload cover image</span>
+            <span className="text-sm font-medium">Upload cover image or video</span>
           </div>
         )}
         {coverImageUrl && !uploading ? (

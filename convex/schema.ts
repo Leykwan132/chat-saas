@@ -863,6 +863,7 @@ export default defineSchema({
     avatarName: v.optional(v.string()),
     avatarPreviewUrl: v.optional(v.string()),
     coverImageR2Key: v.optional(v.string()),
+    coverImageType: v.optional(v.union(v.literal("image"), v.literal("video"))),
     backgroundR2Key: v.optional(v.string()),
     backgroundType: v.optional(v.union(v.literal("image"), v.literal("video"))),
     voiceId: v.optional(v.string()),

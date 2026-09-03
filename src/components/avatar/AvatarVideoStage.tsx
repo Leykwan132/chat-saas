@@ -16,6 +16,7 @@ export function AvatarVideoStage({
   publicKey,
   previewUrl,
   coverImageUrl,
+  coverImageType,
   backgroundUrl,
   backgroundType,
   fullScreen = false,
@@ -23,6 +24,7 @@ export function AvatarVideoStage({
   publicKey: string;
   previewUrl?: string;
   coverImageUrl?: string;
+  coverImageType?: 'image' | 'video';
   backgroundUrl?: string;
   backgroundType?: 'image' | 'video';
   fullScreen?: boolean;
@@ -90,9 +92,10 @@ export function AvatarVideoStage({
         <>
           <AvatarPreviewMedia
             previewUrl={coverImageUrl ?? previewUrl}
+            previewType={coverImageUrl ? coverImageType : 'image'}
             className={cn(
               'pointer-events-none absolute inset-0 size-full rounded-none',
-              coverImageUrl ? '[&_img]:object-cover' : '[&_img]:object-contain',
+              coverImageUrl ? '[&_img]:object-cover [&_video]:object-cover' : '[&_img]:object-contain [&_video]:object-contain',
             )}
           />
           {coverImageUrl || previewUrl ? (

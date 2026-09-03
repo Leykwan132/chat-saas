@@ -64,6 +64,7 @@ export function dashboardAvatarConfiguration(
   configuration: Doc<'avatarConfigurations'>,
   coverImageUrl?: string,
   background?: { url: string; type: 'image' | 'video' },
+  coverImageType: 'image' | 'video' = 'image',
 ) {
   return {
     publicKey: configuration.publicKey,
@@ -71,7 +72,7 @@ export function dashboardAvatarConfiguration(
     enabled: configuration.enabled,
     avatarName: configuration.avatarName,
     avatarPreviewUrl: configuration.avatarPreviewUrl,
-    ...(coverImageUrl ? { coverImageUrl } : {}),
+    ...(coverImageUrl ? { coverImageUrl, coverImageType } : {}),
     ...(background ? { backgroundUrl: background.url, backgroundType: background.type } : {}),
     voiceName: configuration.voiceName,
     voiceLanguage: configuration.voiceLanguage,

@@ -21,10 +21,15 @@ import {
 } from './media/r2';
 
 const AVATAR_COVER_MAX_BYTES = 5_000_000;
-const AVATAR_COVER_MIME_TYPES = new Set([
+const AVATAR_COVER_VIDEO_MAX_BYTES = 50_000_000;
+const AVATAR_COVER_IMAGE_MIME_TYPES = new Set([
   'image/png',
   'image/jpeg',
   'image/webp',
+]);
+const AVATAR_COVER_VIDEO_MIME_TYPES = new Set([
+  'video/mp4',
+  'video/webm',
 ]);
 const AVATAR_BACKGROUND_IMAGE_MIME_TYPES = new Set([
   'image/png',
@@ -39,13 +44,20 @@ const AVATAR_BACKGROUND_MAX_BYTES = 50_000_000;
 
 function assertAvatarCoverUpload(mimeType: string, fileSize: number) {
   const normalizedMimeType = mimeType.trim().toLowerCase();
-  if (!AVATAR_COVER_MIME_TYPES.has(normalizedMimeType)) {
-    throw new Error('Cover images must be PNG, JPEG, or WebP files');
+  const isImage = AVATAR_COVER_IMAGE_MIME_TYPES.has(normalizedMimeType);
+  const isVideo = AVATAR_COVER_VIDEO_MIME_TYPES.has(normalizedMimeType);
+  if (!isImage && !isVideo) {
+    throw new Error('Cover media must be PNG, JPEG, WebP, MP4, or WebM files');
   }
-  if (!Number.isFinite(fileSize) || fileSize <= 0 || fileSize > AVATAR_COVER_MAX_BYTES) {
-    throw new Error('Cover images must be smaller than 5 MB');
+  const maxBytes = isVideo ? AVATAR_COVER_VIDEO_MAX_BYTES : AVATAR_COVER_MAX_BYTES;
+  if (!Number.isFinite(fileSize) || fileSize <= 0 || fileSize > maxBytes) {
+    throw new Error(isVideo ? 'Cover videos must be smaller than 50 MB' : 'Cover images must be smaller than 5 MB');
   }
   return normalizedMimeType;
+}
+
+function assertAvatarCoverMimeType(mimeType: string) {
+  return assertAvatarCoverUpload(mimeType, 1);
 }
 
 function assertAvatarCoverKey(key: string, orgId: string, agentId: Id<'agents'>) {
@@ -114,13 +126,12 @@ export const saveCoverImageInternal = internalMutation({
   handler: async (ctx, args) => {
     const configuration = await ctx.db.get(args.configurationId);
     if (!configuration) throw new Error('Avatar configuration not found');
-    if (!AVATAR_COVER_MIME_TYPES.has(args.mimeType.trim().toLowerCase())) {
-      throw new Error('Cover images must be PNG, JPEG, or WebP files');
-    }
+    const mimeType = assertAvatarCoverMimeType(args.mimeType);
     assertAvatarCoverKey(args.key, configuration.orgId, configuration.agentId);
     const previousKey = configuration.coverImageR2Key;
     await ctx.db.patch(configuration._id, {
       coverImageR2Key: args.key,
+      coverImageType: mimeType.startsWith('video/') ? 'video' : 'image',
       updatedAt: Date.now(),
     });
     return previousKey ?? null;
@@ -135,10 +146,7 @@ export const saveCoverImage = action({
   },
   returns: v.null(),
   handler: async (ctx: ActionCtx, args) => {
-    const mimeType = args.mimeType.trim().toLowerCase();
-    if (!AVATAR_COVER_MIME_TYPES.has(mimeType)) {
-      throw new Error('Cover images must be PNG, JPEG, or WebP files');
-    }
+    const mimeType = assertAvatarCoverMimeType(args.mimeType);
     const setup = await ctx.runQuery(internal.avatarCover.internalGetCoverSetup, {
       agentId: args.agentId,
     });
@@ -167,6 +175,7 @@ export const removeCoverImage = mutation({
     const previousKey = configuration.coverImageR2Key;
     await ctx.db.patch(configuration._id, {
       coverImageR2Key: undefined,
+      coverImageType: undefined,
       updatedAt: Date.now(),
     });
     if (previousKey) await r2.deleteObject(ctx, previousKey);
