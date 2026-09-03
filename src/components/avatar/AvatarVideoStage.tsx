@@ -23,6 +23,7 @@ export function AvatarVideoStage({
   const {
     phase,
     error,
+    inactivityCountdown,
     videoRef,
     start,
     stop,
@@ -46,6 +47,14 @@ export function AvatarVideoStage({
           previewUrl={previewUrl}
           className="absolute inset-0 size-full rounded-none [&_img]:object-contain"
         />
+      ) : null}
+      {active && inactivityCountdown !== null ? (
+        <p
+          aria-live="polite"
+          className="absolute left-1/2 top-6 z-10 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-sm font-medium text-white shadow-lg"
+        >
+          Chat closing in {inactivityCountdown}
+        </p>
       ) : null}
       {error ? (
         <p className="absolute inset-x-6 bottom-20 text-center text-sm text-red-200">

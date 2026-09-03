@@ -37,7 +37,13 @@ describe('Avatar video stage', () => {
 
   it('omits response subtitles from the clean stage', () => {
     expect(source).not.toContain('subtitle');
-    expect(source).not.toContain('aria-live="polite"');
     expect(source).not.toContain('-webkit-text-stroke');
+  });
+
+  it('shows the idle closing countdown at the top of the stage', () => {
+    expect(source).toContain('inactivityCountdown');
+    expect(source).toContain('Chat closing in');
+    expect(source).toContain('absolute left-1/2 top-6 z-10 -translate-x-1/2');
+    expect(source).toContain('aria-live="polite"');
   });
 });

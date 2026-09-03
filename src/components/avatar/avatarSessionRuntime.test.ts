@@ -187,6 +187,28 @@ describe('AvatarSessionRuntime', () => {
     }
   });
 
+  it('publishes a three-second countdown before ending an inactive session', async () => {
+    vi.useFakeTimers();
+    try {
+      const harness = createRuntimeHarness();
+      await harness.runtime.start();
+      const streamReady = harness.client.emitStreamReady();
+      await vi.advanceTimersByTimeAsync(0);
+      await streamReady;
+
+      await vi.advanceTimersByTimeAsync(4_999);
+      expect(harness.runtime.getSnapshot()).toMatchObject({ inactivityCountdown: null });
+      await vi.advanceTimersByTimeAsync(1);
+      expect(harness.runtime.getSnapshot()).toMatchObject({ inactivityCountdown: 3 });
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(harness.runtime.getSnapshot()).toMatchObject({ inactivityCountdown: 2 });
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(harness.runtime.getSnapshot()).toMatchObject({ inactivityCountdown: 1 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('resets the inactivity timeout while the user is speaking', async () => {
     vi.useFakeTimers();
     try {

@@ -27,6 +27,7 @@ export type AvatarSessionSnapshot = {
   userSpeaking: boolean;
   avatarSpeaking: boolean;
   subtitle: string | null;
+  inactivityCountdown: number | null;
   error: string | null;
   identity: AvatarSessionIdentity | null;
 };

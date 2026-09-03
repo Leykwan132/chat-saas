@@ -66,6 +66,7 @@
 - 2026-09-03 [CODE] Removed response subtitles from the Avatar stage for a clean video presentation; unshipped.
 - 2026-09-03 [CODE] Tightened the Live link heading and external-link icon spacing to match the compact reference layout; unshipped.
 - 2026-09-03 [CODE] Avatar sessions now close after eight seconds of silence, reset the timeout during speech, and record `idle_timeout` when they end automatically; unshipped.
+- 2026-09-03 [CODE] Avatar sessions now show “Chat closing in 3”, “2”, and “1” at the top during the final three idle seconds; unshipped.
 - 2026-08-31 [CODE] Added WhatsApp username recipients and BSUID-change continuity; both customer-facing changes are unshipped.
 - 2026-08-27 [CODE] Added responsive mobile inbox/workspace navigation, demo data, accessible customer details, and robust switcher search behaviour; unshipped.
 - 2026-08-27 [CODE] Added Google Calendar Support to What’s new and removed the Model Support New badge; unshipped.
@@ -118,3 +119,4 @@
 - 2026-09-03 [TOOL] Screenshot-matched Live-link code block and icon controls passed 85 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Live-link heading spacing refinement passed the focused Live-link and Avatar overview tests plus diff validation.
 - 2026-09-03 [TOOL] Avatar idle-timeout coverage passed 87 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
+- 2026-09-03 [TOOL] Avatar idle-countdown coverage passed 89 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.

@@ -6,7 +6,7 @@ import type {
   AvatarSessionSnapshot,
   AvatarStoppedEvent,
 } from './avatarSessionRuntimeTypes';
-
+import { createAvatarInactivityController } from './avatarInactivityController';
 export type {
   AvatarSessionClient,
   AvatarSessionEvent,
@@ -19,22 +19,19 @@ export type {
   AvatarStoppedEvent,
   AvatarTranscriptionEvent,
 } from './avatarSessionRuntimeTypes';
-
 const initialSnapshot: AvatarSessionSnapshot = {
   phase: 'idle',
   muted: false,
   userSpeaking: false,
   avatarSpeaking: false,
   subtitle: null,
+  inactivityCountdown: null,
   error: null,
   identity: null,
 };
-const INACTIVITY_TIMEOUT_MS = 8_000;
-
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Avatar session failed';
 }
-
 export class AvatarSessionRuntime {
   private readonly services: AvatarSessionServices;
   private snapshot: AvatarSessionSnapshot = initialSnapshot;
@@ -46,20 +43,27 @@ export class AvatarSessionRuntime {
   private voiceStarting = false;
   private subtitleSourceEventId: string | null = null;
   private cleanupPromise: Promise<void> | null = null;
-  private inactivityTimer: ReturnType<typeof setTimeout> | null = null;
-
-  constructor(services: AvatarSessionServices) { this.services = services; }
+  private readonly inactivityController: ReturnType<typeof createAvatarInactivityController>;
+  constructor(services: AvatarSessionServices) {
+    this.services = services;
+    this.inactivityController = createAvatarInactivityController(
+      (seconds) => {
+        if (this.snapshot.phase === 'active') this.publish({ ...this.snapshot, inactivityCountdown: seconds });
+      },
+      () => {
+        if (this.snapshot.phase === 'active') void this.stop('idle_timeout');
+      },
+    );
+  }
   getSnapshot = () => this.snapshot;
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   };
-
   attachVideo = (element: HTMLMediaElement | null) => {
     this.video = element;
     if (element && this.snapshot.phase === 'active') this.client?.attach(element);
   };
-
   start = async () => {
     if (['starting', 'active', 'stopping'].includes(this.snapshot.phase)) return;
     const generation = ++this.generation;
@@ -108,6 +112,7 @@ export class AvatarSessionRuntime {
         userSpeaking: false,
         avatarSpeaking: false,
         subtitle: null,
+        inactivityCountdown: null,
         error: null,
       });
     } catch (error) {
@@ -215,7 +220,7 @@ export class AvatarSessionRuntime {
       return;
     }
     this.subtitleSourceEventId = null;
-    this.publish({ ...this.snapshot, phase: 'ended', avatarSpeaking: false, subtitle: null });
+    this.publish({ ...this.snapshot, phase: 'ended', avatarSpeaking: false, subtitle: null, inactivityCountdown: null });
   }
 
   private async fail(generation: number, error: unknown) {
@@ -235,7 +240,7 @@ export class AvatarSessionRuntime {
         })
         : Promise.resolve(),
     ]);
-    this.publish({ ...this.snapshot, phase: 'error', subtitle: null, error: message });
+    this.publish({ ...this.snapshot, phase: 'error', subtitle: null, inactivityCountdown: null, error: message });
   }
 
   private recordClientStopped(
@@ -283,17 +288,13 @@ export class AvatarSessionRuntime {
     if (generation !== this.generation || this.snapshot.phase !== 'active' || !this.client) return;
     this.clearInactivityTimer();
     if (this.snapshot.userSpeaking || this.snapshot.avatarSpeaking) return;
-    this.inactivityTimer = setTimeout(() => {
-      this.inactivityTimer = null;
-      if (generation === this.generation && this.snapshot.phase === 'active') {
-        void this.stop('idle_timeout');
-      }
-    }, INACTIVITY_TIMEOUT_MS);
+    this.inactivityController.start();
   }
 
   private clearInactivityTimer() {
-    if (this.inactivityTimer === null) return;
-    clearTimeout(this.inactivityTimer);
-    this.inactivityTimer = null;
+    this.inactivityController.stop();
+    if (this.snapshot.inactivityCountdown !== null) {
+      this.publish({ ...this.snapshot, inactivityCountdown: null });
+    }
   }
 }
