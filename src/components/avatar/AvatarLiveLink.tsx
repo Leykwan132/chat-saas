@@ -17,29 +17,35 @@ export function AvatarLiveLink({ publicKey }: { publicKey: string }) {
 
   return (
     <section className="flex min-w-0 flex-col gap-2">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="font-semibold">Live link</h2>
-          <p className="truncate text-sm text-muted-foreground" title={url}>{url}</p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => void copyLink()}>
-            <Copy data-icon="inline-start" />
-            Copy link
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Open live link preview"
-            title="Open live link preview"
-            asChild
-          >
-            <a href={url} target="_blank" rel="noreferrer">
-              <ExternalLink />
-            </a>
-          </Button>
-        </div>
+      <div className="flex items-center gap-2">
+        <h2 className="font-semibold">Live link</h2>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Open live link preview"
+          title="Open live link preview"
+          asChild
+        >
+          <a href={url} target="_blank" rel="noreferrer">
+            <ExternalLink />
+          </a>
+        </Button>
+      </div>
+      <div className="relative">
+        <pre className="max-h-56 overflow-auto rounded-lg bg-muted p-3 pr-12 text-xs whitespace-pre-wrap break-all" title={url}>{url}</pre>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="absolute right-2 top-2"
+          aria-label="Copy live link"
+          title="Copy live link"
+          onClick={() => void copyLink()}
+        >
+          <Copy />
+          <span className="sr-only">Copy live link</span>
+        </Button>
       </div>
     </section>
   );

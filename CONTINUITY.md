@@ -17,6 +17,7 @@
 - 2026-09-03 [CODE] Avatar public links now resolve to the active localhost origin during local testing and the production host elsewhere. Unshipped.
 - 2026-09-03 [CODE] Public Avatar embeds now fill the dynamic viewport on mobile and desktop, while the dashboard Live link sits above the website embed panel. Unshipped.
 - 2026-09-03 [CODE] Supersedes the previous Live-link placement: the dashboard now shows it below the embed code with a text copy action and icon-only preview action. Unshipped.
+- 2026-09-03 [CODE] Supersedes the previous Live-link controls: the URL now uses a muted code block with an in-block copy icon, and the external-link icon sits beside the heading. Unshipped.
 - 2026-09-03 [CODE] Removed the explanatory sentence beneath the Avatar Context heading for a cleaner settings layout. Unshipped.
 - 2026-09-01 [USER] Goal: test the white-label Partner Programme locally on `codex/white-label-partner-portal`.
 - 2026-09-01 [TOOL] Now: merging current `origin/main` into the white-label branch; concurrent Overview-test and Workspace-page edits are being reconciled without removing partner access controls.
@@ -112,3 +113,4 @@
 - 2026-09-03 [TOOL] Avatar orientation grouping and portrait preview checks passed 73 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Environment-aware Avatar link checks passed 84 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Full-screen Avatar embed and Live-link placement checks passed 85 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
+- 2026-09-03 [TOOL] Screenshot-matched Live-link code block and icon controls passed 85 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.

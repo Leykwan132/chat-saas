@@ -40,9 +40,14 @@ describe('Avatar configured overview', () => {
     expect(liveLinkSource).toContain('buildAvatarLiveUrl');
     expect(liveLinkSource).toContain('navigator.clipboard.writeText(url)');
     expect(liveLinkSource).toContain('Live link');
-    expect(liveLinkSource).toContain('Copy link');
+    expect(liveLinkSource).toContain('Copy live link');
+    expect(liveLinkSource).toContain('className="absolute right-2 top-2"');
+    expect(liveLinkSource).toContain('rounded-lg bg-muted');
+    expect(liveLinkSource).toContain('pr-12');
     expect(liveLinkSource).toContain('aria-label="Open live link preview"');
     expect(liveLinkSource).toContain('title="Open live link preview"');
+    expect(liveLinkSource).toContain('items-center gap-2');
+    expect(liveLinkSource).not.toContain('Copy link');
     expect(liveLinkSource).not.toContain('>Preview</');
     expect(liveLinkSource).toContain('target="_blank"');
     expect(liveLinkSource).toContain('rel="noreferrer"');
