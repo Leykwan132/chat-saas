@@ -13,6 +13,7 @@
 - 2026-09-03 [CODE] Avatar Instructions and Opening text labels now match Voice typography, and the Voice dropdown sizes to its content. Unshipped.
 - 2026-09-03 [CODE] Avatar context saves now include the provider-required `opening_text` field while retaining the opening message in the system prompt. Unshipped.
 - 2026-09-03 [CODE] Avatar setup now groups catalog choices into Landscape-first and Portrait sections using preview aspect ratios, and portrait previews fit without cropping. Unshipped.
+- 2026-09-03 [CODE] Configured Avatar overviews now expose a copyable public Live link and a new-tab Preview action below the video preview. Unshipped.
 - 2026-09-03 [CODE] Removed the explanatory sentence beneath the Avatar Context heading for a cleaner settings layout. Unshipped.
 - 2026-09-01 [USER] Goal: test the white-label Partner Programme locally on `codex/white-label-partner-portal`.
 - 2026-09-01 [TOOL] Now: merging current `origin/main` into the white-label branch; concurrent Overview-test and Workspace-page edits are being reconciled without removing partner access controls.
@@ -70,7 +71,7 @@
 
 - 2026-09-03 [CODE] `convex/{avatar.ts,avatarContext.ts,avatarCore.ts,avatarProvider.ts,avatarSession.ts,avatarLifecycle.ts,schema.ts}`
 - 2026-09-03 [CODE] `shared/geminiLiveVoices.ts`
-- 2026-09-03 [CODE] `src/{pages/AvatarPage.tsx,pages/AvatarCreatePage.tsx,components/avatar/AvatarGeminiVoiceSelector.tsx,components/avatar/avatarOrientation.ts}`
+- 2026-09-03 [CODE] `src/{pages/AvatarPage.tsx,pages/AvatarCreatePage.tsx,components/avatar/{AvatarLiveLink.tsx,AvatarGeminiVoiceSelector.tsx,avatarOrientation.ts},lib/avatarEmbed.ts}`
 - 2026-09-01 [CODE] `convex/whiteLabel/`
 - 2026-09-01 [CODE] `convex/{schema.ts,authUtils.ts,teamHelpers.ts}`
 - 2026-09-01 [CODE] `src/{pages/PartnerPage.tsx,pages/WorkspacePage.tsx,components/partner/}`

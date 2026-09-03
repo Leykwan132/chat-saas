@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { AvatarEmbedCard } from '@/components/avatar/AvatarEmbedCard';
+import { AvatarLiveLink } from '@/components/avatar/AvatarLiveLink';
 import { AvatarContextEditor } from '@/components/avatar/AvatarContextEditor';
 import { AvatarGeminiVoiceSelector } from '@/components/avatar/AvatarGeminiVoiceSelector';
 import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
@@ -57,6 +58,7 @@ export default function AvatarPage() {
                 publicKey={configuration.publicKey}
                 previewUrl={configuration.avatarPreviewUrl}
               />
+              <AvatarLiveLink publicKey={configuration.publicKey} />
             </section>
             <AvatarEmbedCard publicKey={configuration.publicKey} />
           </div>

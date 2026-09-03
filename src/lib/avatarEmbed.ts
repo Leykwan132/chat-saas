@@ -6,6 +6,10 @@ function avatarEmbedSource(publicKey: string) {
   return `${avatarEmbedBaseUrl}/avatar/embed/${encodeURIComponent(publicKey)}`;
 }
 
+export function buildAvatarLiveUrl(publicKey: string) {
+  return avatarEmbedSource(publicKey);
+}
+
 export function buildProviderEmbedSnippet(embedUrl: string) {
   const source = new URL(embedUrl);
   if (source.protocol !== 'https:') throw new Error('Avatar embed URL must use HTTPS');
@@ -14,12 +18,12 @@ export function buildProviderEmbedSnippet(embedUrl: string) {
 }
 
 export function buildAvatarEmbedSnippet(publicKey: string) {
-  const source = avatarEmbedSource(publicKey);
+  const source = buildAvatarLiveUrl(publicKey);
   return `<iframe src="${source}" title="KiloBot Avatar" allow="microphone; autoplay" style="width:100%;aspect-ratio:16/9;border:0"></iframe>`;
 }
 
 export function buildAvatarReactEmbedSnippet(publicKey: string) {
-  const source = avatarEmbedSource(publicKey);
+  const source = buildAvatarLiveUrl(publicKey);
   return `<iframe
   src="${source}"
   title="KiloBot Avatar"
