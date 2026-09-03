@@ -24,8 +24,9 @@ describe('Avatar video stage', () => {
     expect(source).not.toContain('Listening');
     expect(source).toContain('subtitle ?');
     expect(source).toContain('text-white');
-    expect(source).toContain('font-black');
-    expect(source).toContain('-webkit-text-stroke:1.25px_black');
+    expect(source).toContain('pointer-events-none absolute inset-x-8 bottom-8 text-center font-sans text-lg font-semibold leading-normal text-white [-webkit-text-stroke:0.75px_black] [text-shadow:0_1px_2px_black] sm:bottom-10');
+    expect(source).not.toContain('font-black');
+    expect(source).not.toContain('-webkit-text-stroke:1.25px_black');
     expect(source).not.toContain('Mute microphone');
     expect(source).not.toContain('Unmute microphone');
     expect(source).not.toContain('Type a message');

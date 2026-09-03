@@ -61,7 +61,7 @@ export function AvatarVideoStage({
       {active && subtitle ? (
         <p
           aria-live="polite"
-          className="pointer-events-none absolute inset-x-8 bottom-20 text-center text-lg font-black leading-relaxed text-white [-webkit-text-stroke:1.25px_black] [text-shadow:0_2px_3px_black] sm:bottom-24"
+          className="pointer-events-none absolute inset-x-8 bottom-8 text-center font-sans text-lg font-semibold leading-normal text-white [-webkit-text-stroke:0.75px_black] [text-shadow:0_1px_2px_black] sm:bottom-10"
         >
           {subtitle}
         </p>
