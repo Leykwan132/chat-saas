@@ -47,10 +47,10 @@ export function AvatarGeminiVoiceSelector({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex max-w-sm flex-col gap-2">
+      <div className="flex w-fit max-w-sm flex-col gap-2">
         <Label htmlFor="avatar-gemini-voice" className="text-base">Voice</Label>
         <Select value={voice} onValueChange={setDraftVoice} disabled={saving}>
-          <SelectTrigger id="avatar-gemini-voice" className="h-10 w-full text-base">
+          <SelectTrigger id="avatar-gemini-voice" className="h-10 w-auto text-base">
             <SelectValue className="text-base" placeholder="Select a voice" />
           </SelectTrigger>
           <SelectContent align="start" className="w-[var(--radix-select-trigger-width)]">

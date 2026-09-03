@@ -60,8 +60,8 @@ export function AvatarContextEditor({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-prompt">Instructions</Label><Textarea id="avatar-context-prompt" value={prompt} onChange={(event) => updatePrompt(event.target.value)} className="min-h-36" placeholder="Describe the role, tone, knowledge, and boundaries." /></div>
-      <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-opening">Opening text</Label><Input id="avatar-context-opening" value={openingText} onChange={(event) => updateOpeningText(event.target.value)} placeholder="Hello, how can I help?" /></div>
+      <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-prompt" className="text-base">Instructions</Label><Textarea id="avatar-context-prompt" value={prompt} onChange={(event) => updatePrompt(event.target.value)} className="min-h-36" placeholder="Describe the role, tone, knowledge, and boundaries." /></div>
+      <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-opening" className="text-base">Opening text</Label><Input id="avatar-context-opening" value={openingText} onChange={(event) => updateOpeningText(event.target.value)} placeholder="Hello, how can I help?" /></div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex justify-end"><Button onClick={() => void save()} disabled={!canSave}>{saving ? 'Saving…' : 'Save context'}</Button></div>
     </section>

@@ -10,6 +10,7 @@
 - 2026-09-03 [CODE] Avatar managers can choose one of the 30 supported Gemini Live voices; selected voices persist per Avatar configuration and are used for new LITE sessions. Opening text is composed into the saved provider system prompt instead of sent as a separate provider field. Unshipped.
 - 2026-09-03 [CODE] Avatar settings now place the Voice selector below the Context and Opening text fields, use the shorter “Voice” heading, and render the selector text at a larger size. Unshipped.
 - 2026-09-03 [CODE] Avatar settings now show only the single-line Voice, Instructions, and Opening text labels; the extra Voice and Context headings are removed. Unshipped.
+- 2026-09-03 [CODE] Avatar Instructions and Opening text labels now match Voice typography, and the Voice dropdown sizes to its content. Unshipped.
 - 2026-09-03 [CODE] Removed the explanatory sentence beneath the Avatar Context heading for a cleaner settings layout. Unshipped.
 - 2026-09-01 [USER] Goal: test the white-label Partner Programme locally on `codex/white-label-partner-portal`.
 - 2026-09-01 [TOOL] Now: merging current `origin/main` into the white-label branch; concurrent Overview-test and Workspace-page edits are being reconciled without removing partner access controls.
@@ -42,6 +43,7 @@
 - 2026-09-03 [CODE] Added the Gemini Live voice catalog and manager voice selector, persisted the choice, and embedded Avatar opening text into the provider system prompt; unshipped.
 - 2026-09-03 [CODE] Refined the Voice selector order, label, and typography for clearer Avatar settings.
 - 2026-09-03 [CODE] Flattened the Avatar settings labels and removed the redundant Voice and Context headings.
+- 2026-09-03 [CODE] Matched Avatar setting label sizes and made the Voice selector intrinsic-width.
 - 2026-09-03 [CODE] Removed the redundant Avatar Context description text.
 - 2026-09-03 [CODE] Hardened Avatar teardown so explicit End releases the backend session slot; unshipped.
 - 2026-09-03 [CODE] Simplified the Avatar context editor presentation and renamed its prompt label to “Instructions”; unshipped.
@@ -97,3 +99,4 @@
 - 2026-09-03 [TOOL] Voice selector layout and typography checks passed the focused Avatar tests, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Context-description removal passed the Avatar-focused suite, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Avatar settings label flattening passed 72 focused tests, targeted ESLint, diff validation, and the Node v22 production build.
+- 2026-09-03 [TOOL] Avatar settings typography and intrinsic Voice-width checks passed 72 focused tests, targeted ESLint, diff validation, and the Node v22 production build.

@@ -6,10 +6,11 @@ test('provides a manager context editor with explicit save states', () => {
   expect(existsSync(path)).toBe(true);
   const source = readFileSync(path, 'utf8');
   expect(source).toContain('>Instructions</Label>');
+  expect(source).toContain('htmlFor="avatar-context-prompt" className="text-base"');
   expect(source).not.toContain('System instructions');
   expect(source).not.toContain('Instructions Gemini uses for every Avatar conversation.');
   expect(source).not.toContain('>Context</h2>');
-  expect(source).toContain('Opening text');
+  expect(source).toContain('htmlFor="avatar-context-opening" className="text-base">Opening text</Label>');
   expect(source).toContain('Save context');
   expect(source).toContain('api.avatarContext.save');
   expect(source).not.toContain('rounded-xl border p-5');
