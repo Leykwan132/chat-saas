@@ -85,7 +85,7 @@ export const generateCoverUploadUrl = mutation({
     const configuration = await getWorkspaceAvatarConfiguration(ctx, channelOrgId, userId);
     if (!configuration) throw new Error('Avatar configuration not found');
     const mimeType = assertAvatarCoverUpload(args.mimeType, args.fileSize);
-    const key = generateAvatarCoverKey(channelOrgId, args.agentId, mimeType);
+    const key = generateAvatarCoverKey(configuration.orgId, configuration.agentId, mimeType);
     return await r2.generateUploadUrl(key);
   },
 });
@@ -98,8 +98,8 @@ export const internalGetCoverSetup = internalQuery({
     if (!configuration) throw new Error('Avatar configuration not found');
     return {
       configurationId: configuration._id,
-      orgId: channelOrgId,
-      agentId: args.agentId,
+      orgId: configuration.orgId,
+      agentId: configuration.agentId,
     };
   },
 });
@@ -186,7 +186,7 @@ export const generateBackgroundUploadUrl = mutation({
     const configuration = await getWorkspaceAvatarConfiguration(ctx, channelOrgId, userId);
     if (!configuration) throw new Error('Avatar configuration not found');
     const mimeType = assertAvatarBackgroundUpload(args.mimeType, args.fileSize);
-    const key = generateAvatarBackgroundKey(channelOrgId, args.agentId, mimeType);
+    const key = generateAvatarBackgroundKey(configuration.orgId, configuration.agentId, mimeType);
     return await r2.generateUploadUrl(key);
   },
 });
@@ -199,8 +199,8 @@ export const internalGetBackgroundSetup = internalQuery({
     if (!configuration) throw new Error('Avatar configuration not found');
     return {
       configurationId: configuration._id,
-      orgId: channelOrgId,
-      agentId: args.agentId,
+      orgId: configuration.orgId,
+      agentId: configuration.agentId,
     };
   },
 });

@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-04 [CODE] Avatar cover/background upload keys now use the persisted workspace Avatar configuration agent, preventing multi-agent workspaces from rejecting valid R2 background uploads. Unshipped.
 - 2026-09-04 [CODE] Start Chat keeps its original pill shape with a white button body and a thicker horizontal dark-to-light green gradient border; its larger size and neutral idle-cover overlay remain in place. Unshipped.
 - 2026-09-04 [CODE] Avatar Start Chat is larger and uses a left-to-right dark-to-light green gradient while the neutral idle-cover overlay remains in place. Unshipped.
 - 2026-09-03 [CODE] Idle Avatar cover previews now receive a neutral dim overlay, while Start Chat uses a thicker green outline and remains the top visual focus. Unshipped.
@@ -59,6 +60,7 @@
 
 # Done (recent)
 
+- 2026-09-04 [CODE] Fixed Avatar R2 media uploads by generating and validating keys against the workspace Avatar configuration namespace instead of the requesting route agent; unshipped.
 - 2026-09-04 [CODE] Increased the Start Chat gradient border to 6px while preserving its original pill shape and white button body; unshipped.
 - 2026-09-04 [CODE] Corrected the Start Chat treatment so only the original pill-shaped border changes to a horizontal gradient while the button remains white; unshipped.
 - 2026-09-04 [CODE] Enlarged Start Chat and added its horizontal green gradient styling without changing the click-safe layering; unshipped.
@@ -115,6 +117,7 @@
 
 # Receipts
 
+- 2026-09-04 [TOOL] Avatar background ownership regression passed 66 Convex and Avatar tests, Node v22 targeted ESLint, and diff validation.
 - 2026-09-02 [TOOL] Gemini Avatar focused suite passed 27 tests and Node v22 production build passed. `bunx convex codegen` was blocked because the worktree lacked `CONVEX_DEPLOYMENT`.
 - 2026-08-31 [TOOL] WhatsApp username-recipient focused suite passed 19 tests, Node v22 TypeScript, changed-backend lint, and diff validation; unrelated full-suite failures remain.
 - 2026-08-27 [TOOL] Mobile inbox/workspace focused tests, targeted lint, diff validation, and Node v22 production build passed.
