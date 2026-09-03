@@ -48,19 +48,19 @@ export function AvatarGeminiVoiceSelector({
   return (
     <section className="flex flex-col gap-4">
       <div>
-        <h2 className="text-sm font-semibold">Gemini voice</h2>
+        <h2 className="text-base font-semibold">Voice</h2>
         <p className="mt-1 text-sm text-muted-foreground">Choose the voice Gemini uses during live Avatar conversations.</p>
       </div>
       <div className="flex max-w-sm flex-col gap-2">
-        <Label htmlFor="avatar-gemini-voice">Voice</Label>
+        <Label htmlFor="avatar-gemini-voice" className="text-base">Voice</Label>
         <Select value={voice} onValueChange={setDraftVoice} disabled={saving}>
-          <SelectTrigger id="avatar-gemini-voice" className="w-full">
-            <SelectValue placeholder="Select a voice" />
+          <SelectTrigger id="avatar-gemini-voice" className="h-10 w-full text-base">
+            <SelectValue className="text-base" placeholder="Select a voice" />
           </SelectTrigger>
           <SelectContent align="start" className="w-[var(--radix-select-trigger-width)]">
             <SelectGroup>
               {GEMINI_LIVE_VOICES.map((option) => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
+                <SelectItem key={option} value={option} className="text-base">{option}</SelectItem>
               ))}
             </SelectGroup>
           </SelectContent>

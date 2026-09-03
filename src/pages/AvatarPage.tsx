@@ -62,8 +62,8 @@ export default function AvatarPage() {
           </div>
           {canManage ? (
             <>
-              <AvatarGeminiVoiceSelector agentId={typedAgentId} geminiVoice={configuration.geminiVoice} />
               <AvatarContextEditor agentId={typedAgentId} prompt={configuration.providerContextPrompt ?? ''} openingText={configuration.providerContextOpeningText ?? ''} />
+              <AvatarGeminiVoiceSelector agentId={typedAgentId} geminiVoice={configuration.geminiVoice} />
             </>
           ) : null}
         </>
