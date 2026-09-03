@@ -19,7 +19,10 @@ import {
   MAX_AVATAR_CONCURRENT_SESSIONS,
   MAX_AVATAR_SESSION_DURATION_SECONDS,
 } from './avatarProvider';
-
+import {
+  DEFAULT_GEMINI_LIVE_VOICE,
+  isGeminiLiveVoice,
+} from '../shared/geminiLiveVoices';
 async function countActiveSessions(
   ctx: QueryCtx | MutationCtx,
   configurationId: Id<'avatarConfigurations'>,
@@ -37,7 +40,6 @@ async function countActiveSessions(
     return session.status === 'active' && session.startedAt >= now - durationSeconds * 1000;
   }).length;
 }
-
 export const getForAgent = query({
   args: { agentId: v.id('agents') },
   handler: async (ctx, args) => {
@@ -72,12 +74,30 @@ export const ensureForAgent = mutation({
       publicKey: await generateAvatarPublicKey(ctx),
       enabled: false,
       language: 'en',
+      geminiVoice: DEFAULT_GEMINI_LIVE_VOICE,
       createdAt: now,
       updatedAt: now,
     });
     const configuration = await ctx.db.get(configurationId);
     if (!configuration) throw new Error('Could not create Avatar configuration');
     return dashboardAvatarConfiguration(configuration);
+  },
+});
+
+export const updateGeminiVoice = mutation({
+  args: {
+    agentId: v.id('agents'),
+    voice: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { channelOrgId, userId } = await getAuthorizedAvatarAgent(ctx, args.agentId);
+    const configuration = await getWorkspaceAvatarConfiguration(ctx, channelOrgId, userId);
+    if (!configuration) throw new Error('Avatar configuration not found');
+    if (!isGeminiLiveVoice(args.voice)) throw new Error('Choose a supported Gemini Live voice');
+    await ctx.db.patch(configuration._id, {
+      geminiVoice: args.voice,
+      updatedAt: Date.now(),
+    });
   },
 });
 
@@ -276,29 +296,5 @@ export const registerSession = internalMutation({
       startedAt: now,
       updatedAt: now,
     });
-  },
-});
-
-export const recordLifecycleEvent = internalMutation({
-  args: {
-    sessionId: v.string(),
-    eventId: v.string(),
-    eventType: v.string(),
-    sourceEventId: v.union(v.string(), v.null()),
-  },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query('avatarEvents')
-      .withIndex('by_eventId', (q) => q.eq('eventId', args.eventId))
-      .unique();
-    if (existing) return false;
-    await ctx.db.insert('avatarEvents', {
-      sessionId: args.sessionId,
-      eventId: args.eventId,
-      eventType: args.eventType,
-      sourceEventId: args.sourceEventId ?? undefined,
-      createdAt: Date.now(),
-    });
-    return true;
   },
 });

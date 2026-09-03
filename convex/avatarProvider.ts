@@ -126,6 +126,7 @@ export function buildGeminiLiveTokenRequest(args: {
   avatarId: string;
   contextId: string;
   secretId: string;
+  voice: string;
 }) {
   return {
     mode: 'LITE',
@@ -137,9 +138,10 @@ export function buildGeminiLiveTokenRequest(args: {
     gemini_realtime_config: {
       secret_id: args.secretId,
       context_id: args.contextId,
-      voice: 'Puck',
+      voice: args.voice,
       model: 'gemini-3.1-flash-live-preview',
       temperature: 0.8,
     },
   };
 }
+export { DEFAULT_GEMINI_LIVE_VOICE, GEMINI_LIVE_VOICES, isGeminiLiveVoice } from '../shared/geminiLiveVoices';

@@ -58,6 +58,7 @@ describe('LiveAvatar provider configuration', () => {
       avatarId: 'production-avatar',
       contextId: 'context-id',
       secretId: 'secret-id',
+      voice: 'Aoede',
     })).toEqual({
       mode: 'LITE',
       is_sandbox: true,
@@ -66,11 +67,17 @@ describe('LiveAvatar provider configuration', () => {
       gemini_realtime_config: {
         secret_id: 'secret-id',
         context_id: 'context-id',
-        voice: 'Puck',
+        voice: 'Aoede',
         model: 'gemini-3.1-flash-live-preview',
         temperature: 0.8,
       },
     });
+  });
+
+  it('exposes every supported Gemini Live voice', () => {
+    expect(avatarProvider.GEMINI_LIVE_VOICES).toHaveLength(30);
+    expect(avatarProvider.GEMINI_LIVE_VOICES).toContain('Puck');
+    expect(avatarProvider.GEMINI_LIVE_VOICES).toContain('Zubenelgenubi');
   });
 
   it('keeps production sessions at ten minutes', () => {

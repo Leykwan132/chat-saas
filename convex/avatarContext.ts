@@ -7,6 +7,10 @@ type ProviderResponse = {
   message?: string;
 };
 
+export function buildAvatarContextPrompt(prompt: string, openingText: string) {
+  return `${prompt.trim()}\n\nStart each new conversation with this opening message:\n${openingText.trim()}`;
+}
+
 function requireApiKey() {
   const apiKey = process.env.LIVEAVATAR_API_KEY?.trim();
   if (!apiKey) throw new Error('LIVEAVATAR_API_KEY is required');
@@ -39,8 +43,7 @@ export const save = action({
         },
         body: JSON.stringify({
           name: `${setup.agentName} Avatar`,
-          prompt,
-          opening_text: openingText,
+          prompt: buildAvatarContextPrompt(prompt, openingText),
         }),
       },
     );

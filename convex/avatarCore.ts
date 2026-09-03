@@ -1,6 +1,7 @@
 import type { Doc, Id } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { getAuthContext, resolveChannelOrgId } from './authUtils';
+import { DEFAULT_GEMINI_LIVE_VOICE } from '../shared/geminiLiveVoices';
 
 const PUBLIC_KEY_PREFIX = 'avatar_';
 
@@ -73,6 +74,7 @@ export function dashboardAvatarConfiguration(configuration: Doc<'avatarConfigura
     voiceName: configuration.voiceName,
     voiceLanguage: configuration.voiceLanguage,
     voiceGender: configuration.voiceGender,
+    geminiVoice: configuration.geminiVoice ?? DEFAULT_GEMINI_LIVE_VOICE,
     language: configuration.language,
     providerContextPrompt: configuration.providerContextPrompt,
     providerContextOpeningText: configuration.providerContextOpeningText,

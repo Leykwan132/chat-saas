@@ -6,6 +6,7 @@ import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { AvatarEmbedCard } from '@/components/avatar/AvatarEmbedCard';
 import { AvatarContextEditor } from '@/components/avatar/AvatarContextEditor';
+import { AvatarGeminiVoiceSelector } from '@/components/avatar/AvatarGeminiVoiceSelector';
 import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -59,7 +60,12 @@ export default function AvatarPage() {
             </section>
             <AvatarEmbedCard publicKey={configuration.publicKey} />
           </div>
-          {canManage ? <AvatarContextEditor agentId={typedAgentId} prompt={configuration.providerContextPrompt ?? ''} openingText={configuration.providerContextOpeningText ?? ''} /> : null}
+          {canManage ? (
+            <>
+              <AvatarGeminiVoiceSelector agentId={typedAgentId} geminiVoice={configuration.geminiVoice} />
+              <AvatarContextEditor agentId={typedAgentId} prompt={configuration.providerContextPrompt ?? ''} openingText={configuration.providerContextOpeningText ?? ''} />
+            </>
+          ) : null}
         </>
       ) : (
         <Empty className="min-h-[420px] border">

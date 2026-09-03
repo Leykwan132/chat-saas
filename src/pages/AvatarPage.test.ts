@@ -19,6 +19,8 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('<AvatarVideoStage');
     expect(pageSource).toContain('publicKey={configuration.publicKey}');
     expect(pageSource).toContain('<AvatarEmbedCard publicKey={configuration.publicKey} />');
+    expect(pageSource).toContain('<AvatarGeminiVoiceSelector');
+    expect(pageSource).toContain('geminiVoice={configuration.geminiVoice}');
     expect(pageSource).not.toContain('updateSettings');
     expect(pageSource).not.toContain('enabledOverride');
     expect(pageSource).not.toContain('onEnabledChange');

@@ -20,8 +20,22 @@ test('dashboard Avatar configuration never exposes provider ids', () => {
   } as never);
 
   expect(result).toMatchObject({ avatarName: 'Wayne', voiceName: 'Calm English' });
+  expect(result.geminiVoice).toBe('Puck');
   expect(result).not.toHaveProperty('avatarId');
   expect(result).not.toHaveProperty('voiceId');
+});
+
+test('persists a selected Gemini Live voice for an Avatar manager', async () => {
+  const t = convexTest(schema, modules);
+  const agentId = await createAgent(t, 'voice_owner');
+  const authed = t.withIdentity({ subject: 'voice_owner' });
+  await authed.mutation(api.avatar.ensureForAgent, { agentId });
+
+  await authed.mutation(api.avatar.updateGeminiVoice, { agentId, voice: 'Aoede' });
+
+  await expect(authed.query(api.avatar.getForAgent, { agentId })).resolves.toMatchObject({
+    geminiVoice: 'Aoede',
+  });
 });
 
 async function createAgent(t: TestConvex<typeof schema>, userId: string) {
@@ -173,13 +187,13 @@ test('LiveAvatar session ids and event ids are idempotent', async () => {
 
   expect(second).toBe(first);
 
-  const eventOne = await t.mutation(internal.avatar.recordLifecycleEvent, {
+  const eventOne = await t.mutation(internal.avatarLifecycle.recordLifecycleEvent, {
     sessionId: 'session-1',
     eventId: 'event-1',
     eventType: 'session.started',
     sourceEventId: null,
   });
-  const eventTwo = await t.mutation(internal.avatar.recordLifecycleEvent, {
+  const eventTwo = await t.mutation(internal.avatarLifecycle.recordLifecycleEvent, {
     sessionId: 'session-1',
     eventId: 'event-1',
     eventType: 'session.started',

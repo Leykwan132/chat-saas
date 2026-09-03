@@ -866,6 +866,7 @@ export default defineSchema({
     voiceName: v.optional(v.string()),
     voiceLanguage: v.optional(v.string()),
     voiceGender: v.optional(v.string()),
+    geminiVoice: v.optional(v.string()),
     language: v.string(),
     providerContextId: v.optional(v.string()),
     providerContextPrompt: v.optional(v.string()),

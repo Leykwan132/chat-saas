@@ -3,6 +3,7 @@ import { convexTest, type TestConvex } from 'convex-test';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { api } from './_generated/api';
 import schema from './schema';
+import { buildAvatarContextPrompt } from './avatarContext';
 
 const modules = import.meta.glob('./**/*.ts');
 
@@ -50,12 +51,16 @@ test('creates and persists a LiveAvatar context for an authorized Avatar manager
     method: 'POST',
     body: JSON.stringify({
       name: 'Support Avatar',
-      prompt: 'Help customers with billing.',
-      opening_text: 'Hello, how can I help?',
+      prompt: buildAvatarContextPrompt('Help customers with billing.', 'Hello, how can I help?'),
     }),
   }));
   expect(await authed.query(api.avatar.getForAgent, { agentId })).toMatchObject({
     providerContextPrompt: 'Help customers with billing.',
     providerContextOpeningText: 'Hello, how can I help?',
   });
+});
+
+test('embeds opening text into the LiveAvatar system prompt', () => {
+  expect(buildAvatarContextPrompt('Help customers with billing.', 'Hello, how can I help?'))
+    .toBe('Help customers with billing.\n\nStart each new conversation with this opening message:\nHello, how can I help?');
 });

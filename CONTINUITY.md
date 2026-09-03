@@ -7,6 +7,7 @@
 - 2026-09-03 [CODE] Avatar context editing now presents the prompt field as “Instructions” without the extra bordered outer container. Unshipped.
 - 2026-09-03 [CODE] Avatar calls now place controls vertically on the right edge with no speaking/status or response-subtitle overlays. Unshipped.
 - 2026-09-03 [CODE] Avatar controls now show only a centered-right End button during calls and bottom-center Start Chat before calls, with no speaking/listening status labels. Unshipped.
+- 2026-09-03 [CODE] Avatar managers can choose one of the 30 supported Gemini Live voices; selected voices persist per Avatar configuration and are used for new LITE sessions. Opening text is composed into the saved provider system prompt instead of sent as a separate provider field. Unshipped.
 - 2026-09-01 [USER] Goal: test the white-label Partner Programme locally on `codex/white-label-partner-portal`.
 - 2026-09-01 [TOOL] Now: merging current `origin/main` into the white-label branch; concurrent Overview-test and Workspace-page edits are being reconciled without removing partner access controls.
 - 2026-08-31 [CODE] Now: `origin/main` adds WhatsApp username recipients and BSUID-change continuity; both remain unshipped.
@@ -35,6 +36,7 @@
 # Done (recent)
 
 - 2026-09-02 [CODE] Added LiveAvatar Gemini connector session tokens, manager-editable provider context, and direct connector-owned Avatar conversations; unshipped.
+- 2026-09-03 [CODE] Added the Gemini Live voice catalog and manager voice selector, persisted the choice, and embedded Avatar opening text into the provider system prompt; unshipped.
 - 2026-09-03 [CODE] Hardened Avatar teardown so explicit End releases the backend session slot; unshipped.
 - 2026-09-03 [CODE] Simplified the Avatar context editor presentation and renamed its prompt label to “Instructions”; unshipped.
 - 2026-09-03 [CODE] Added right-edge call controls and centered AI response subtitles to the Avatar stage; unshipped.
@@ -54,6 +56,9 @@
 
 # Working set
 
+- 2026-09-03 [CODE] `convex/{avatar.ts,avatarContext.ts,avatarCore.ts,avatarProvider.ts,avatarSession.ts,avatarLifecycle.ts,schema.ts}`
+- 2026-09-03 [CODE] `shared/geminiLiveVoices.ts`
+- 2026-09-03 [CODE] `src/{pages/AvatarPage.tsx,components/avatar/AvatarGeminiVoiceSelector.tsx}`
 - 2026-09-01 [CODE] `convex/whiteLabel/`
 - 2026-09-01 [CODE] `convex/{schema.ts,authUtils.ts,teamHelpers.ts}`
 - 2026-09-01 [CODE] `src/{pages/PartnerPage.tsx,pages/WorkspacePage.tsx,components/partner/}`
@@ -82,3 +87,4 @@
 - 2026-09-03 [TOOL] Extra-bold neutral subtitle styling passed 67 Avatar-focused tests, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Speaking-status removal passed 67 Avatar-focused tests, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Subtitle-overlay removal passed 68 Avatar-focused tests, targeted ESLint, diff validation, and the Node v22 production build.
+- 2026-09-03 [TOOL] Gemini voice and prompt changes passed 72 Avatar-focused tests, Convex TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
