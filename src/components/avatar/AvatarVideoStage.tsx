@@ -140,16 +140,17 @@ export function AvatarVideoStage({
         </div>
       ) : starting ? null : (
         <div className="pointer-events-none absolute inset-0 z-30">
-          <div className="pointer-events-auto absolute bottom-6 left-1/2 -translate-x-1/2 rounded-xl bg-gradient-to-r from-emerald-800 via-emerald-600 to-emerald-300 p-1 shadow-lg">
-            <Button
-              variant="secondary"
-              className="min-w-36 min-h-12 border-0 bg-white text-zinc-950 shadow-none hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
-              disabled={starting}
-              onClick={() => void start()}
-            >
-              Start Chat
-            </Button>
-          </div>
+          <Button
+            variant="secondary"
+            className="pointer-events-auto absolute bottom-6 left-1/2 min-w-36 min-h-12 -translate-x-1/2 rounded-4xl border-4 border-transparent bg-white bg-clip-padding text-zinc-950 shadow-lg hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+            style={{
+              background: 'linear-gradient(#fff, #fff) padding-box, linear-gradient(to right, #166534, #86efac) border-box',
+            }}
+            disabled={starting}
+            onClick={() => void start()}
+          >
+            Start Chat
+          </Button>
         </div>
       )}
     </section>
