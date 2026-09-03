@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-03 [CODE] Avatar settings now support manager-uploaded R2 cover images, and dashboard/public previews show a centered “Connecting...” overlay while a LiveAvatar session starts. Unshipped.
 - 2026-09-03 [CODE] Gemini Live Avatar connector remains implemented on `codex/gemini-live-connector`: managers save a provider context, LITE tokens use server-only `HEYGEN_GEMINI_SECRET_ID`, and browser turns bypass KiloBot. Focused tests and the Node 22 build passed before this merge; sandbox verification awaits a configured local Convex deployment.
 - 2026-09-03 [CODE] Avatar End now records `session.stopped` for both active sessions and canceled in-flight starts; event persistence strips request-only fields so Convex can finalize the session and release its capacity slot. Unshipped.
 - 2026-09-03 [CODE] Avatar context editing now presents the prompt field as “Instructions” without the extra bordered outer container. Unshipped.
@@ -29,6 +30,7 @@
 
 # Decisions
 
+- 2026-09-03 [USER] D778 ACTIVE: Avatar cover images are stored in R2 under agent-scoped keys and served through the configured media CDN URL.
 - 2026-09-02 [USER] D757 ACTIVE: Gemini credentials are externally registered with LiveAvatar. The app reads only opaque `HEYGEN_GEMINI_SECRET_ID` server-side and never persists or exposes the Gemini API key.
 - 2026-08-19 [USER] D734 ACTIVE: white-label state is isolated in dedicated partner tables; existing user, team, Stripe, and admin-session records change only through ID relationships.
 - 2026-08-19 [USER] D735 ACTIVE: shared plan limits take effect immediately; only the new monthly allowance starts at the organization’s next credit cycle.
@@ -47,6 +49,7 @@
 # Done (recent)
 
 - 2026-09-02 [CODE] Added LiveAvatar Gemini connector session tokens, manager-editable provider context, and direct connector-owned Avatar conversations; unshipped.
+- 2026-09-03 [CODE] Added R2-backed Avatar cover image upload, replacement, removal, and preview handoff plus a loading overlay during session startup; unshipped.
 - 2026-09-03 [CODE] Added the Gemini Live voice catalog and manager voice selector, persisted the choice, and embedded Avatar opening text into the provider system prompt; unshipped.
 - 2026-09-03 [CODE] Refined the Voice selector order, label, and typography for clearer Avatar settings.
 - 2026-09-03 [CODE] Flattened the Avatar settings labels and removed the redundant Voice and Context headings.
@@ -77,6 +80,7 @@
 # Working set
 
 - 2026-09-03 [CODE] `convex/{avatar.ts,avatarContext.ts,avatarCore.ts,avatarProvider.ts,avatarSession.ts,avatarLifecycle.ts,schema.ts}`
+- 2026-09-03 [CODE] `convex/{avatarCover.ts,avatarSessionCapacity.ts,media/r2.ts}` and `src/components/avatar/AvatarCoverImageEditor.tsx`
 - 2026-09-03 [CODE] `shared/geminiLiveVoices.ts`
 - 2026-09-03 [CODE] `src/{pages/AvatarPage.tsx,pages/AvatarCreatePage.tsx,components/avatar/{AvatarLiveLink.tsx,AvatarGeminiVoiceSelector.tsx,avatarOrientation.ts},lib/avatarEmbed.ts}`
 - 2026-09-01 [CODE] `convex/whiteLabel/`
@@ -120,3 +124,4 @@
 - 2026-09-03 [TOOL] Live-link heading spacing refinement passed the focused Live-link and Avatar overview tests plus diff validation.
 - 2026-09-03 [TOOL] Avatar idle-timeout coverage passed 87 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Avatar idle-countdown coverage passed 89 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
+- 2026-09-03 [TOOL] R2 cover-image and connecting-overlay coverage passed 94 focused Avatar tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.

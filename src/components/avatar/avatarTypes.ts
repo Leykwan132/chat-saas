@@ -22,6 +22,7 @@ export type AvatarConfiguration = {
   enabled: boolean;
   avatarName?: string;
   avatarPreviewUrl?: string;
+  coverImageUrl?: string;
   voiceName?: string;
   voiceLanguage?: string;
   voiceGender?: string;

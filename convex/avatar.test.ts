@@ -25,6 +25,17 @@ test('dashboard Avatar configuration never exposes provider ids', () => {
   expect(result).not.toHaveProperty('voiceId');
 });
 
+test('dashboard Avatar configuration exposes the public cover image URL', () => {
+  const result = dashboardAvatarConfiguration({
+    publicKey: 'avatar_public',
+    enabled: true,
+    language: 'en',
+    updatedAt: 1,
+  } as never, 'https://cdn.example.com/avatar-cover.png');
+
+  expect(result.coverImageUrl).toBe('https://cdn.example.com/avatar-cover.png');
+});
+
 test('persists a selected Gemini Live voice for an Avatar manager', async () => {
   const t = convexTest(schema, modules);
   const agentId = await createAgent(t, 'voice_owner');

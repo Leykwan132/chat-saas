@@ -60,7 +60,10 @@ export async function generateAvatarPublicKey(ctx: MutationCtx) {
   throw new Error('Could not generate Avatar key');
 }
 
-export function dashboardAvatarConfiguration(configuration: Doc<'avatarConfigurations'>) {
+export function dashboardAvatarConfiguration(
+  configuration: Doc<'avatarConfigurations'>,
+  coverImageUrl?: string,
+) {
   return {
     publicKey: configuration.publicKey,
     configured: Boolean(
@@ -71,6 +74,7 @@ export function dashboardAvatarConfiguration(configuration: Doc<'avatarConfigura
     enabled: configuration.enabled,
     avatarName: configuration.avatarName,
     avatarPreviewUrl: configuration.avatarPreviewUrl,
+    ...(coverImageUrl ? { coverImageUrl } : {}),
     voiceName: configuration.voiceName,
     voiceLanguage: configuration.voiceLanguage,
     voiceGender: configuration.voiceGender,

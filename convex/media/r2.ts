@@ -53,6 +53,19 @@ export function generateInboxMediaKey(orgId: string, mimeType: string): string {
   const id = crypto.randomUUID();
   return `inbox/${orgId}/${id}.${ext}`;
 }
+
+export function avatarCoverKeyPrefix(orgId: string, agentId: string): string {
+  return `avatar-covers/${orgId || "personal"}/${agentId}/`;
+}
+
+export function generateAvatarCoverKey(
+  orgId: string,
+  agentId: string,
+  mimeType: string,
+): string {
+  const ext = MIME_TO_EXT[mimeType] ?? "bin";
+  return `${avatarCoverKeyPrefix(orgId, agentId)}${crypto.randomUUID()}.${ext}`;
+}
 // ─── Knowledge-base image helpers ─────────────────────────
 
 function sanitizePathSegment(value: string): string {

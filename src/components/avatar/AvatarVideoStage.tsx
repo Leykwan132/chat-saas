@@ -14,10 +14,12 @@ import {
 export function AvatarVideoStage({
   publicKey,
   previewUrl,
+  coverImageUrl,
   fullScreen = false,
 }: {
   publicKey: string;
   previewUrl?: string;
+  coverImageUrl?: string;
   fullScreen?: boolean;
 }) {
   const {
@@ -44,9 +46,24 @@ export function AvatarVideoStage({
       />
       {!active ? (
         <AvatarPreviewMedia
-          previewUrl={previewUrl}
-          className="absolute inset-0 size-full rounded-none [&_img]:object-contain"
+          previewUrl={coverImageUrl ?? previewUrl}
+          className={cn(
+            'absolute inset-0 size-full rounded-none',
+            coverImageUrl ? '[&_img]:object-cover' : '[&_img]:object-contain',
+          )}
         />
+      ) : null}
+      {starting ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="absolute inset-0 z-20 flex items-center justify-center bg-black/45"
+        >
+          <div className="flex flex-col items-center gap-3 text-white">
+            <Spinner className="size-8" />
+            <span className="text-sm font-medium">Connecting...</span>
+          </div>
+        </div>
       ) : null}
       {active && inactivityCountdown !== null ? (
         <p
@@ -72,15 +89,14 @@ export function AvatarVideoStage({
             <PhoneOff />
           </StageControl>
         </div>
-      ) : (
+      ) : starting ? null : (
         <Button
           variant="secondary"
           className="absolute bottom-6 left-1/2 min-w-28 -translate-x-1/2 shadow-lg"
           disabled={starting}
           onClick={() => void start()}
         >
-          {starting ? <Spinner /> : null}
-          {starting ? 'Starting…' : 'Start Chat'}
+          Start Chat
         </Button>
       )}
     </section>

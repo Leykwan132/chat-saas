@@ -22,11 +22,13 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('>Preview</h2>');
     expect(pageSource).toContain('<AvatarVideoStage');
     expect(pageSource).toContain('publicKey={configuration.publicKey}');
+    expect(pageSource).toContain('coverImageUrl={configuration.coverImageUrl}');
     expect(pageSource).toContain('<AvatarLiveLink publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('<AvatarEmbedCard publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('<section className="flex min-w-0 flex-col gap-4">\n              <AvatarEmbedCard publicKey={configuration.publicKey} />\n              <AvatarLiveLink publicKey={configuration.publicKey} />');
     expect(pageSource.indexOf('<AvatarEmbedCard publicKey={configuration.publicKey} />')).toBeLessThan(pageSource.indexOf('<AvatarLiveLink publicKey={configuration.publicKey} />'));
     expect(pageSource).toContain('<AvatarGeminiVoiceSelector');
+    expect(pageSource).toContain('<AvatarCoverImageEditor');
     expect(pageSource).toContain('geminiVoice={configuration.geminiVoice}');
     expect(pageSource.indexOf('<AvatarContextEditor')).toBeLessThan(pageSource.indexOf('<AvatarGeminiVoiceSelector'));
     expect(pageSource).not.toContain('updateSettings');
@@ -34,6 +36,12 @@ describe('Avatar configured overview', () => {
     expect(pageSource).not.toContain('onEnabledChange');
     expect(stageSource).not.toContain('embedUrl');
     expect(stageSource).not.toContain('<iframe');
+  });
+
+  it('offers an R2-backed cover image editor', () => {
+    expect(pageSource).toContain("import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';");
+    expect(pageSource).toContain('agentId={typedAgentId}');
+    expect(pageSource).toContain('coverImageUrl={configuration.coverImageUrl}');
   });
 
   it('offers a copyable public link and a new-tab preview', () => {

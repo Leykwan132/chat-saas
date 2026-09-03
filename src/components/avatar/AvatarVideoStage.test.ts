@@ -46,4 +46,12 @@ describe('Avatar video stage', () => {
     expect(source).toContain('absolute left-1/2 top-6 z-10 -translate-x-1/2');
     expect(source).toContain('aria-live="polite"');
   });
+
+  it('uses the configured cover image and shows a connecting overlay', () => {
+    expect(source).toContain('coverImageUrl');
+    expect(source).toContain('previewUrl={coverImageUrl ?? previewUrl}');
+    expect(source).toContain('Connecting...');
+    expect(source).toContain('absolute inset-0 z-20 flex items-center justify-center');
+    expect(source).toContain('bg-black/45');
+  });
 });

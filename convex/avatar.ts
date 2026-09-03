@@ -4,10 +4,7 @@ import {
   internalQuery,
   mutation,
   query,
-  type MutationCtx,
-  type QueryCtx,
 } from './_generated/server';
-import type { Id } from './_generated/dataModel';
 import {
   dashboardAvatarConfiguration,
   generateAvatarPublicKey,
@@ -17,35 +14,23 @@ import {
 } from './avatarCore';
 import {
   MAX_AVATAR_CONCURRENT_SESSIONS,
-  MAX_AVATAR_SESSION_DURATION_SECONDS,
 } from './avatarProvider';
 import {
   DEFAULT_GEMINI_LIVE_VOICE,
   isGeminiLiveVoice,
 } from '../shared/geminiLiveVoices';
-async function countActiveSessions(
-  ctx: QueryCtx | MutationCtx,
-  configurationId: Id<'avatarConfigurations'>,
-) {
-  const recent = await ctx.db
-    .query('avatarSessions')
-    .withIndex('by_configurationId_and_startedAt', (q) => q
-      .eq('configurationId', configurationId)
-      .gte('startedAt', Date.now() - MAX_AVATAR_SESSION_DURATION_SECONDS * 1000))
-    .order('desc')
-    .take(100);
-  const now = Date.now();
-  return recent.filter((session) => {
-    const durationSeconds = session.isSandbox ? 90 : MAX_AVATAR_SESSION_DURATION_SECONDS;
-    return session.status === 'active' && session.startedAt >= now - durationSeconds * 1000;
-  }).length;
-}
+import { getPublicMediaUrl } from './media/r2';
+import { countActiveAvatarSessions } from './avatarSessionCapacity';
 export const getForAgent = query({
   args: { agentId: v.id('agents') },
   handler: async (ctx, args) => {
     const { channelOrgId, userId } = await getAuthorizedAvatarAgent(ctx, args.agentId);
     const configuration = await getWorkspaceAvatarConfiguration(ctx, channelOrgId, userId);
-    return configuration ? dashboardAvatarConfiguration(configuration) : null;
+    if (!configuration) return null;
+    const coverImageUrl = configuration.coverImageR2Key
+      ? getPublicMediaUrl(configuration.coverImageR2Key)
+      : undefined;
+    return dashboardAvatarConfiguration(configuration, coverImageUrl);
   },
 });
 
@@ -234,6 +219,7 @@ export const publicGetConfig = query({
       publicKey: v.string(),
       language: v.string(),
       avatarPreviewUrl: v.optional(v.string()),
+      coverImageUrl: v.optional(v.string()),
     }),
   ),
   handler: async (ctx, args) => {
@@ -248,6 +234,9 @@ export const publicGetConfig = query({
       ...(configuration.avatarPreviewUrl
         ? { avatarPreviewUrl: configuration.avatarPreviewUrl }
         : {}),
+      ...(configuration.coverImageR2Key
+        ? { coverImageUrl: getPublicMediaUrl(configuration.coverImageR2Key) }
+        : {}),
     };
   },
 });
@@ -256,7 +245,7 @@ export const assertSessionCapacity = internalQuery({
   args: { publicKey: v.string() },
   handler: async (ctx, args) => {
     const configuration = await getAvatarConfigurationByPublicKey(ctx, args.publicKey);
-    const activeCount = await countActiveSessions(ctx, configuration._id);
+    const activeCount = await countActiveAvatarSessions(ctx, configuration._id);
     if (activeCount >= MAX_AVATAR_CONCURRENT_SESSIONS) {
       throw new Error('Avatar concurrent session limit reached');
     }
@@ -282,7 +271,7 @@ export const registerSession = internalMutation({
       .unique();
     if (existing) return existing._id;
     const configuration = await getAvatarConfigurationByPublicKey(ctx, args.publicKey);
-    const activeCount = await countActiveSessions(ctx, configuration._id);
+    const activeCount = await countActiveAvatarSessions(ctx, configuration._id);
     if (activeCount >= MAX_AVATAR_CONCURRENT_SESSIONS) {
       throw new Error('Avatar concurrent session limit reached');
     }
