@@ -33,6 +33,10 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('<AvatarGeminiVoiceSelector');
     expect(pageSource).toContain('<AvatarCoverImageEditor');
     expect(pageSource).toContain('<AvatarBackgroundEditor');
+    expect(pageSource).toContain("import { Separator } from '@/components/ui/separator';");
+    expect(pageSource).toContain('lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]');
+    expect(pageSource).toContain('<Separator orientation="vertical" className="hidden lg:block" />');
+    expect(pageSource).toContain('<Separator className="lg:hidden" />');
     expect(pageSource).toContain('geminiVoice={configuration.geminiVoice}');
     expect(pageSource).toContain('voiceSlot={<AvatarGeminiVoiceSelector');
     expect(pageSource.indexOf('<AvatarContextEditor')).toBeLessThan(pageSource.indexOf('<AvatarGeminiVoiceSelector'));
@@ -50,7 +54,7 @@ describe('Avatar configured overview', () => {
     );
     expect(coverEditorSource).toContain('api.avatarCover.generateCoverUploadUrl');
     expect(coverEditorSource).toContain('api.avatarCover.saveCoverImage');
-    expect(coverEditorSource).toContain('api.avatarCover.removeCoverImage');
+    expect(coverEditorSource).toContain('Click to replace');
     expect(pageSource).toContain("import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';");
   });
 

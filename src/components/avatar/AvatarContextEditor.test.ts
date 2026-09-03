@@ -11,7 +11,8 @@ test('provides a manager context editor with explicit save states', () => {
   expect(source).not.toContain('Instructions Gemini uses for every Avatar conversation.');
   expect(source).not.toContain('>Context</h2>');
   expect(source).toContain('htmlFor="avatar-context-opening" className="text-base">Opening text</Label>');
-  expect(source).toContain('grid gap-4 sm:grid-cols-2');
+  expect(source).toContain('grid gap-4');
+  expect(source).not.toContain('sm:grid-cols-2');
   expect(source).toContain('voiceSlot?: ReactNode');
   expect(source.indexOf('avatar-context-opening')).toBeLessThan(source.indexOf('avatar-context-prompt'));
   expect(source).toContain('Save context');

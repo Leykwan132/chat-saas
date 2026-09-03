@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Film, ImagePlus, Loader2, Trash2 } from 'lucide-react';
+import { ImagePlus } from 'lucide-react';
 import { useAction, useMutation } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { uploadWithProgress } from '@/lib/r2Upload';
@@ -29,7 +28,6 @@ export function AvatarBackgroundEditor({
 }) {
   const generateUploadUrl = useMutation(api.avatarCover.generateBackgroundUploadUrl);
   const saveBackground = useAction(api.avatarCover.saveBackground);
-  const removeBackground = useMutation(api.avatarCover.removeBackground);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -58,58 +56,49 @@ export function AvatarBackgroundEditor({
     }
   };
 
-  const remove = async () => {
-    setUploading(true);
-    setError(undefined);
-    try {
-      await removeBackground({ agentId });
-      toast.success('Avatar background removed');
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not remove background');
-    } finally {
-      setUploading(false);
-    }
-  };
-
   return (
-    <section className="flex w-fit max-w-full flex-col gap-3 rounded-xl border p-3">
+    <section className="flex w-full flex-col gap-2">
       <Label htmlFor="avatar-background" className="text-base">Background</Label>
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative h-20 w-36 overflow-hidden rounded-lg bg-muted">
-          {backgroundUrl ? (
-            backgroundType === 'video' ? (
-              <video src={backgroundUrl} autoPlay loop muted playsInline className="size-full object-cover" />
-            ) : (
-              <img src={backgroundUrl} alt="Avatar background" className="size-full object-cover" />
-            )
+      <label
+        htmlFor="avatar-background"
+        data-disabled={uploading}
+        className="group relative flex h-32 w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-border bg-muted transition-colors hover:border-foreground/50 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-60"
+      >
+        <input
+          id="avatar-background"
+          type="file"
+          accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
+          className="sr-only"
+          disabled={uploading}
+          onChange={(event) => {
+            void selectFile(event.currentTarget.files?.[0]);
+            event.currentTarget.value = '';
+          }}
+        />
+        {backgroundUrl ? (
+          backgroundType === 'video' ? (
+            <video src={backgroundUrl} autoPlay loop muted playsInline className="size-full object-cover" />
           ) : (
-            <div className="flex size-full items-center justify-center text-muted-foreground"><ImagePlus className="size-6" /></div>
-          )}
-          {uploading ? <div className="absolute inset-0 flex items-center justify-center bg-background/65"><Loader2 className="size-6 animate-spin" /></div> : null}
-        </div>
-        <div className="flex items-center gap-2">
-          <label data-disabled={uploading} className="inline-flex cursor-pointer items-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50">
-            <input
-              id="avatar-background"
-              type="file"
-              accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"
-              className="sr-only"
-              disabled={uploading}
-              onChange={(event) => {
-                void selectFile(event.currentTarget.files?.[0]);
-                event.currentTarget.value = '';
-              }}
-            />
-            {uploading ? <Spinner className="mr-2" /> : backgroundType === 'video' ? <Film className="mr-2 size-4" /> : null}
-            {backgroundUrl ? 'Replace background' : 'Choose background'}
-          </label>
-          {backgroundUrl ? (
-            <Button type="button" variant="ghost" size="icon" aria-label="Remove background" disabled={uploading} onClick={() => void remove()}>
-              <Trash2 className="size-4 text-destructive" />
-            </Button>
-          ) : null}
-        </div>
-      </div>
+            <img src={backgroundUrl} alt="Avatar background" className="size-full object-cover" />
+          )
+        ) : (
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <ImagePlus className="size-7" />
+            <span className="text-sm font-medium">Upload background</span>
+          </div>
+        )}
+        {backgroundUrl && !uploading ? (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+            Click to replace
+          </div>
+        ) : null}
+        {uploading ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/65">
+            <Spinner className="size-6" />
+            <span className="text-xs font-medium">Uploading…</span>
+          </div>
+        ) : null}
+      </label>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </section>
   );

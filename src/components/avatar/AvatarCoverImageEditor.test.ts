@@ -12,17 +12,19 @@ describe('Avatar cover image editor', () => {
     expect(source).toContain('accept="image/png,image/jpeg,image/webp"');
   });
 
-  it('supports replacing and removing the cover image', () => {
-    expect(source).toContain('api.avatarCover.removeCoverImage');
-    expect(source).toContain('Remove cover image');
+  it('uses one upload tile for the cover image', () => {
     expect(source).toContain('Cover image');
     expect(source).toContain('object-cover');
+    expect(source).toContain('Click to replace');
+    expect(source).toContain('group-hover:opacity-100');
+    expect(source).not.toContain('removeCoverImage');
+    expect(source).not.toContain('Trash2');
   });
 
   it('keeps the cover controls compact and title-only', () => {
     expect(source).toContain('className="text-base"');
-    expect(source).toContain('h-20 w-36');
-    expect(source).toContain('w-fit max-w-full');
+    expect(source).toContain('h-32 w-full');
+    expect(source).not.toContain('w-fit max-w-full');
     expect(source).not.toContain('Shown before a visitor starts a chat.');
     expect(source).not.toContain('up to 5 MB.');
   });

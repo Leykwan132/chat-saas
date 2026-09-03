@@ -62,7 +62,7 @@ export function AvatarContextEditor({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4">
         <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-opening" className="text-base">Opening text</Label><Input id="avatar-context-opening" value={openingText} onChange={(event) => updateOpeningText(event.target.value)} placeholder="Hello, how can I help?" /></div>
         {voiceSlot}
       </div>

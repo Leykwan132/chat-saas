@@ -14,6 +14,7 @@ import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
@@ -64,14 +65,6 @@ export default function AvatarPage() {
                   backgroundUrl={configuration.backgroundUrl}
                   backgroundType={configuration.backgroundType}
                 />
-                {canManage ? <AvatarCoverImageEditor agentId={typedAgentId} coverImageUrl={configuration.coverImageUrl} /> : null}
-                {canManage ? (
-                  <AvatarBackgroundEditor
-                    agentId={typedAgentId}
-                    backgroundUrl={configuration.backgroundUrl}
-                    backgroundType={configuration.backgroundType}
-                  />
-                ) : null}
               </div>
             </section>
             <section className="flex min-w-0 flex-col gap-4">
@@ -80,9 +73,15 @@ export default function AvatarPage() {
             </section>
           </div>
           {canManage ? (
-            <>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
               <AvatarContextEditor agentId={typedAgentId} prompt={configuration.providerContextPrompt ?? ''} openingText={configuration.providerContextOpeningText ?? ''} voiceSlot={<AvatarGeminiVoiceSelector agentId={typedAgentId} geminiVoice={configuration.geminiVoice} />} />
-            </>
+              <Separator className="lg:hidden" />
+              <Separator orientation="vertical" className="hidden lg:block" />
+              <div className="flex min-w-0 flex-col gap-6">
+                <AvatarCoverImageEditor agentId={typedAgentId} coverImageUrl={configuration.coverImageUrl} />
+                <AvatarBackgroundEditor agentId={typedAgentId} backgroundUrl={configuration.backgroundUrl} backgroundType={configuration.backgroundType} />
+              </div>
+            </div>
           ) : null}
         </>
       ) : (

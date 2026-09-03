@@ -12,10 +12,12 @@ describe('Avatar background editor', () => {
     expect(source).toContain('accept="image/png,image/jpeg,image/webp,video/mp4,video/webm"');
   });
 
-  it('supports replacing and removing the configured background', () => {
-    expect(source).toContain('api.avatarCover.removeBackground');
-    expect(source).toContain('Remove background');
+  it('uses one upload tile for the configured background', () => {
     expect(source).toContain('Background');
     expect(source).toContain('backgroundType');
+    expect(source).toContain('Click to replace');
+    expect(source).toContain('group-hover:opacity-100');
+    expect(source).not.toContain('removeBackground');
+    expect(source).not.toContain('Trash2');
   });
 });
