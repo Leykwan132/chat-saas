@@ -62,8 +62,11 @@ export class AvatarSessionRuntime {
     this.publish({ ...initialSnapshot, phase: 'starting' });
     try {
       const access = await this.services.begin();
-      if (generation !== this.generation) return;
       const { sessionToken, ...identity } = access;
+      if (generation !== this.generation) {
+        await this.recordClientStopped(identity);
+        return;
+      }
       const client = this.services.createClient(sessionToken);
       this.client = client;
       this.publish({ ...this.snapshot, identity });
@@ -76,12 +79,21 @@ export class AvatarSessionRuntime {
 
   stop = async () => {
     if (this.snapshot.phase === 'idle' || this.snapshot.phase === 'ended') return;
+    const identity = this.snapshot.identity;
+    const shouldRecordStop = Boolean(identity) && this.snapshot.phase !== 'error';
     if (this.snapshot.phase !== 'error') {
       this.publish({ ...this.snapshot, phase: 'stopping' });
     }
     ++this.generation;
     try {
-      await this.cleanup();
+      const results = await Promise.allSettled([
+        this.cleanup(),
+        shouldRecordStop && identity
+          ? this.recordClientStopped(identity)
+          : Promise.resolve(),
+      ]);
+      const failure = results.find((result) => result.status === 'rejected');
+      if (failure?.status === 'rejected') throw failure.reason;
       this.publish({
         ...this.snapshot,
         phase: 'ended',
@@ -107,7 +119,7 @@ export class AvatarSessionRuntime {
     this.publish({ ...this.snapshot, muted: false });
   };
 
-  syncMessages = (_messages: AvatarSessionMessage[]) => {};
+  syncMessages = (messages: AvatarSessionMessage[]) => { void messages; };
 
   destroy = async () => this.stop();
   private handlers(generation: number): AvatarSessionHandlers {
@@ -193,6 +205,15 @@ export class AvatarSessionRuntime {
         : Promise.resolve(),
     ]);
     this.publish({ ...this.snapshot, phase: 'error', error: message });
+  }
+
+  private recordClientStopped(identity: NonNullable<AvatarSessionSnapshot['identity']>) {
+    return this.services.recordEvent(identity, {
+      eventId: crypto.randomUUID(),
+      sourceEventId: null,
+      eventType: 'session.stopped',
+      endReason: 'client_ended',
+    });
   }
 
   private async cleanup() {

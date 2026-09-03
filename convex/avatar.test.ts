@@ -216,6 +216,45 @@ test('Avatar allows at most two concurrent sessions per workspace', async () => 
   })).rejects.toThrow('concurrent');
 });
 
+test('ending an Avatar session releases its active session slot', async () => {
+  const t = convexTest(schema, modules);
+  const agentId = await createAgent(t, 'ending_owner');
+  const setup = await t.withIdentity({ subject: 'ending_owner' }).mutation(
+    api.avatar.ensureForAgent,
+    { agentId },
+  );
+  await enableAvatarConfiguration(t, setup.publicKey);
+
+  await t.mutation(internal.avatar.registerSession, {
+    publicKey: setup.publicKey,
+    visitorId: 'visitor-1',
+    sessionId: 'session-1',
+    isSandbox: false,
+  });
+
+  await t.mutation(api.avatarConversation.recordEvent, {
+    publicKey: setup.publicKey,
+    visitorId: 'visitor-1',
+    sessionId: 'session-1',
+    eventId: 'event-stop-1',
+    eventType: 'session.stopped',
+    endReason: 'client_ended',
+  });
+
+  const session = await t.run(async (ctx) => await ctx.db
+    .query('avatarSessions')
+    .withIndex('by_sessionId', (q) => q.eq('sessionId', 'session-1'))
+    .unique());
+  expect(session?.status).toBe('stopped');
+
+  await expect(t.mutation(internal.avatar.registerSession, {
+    publicKey: setup.publicKey,
+    visitorId: 'visitor-2',
+    sessionId: 'session-2',
+    isSandbox: false,
+  })).resolves.toBeTruthy();
+});
+
 test('disabled Avatar embeds resolve as unavailable', async () => {
   const t = convexTest(schema, modules);
   const agentId = await createAgent(t, 'disabled_owner');

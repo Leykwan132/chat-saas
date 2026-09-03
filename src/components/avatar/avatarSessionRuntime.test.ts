@@ -119,6 +119,7 @@ function createRuntimeHarness(options?: {
     options?.voiceStartError,
   );
   let beginCalls = 0;
+  const recordEvent = vi.fn(async () => undefined);
   const runtime = new AvatarSessionRuntime({
     begin: async () => {
       beginCalls += 1;
@@ -130,7 +131,7 @@ function createRuntimeHarness(options?: {
       };
     },
     receiveTranscript: vi.fn(async () => undefined),
-    recordEvent: vi.fn(async () => undefined),
+    recordEvent,
     createClient: () => client,
     splitSpeech: (text) => text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((part) => part.trim()) ?? [],
     now: () => 100,
@@ -138,6 +139,7 @@ function createRuntimeHarness(options?: {
   return {
     runtime,
     client,
+    recordEvent,
     get beginCalls() {
       return beginCalls;
     },
@@ -176,10 +178,59 @@ describe('AvatarSessionRuntime', () => {
     expect(harness.client.muteCalls).toBe(1);
     expect(harness.client.unmuteCalls).toBe(1);
     expect(harness.client.stopCalls).toBe(1);
+    expect(harness.recordEvent).toHaveBeenCalledTimes(1);
     expect(harness.runtime.getSnapshot().phase).toBe('ended');
   });
 
-  it('interrupts stale speech when the user starts another turn', async () => {
+  it('records a stopped session when the user ends the call', async () => {
+    const harness = await createActiveRuntimeHarness();
+
+    await harness.runtime.stop();
+
+    expect(harness.recordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: 'session-1' }),
+      expect.objectContaining({
+        eventType: 'session.stopped',
+        endReason: 'client_ended',
+      }),
+    );
+  });
+
+  it('records a stopped session when the user ends while access is loading', async () => {
+    let resolveBegin!: (access: {
+      publicKey: string;
+      visitorId: string;
+      sessionId: string;
+      sessionToken: string;
+    }) => void;
+    const recordEvent = vi.fn(async () => undefined);
+    const runtime = new AvatarSessionRuntime({
+      begin: () => new Promise((resolve) => { resolveBegin = resolve; }),
+      receiveTranscript: vi.fn(async () => undefined),
+      recordEvent,
+      createClient: () => new FakeAvatarSessionClient(),
+      splitSpeech: () => [],
+      now: () => 100,
+    });
+    const start = runtime.start();
+
+    await settle();
+    await runtime.stop();
+    resolveBegin({
+      publicKey: 'public-key',
+      visitorId: 'visitor-id',
+      sessionId: 'session-1',
+      sessionToken: 'token-1',
+    });
+    await start;
+
+    expect(recordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: 'session-1' }),
+      expect.objectContaining({ eventType: 'session.stopped', endReason: 'client_ended' }),
+    );
+  });
+
+  it('leaves response speech and interruption handling to the LiveAvatar connector', async () => {
     const harness = await createActiveRuntimeHarness();
     harness.client.emitUserTranscription({
       eventId: 'turn-1',
@@ -189,27 +240,11 @@ describe('AvatarSessionRuntime', () => {
     harness.runtime.syncMessages([
       outgoingMessage('reply-1', 'turn-1', 'First. Second.'),
     ]);
-    expect(harness.client.repeated).toEqual(['First.']);
+    expect(harness.client.repeated).toEqual([]);
     harness.client.emitUserSpeechStarted();
-    expect(harness.client.interruptCalls).toBe(1);
+    expect(harness.client.interruptCalls).toBe(0);
     await harness.client.emitAvatarSpeechEnded();
-    expect(harness.client.repeated).toEqual(['First.']);
-  });
-
-  it('speaks only messages for the active source event in order', async () => {
-    const harness = await createActiveRuntimeHarness();
-    harness.client.emitUserTranscription({
-      eventId: 'turn-2',
-      sourceEventId: null,
-      text: 'Continue',
-    });
-    harness.runtime.syncMessages([
-      outgoingMessage('stale', 'turn-1', 'Ignore me.'),
-      outgoingMessage('current', 'turn-2', 'One. Two.'),
-    ]);
-    expect(harness.client.repeated).toEqual(['One.']);
-    await harness.client.emitAvatarSpeechEnded();
-    expect(harness.client.repeated).toEqual(['One.', 'Two.']);
+    expect(harness.client.repeated).toEqual([]);
   });
 
   it('cleans up and exposes a retryable error when voice start fails', async () => {
