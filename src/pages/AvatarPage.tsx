@@ -60,8 +60,8 @@ export default function AvatarPage() {
               />
             </section>
             <section className="flex min-w-0 flex-col gap-4">
-              <AvatarLiveLink publicKey={configuration.publicKey} />
               <AvatarEmbedCard publicKey={configuration.publicKey} />
+              <AvatarLiveLink publicKey={configuration.publicKey} />
             </section>
           </div>
           {canManage ? (

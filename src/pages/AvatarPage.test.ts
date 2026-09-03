@@ -24,7 +24,8 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('publicKey={configuration.publicKey}');
     expect(pageSource).toContain('<AvatarLiveLink publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('<AvatarEmbedCard publicKey={configuration.publicKey} />');
-    expect(pageSource).toContain('<section className="flex min-w-0 flex-col gap-4">\n              <AvatarLiveLink publicKey={configuration.publicKey} />\n              <AvatarEmbedCard publicKey={configuration.publicKey} />');
+    expect(pageSource).toContain('<section className="flex min-w-0 flex-col gap-4">\n              <AvatarEmbedCard publicKey={configuration.publicKey} />\n              <AvatarLiveLink publicKey={configuration.publicKey} />');
+    expect(pageSource.indexOf('<AvatarEmbedCard publicKey={configuration.publicKey} />')).toBeLessThan(pageSource.indexOf('<AvatarLiveLink publicKey={configuration.publicKey} />'));
     expect(pageSource).toContain('<AvatarGeminiVoiceSelector');
     expect(pageSource).toContain('geminiVoice={configuration.geminiVoice}');
     expect(pageSource.indexOf('<AvatarContextEditor')).toBeLessThan(pageSource.indexOf('<AvatarGeminiVoiceSelector'));
@@ -40,7 +41,9 @@ describe('Avatar configured overview', () => {
     expect(liveLinkSource).toContain('navigator.clipboard.writeText(url)');
     expect(liveLinkSource).toContain('Live link');
     expect(liveLinkSource).toContain('Copy link');
-    expect(liveLinkSource).toContain('Preview');
+    expect(liveLinkSource).toContain('aria-label="Open live link preview"');
+    expect(liveLinkSource).toContain('title="Open live link preview"');
+    expect(liveLinkSource).not.toContain('>Preview</');
     expect(liveLinkSource).toContain('target="_blank"');
     expect(liveLinkSource).toContain('rel="noreferrer"');
   });

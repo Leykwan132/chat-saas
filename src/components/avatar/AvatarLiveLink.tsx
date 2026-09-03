@@ -27,10 +27,16 @@ export function AvatarLiveLink({ publicKey }: { publicKey: string }) {
             <Copy data-icon="inline-start" />
             Copy link
           </Button>
-          <Button type="button" variant="outline" size="sm" asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Open live link preview"
+            title="Open live link preview"
+            asChild
+          >
             <a href={url} target="_blank" rel="noreferrer">
-              <ExternalLink data-icon="inline-start" />
-              Preview
+              <ExternalLink />
             </a>
           </Button>
         </div>

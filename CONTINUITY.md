@@ -16,6 +16,7 @@
 - 2026-09-03 [CODE] Configured Avatar overviews now expose a copyable public Live link and a new-tab Preview action below the video preview. Unshipped.
 - 2026-09-03 [CODE] Avatar public links now resolve to the active localhost origin during local testing and the production host elsewhere. Unshipped.
 - 2026-09-03 [CODE] Public Avatar embeds now fill the dynamic viewport on mobile and desktop, while the dashboard Live link sits above the website embed panel. Unshipped.
+- 2026-09-03 [CODE] Supersedes the previous Live-link placement: the dashboard now shows it below the embed code with a text copy action and icon-only preview action. Unshipped.
 - 2026-09-03 [CODE] Removed the explanatory sentence beneath the Avatar Context heading for a cleaner settings layout. Unshipped.
 - 2026-09-01 [USER] Goal: test the white-label Partner Programme locally on `codex/white-label-partner-portal`.
 - 2026-09-01 [TOOL] Now: merging current `origin/main` into the white-label branch; concurrent Overview-test and Workspace-page edits are being reconciled without removing partner access controls.
