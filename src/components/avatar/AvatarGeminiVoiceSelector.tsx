@@ -47,10 +47,6 @@ export function AvatarGeminiVoiceSelector({
 
   return (
     <section className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-base font-semibold">Voice</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Choose the voice Gemini uses during live Avatar conversations.</p>
-      </div>
       <div className="flex max-w-sm flex-col gap-2">
         <Label htmlFor="avatar-gemini-voice" className="text-base">Voice</Label>
         <Select value={voice} onValueChange={setDraftVoice} disabled={saving}>

@@ -9,7 +9,9 @@ test('provides a manager Gemini Live voice selector with all supported options',
   expect(source).toContain('<Select');
   expect(source).toContain('GEMINI_LIVE_VOICES.map');
   expect(source).toContain('Save voice');
-  expect(source).toContain('>Voice</h2>');
+  expect(source).toContain('>Voice</Label>');
   expect(source).toContain('text-base');
   expect(source).toContain('shared/geminiLiveVoices');
+  expect(source).not.toContain('Choose the voice Gemini uses during live Avatar conversations.');
+  expect(source).not.toContain('<h2');
 });
