@@ -87,13 +87,18 @@ export function AvatarVideoStage({
         />
       ) : null}
       {!active ? (
-        <AvatarPreviewMedia
-          previewUrl={coverImageUrl ?? previewUrl}
-          className={cn(
-            'pointer-events-none absolute inset-0 size-full rounded-none',
-            coverImageUrl ? '[&_img]:object-cover' : '[&_img]:object-contain',
-          )}
-        />
+        <>
+          <AvatarPreviewMedia
+            previewUrl={coverImageUrl ?? previewUrl}
+            className={cn(
+              'pointer-events-none absolute inset-0 size-full rounded-none',
+              coverImageUrl ? '[&_img]:object-cover' : '[&_img]:object-contain',
+            )}
+          />
+          {coverImageUrl || previewUrl ? (
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-zinc-950/40" />
+          ) : null}
+        </>
       ) : null}
       {starting ? (
         <div className="absolute inset-0 z-40">
@@ -137,7 +142,7 @@ export function AvatarVideoStage({
         <div className="pointer-events-none absolute inset-0 z-30">
           <Button
             variant="secondary"
-            className="absolute bottom-6 left-1/2 min-w-28 -translate-x-1/2 shadow-lg border-2 border-emerald-500 pointer-events-auto hover:border-emerald-400"
+            className="absolute bottom-6 left-1/2 min-w-28 -translate-x-1/2 shadow-lg border-4 border-emerald-500 pointer-events-auto hover:border-emerald-400"
             disabled={starting}
             onClick={() => void start()}
           >

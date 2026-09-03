@@ -74,6 +74,11 @@ describe('Avatar video stage', () => {
 
   it('shows a top-layer connection overlay and green outlined Start Chat button', () => {
     expect(source).toContain('className="absolute inset-0 z-40"');
-    expect(source).toContain('border-2 border-emerald-500');
+    expect(source).toContain('border-4 border-emerald-500');
+  });
+
+  it('dims the idle cover image so the start control remains the visual focus', () => {
+    expect(source).toContain('bg-zinc-950/40');
+    expect(source).toContain('aria-hidden="true"');
   });
 });
