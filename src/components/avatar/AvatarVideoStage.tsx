@@ -44,13 +44,13 @@ export function AvatarVideoStage({
           className="absolute inset-0 size-full rounded-none [&_img]:object-cover"
         />
       ) : null}
-      {active ? (
+      {active && avatarSpeaking ? (
         <div
           role="status"
           aria-live="polite"
           className="absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1.5 text-xs backdrop-blur"
         >
-          {avatarSpeaking ? 'KiloBot is speaking' : 'Listening'}
+          KiloBot is speaking
         </div>
       ) : null}
       {error ? (
