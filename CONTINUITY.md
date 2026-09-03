@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-04 [CODE] Avatar settings now keep Instructions below the side-by-side section while Cover and Background share a responsive row on the right. Unshipped.
 - 2026-09-04 [CODE] Avatar cover media now accepts MP4/WebM alongside PNG/JPEG/WebP, persists its media type, and previews videos in the editor and idle stage. Unshipped.
 - 2026-09-04 [CODE] Avatar settings now place Opening text and Voice in a stacked left column, Cover image and Background in a stacked right column, and separate them responsively with a center separator. Media uses a single workflow-style preview/upload tile with hover replacement affordance. Unshipped.
 - 2026-09-04 [CODE] Avatar cover images are enabled again: managers can upload them below Preview, and dashboard/public chat stages use them before a session starts. Unshipped.
@@ -63,6 +64,7 @@
 
 # Done (recent)
 
+- 2026-09-04 [CODE] Moved Instructions below the split Avatar settings area and aligned the Cover and Background upload tiles in one responsive row; unshipped.
 - 2026-09-04 [CODE] Extended the R2-backed Avatar cover component for MP4/WebM uploads with video-specific validation, persisted media type, and autoplaying editor/stage previews; unshipped.
 - 2026-09-04 [CODE] Reorganized Avatar settings into separated context and media columns, stacked each field group, and replaced media action buttons with one clickable upload/replace preview tile per asset. Unshipped.
 - 2026-09-04 [CODE] Restored the R2-backed Avatar cover-image editor and passed its configured cover URL to dashboard and public stages as the idle chat image; unshipped.
@@ -123,6 +125,7 @@
 
 # Receipts
 
+- 2026-09-04 [TOOL] Avatar settings layout checks passed 82 focused Avatar/Convex tests, Node v22 targeted ESLint, diff validation, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Video-cover focused tests passed 82 Avatar/Convex tests, Node v22 targeted ESLint, diff validation, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Avatar settings layout and workflow-style media tiles passed 81 Convex/Avatar/page tests, Node v22 targeted ESLint, diff validation, and the production build; Vite reported only the existing metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Cover-image restoration passed 81 Convex/Avatar/page tests, Node v22 targeted ESLint, diff validation, and the production build; Vite reported only the existing metadata placeholder and large-chunk warnings.

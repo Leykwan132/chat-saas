@@ -35,12 +35,11 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('<AvatarCoverImageEditor');
     expect(pageSource).toContain('coverImageType={configuration.coverImageType}');
     expect(pageSource).toContain('<AvatarBackgroundEditor');
-    expect(pageSource).toContain("import { Separator } from '@/components/ui/separator';");
-    expect(pageSource).toContain('lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]');
-    expect(pageSource).toContain('<Separator orientation="vertical" className="hidden lg:block" />');
-    expect(pageSource).toContain('<Separator className="lg:hidden" />');
     expect(pageSource).toContain('geminiVoice={configuration.geminiVoice}');
     expect(pageSource).toContain('voiceSlot={<AvatarGeminiVoiceSelector');
+    expect(pageSource).toContain('mediaSlot={');
+    expect(pageSource).toContain('<AvatarCoverImageEditor');
+    expect(pageSource).toContain('<AvatarBackgroundEditor');
     expect(pageSource.indexOf('<AvatarContextEditor')).toBeLessThan(pageSource.indexOf('<AvatarGeminiVoiceSelector'));
     expect(pageSource).not.toContain('updateSettings');
     expect(pageSource).not.toContain('enabledOverride');
