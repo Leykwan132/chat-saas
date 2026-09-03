@@ -66,11 +66,7 @@ export function dashboardAvatarConfiguration(
 ) {
   return {
     publicKey: configuration.publicKey,
-    configured: Boolean(
-      configuration.avatarId
-      && configuration.voiceId
-      && configuration.language,
-    ),
+    configured: Boolean(configuration.avatarId),
     enabled: configuration.enabled,
     avatarName: configuration.avatarName,
     avatarPreviewUrl: configuration.avatarPreviewUrl,

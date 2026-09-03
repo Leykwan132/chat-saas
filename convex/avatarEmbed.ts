@@ -65,16 +65,24 @@ async function providerRequest<T>(
 }
 
 async function loadCatalog(apiKey: string) {
-  const [avatarPage, voices, languageRecords] = await Promise.all([
-    providerRequest<Paginated<ProviderAvatar>>(apiKey, '/v1/avatars/public?page=1&page_size=100'),
+  const [avatars, voices, languageRecords] = await Promise.all([
+    loadAvatars(apiKey),
     loadVoices(apiKey),
     providerRequest<ProviderLanguage[]>(apiKey, '/v1/languages'),
   ]);
   return {
-    avatars: mapPublicAvatars(avatarPage.results),
+    avatars,
     voices,
     languages: mapSupportedLanguages(languageRecords),
   };
+}
+
+async function loadAvatars(apiKey: string) {
+  const avatarPage = await providerRequest<Paginated<ProviderAvatar>>(
+    apiKey,
+    '/v1/avatars/public?page=1&page_size=100',
+  );
+  return mapPublicAvatars(avatarPage.results);
 }
 
 async function loadVoices(apiKey: string) {
@@ -89,7 +97,7 @@ export const listOptions = action({
   args: { agentId: v.id('agents') },
   handler: async (ctx, args) => {
     await ctx.runQuery(internal.avatar.internalGetSetupContext, { agentId: args.agentId });
-    return await loadCatalog(requireApiKey());
+    return { avatars: await loadAvatars(requireApiKey()) };
   },
 });
 
@@ -112,37 +120,19 @@ export const previewVoice = action({
 });
 
 export const configure = action({
-  args: {
-    agentId: v.id('agents'),
-    avatarId: v.string(),
-    voiceId: v.string(),
-    language: v.string(),
-  },
+  args: { agentId: v.id('agents'), avatarId: v.string() },
   handler: async (ctx, args): Promise<null> => {
     const setup = await ctx.runQuery(internal.avatar.internalGetSetupContext, {
       agentId: args.agentId,
     });
-    const language = args.language.trim();
-    if (!language || language.length > 5) {
-      throw new Error('Choose a valid language');
-    }
-    const catalog = await loadCatalog(requireApiKey());
-    const avatar = catalog.avatars.find((item) => item.id === args.avatarId);
+    const avatars = await loadAvatars(requireApiKey());
+    const avatar = avatars.find((item) => item.id === args.avatarId);
     if (!avatar) throw new Error('Choose an available avatar');
-    const voice = validateLanguageVoiceSelection(catalog, {
-      language,
-      voiceId: args.voiceId,
-    });
     await ctx.runMutation(internal.avatar.saveConfiguration, {
       configurationId: setup.configurationId,
       avatarId: avatar.id,
       avatarName: avatar.name,
       ...(avatar.previewUrl ? { avatarPreviewUrl: avatar.previewUrl } : {}),
-      voiceId: voice.id,
-      voiceName: voice.name,
-      voiceLanguage: voice.language,
-      voiceGender: voice.gender,
-      language,
     });
     return null;
   },

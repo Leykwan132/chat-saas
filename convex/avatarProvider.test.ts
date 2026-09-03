@@ -14,6 +14,8 @@ describe('LiveAvatar provider configuration', () => {
     expect(configureSource).not.toContain("'/v1/contexts'");
     expect(configureSource).not.toContain("'/v2/embeddings'");
     expect(configureSource).not.toContain('buildLiveAvatarEmbedRequest({');
+    expect(configureSource).toContain("args: { agentId: v.id('agents'), avatarId: v.string() }");
+    expect(configureSource).not.toContain('voiceId: v.string(),\n    language: v.string(),');
   });
 
   it('proxies public voice previews without exposing the API key', () => {
@@ -143,6 +145,16 @@ describe('LiveAvatar provider configuration', () => {
     const source = readFileSync(new URL('./avatarEmbed.ts', import.meta.url), 'utf8');
     expect(source).toContain("providerRequest<ProviderLanguage[]>(apiKey, '/v1/languages')");
     expect(source).toContain('languages: mapSupportedLanguages(languageRecords)');
+  });
+
+  it('keeps the Gemini Live setup catalog avatar-only', () => {
+    const source = readFileSync(new URL('./avatarEmbed.ts', import.meta.url), 'utf8');
+    const listOptionsSource = source.slice(
+      source.indexOf('export const listOptions = action'),
+      source.indexOf('export const previewVoice = action'),
+    );
+    expect(listOptionsSource).toContain('loadAvatars(requireApiKey())');
+    expect(listOptionsSource).not.toContain('loadCatalog(requireApiKey())');
   });
 
   it('builds a horizontal sandbox Embed V2 request without context or voice agent ids', () => {

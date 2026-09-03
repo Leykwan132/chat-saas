@@ -25,6 +25,19 @@ test('dashboard Avatar configuration never exposes provider ids', () => {
   expect(result).not.toHaveProperty('voiceId');
 });
 
+test('dashboard Avatar configuration is ready with an avatar alone', () => {
+  const result = dashboardAvatarConfiguration({
+    avatarId: 'avatar-id',
+    avatarName: 'Wayne',
+    publicKey: 'avatar_public',
+    enabled: true,
+    language: 'en',
+    updatedAt: 1,
+  } as never);
+
+  expect(result.configured).toBe(true);
+});
+
 test('dashboard Avatar configuration exposes the public cover image URL', () => {
   const result = dashboardAvatarConfiguration({
     publicKey: 'avatar_public',
@@ -118,11 +131,6 @@ test('validated Avatar metadata configures the Web SDK runtime without an embed'
     avatarId: 'avatar-id',
     avatarName: 'Wayne',
     avatarPreviewUrl: 'https://example.com/avatar.png',
-    voiceId: 'voice-id',
-    voiceName: 'Calm English',
-    voiceLanguage: 'en',
-    voiceGender: 'male',
-    language: 'en',
   });
 
   const configured = await authed.query(api.avatar.getForAgent, { agentId });

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const source = readFileSync(new URL('./AvatarEmbedPage.tsx', import.meta.url), 'utf8');
@@ -109,42 +109,51 @@ describe('Avatar setup', () => {
   });
 
   it('persists Web SDK configuration without requiring Embed V2', () => {
+    const configureSource = avatarEmbedActionSource.slice(
+      avatarEmbedActionSource.indexOf('export const configure = action'),
+      avatarEmbedActionSource.indexOf('export const create = action'),
+    );
     expect(createSource).toContain('api.avatarEmbed.configure');
     expect(createSource).toContain("configuration?.configured ? 'Save changes' : 'Create avatar'");
     expect(createSource).not.toContain('api.avatarEmbed.create');
     expect(createSource).not.toContain('configuration?.embedUrl');
+    expect(createSource).not.toContain('voiceId: selectedVoiceId');
+    expect(createSource).not.toContain('language,');
+    expect(configureSource).toContain("args: { agentId: v.id('agents'), avatarId: v.string() }");
+    expect(configureSource).not.toContain('voiceId: v.string(),\n    language: v.string(),');
     expect(avatarSessionSource).toContain('return { sessionId, sessionToken };');
     expect(avatarSessionSource).not.toContain('return { sessionId, sessionToken, apiKey');
   });
 
-  it('uses a minimal avatar-first flow with direct selection and skeleton loading', () => {
+  it('uses a Gemini Live avatar-only flow with curated catalog sections', () => {
     expect(createSource).not.toContain('Avatar ID');
     expect(createSource).not.toContain('Voice ID');
     expect(createSource).toContain('Choose your avatar');
     expect(createSource).toContain('Select the face visitors will see during a conversation. You can change this later.');
     expect(createSource).toContain('AvatarGridSkeleton');
     expect(createSource).toContain('loadAvatarOrientations');
+    expect(createSource).toContain('filterBackgroundFreeAvatars');
+    expect(createSource).toContain('defaultAvatars');
+    expect(createSource).toContain('title="Default"');
     expect(createSource).toContain('title="Landscape"');
     expect(createSource).toContain('title="Portrait"');
+    expect(createSource.indexOf('title="Default"')).toBeLessThan(createSource.indexOf('title="Landscape"'));
     expect(createSource.indexOf('title="Landscape"')).toBeLessThan(createSource.indexOf('title="Portrait"'));
-    expect(createSource).toContain('VoiceFormSkeleton');
     expect(createSource).toContain('<Skeleton');
-    expect(createSource).toContain('setSelectedAvatarId(avatarId);');
-    expect(createSource).toContain('setStep(2)');
-    expect(createSource).toContain('setStep(1)');
+    expect(createSource).toContain('onSelect={setSelectedAvatarId}');
     expect(createSource).toContain('Create avatar');
-    expect(createSource).toContain('Save changes');
-    expect(createSource).toContain('<CatalogEmpty kind="avatars" />');
+    expect(createSource).toContain('<CatalogEmpty />');
     expect(createSource).toContain('Back to Avatar');
-    expect(createSource).toContain('const selectedAvatar = avatars?.find');
-    expect(createSource).toContain('<SelectedAvatarSummary avatar={selectedAvatar} />');
-    expect(createSource.indexOf('<SelectedAvatarSummary avatar={selectedAvatar} />')).toBeLessThan(createSource.indexOf('Choose your voice'));
-    expect(createSource).toContain('result.languages');
-    expect(createSource.indexOf('avatar-language')).toBeLessThan(createSource.indexOf('<AvatarVoicePickerDialog'));
-    expect(createSource).toContain('<AvatarLanguageFlag');
-    expect(createSource).toContain('<AvatarVoicePickerDialog');
-    expect(createSource).toContain('selectedVoice?.language !== value');
+    expect(createSource).toContain('selectedAvatarId');
     expect(createSource).toContain('<AvatarPreviewMedia');
+    expect(createSource).not.toContain('Choose your voice');
+    expect(createSource).not.toContain('VoiceFormSkeleton');
+    expect(createSource).not.toContain('AvatarVoicePickerDialog');
+    expect(createSource).not.toContain('AvatarLanguageFlag');
+    expect(createSource).not.toContain('avatar-language');
+    expect(createSource).not.toContain('result.languages');
+    expect(createSource).not.toContain('selectedVoiceId');
+    expect(createSource).not.toContain('setStep(');
     expect(createSource).not.toContain('<Input id="avatar-language"');
     expect(createSource).not.toContain('<select id="avatar-voice"');
     expect(createSource).not.toContain("'Preview voice'");
@@ -154,34 +163,26 @@ describe('Avatar setup', () => {
     expect(createSource).not.toContain('>Continue<');
   });
 
-  it('previews compatible voices only inside the picker dialog', () => {
+  it('keeps legacy voice preview code isolated from the Gemini Live setup', () => {
     expect(createSource).not.toContain('api.avatarEmbed.previewVoice');
+    expect(createSource).not.toContain('new Audio(');
     expect(voiceDialogSource).toContain('api.avatarEmbed.previewVoice');
     expect(voiceDialogSource).toContain('new Audio(');
     expect(voiceDialogSource).toContain('voice.language === languageCode');
   });
 
-  it('renders only languages returned by the provider catalog', () => {
-    expect(createSource).toContain('setLanguages(result.languages)');
-    expect(createSource).toContain('languages.map((option) => <SelectItem');
-    expect(createSource).toContain("const [language, setLanguage] = useState('')");
-    expect(createSource).not.toContain("useState('en')");
-    expect(createSource).not.toContain('const languageOptions =');
+  it('loads only the avatar catalog for Gemini Live setup', () => {
+    expect(createSource).toContain('setAvatars(orientedAvatars)');
+    expect(createSource).not.toContain('setVoices');
+    expect(createSource).not.toContain('setLanguages');
+    expect(createSource).not.toContain('const [language');
+    expect(createSource).not.toContain('const [voices');
+    expect(createSource).not.toContain('const [languages');
   });
 
-  it('aligns both setup fields and enlarges the selected avatar', () => {
-    const setupStylesUrl = new URL('../components/avatar/avatarSetupStyles.ts', import.meta.url);
-    expect(existsSync(setupStylesUrl)).toBe(true);
-    const setupStylesSource = readFileSync(setupStylesUrl, 'utf8');
-    expect(setupStylesSource).toContain('h-10 w-full data-[size=default]:h-10 rounded-md border-border bg-background px-3 text-sm font-normal');
-    expect(createSource).toContain('avatarSetupFieldClassName');
-    expect(voiceDialogSource).toContain('avatarSetupFieldClassName');
-    expect(voiceDialogSource).toContain('min-[480px]:max-w-2xl');
-    expect(voiceDialogSource).toContain('sm:max-w-2xl');
-    expect(voiceDialogSource).toContain('min-[480px]:grid-cols-2');
-    expect(voiceDialogSource).toContain("variant={isPlaying ? 'default' : 'secondary'}");
-    expect(createSource).toContain('className="w-[270px] max-w-full shrink rounded-lg"');
-    expect(createSource).not.toContain('className="w-52 shrink-0 rounded-lg"');
+  it('keeps the avatar choice cards and action sizing', () => {
+    expect(createSource).not.toContain('avatarSetupFieldClassName');
+    expect(createSource).toContain('grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4');
     expect(createSource).toContain("configuration?.configured ? 'Save changes' : 'Create avatar'");
     expect(createSource).not.toContain('Create embed link');
   });

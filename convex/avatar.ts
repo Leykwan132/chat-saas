@@ -95,8 +95,8 @@ export const updateSettings = mutation({
     const { channelOrgId, userId } = await getAuthorizedAvatarAgent(ctx, args.agentId);
     const configuration = await getWorkspaceAvatarConfiguration(ctx, channelOrgId, userId);
     if (!configuration) throw new Error('Avatar configuration not found');
-    if (args.enabled && (!configuration.avatarId || !configuration.voiceId)) {
-      throw new Error('Configure an avatar and voice first');
+    if (args.enabled && !configuration.avatarId) {
+      throw new Error('Configure an avatar first');
     }
     await ctx.db.patch(configuration._id, {
       enabled: args.enabled,
@@ -126,11 +126,6 @@ export const saveConfiguration = internalMutation({
     avatarId: v.string(),
     avatarName: v.string(),
     avatarPreviewUrl: v.optional(v.string()),
-    voiceId: v.string(),
-    voiceName: v.string(),
-    voiceLanguage: v.string(),
-    voiceGender: v.string(),
-    language: v.string(),
   },
   handler: async (ctx, args) => {
     const configuration = await ctx.db.get(args.configurationId);
@@ -140,11 +135,6 @@ export const saveConfiguration = internalMutation({
       avatarId: args.avatarId,
       avatarName: args.avatarName,
       avatarPreviewUrl: args.avatarPreviewUrl,
-      voiceId: args.voiceId,
-      voiceName: args.voiceName,
-      voiceLanguage: args.voiceLanguage,
-      voiceGender: args.voiceGender,
-      language: args.language,
       updatedAt: Date.now(),
     });
   },
