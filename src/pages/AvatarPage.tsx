@@ -7,7 +7,6 @@ import type { Id } from '../../convex/_generated/dataModel';
 import { AvatarEmbedCard } from '@/components/avatar/AvatarEmbedCard';
 import { AvatarLiveLink } from '@/components/avatar/AvatarLiveLink';
 import { AvatarContextEditor } from '@/components/avatar/AvatarContextEditor';
-import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';
 import { AvatarGeminiVoiceSelector } from '@/components/avatar/AvatarGeminiVoiceSelector';
 import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
 import { Badge } from '@/components/ui/badge';
@@ -59,10 +58,8 @@ export default function AvatarPage() {
                 <AvatarVideoStage
                   publicKey={configuration.publicKey}
                   previewUrl={configuration.avatarPreviewUrl}
-                  coverImageUrl={configuration.coverImageUrl}
                 />
               </div>
-              {canManage ? <AvatarCoverImageEditor agentId={typedAgentId} coverImageUrl={configuration.coverImageUrl} /> : null}
             </section>
             <section className="flex min-w-0 flex-col gap-4">
               <AvatarEmbedCard publicKey={configuration.publicKey} />
