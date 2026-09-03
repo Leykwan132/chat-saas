@@ -71,4 +71,9 @@ describe('Avatar video stage', () => {
     expect(source).toContain('className="pointer-events-none absolute inset-0 z-30"');
     expect(source).toContain('pointer-events-auto');
   });
+
+  it('shows a top-layer connection overlay and green outlined Start Chat button', () => {
+    expect(source).toContain('className="absolute inset-0 z-40"');
+    expect(source).toContain('border-2 border-emerald-500');
+  });
 });

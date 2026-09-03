@@ -96,14 +96,16 @@ export function AvatarVideoStage({
         />
       ) : null}
       {starting ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="absolute inset-0 z-20 flex items-center justify-center bg-black/45"
-        >
-          <div className="flex flex-col items-center gap-3 text-white">
-            <Spinner className="size-8" />
-            <span className="text-sm font-medium">Connecting...</span>
+        <div className="absolute inset-0 z-40">
+          <div
+            role="status"
+            aria-live="polite"
+            className="absolute inset-0 z-20 flex items-center justify-center bg-black/45"
+          >
+            <div className="flex flex-col items-center gap-3 text-white">
+              <Spinner className="size-8" />
+              <span className="text-sm font-medium">Connecting...</span>
+            </div>
           </div>
         </div>
       ) : null}
@@ -135,7 +137,7 @@ export function AvatarVideoStage({
         <div className="pointer-events-none absolute inset-0 z-30">
           <Button
             variant="secondary"
-            className="absolute bottom-6 left-1/2 min-w-28 -translate-x-1/2 shadow-lg pointer-events-auto"
+            className="absolute bottom-6 left-1/2 min-w-28 -translate-x-1/2 shadow-lg border-2 border-emerald-500 pointer-events-auto hover:border-emerald-400"
             disabled={starting}
             onClick={() => void start()}
           >
