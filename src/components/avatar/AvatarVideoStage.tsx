@@ -1,5 +1,5 @@
 import type { MouseEventHandler, ReactNode } from 'react';
-import { Mic, MicOff, PhoneOff } from 'lucide-react';
+import { PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AvatarPreviewMedia } from './AvatarPreviewMedia';
 import { useAvatarSession } from './useAvatarSession';
@@ -20,15 +20,12 @@ export function AvatarVideoStage({
 }) {
   const {
     phase,
-    muted,
     avatarSpeaking,
     subtitle,
     error,
     videoRef,
     start,
     stop,
-    mute,
-    unmute,
   } = useAvatarSession(publicKey);
   const active = phase === 'active' || phase === 'stopping';
   const starting = phase === 'starting';
@@ -64,46 +61,33 @@ export function AvatarVideoStage({
       {active && subtitle ? (
         <p
           aria-live="polite"
-          className="pointer-events-none absolute inset-x-8 bottom-20 text-center text-lg font-semibold leading-relaxed text-white [-webkit-text-stroke:1px_black] [text-shadow:0_2px_2px_black] sm:bottom-24"
+          className="pointer-events-none absolute inset-x-8 bottom-20 text-center text-lg font-black leading-relaxed text-white [-webkit-text-stroke:1.25px_black] [text-shadow:0_2px_3px_black] sm:bottom-24"
         >
           {subtitle}
         </p>
       ) : null}
-      <div className="absolute bottom-6 right-6 top-6 flex flex-col items-end sm:bottom-8">
-        {active ? (
-          <>
-            <StageControl
-              label={muted ? 'Unmute microphone' : 'Mute microphone'}
-              disabled={phase === 'stopping'}
-              onClick={() => void (muted ? unmute() : mute())}
-            >
-              {muted ? <MicOff /> : <Mic />}
-            </StageControl>
-            <div className="mt-auto">
-              <StageControl
-                label="End chat"
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                disabled={phase === 'stopping'}
-                onClick={() => void stop()}
-              >
-                <PhoneOff />
-              </StageControl>
-            </div>
-          </>
-        ) : (
-          <div className="mt-auto">
-            <Button
-              variant="secondary"
-              className="min-w-28 shadow-lg"
-              disabled={starting}
-              onClick={() => void start()}
-            >
-              {starting ? <Spinner /> : null}
-              {starting ? 'Starting…' : 'Start Chat'}
-            </Button>
-          </div>
-        )}
-      </div>
+      {active ? (
+        <div className="absolute right-6 top-1/2 -translate-y-1/2">
+          <StageControl
+            label="End chat"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={phase === 'stopping'}
+            onClick={() => void stop()}
+          >
+            <PhoneOff />
+          </StageControl>
+        </div>
+      ) : (
+        <Button
+          variant="secondary"
+          className="absolute left-1/2 top-1/2 min-w-28 -translate-x-1/2 -translate-y-1/2 shadow-lg"
+          disabled={starting}
+          onClick={() => void start()}
+        >
+          {starting ? <Spinner /> : null}
+          {starting ? 'Starting…' : 'Start Chat'}
+        </Button>
+      )}
     </section>
   );
 }
