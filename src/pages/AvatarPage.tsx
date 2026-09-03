@@ -8,6 +8,7 @@ import { AvatarEmbedCard } from '@/components/avatar/AvatarEmbedCard';
 import { AvatarLiveLink } from '@/components/avatar/AvatarLiveLink';
 import { AvatarContextEditor } from '@/components/avatar/AvatarContextEditor';
 import { AvatarBackgroundEditor } from '@/components/avatar/AvatarBackgroundEditor';
+import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';
 import { AvatarGeminiVoiceSelector } from '@/components/avatar/AvatarGeminiVoiceSelector';
 import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
 import { Badge } from '@/components/ui/badge';
@@ -59,9 +60,11 @@ export default function AvatarPage() {
                 <AvatarVideoStage
                   publicKey={configuration.publicKey}
                   previewUrl={configuration.avatarPreviewUrl}
+                  coverImageUrl={configuration.coverImageUrl}
                   backgroundUrl={configuration.backgroundUrl}
                   backgroundType={configuration.backgroundType}
                 />
+                {canManage ? <AvatarCoverImageEditor agentId={typedAgentId} coverImageUrl={configuration.coverImageUrl} /> : null}
                 {canManage ? (
                   <AvatarBackgroundEditor
                     agentId={typedAgentId}

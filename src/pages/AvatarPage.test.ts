@@ -24,14 +24,14 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('publicKey={configuration.publicKey}');
     expect(pageSource).toContain('backgroundUrl={configuration.backgroundUrl}');
     expect(pageSource).toContain('backgroundType={configuration.backgroundType}');
-    expect(pageSource).not.toContain('coverImageUrl={configuration.coverImageUrl}');
+    expect(pageSource).toContain('coverImageUrl={configuration.coverImageUrl}');
     expect(pageSource).toContain('<section className="flex min-w-0 flex-col gap-4">\n              <div className="flex flex-col gap-3">');
     expect(pageSource).toContain('<AvatarLiveLink publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('<AvatarEmbedCard publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('<section className="flex min-w-0 flex-col gap-4">\n              <AvatarEmbedCard publicKey={configuration.publicKey} />\n              <AvatarLiveLink publicKey={configuration.publicKey} />');
     expect(pageSource.indexOf('<AvatarEmbedCard publicKey={configuration.publicKey} />')).toBeLessThan(pageSource.indexOf('<AvatarLiveLink publicKey={configuration.publicKey} />'));
     expect(pageSource).toContain('<AvatarGeminiVoiceSelector');
-    expect(pageSource).not.toContain('<AvatarCoverImageEditor');
+    expect(pageSource).toContain('<AvatarCoverImageEditor');
     expect(pageSource).toContain('<AvatarBackgroundEditor');
     expect(pageSource).toContain('geminiVoice={configuration.geminiVoice}');
     expect(pageSource).toContain('voiceSlot={<AvatarGeminiVoiceSelector');
@@ -43,7 +43,7 @@ describe('Avatar configured overview', () => {
     expect(stageSource).not.toContain('<iframe');
   });
 
-  it('keeps the cover image editor available without exposing it in the overview', () => {
+  it('exposes the cover image editor in the overview', () => {
     const coverEditorSource = readFileSync(
       new URL('../components/avatar/AvatarCoverImageEditor.tsx', import.meta.url),
       'utf8',
@@ -51,7 +51,7 @@ describe('Avatar configured overview', () => {
     expect(coverEditorSource).toContain('api.avatarCover.generateCoverUploadUrl');
     expect(coverEditorSource).toContain('api.avatarCover.saveCoverImage');
     expect(coverEditorSource).toContain('api.avatarCover.removeCoverImage');
-    expect(pageSource).not.toContain("import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';");
+    expect(pageSource).toContain("import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';");
   });
 
   it('offers a copyable public link and a new-tab preview', () => {

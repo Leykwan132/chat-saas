@@ -39,9 +39,9 @@ describe('Avatar embed runtime', () => {
     expect(source).toContain('<AvatarVideoStage');
     expect(source).toContain('publicKey={publicKey}');
     expect(source).toContain('previewUrl={config.avatarPreviewUrl}');
+    expect(source).toContain('coverImageUrl={config.coverImageUrl}');
     expect(source).toContain('backgroundUrl={config.backgroundUrl}');
     expect(source).toContain('backgroundType={config.backgroundType}');
-    expect(source).not.toContain('coverImageUrl={config.coverImageUrl}');
     expect(source).not.toContain('useAvatarSession(publicKey)');
     expect(source).not.toContain('Talk with KiloBot');
     expect(source).not.toContain('Start conversation');
@@ -52,7 +52,7 @@ describe('Avatar embed runtime', () => {
     expect(settingsSource).toContain(
       'previewUrl={configuration.avatarPreviewUrl}',
     );
-    expect(settingsSource).not.toContain(
+    expect(settingsSource).toContain(
       'coverImageUrl={configuration.coverImageUrl}',
     );
     expect(stageSource).toContain('Start Chat');
