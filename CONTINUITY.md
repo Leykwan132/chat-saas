@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-04 [CODE] Start Chat keeps a white button body with a thicker horizontal dark-to-light green gradient ring; its larger size and neutral idle-cover overlay remain in place. Unshipped.
 - 2026-09-04 [CODE] Avatar Start Chat is larger and uses a left-to-right dark-to-light green gradient while the neutral idle-cover overlay remains in place. Unshipped.
 - 2026-09-03 [CODE] Idle Avatar cover previews now receive a neutral dim overlay, while Start Chat uses a thicker green outline and remains the top visual focus. Unshipped.
 - 2026-09-03 [CODE] Avatar Start Chat now has a slightly thick green outline, and clicking it shows a top-layer Connecting overlay during session startup. Unshipped.
@@ -58,6 +59,7 @@
 
 # Done (recent)
 
+- 2026-09-04 [CODE] Corrected the Start Chat treatment so the gradient is a border ring around a white button; unshipped.
 - 2026-09-04 [CODE] Enlarged Start Chat and added its horizontal green gradient styling without changing the click-safe layering; unshipped.
 - 2026-09-03 [CODE] Strengthened the Avatar Start Chat border and added a neutral idle-cover overlay for clearer call-to-action focus; unshipped.
 - 2026-09-03 [CODE] Added green Start Chat styling and guaranteed the Connecting overlay covers the stage immediately during startup; unshipped.
@@ -153,3 +155,4 @@
 - 2026-09-03 [TOOL] Green Start Chat and startup-overlay checks passed 72 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-03 [TOOL] Thicker Start Chat and cover-overlay checks passed 73 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Gradient Start Chat checks passed 74 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
+- 2026-09-04 [TOOL] White-button gradient-ring checks passed 74 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
