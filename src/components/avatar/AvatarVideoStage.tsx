@@ -20,7 +20,6 @@ export function AvatarVideoStage({
 }) {
   const {
     phase,
-    subtitle,
     error,
     videoRef,
     start,
@@ -46,14 +45,6 @@ export function AvatarVideoStage({
       {error ? (
         <p className="absolute inset-x-6 bottom-20 text-center text-sm text-red-200">
           {error}
-        </p>
-      ) : null}
-      {active && subtitle ? (
-        <p
-          aria-live="polite"
-          className="pointer-events-none absolute inset-x-8 bottom-8 text-center font-sans text-lg font-extrabold leading-normal text-white [-webkit-text-stroke:0.75px_var(--color-neutral-800)] [text-shadow:0_1px_2px_var(--color-neutral-900)] sm:bottom-10"
-        >
-          {subtitle}
         </p>
       ) : null}
       {active ? (
