@@ -52,6 +52,7 @@ test('creates and persists a LiveAvatar context for an authorized Avatar manager
     body: JSON.stringify({
       name: 'Support Avatar',
       prompt: buildAvatarContextPrompt('Help customers with billing.', 'Hello, how can I help?'),
+      opening_text: 'Hello, how can I help?',
     }),
   }));
   expect(await authed.query(api.avatar.getForAgent, { agentId })).toMatchObject({

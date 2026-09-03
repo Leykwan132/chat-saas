@@ -44,6 +44,7 @@ export const save = action({
         body: JSON.stringify({
           name: `${setup.agentName} Avatar`,
           prompt: buildAvatarContextPrompt(prompt, openingText),
+          opening_text: openingText,
         }),
       },
     );
