@@ -19,7 +19,9 @@ describe('Avatar configured overview', () => {
   it('presents the custom preview and website embed handoff', () => {
     expect(pageSource).toContain('font-title text-3xl font-normal');
     expect(pageSource).toContain('sm:flex-row sm:items-start sm:justify-between');
-    expect(pageSource).toContain('Edit avatar');
+    expect(pageSource).toContain('Edit');
+    expect(pageSource).toContain('<Button variant="ghost" size="sm" asChild>\n              <Link to={`/dashboard/${typedAgentId}/avatar/create`}>');
+    expect(pageSource).not.toContain('Edit avatar');
     expect(pageSource).toContain('<AvatarShareDialog publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('buildAvatarLiveUrl(configuration.publicKey)');
     expect(pageSource).toContain('aria-label="Open Avatar preview"');

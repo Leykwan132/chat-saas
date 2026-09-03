@@ -45,11 +45,11 @@ export default function AvatarPage() {
         {configuration.configured ? (
           <div className="flex items-center gap-2">
             {canManage ? (
-              <Button variant="outline" size="sm" asChild>
-                <Link to={`/dashboard/${typedAgentId}/avatar/create`}>
-                  <Pencil data-icon="inline-start" />
-                  Edit avatar
-                </Link>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to={`/dashboard/${typedAgentId}/avatar/create`}>
+                <Pencil data-icon="inline-start" />
+                Edit
+              </Link>
               </Button>
             ) : null}
             <AvatarShareDialog publicKey={configuration.publicKey} />

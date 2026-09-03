@@ -5,12 +5,14 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
+import { AvatarBackgroundEditor } from '@/components/avatar/AvatarBackgroundEditor';
 import { AvatarPreviewMedia } from '@/components/avatar/AvatarPreviewMedia';
 import { filterBackgroundFreeAvatars, splitAvatarOptions } from '@/components/avatar/avatarCatalog';
 import { loadAvatarOrientations, type OrientedAvatarOption } from '@/components/avatar/avatarOrientation';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermissions } from '@/hooks/usePermissions';
 import { cn } from '@/lib/utils';
 import { Permission } from '../../shared/permissions';
@@ -68,7 +70,10 @@ export default function AvatarCreatePage() {
   if (!canManage) return <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">You do not have permission to configure Avatar.</div>;
 
   const backgroundFreeAvatars = avatars ? filterBackgroundFreeAvatars(avatars) : [];
-  const { defaultAvatars, landscapeAvatars, portraitAvatars } = splitAvatarOptions(avatars ?? []);
+  const { landscapeAvatars, portraitAvatars } = splitAvatarOptions(avatars ?? []);
+  const selectedAvatar = backgroundFreeAvatars.find((avatar) => avatar.id === selectedAvatarId);
+  const availableLandscapeAvatars = landscapeAvatars.filter((avatar) => avatar.id !== selectedAvatarId);
+  const availablePortraitAvatars = portraitAvatars.filter((avatar) => avatar.id !== selectedAvatarId);
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
@@ -76,12 +81,32 @@ export default function AvatarCreatePage() {
       {catalogError ? <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{catalogError}</div> : null}
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-1"><h1 className="text-2xl font-semibold">Choose your avatar</h1><p className="text-sm text-muted-foreground">Select the face visitors will see during a conversation. You can change this later.</p></div>
+        <section className="flex flex-col gap-3">
+          <h2 className="text-base font-medium">Preview</h2>
+          <AvatarPreviewMedia
+            previewUrl={selectedAvatar?.previewUrl ?? configuration?.avatarPreviewUrl}
+            className="w-full rounded-2xl [&_img]:object-contain"
+          />
+        </section>
         {avatars === undefined ? <AvatarGridSkeleton /> : backgroundFreeAvatars.length === 0 ? <CatalogEmpty /> : (
-          <div className="flex flex-col gap-8">
-            {defaultAvatars.length ? <AvatarSection title="Default" avatars={defaultAvatars} selectedAvatarId={selectedAvatarId} onSelect={setSelectedAvatarId} /> : null}
-            {landscapeAvatars.length ? <AvatarSection title="Landscape" avatars={landscapeAvatars} selectedAvatarId={selectedAvatarId} onSelect={setSelectedAvatarId} /> : null}
-            {portraitAvatars.length ? <AvatarSection title="Portrait" avatars={portraitAvatars} selectedAvatarId={selectedAvatarId} onSelect={setSelectedAvatarId} /> : null}
-          </div>
+          <Tabs defaultValue="avatar" className="gap-6">
+            <TabsList variant="line" aria-label="Avatar setup sections" className="w-full justify-start">
+              <TabsTrigger value="avatar">Avatar</TabsTrigger>
+              <TabsTrigger value="background">Background</TabsTrigger>
+            </TabsList>
+            <TabsContent value="avatar" className="flex flex-col gap-8">
+              {selectedAvatar ? <AvatarSection title="Selected" avatars={[selectedAvatar]} selectedAvatarId={selectedAvatarId} onSelect={setSelectedAvatarId} /> : null}
+              {availableLandscapeAvatars.length ? <AvatarSection title="Landscape" avatars={availableLandscapeAvatars} selectedAvatarId={selectedAvatarId} onSelect={setSelectedAvatarId} /> : null}
+              {availablePortraitAvatars.length ? <AvatarSection title="Portrait" avatars={availablePortraitAvatars} selectedAvatarId={selectedAvatarId} onSelect={setSelectedAvatarId} /> : null}
+            </TabsContent>
+            <TabsContent value="background">
+              <AvatarBackgroundEditor
+                agentId={typedAgentId}
+                backgroundUrl={configuration?.backgroundUrl}
+                backgroundType={configuration?.backgroundType}
+              />
+            </TabsContent>
+          </Tabs>
         )}
         {backgroundFreeAvatars.length ? <div className="flex justify-end"><Button onClick={() => void create()} disabled={creating || !selectedAvatarId}>{creating ? 'Saving…' : configuration?.configured ? 'Save changes' : 'Create avatar'}</Button></div> : null}
       </div>

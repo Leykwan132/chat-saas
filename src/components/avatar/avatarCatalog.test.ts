@@ -18,7 +18,7 @@ describe('Avatar catalog curation', () => {
     expect(filterBackgroundFreeAvatars(options).map((option) => option.id)).toEqual(['green-screen']);
   });
 
-  it('shows the first four eligible avatars as Defaults before orientation groups', () => {
+  it('returns eligible avatars grouped by orientation', () => {
     const options = [
       avatar('one', 'One in Black Suit', 'landscape'),
       avatar('two', 'Two in Grey Sweater', 'portrait'),
@@ -29,8 +29,7 @@ describe('Avatar catalog curation', () => {
     ];
 
     const groups = splitAvatarOptions(options);
-    expect(groups.defaultAvatars.map((option) => option.id)).toEqual(['one', 'two', 'three', 'four']);
-    expect(groups.landscapeAvatars.map((option) => option.id)).toEqual(['five']);
-    expect(groups.portraitAvatars).toHaveLength(0);
+    expect(groups.landscapeAvatars.map((option) => option.id)).toEqual(['one', 'three', 'five']);
+    expect(groups.portraitAvatars.map((option) => option.id)).toEqual(['two', 'four']);
   });
 });

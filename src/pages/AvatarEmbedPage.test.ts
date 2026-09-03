@@ -138,8 +138,15 @@ describe('Avatar setup', () => {
     expect(createSource).toContain('AvatarGridSkeleton');
     expect(createSource).toContain('loadAvatarOrientations');
     expect(createSource).toContain('filterBackgroundFreeAvatars');
-    expect(createSource).toContain('defaultAvatars');
-    expect(createSource).toContain('title="Default"');
+    expect(createSource).toContain('<Tabs');
+    expect(createSource).toContain('<TabsList variant="line"');
+    expect(createSource).toContain('<TabsTrigger value="avatar">Avatar</TabsTrigger>');
+    expect(createSource).toContain('<TabsTrigger value="background">Background</TabsTrigger>');
+    expect(createSource).toContain('title="Selected"');
+    expect(createSource).toContain('selectedAvatar?.previewUrl');
+    expect(createSource).toContain('<AvatarBackgroundEditor');
+    expect(createSource).not.toContain('defaultAvatars');
+    expect(createSource).not.toContain('title="Default"');
     expect(createSource).toContain('title="Landscape"');
     expect(createSource).toContain('title="Portrait"');
     expect(createSource.indexOf('title="Default"')).toBeLessThan(createSource.indexOf('title="Landscape"'));

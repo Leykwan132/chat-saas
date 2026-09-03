@@ -6,7 +6,6 @@ const COMPLETE_SCENE_AVATAR_NAMES = new Set([
   'judy doctor sitting',
   'santa fireplace front',
 ]);
-const DEFAULT_AVATAR_COUNT = 4;
 
 export function isBackgroundFreeAvatar(avatar: AvatarOption) {
   const name = avatar.name.trim().toLowerCase();
@@ -19,13 +18,8 @@ export function filterBackgroundFreeAvatars<T extends AvatarOption>(avatars: T[]
 
 export function splitAvatarOptions(avatars: OrientedAvatarOption[]) {
   const backgroundFreeAvatars = filterBackgroundFreeAvatars(avatars);
-  const defaultAvatars = backgroundFreeAvatars.slice(0, DEFAULT_AVATAR_COUNT);
-  const defaultIds = new Set(defaultAvatars.map((avatar) => avatar.id));
-  const remainingAvatars = backgroundFreeAvatars.filter((avatar) => !defaultIds.has(avatar.id));
-
   return {
-    defaultAvatars,
-    landscapeAvatars: remainingAvatars.filter((avatar) => avatar.orientation === 'landscape'),
-    portraitAvatars: remainingAvatars.filter((avatar) => avatar.orientation === 'portrait'),
+    landscapeAvatars: backgroundFreeAvatars.filter((avatar) => avatar.orientation === 'landscape'),
+    portraitAvatars: backgroundFreeAvatars.filter((avatar) => avatar.orientation === 'portrait'),
   };
 }
