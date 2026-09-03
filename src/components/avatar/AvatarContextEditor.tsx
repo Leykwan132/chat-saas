@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAction } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
@@ -7,6 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+
+type ContextDraft = {
+  prompt: string;
+  openingText: string;
+};
 
 export function AvatarContextEditor({
   agentId,
@@ -18,15 +23,20 @@ export function AvatarContextEditor({
   openingText: string;
 }) {
   const saveContext = useAction(api.avatarContext.save);
-  const [prompt, setPrompt] = useState(savedPrompt);
-  const [openingText, setOpeningText] = useState(savedOpeningText);
+  const [draft, setDraft] = useState<ContextDraft>();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
 
-  useEffect(() => {
-    setPrompt(savedPrompt);
-    setOpeningText(savedOpeningText);
-  }, [savedOpeningText, savedPrompt]);
+  const prompt = draft?.prompt ?? savedPrompt;
+  const openingText = draft?.openingText ?? savedOpeningText;
+  const updatePrompt = (value: string) => setDraft((current) => ({
+    prompt: value,
+    openingText: current?.openingText ?? savedOpeningText,
+  }));
+  const updateOpeningText = (value: string) => setDraft((current) => ({
+    prompt: current?.prompt ?? savedPrompt,
+    openingText: value,
+  }));
 
   const trimmedPrompt = prompt.trim();
   const trimmedOpeningText = openingText.trim();
@@ -39,6 +49,7 @@ export function AvatarContextEditor({
     setError(undefined);
     try {
       await saveContext({ agentId, prompt: trimmedPrompt, openingText: trimmedOpeningText });
+      setDraft(undefined);
       toast.success('Avatar context saved');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not save Avatar context');
@@ -49,9 +60,9 @@ export function AvatarContextEditor({
 
   return (
     <section className="flex flex-col gap-4">
-      <div><h2 className="text-sm font-semibold">Context</h2><p className="mt-1 text-sm text-muted-foreground">Instructions Gemini uses for every Avatar conversation.</p></div>
-      <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-prompt">Instructions</Label><Textarea id="avatar-context-prompt" value={prompt} onChange={(event) => setPrompt(event.target.value)} className="min-h-36" placeholder="Describe the role, tone, knowledge, and boundaries." /></div>
-      <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-opening">Opening text</Label><Input id="avatar-context-opening" value={openingText} onChange={(event) => setOpeningText(event.target.value)} placeholder="Hello, how can I help?" /></div>
+      <div><h2 className="text-sm font-semibold">Context</h2></div>
+      <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-prompt">Instructions</Label><Textarea id="avatar-context-prompt" value={prompt} onChange={(event) => updatePrompt(event.target.value)} className="min-h-36" placeholder="Describe the role, tone, knowledge, and boundaries." /></div>
+      <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-opening">Opening text</Label><Input id="avatar-context-opening" value={openingText} onChange={(event) => updateOpeningText(event.target.value)} placeholder="Hello, how can I help?" /></div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex justify-end"><Button onClick={() => void save()} disabled={!canSave}>{saving ? 'Saving…' : 'Save context'}</Button></div>
     </section>

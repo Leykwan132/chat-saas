@@ -7,8 +7,10 @@ test('provides a manager context editor with explicit save states', () => {
   const source = readFileSync(path, 'utf8');
   expect(source).toContain('>Instructions</Label>');
   expect(source).not.toContain('System instructions');
+  expect(source).not.toContain('Instructions Gemini uses for every Avatar conversation.');
   expect(source).toContain('Opening text');
   expect(source).toContain('Save context');
   expect(source).toContain('api.avatarContext.save');
   expect(source).not.toContain('rounded-xl border p-5');
+  expect(source).not.toContain('useEffect');
 });

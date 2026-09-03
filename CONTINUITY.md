@@ -9,6 +9,7 @@
 - 2026-09-03 [CODE] Avatar controls now show only a centered-right End button during calls and bottom-center Start Chat before calls, with no speaking/listening status labels. Unshipped.
 - 2026-09-03 [CODE] Avatar managers can choose one of the 30 supported Gemini Live voices; selected voices persist per Avatar configuration and are used for new LITE sessions. Opening text is composed into the saved provider system prompt instead of sent as a separate provider field. Unshipped.
 - 2026-09-03 [CODE] Avatar settings now place the Voice selector below the Context and Opening text fields, use the shorter “Voice” heading, and render the selector text at a larger size. Unshipped.
+- 2026-09-03 [CODE] Removed the explanatory sentence beneath the Avatar Context heading for a cleaner settings layout. Unshipped.
 - 2026-09-01 [USER] Goal: test the white-label Partner Programme locally on `codex/white-label-partner-portal`.
 - 2026-09-01 [TOOL] Now: merging current `origin/main` into the white-label branch; concurrent Overview-test and Workspace-page edits are being reconciled without removing partner access controls.
 - 2026-08-31 [CODE] Now: `origin/main` adds WhatsApp username recipients and BSUID-change continuity; both remain unshipped.
@@ -39,6 +40,7 @@
 - 2026-09-02 [CODE] Added LiveAvatar Gemini connector session tokens, manager-editable provider context, and direct connector-owned Avatar conversations; unshipped.
 - 2026-09-03 [CODE] Added the Gemini Live voice catalog and manager voice selector, persisted the choice, and embedded Avatar opening text into the provider system prompt; unshipped.
 - 2026-09-03 [CODE] Refined the Voice selector order, label, and typography for clearer Avatar settings.
+- 2026-09-03 [CODE] Removed the redundant Avatar Context description text.
 - 2026-09-03 [CODE] Hardened Avatar teardown so explicit End releases the backend session slot; unshipped.
 - 2026-09-03 [CODE] Simplified the Avatar context editor presentation and renamed its prompt label to “Instructions”; unshipped.
 - 2026-09-03 [CODE] Added right-edge call controls and centered AI response subtitles to the Avatar stage; unshipped.
@@ -91,3 +93,4 @@
 - 2026-09-03 [TOOL] Subtitle-overlay removal passed 68 Avatar-focused tests, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Gemini voice and prompt changes passed 72 Avatar-focused tests, Convex TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Voice selector layout and typography checks passed the focused Avatar tests, targeted ESLint, diff validation, and the Node v22 production build.
+- 2026-09-03 [TOOL] Context-description removal passed the Avatar-focused suite, targeted ESLint, diff validation, and the Node v22 production build.
