@@ -10,15 +10,23 @@ const liveLinkSource = readFileSync(
   new URL('../components/avatar/AvatarLiveLink.tsx', import.meta.url),
   'utf8',
 );
+const shareDialogSource = readFileSync(
+  new URL('../components/avatar/AvatarShareDialog.tsx', import.meta.url),
+  'utf8',
+);
 
 describe('Avatar configured overview', () => {
   it('presents the custom preview and website embed handoff', () => {
     expect(pageSource).toContain('font-title text-3xl font-normal');
     expect(pageSource).toContain('sm:flex-row sm:items-start sm:justify-between');
     expect(pageSource).toContain('Edit avatar');
-    expect(pageSource).toContain('configuration.configured && canManage ?');
+    expect(pageSource).toContain('<AvatarShareDialog publicKey={configuration.publicKey} />');
+    expect(pageSource).toContain('buildAvatarLiveUrl(configuration.publicKey)');
+    expect(pageSource).toContain('aria-label="Open Avatar preview"');
+    expect(pageSource).toContain('title="Open Avatar preview"');
     expect(pageSource).toContain('configuration.configured ?');
-    expect(pageSource).toContain('lg:grid-cols-[minmax(0,1fr)_22rem]');
+    expect(pageSource).toContain('configuration.configured ?');
+    expect(pageSource).toContain('grid items-start gap-6');
     expect(pageSource).toContain('<h2 className="text-base font-medium">Preview</h2>');
     expect(pageSource).toContain('<AvatarVideoStage');
     expect(pageSource).toContain('publicKey={configuration.publicKey}');
@@ -27,10 +35,8 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('coverImageUrl={configuration.coverImageUrl}');
     expect(pageSource).toContain('coverImageType={configuration.coverImageType}');
     expect(pageSource).toContain('<section className="flex min-w-0 flex-col gap-4">\n              <div className="flex flex-col gap-3">');
-    expect(pageSource).toContain('<AvatarLiveLink publicKey={configuration.publicKey} />');
-    expect(pageSource).toContain('<AvatarEmbedCard publicKey={configuration.publicKey} />');
-    expect(pageSource).toContain('<section className="flex min-w-0 flex-col gap-4">\n              <AvatarEmbedCard publicKey={configuration.publicKey} />\n              <AvatarLiveLink publicKey={configuration.publicKey} />');
-    expect(pageSource.indexOf('<AvatarEmbedCard publicKey={configuration.publicKey} />')).toBeLessThan(pageSource.indexOf('<AvatarLiveLink publicKey={configuration.publicKey} />'));
+    expect(pageSource).not.toContain('<AvatarLiveLink publicKey={configuration.publicKey} />');
+    expect(pageSource).not.toContain('<AvatarEmbedCard publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('<AvatarGeminiVoiceSelector');
     expect(pageSource).toContain('<AvatarCoverImageEditor');
     expect(pageSource).toContain('coverImageType={configuration.coverImageType}');
@@ -46,6 +52,12 @@ describe('Avatar configured overview', () => {
     expect(pageSource).not.toContain('onEnabledChange');
     expect(stageSource).not.toContain('embedUrl');
     expect(stageSource).not.toContain('<iframe');
+  });
+
+  it('puts sharing content in the primary Share dialog', () => {
+    expect(pageSource).toContain("import { AvatarShareDialog } from '@/components/avatar/AvatarShareDialog';");
+    expect(shareDialogSource).toContain('<AvatarLiveLink publicKey={publicKey} />');
+    expect(shareDialogSource).toContain('<AvatarEmbedCard publicKey={publicKey} />');
   });
 
   it('exposes the cover image editor in the overview', () => {

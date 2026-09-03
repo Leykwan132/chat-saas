@@ -1,21 +1,21 @@
 import { useEffect } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { Pencil, ScanFace } from 'lucide-react';
+import { ExternalLink, Pencil, ScanFace } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
-import { AvatarEmbedCard } from '@/components/avatar/AvatarEmbedCard';
-import { AvatarLiveLink } from '@/components/avatar/AvatarLiveLink';
 import { AvatarContextEditor } from '@/components/avatar/AvatarContextEditor';
 import { AvatarBackgroundEditor } from '@/components/avatar/AvatarBackgroundEditor';
 import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';
 import { AvatarGeminiVoiceSelector } from '@/components/avatar/AvatarGeminiVoiceSelector';
+import { AvatarShareDialog } from '@/components/avatar/AvatarShareDialog';
 import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/usePermissions';
+import { buildAvatarLiveUrl } from '@/lib/avatarEmbed';
 import { Permission } from '../../shared/permissions';
 
 export default function AvatarPage() {
@@ -42,21 +42,41 @@ export default function AvatarPage() {
           <div className="flex items-center gap-2"><h1 className="font-title text-3xl font-normal">Avatar</h1><Badge variant="secondary" className="bg-muted text-muted-foreground">Beta</Badge></div>
           <p className="mt-1 text-sm text-muted-foreground">Give visitors a face and voice for live conversations with KiloBot.</p>
         </div>
-        {configuration.configured && canManage ? (
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`/dashboard/${typedAgentId}/avatar/create`}>
-              <Pencil data-icon="inline-start" />
-              Edit avatar
-            </Link>
-          </Button>
+        {configuration.configured ? (
+          <div className="flex items-center gap-2">
+            {canManage ? (
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/dashboard/${typedAgentId}/avatar/create`}>
+                  <Pencil data-icon="inline-start" />
+                  Edit avatar
+                </Link>
+              </Button>
+            ) : null}
+            <AvatarShareDialog publicKey={configuration.publicKey} />
+          </div>
         ) : null}
       </div>
       {configuration.configured ? (
         <>
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="grid items-start gap-6">
             <section className="flex min-w-0 flex-col gap-4">
               <div className="flex flex-col gap-3">
-                <h2 className="text-base font-medium">Preview</h2>
+                <div className="flex items-center gap-1">
+                  <h2 className="text-base font-medium">Preview</h2>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Open Avatar preview"
+                    title="Open Avatar preview"
+                    asChild
+                  >
+                    <a href={buildAvatarLiveUrl(configuration.publicKey)} target="_blank" rel="noreferrer">
+                      <ExternalLink />
+                      <span className="sr-only">Open Avatar preview</span>
+                    </a>
+                  </Button>
+                </div>
                 <AvatarVideoStage
                   publicKey={configuration.publicKey}
                   previewUrl={configuration.avatarPreviewUrl}
@@ -66,10 +86,6 @@ export default function AvatarPage() {
                   backgroundType={configuration.backgroundType}
                 />
               </div>
-            </section>
-            <section className="flex min-w-0 flex-col gap-4">
-              <AvatarEmbedCard publicKey={configuration.publicKey} />
-              <AvatarLiveLink publicKey={configuration.publicKey} />
             </section>
           </div>
           {canManage ? (
