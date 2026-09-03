@@ -59,6 +59,7 @@
 
 # Done (recent)
 
+- 2026-09-04 [CODE] Increased the Start Chat gradient border to 6px while preserving its original pill shape and white button body; unshipped.
 - 2026-09-04 [CODE] Corrected the Start Chat treatment so only the original pill-shaped border changes to a horizontal gradient while the button remains white; unshipped.
 - 2026-09-04 [CODE] Enlarged Start Chat and added its horizontal green gradient styling without changing the click-safe layering; unshipped.
 - 2026-09-03 [CODE] Strengthened the Avatar Start Chat border and added a neutral idle-cover overlay for clearer call-to-action focus; unshipped.
@@ -156,3 +157,4 @@
 - 2026-09-03 [TOOL] Thicker Start Chat and cover-overlay checks passed 73 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Gradient Start Chat checks passed 74 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] White-button gradient-ring checks passed 74 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
+- 2026-09-04 [TOOL] Thicker Start Chat border checks passed 50 Avatar tests, Node v22 targeted ESLint, and diff validation.

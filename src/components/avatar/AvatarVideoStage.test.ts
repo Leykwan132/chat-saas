@@ -74,7 +74,7 @@ describe('Avatar video stage', () => {
 
   it('shows a top-layer connection overlay and gradient-bordered Start Chat button', () => {
     expect(source).toContain('className="absolute inset-0 z-40"');
-    expect(source).toContain('border-4 border-transparent');
+    expect(source).toContain('border-[6px] border-transparent');
     expect(source).toContain("linear-gradient(#fff, #fff) padding-box, linear-gradient(to right, #166534, #86efac) border-box");
     expect(source).toContain('bg-white');
     expect(source).toContain('text-zinc-950');
