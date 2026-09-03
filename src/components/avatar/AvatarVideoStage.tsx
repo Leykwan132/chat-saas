@@ -20,7 +20,6 @@ export function AvatarVideoStage({
 }) {
   const {
     phase,
-    avatarSpeaking,
     subtitle,
     error,
     videoRef,
@@ -43,15 +42,6 @@ export function AvatarVideoStage({
           previewUrl={previewUrl}
           className="absolute inset-0 size-full rounded-none [&_img]:object-cover"
         />
-      ) : null}
-      {active && avatarSpeaking ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1.5 text-xs backdrop-blur"
-        >
-          KiloBot is speaking
-        </div>
       ) : null}
       {error ? (
         <p className="absolute inset-x-6 bottom-20 text-center text-sm text-red-200">

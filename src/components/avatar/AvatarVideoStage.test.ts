@@ -19,8 +19,8 @@ describe('Avatar video stage', () => {
     expect(source).toContain('label="End chat"');
     expect(source).toContain('aria-label={label}');
     expect(source).toContain('End chat');
-    expect(source).toContain('{active && avatarSpeaking ? (');
-    expect(source).toContain('KiloBot is speaking');
+    expect(source).not.toContain('avatarSpeaking');
+    expect(source).not.toContain('KiloBot is speaking');
     expect(source).not.toContain('Listening');
     expect(source).toContain('subtitle ?');
     expect(source).toContain('text-white');
