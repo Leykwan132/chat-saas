@@ -1,9 +1,27 @@
-const avatarEmbedBaseUrl = (
+const configuredAvatarEmbedBaseUrl = (
   import.meta.env.VITE_AVATAR_EMBED_BASE_URL as string | undefined
-)?.trim() || 'https://kilobot.app';
+)?.trim();
+
+type AvatarEmbedLocation = {
+  hostname: string;
+  origin: string;
+};
+
+function getBrowserLocation(): AvatarEmbedLocation | undefined {
+  if (typeof window === 'undefined' || !window.location) return undefined;
+  return { hostname: window.location.hostname, origin: window.location.origin };
+}
+
+export function resolveAvatarEmbedBaseUrl(location = getBrowserLocation()) {
+  const hostname = location?.hostname.toLowerCase();
+  if (location && (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]')) {
+    return location.origin;
+  }
+  return configuredAvatarEmbedBaseUrl || 'https://kilobot.app';
+}
 
 function avatarEmbedSource(publicKey: string) {
-  return `${avatarEmbedBaseUrl}/avatar/embed/${encodeURIComponent(publicKey)}`;
+  return `${resolveAvatarEmbedBaseUrl()}/avatar/embed/${encodeURIComponent(publicKey)}`;
 }
 
 export function buildAvatarLiveUrl(publicKey: string) {

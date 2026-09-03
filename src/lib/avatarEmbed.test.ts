@@ -3,6 +3,7 @@ import {
   buildAvatarEmbedSnippet,
   buildAvatarReactEmbedSnippet,
   getAvatarVisitorId,
+  resolveAvatarEmbedBaseUrl,
   splitAvatarSpeech,
   visitorStorageKey,
 } from './avatarEmbed';
@@ -37,6 +38,15 @@ describe('avatar embed helpers', () => {
     expect(snippet).toContain("aspectRatio: '16 / 9'");
     expect(snippet).toContain('border: 0');
     expect(snippet).not.toContain('style="');
+  });
+
+  it('uses the active local origin for localhost previews', () => {
+    expect(resolveAvatarEmbedBaseUrl({ hostname: 'localhost', origin: 'http://localhost:5173' })).toBe('http://localhost:5173');
+    expect(resolveAvatarEmbedBaseUrl({ hostname: '127.0.0.1', origin: 'http://127.0.0.1:5173' })).toBe('http://127.0.0.1:5173');
+  });
+
+  it('uses the production host outside local development', () => {
+    expect(resolveAvatarEmbedBaseUrl({ hostname: 'kilobot.app', origin: 'https://kilobot.app' })).toBe('https://kilobot.app');
   });
 
   it('scopes visitor identity to the embed key', () => {
