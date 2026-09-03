@@ -59,14 +59,14 @@ export function AvatarVideoStage({
             muted
             playsInline
             aria-hidden="true"
-            className="absolute inset-0 z-0 size-full object-cover"
+            className="pointer-events-none absolute inset-0 z-0 size-full object-cover"
           />
         ) : (
           <img
             src={backgroundUrl}
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 z-0 size-full object-cover"
+            className="pointer-events-none absolute inset-0 z-0 size-full object-cover"
           />
         )
       ) : null}
@@ -75,7 +75,7 @@ export function AvatarVideoStage({
         autoPlay
         playsInline
         className={cn(
-          'absolute inset-0 z-10 size-full object-cover',
+          'pointer-events-none absolute inset-0 z-10 size-full object-cover',
           active && backgroundUrl ? 'opacity-0' : null,
         )}
       />
@@ -90,7 +90,7 @@ export function AvatarVideoStage({
         <AvatarPreviewMedia
           previewUrl={coverImageUrl ?? previewUrl}
           className={cn(
-            'absolute inset-0 size-full rounded-none',
+            'pointer-events-none absolute inset-0 size-full rounded-none',
             coverImageUrl ? '[&_img]:object-cover' : '[&_img]:object-contain',
           )}
         />
@@ -132,14 +132,16 @@ export function AvatarVideoStage({
           </StageControl>
         </div>
       ) : starting ? null : (
-        <Button
-          variant="secondary"
-          className="absolute bottom-6 left-1/2 min-w-28 -translate-x-1/2 shadow-lg"
-          disabled={starting}
-          onClick={() => void start()}
-        >
-          Start Chat
-        </Button>
+        <div className="pointer-events-none absolute inset-0 z-30">
+          <Button
+            variant="secondary"
+            className="absolute bottom-6 left-1/2 min-w-28 -translate-x-1/2 shadow-lg pointer-events-auto"
+            disabled={starting}
+            onClick={() => void start()}
+          >
+            Start Chat
+          </Button>
+        </div>
       )}
     </section>
   );

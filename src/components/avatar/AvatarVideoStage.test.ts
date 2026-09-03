@@ -64,4 +64,11 @@ describe('Avatar video stage', () => {
     expect(source).toContain('loop');
     expect(source).toContain('muted');
   });
+
+  it('keeps media layers from intercepting the idle Start Chat target', () => {
+    expect(source).toContain('pointer-events-none');
+    expect(source).toContain('z-30');
+    expect(source).toContain('className="pointer-events-none absolute inset-0 z-30"');
+    expect(source).toContain('pointer-events-auto');
+  });
 });

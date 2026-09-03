@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-03 [CODE] Avatar stage media layers no longer intercept Start Chat; the idle control is explicitly top-layer and interactive. Unshipped.
 - 2026-09-03 [CODE] Avatar managers can upload PNG/JPEG/WebP or MP4/WebM backgrounds to R2; public Avatar sessions composite them behind keyed LiveAvatar streams in the browser. Unshipped.
 - 2026-09-03 [CODE] Avatar setup now shows four background-free Default choices, then remaining eligible Landscape and Portrait choices; the legacy Language and Voice step is removed for Gemini Live. Unshipped.
 - 2026-09-03 [CODE] Supersedes the prior Avatar settings order: Opening text and Voice now share a responsive row above Instructions. Unshipped.
@@ -54,6 +55,7 @@
 
 # Done (recent)
 
+- 2026-09-03 [CODE] Fixed public Avatar Start Chat clicks after background compositing by isolating media hit testing and elevating the control layer; unshipped.
 - 2026-09-03 [CODE] Added R2-backed Avatar background image/video upload, replacement, removal, dashboard controls, and full-screen/public-stage compositing; unshipped.
 - 2026-09-03 [CODE] Simplified Avatar creation to curated background-free avatar choices with four Defaults and removed legacy setup voice/language selection; avatar-only persistence now supports Gemini Live.
 - 2026-09-03 [CODE] Reordered Avatar Opening text and Voice into a shared responsive row above Instructions.
@@ -141,3 +143,4 @@
 - 2026-09-03 [TOOL] Avatar settings order checks passed 95 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-03 [TOOL] Gemini Live Avatar setup checks passed 99 focused tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-03 [TOOL] Avatar background media checks passed 69 focused tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
+- 2026-09-03 [TOOL] Start Chat hit-target regression passed 71 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
