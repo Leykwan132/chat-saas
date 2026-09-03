@@ -24,6 +24,7 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('publicKey={configuration.publicKey}');
     expect(pageSource).toContain('<AvatarLiveLink publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('<AvatarEmbedCard publicKey={configuration.publicKey} />');
+    expect(pageSource).toContain('<section className="flex min-w-0 flex-col gap-4">\n              <AvatarLiveLink publicKey={configuration.publicKey} />\n              <AvatarEmbedCard publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('<AvatarGeminiVoiceSelector');
     expect(pageSource).toContain('geminiVoice={configuration.geminiVoice}');
     expect(pageSource.indexOf('<AvatarContextEditor')).toBeLessThan(pageSource.indexOf('<AvatarGeminiVoiceSelector'));

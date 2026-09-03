@@ -4,6 +4,12 @@ import { describe, expect, it } from 'vitest';
 const source = readFileSync(new URL('./AvatarVideoStage.tsx', import.meta.url), 'utf8');
 
 describe('Avatar video stage', () => {
+  it('supports a viewport-filling public embed mode', () => {
+    expect(source).toContain('fullScreen');
+    expect(source).toContain('size-full overflow-hidden bg-zinc-950 text-white');
+    expect(source).toContain('aspect-video w-full max-w-4xl');
+  });
+
   it('uses the approved neutral bottom-centered Start Chat control', () => {
     expect(source).toContain('Start Chat');
     expect(source).toContain('variant="secondary"');

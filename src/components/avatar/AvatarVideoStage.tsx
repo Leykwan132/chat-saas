@@ -14,9 +14,11 @@ import {
 export function AvatarVideoStage({
   publicKey,
   previewUrl,
+  fullScreen = false,
 }: {
   publicKey: string;
   previewUrl?: string;
+  fullScreen?: boolean;
 }) {
   const {
     phase,
@@ -27,9 +29,12 @@ export function AvatarVideoStage({
   } = useAvatarSession(publicKey);
   const active = phase === 'active' || phase === 'stopping';
   const starting = phase === 'starting';
+  const stageClassName = fullScreen
+    ? 'relative size-full overflow-hidden bg-zinc-950 text-white'
+    : 'relative mx-auto aspect-video w-full max-w-4xl overflow-hidden rounded-2xl bg-zinc-950 text-white';
 
   return (
-    <section className="relative mx-auto aspect-video w-full max-w-4xl overflow-hidden rounded-2xl bg-zinc-950 text-white">
+    <section className={stageClassName}>
       <video
         ref={videoRef}
         autoPlay

@@ -43,6 +43,8 @@ describe('Avatar embed runtime', () => {
     expect(source).not.toContain('Talk with KiloBot');
     expect(source).not.toContain('Start conversation');
     expect(source).not.toContain('<video');
+    expect(source).toContain('h-[100dvh] w-full overflow-hidden');
+    expect(source).toContain('fullScreen');
     expect(settingsSource).toContain('<AvatarVideoStage');
     expect(settingsSource).toContain(
       'previewUrl={configuration.avatarPreviewUrl}',
@@ -55,6 +57,8 @@ describe('Avatar embed runtime', () => {
     expect(stageSource).toContain('top-1/2');
     expect(stageSource).toContain('[&_img]:object-contain');
     expect(stageSource).not.toContain('[&_img]:object-cover');
+    expect(stageSource).toContain('fullScreen');
+    expect(stageSource).toContain('size-full overflow-hidden bg-zinc-950 text-white');
   });
 
   it('keeps Gemini-owned conversations out of the KiloBot runtime', () => {
