@@ -17,7 +17,7 @@ export function AvatarLiveLink({ publicKey }: { publicKey: string }) {
 
   return (
     <section className="flex min-w-0 flex-col gap-2">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <h2 className="font-semibold">Live link</h2>
         <Button
           type="button"
