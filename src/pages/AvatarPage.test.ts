@@ -19,10 +19,11 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('configuration.configured && canManage ?');
     expect(pageSource).toContain('configuration.configured ?');
     expect(pageSource).toContain('lg:grid-cols-[minmax(0,1fr)_22rem]');
-    expect(pageSource).toContain('>Preview</h2>');
+    expect(pageSource).toContain('<h2 className="text-base font-medium">Preview</h2>');
     expect(pageSource).toContain('<AvatarVideoStage');
     expect(pageSource).toContain('publicKey={configuration.publicKey}');
     expect(pageSource).toContain('coverImageUrl={configuration.coverImageUrl}');
+    expect(pageSource).toContain('<section className="flex min-w-0 flex-col gap-4">\n              <div className="flex flex-col gap-3">');
     expect(pageSource).toContain('<AvatarLiveLink publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('<AvatarEmbedCard publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('<section className="flex min-w-0 flex-col gap-4">\n              <AvatarEmbedCard publicKey={configuration.publicKey} />\n              <AvatarLiveLink publicKey={configuration.publicKey} />');

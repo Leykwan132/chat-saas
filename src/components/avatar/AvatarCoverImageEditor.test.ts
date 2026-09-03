@@ -18,4 +18,12 @@ describe('Avatar cover image editor', () => {
     expect(source).toContain('Cover image');
     expect(source).toContain('object-cover');
   });
+
+  it('keeps the cover controls compact and title-only', () => {
+    expect(source).toContain('className="text-base"');
+    expect(source).toContain('h-20 w-36');
+    expect(source).toContain('w-fit max-w-full');
+    expect(source).not.toContain('Shown before a visitor starts a chat.');
+    expect(source).not.toContain('up to 5 MB.');
+  });
 });

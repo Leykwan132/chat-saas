@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-03 [CODE] Avatar settings now show a compact, title-only Cover image block below Preview, with Preview matching Instructions typography. Unshipped.
 - 2026-09-03 [CODE] Avatar settings now support manager-uploaded R2 cover images, and dashboard/public previews show a centered “Connecting...” overlay while a LiveAvatar session starts. Unshipped.
 - 2026-09-03 [CODE] Gemini Live Avatar connector remains implemented on `codex/gemini-live-connector`: managers save a provider context, LITE tokens use server-only `HEYGEN_GEMINI_SECRET_ID`, and browser turns bypass KiloBot. Focused tests and the Node 22 build passed before this merge; sandbox verification awaits a configured local Convex deployment.
 - 2026-09-03 [CODE] Avatar End now records `session.stopped` for both active sessions and canceled in-flight starts; event persistence strips request-only fields so Convex can finalize the session and release its capacity slot. Unshipped.
@@ -50,6 +51,7 @@
 
 - 2026-09-02 [CODE] Added LiveAvatar Gemini connector session tokens, manager-editable provider context, and direct connector-owned Avatar conversations; unshipped.
 - 2026-09-03 [CODE] Added R2-backed Avatar cover image upload, replacement, removal, and preview handoff plus a loading overlay during session startup; unshipped.
+- 2026-09-03 [CODE] Refined Avatar Preview and Cover image settings into matching, compact title-led sections; unshipped.
 - 2026-09-03 [CODE] Added the Gemini Live voice catalog and manager voice selector, persisted the choice, and embedded Avatar opening text into the provider system prompt; unshipped.
 - 2026-09-03 [CODE] Refined the Voice selector order, label, and typography for clearer Avatar settings.
 - 2026-09-03 [CODE] Flattened the Avatar settings labels and removed the redundant Voice and Context headings.
@@ -125,3 +127,4 @@
 - 2026-09-03 [TOOL] Avatar idle-timeout coverage passed 87 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Avatar idle-countdown coverage passed 89 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] R2 cover-image and connecting-overlay coverage passed 94 focused Avatar tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
+- 2026-09-03 [TOOL] Compact Cover image and Preview typography checks passed 95 focused Avatar tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.

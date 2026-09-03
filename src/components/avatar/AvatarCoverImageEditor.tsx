@@ -68,36 +68,35 @@ export function AvatarCoverImageEditor({
   };
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border p-4">
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="avatar-cover-image" className="text-base">Cover image</Label>
-        <p className="text-sm text-muted-foreground">Shown before a visitor starts a chat. PNG, JPEG, or WebP up to 5 MB.</p>
-      </div>
-      <div className="relative aspect-video w-full max-w-xl overflow-hidden rounded-lg bg-muted">
-        {coverImageUrl ? <img src={coverImageUrl} alt="Avatar cover" className="size-full object-cover" /> : <div className="flex size-full items-center justify-center text-muted-foreground"><ImagePlus className="size-8" /></div>}
-        {uploading ? <div className="absolute inset-0 flex items-center justify-center bg-background/65"><Loader2 className="size-7 animate-spin" /></div> : null}
-      </div>
-      <div className="flex items-center gap-2">
-        <label data-disabled={uploading} className="inline-flex cursor-pointer items-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50">
-          <input
-            id="avatar-cover-image"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="sr-only"
-            disabled={uploading}
-            onChange={(event) => {
-              void selectFile(event.currentTarget.files?.[0]);
-              event.currentTarget.value = '';
-            }}
-          />
-          {uploading ? <Spinner className="mr-2" /> : null}
-          {coverImageUrl ? 'Replace cover image' : 'Choose cover image'}
-        </label>
-        {coverImageUrl ? (
-          <Button type="button" variant="ghost" size="icon" aria-label="Remove cover image" disabled={uploading} onClick={() => void remove()}>
-            <Trash2 className="size-4 text-destructive" />
-          </Button>
-        ) : null}
+    <section className="flex w-fit max-w-full flex-col gap-3 rounded-xl border p-3">
+      <Label htmlFor="avatar-cover-image" className="text-base">Cover image</Label>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative h-20 w-36 overflow-hidden rounded-lg bg-muted">
+          {coverImageUrl ? <img src={coverImageUrl} alt="Avatar cover" className="size-full object-cover" /> : <div className="flex size-full items-center justify-center text-muted-foreground"><ImagePlus className="size-6" /></div>}
+          {uploading ? <div className="absolute inset-0 flex items-center justify-center bg-background/65"><Loader2 className="size-6 animate-spin" /></div> : null}
+        </div>
+        <div className="flex items-center gap-2">
+          <label data-disabled={uploading} className="inline-flex cursor-pointer items-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50">
+            <input
+              id="avatar-cover-image"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="sr-only"
+              disabled={uploading}
+              onChange={(event) => {
+                void selectFile(event.currentTarget.files?.[0]);
+                event.currentTarget.value = '';
+              }}
+            />
+            {uploading ? <Spinner className="mr-2" /> : null}
+            {coverImageUrl ? 'Replace cover image' : 'Choose cover image'}
+          </label>
+          {coverImageUrl ? (
+            <Button type="button" variant="ghost" size="icon" aria-label="Remove cover image" disabled={uploading} onClick={() => void remove()}>
+              <Trash2 className="size-4 text-destructive" />
+            </Button>
+          ) : null}
+        </div>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
     </section>

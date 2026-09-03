@@ -53,13 +53,15 @@ export default function AvatarPage() {
       {configuration.configured ? (
         <>
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-            <section className="flex min-w-0 flex-col gap-3">
-              <h2 className="text-sm font-semibold">Preview</h2>
-              <AvatarVideoStage
-                publicKey={configuration.publicKey}
-                previewUrl={configuration.avatarPreviewUrl}
-                coverImageUrl={configuration.coverImageUrl}
-              />
+            <section className="flex min-w-0 flex-col gap-4">
+              <div className="flex flex-col gap-3">
+                <h2 className="text-base font-medium">Preview</h2>
+                <AvatarVideoStage
+                  publicKey={configuration.publicKey}
+                  previewUrl={configuration.avatarPreviewUrl}
+                  coverImageUrl={configuration.coverImageUrl}
+                />
+              </div>
               {canManage ? <AvatarCoverImageEditor agentId={typedAgentId} coverImageUrl={configuration.coverImageUrl} /> : null}
             </section>
             <section className="flex min-w-0 flex-col gap-4">
