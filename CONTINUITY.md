@@ -6,7 +6,7 @@
 - 2026-09-03 [CODE] Avatar End now records `session.stopped` for both active sessions and canceled in-flight starts; event persistence strips request-only fields so Convex can finalize the session and release its capacity slot. Unshipped.
 - 2026-09-03 [CODE] Avatar context editing now presents the prompt field as “Instructions” without the extra bordered outer container. Unshipped.
 - 2026-09-03 [CODE] Avatar calls now place controls vertically on the right edge and render LiveAvatar response transcription as centered white, black-stroked subtitles. Unshipped.
-- 2026-09-03 [CODE] Avatar controls now show only a centered-right End button during calls, center Start Chat in the video, and use heavier outlined subtitle text. Unshipped.
+- 2026-09-03 [CODE] Avatar controls now show only a centered-right End button during calls, bottom-center Start Chat before calls, and heavier outlined subtitle text. Unshipped.
 - 2026-09-01 [USER] Goal: test the white-label Partner Programme locally on `codex/white-label-partner-portal`.
 - 2026-09-01 [TOOL] Now: merging current `origin/main` into the white-label branch; concurrent Overview-test and Workspace-page edits are being reconciled without removing partner access controls.
 - 2026-08-31 [CODE] Now: `origin/main` adds WhatsApp username recipients and BSUID-change continuity; both remain unshipped.
@@ -39,6 +39,7 @@
 - 2026-09-03 [CODE] Simplified the Avatar context editor presentation and renamed its prompt label to “Instructions”; unshipped.
 - 2026-09-03 [CODE] Added right-edge call controls and centered AI response subtitles to the Avatar stage; unshipped.
 - 2026-09-03 [CODE] Refined Avatar controls and subtitle weight for the requested call-stage layout; unshipped.
+- 2026-09-03 [CODE] Moved the inactive Avatar Start Chat control to the bottom center of the video stage; unshipped.
 - 2026-08-31 [CODE] Added WhatsApp username recipients and BSUID-change continuity; both customer-facing changes are unshipped.
 - 2026-08-27 [CODE] Added responsive mobile inbox/workspace navigation, demo data, accessible customer details, and robust switcher search behaviour; unshipped.
 - 2026-08-27 [CODE] Added Google Calendar Support to What’s new and removed the Model Support New badge; unshipped.
@@ -70,3 +71,4 @@
 - 2026-09-03 [TOOL] Avatar-focused suite passed 45 tests and the Node v22 production build passed after the context-editor presentation update.
 - 2026-09-03 [TOOL] Avatar stage and connector changes passed 48 focused tests, targeted ESLint, diff validation, and the Node v22 production build.
 - 2026-09-03 [TOOL] Avatar control/subtitle iteration passed 48 focused tests, targeted ESLint, diff validation, and the Node v22 production build.
+- 2026-09-03 [TOOL] Bottom-center Start Chat update passed 67 Avatar-focused tests, targeted ESLint, diff validation, and the Node v22 production build.

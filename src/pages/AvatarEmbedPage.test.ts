@@ -49,9 +49,10 @@ describe('Avatar embed runtime', () => {
     );
     expect(stageSource).toContain('Start Chat');
     expect(stageSource).toContain('left-1/2');
-    expect(stageSource).toContain('top-1/2');
+    expect(stageSource).toContain('bottom-6');
     expect(stageSource).toContain('End chat');
     expect(stageSource).toContain('right-6');
+    expect(stageSource).toContain('top-1/2');
   });
 
   it('keeps Gemini-owned conversations out of the KiloBot runtime', () => {

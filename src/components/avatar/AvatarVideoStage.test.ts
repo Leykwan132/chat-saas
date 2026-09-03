@@ -4,13 +4,11 @@ import { describe, expect, it } from 'vitest';
 const source = readFileSync(new URL('./AvatarVideoStage.tsx', import.meta.url), 'utf8');
 
 describe('Avatar video stage', () => {
-  it('uses the approved neutral centered Start Chat control', () => {
+  it('uses the approved neutral bottom-centered Start Chat control', () => {
     expect(source).toContain('Start Chat');
     expect(source).toContain('variant="secondary"');
-    expect(source).toContain('left-1/2');
-    expect(source).toContain('top-1/2');
-    expect(source).toContain('-translate-x-1/2');
-    expect(source).toContain('-translate-y-1/2');
+    expect(source).toContain('absolute bottom-6 left-1/2 min-w-28 -translate-x-1/2 shadow-lg');
+    expect(source).not.toContain('absolute left-1/2 top-1/2 min-w-28 -translate-x-1/2 -translate-y-1/2 shadow-lg');
     expect(source).not.toContain('Start conversation');
     expect(source).not.toContain('Start again');
   });

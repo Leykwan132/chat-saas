@@ -80,7 +80,7 @@ export function AvatarVideoStage({
       ) : (
         <Button
           variant="secondary"
-          className="absolute left-1/2 top-1/2 min-w-28 -translate-x-1/2 -translate-y-1/2 shadow-lg"
+          className="absolute bottom-6 left-1/2 min-w-28 -translate-x-1/2 shadow-lg"
           disabled={starting}
           onClick={() => void start()}
         >
