@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-04 [CODE] Avatar Opening text and Voice now share one row when the context editor has no media panel, removing the unused right-side column. Unshipped.
 - 2026-09-04 [CODE] Avatar Edit modal now uses a responsive `sm:max-w-5xl` width so desktop editing has more room while mobile remains viewport-safe. Unshipped.
 - 2026-09-04 [CODE] Configured Avatar overview Edit now opens an in-page modal with the shared Preview/Avatar/Background editor; the standalone `/avatar/create` route still uses the same editor. Unshipped.
 - 2026-09-04 [CODE] Avatar Preview now fills its dashboard column, and Cover/Background editing is consolidated in the Edit page’s Background tab; setup no longer shows the old chooser title or description. Unshipped.
@@ -69,6 +70,7 @@
 
 # Done (recent)
 
+- 2026-09-04 [CODE] Placed the Avatar Opening text and Voice controls side-by-side in the context editor when media controls are absent. Unshipped.
 - 2026-09-04 [CODE] Increased the responsive Edit modal width to 5xl and added a regression assertion for the desktop breakpoint. Unshipped.
 - 2026-09-04 [CODE] Added a reusable Avatar setup editor and opened it from the overview’s ghost Edit action in a scrollable modal; standalone creation remains available. Unshipped.
 - 2026-09-04 [CODE] Removed the dashboard preview width cap, moved Cover and Background editors into Edit → Background, and removed the redundant Avatar chooser heading/copy. Unshipped.
@@ -135,6 +137,7 @@
 
 # Receipts
 
+- 2026-09-04 [TOOL] One-row context layout passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Modal-width regression passed the AvatarPage test (4/4) and targeted Node v22 ESLint.
 - 2026-09-04 [TOOL] Edit-modal extraction passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Full-width preview and Edit-page media checks passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, diff validation, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.

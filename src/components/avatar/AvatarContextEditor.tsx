@@ -63,17 +63,18 @@ export function AvatarContextEditor({
     }
   };
 
+  const openingField = <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-opening" className="text-base">Opening text</Label><Input id="avatar-context-opening" value={openingText} onChange={(event) => updateOpeningText(event.target.value)} placeholder="Hello, how can I help?" /></div>;
+
   return (
     <section className="flex flex-col gap-4">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-        <div className="grid gap-4">
-          <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-opening" className="text-base">Opening text</Label><Input id="avatar-context-opening" value={openingText} onChange={(event) => updateOpeningText(event.target.value)} placeholder="Hello, how can I help?" /></div>
-          {voiceSlot}
+      {mediaSlot ? (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+          <div className="grid gap-4">{openingField}{voiceSlot}</div>
+          <Separator className="lg:hidden" />
+          <Separator orientation="vertical" className="hidden lg:block" />
+          <div className="grid min-w-0 gap-4 sm:grid-cols-2">{mediaSlot}</div>
         </div>
-        <Separator className="lg:hidden" />
-        <Separator orientation="vertical" className="hidden lg:block" />
-        <div className="grid min-w-0 gap-4 sm:grid-cols-2">{mediaSlot}</div>
-      </div>
+      ) : <div className="grid gap-4 sm:grid-cols-2">{openingField}{voiceSlot}</div>}
       <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-prompt" className="text-base">Instructions</Label><Textarea id="avatar-context-prompt" value={prompt} onChange={(event) => updatePrompt(event.target.value)} className="min-h-36" placeholder="Describe the role, tone, knowledge, and boundaries." /></div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex justify-end"><Button onClick={() => void save()} disabled={!canSave}>{saving ? 'Saving…' : 'Save context'}</Button></div>

@@ -14,6 +14,8 @@ test('provides a manager context editor with explicit save states', () => {
   expect(source).toContain('grid gap-4');
   expect(source).toContain('voiceSlot?: ReactNode');
   expect(source).toContain('mediaSlot?: ReactNode');
+  expect(source).toContain('const openingField =');
+  expect(source).toContain('<div className="grid gap-4 sm:grid-cols-2">{openingField}{voiceSlot}</div>');
   expect(source).toContain('lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]');
   expect(source).toContain('<Separator orientation="vertical" className="hidden lg:block" />');
   expect(source).toContain('<Separator className="lg:hidden" />');
