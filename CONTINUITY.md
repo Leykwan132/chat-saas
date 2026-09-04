@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-04 [CODE] Cover & background preview opens on the Cover image view; its end-of-row toggle switches to the avatar-over-background view and back. Unshipped.
 - 2026-09-04 [CODE] Cover & background preview now has a header toggle between avatar-over-background and cover/idle views; portrait background media is clipped to a centered portrait frame. Unshipped.
 - 2026-09-04 [CODE] Cover & background modal preview now keeps background media behind the avatar preview; cover media is not layered into that backdrop preview. Unshipped.
 - 2026-09-04 [CODE] Avatar setup’s Cover & background tab now switches the top preview to a static background/cover media stage with the Start Chat treatment instead of the selected avatar preview. Unshipped.
@@ -74,6 +75,7 @@
 
 # Done (recent)
 
+- 2026-09-04 [CODE] Set the Cover & background preview toggle’s initial state to Cover image, with Background as the click-through state. Unshipped.
 - 2026-09-04 [CODE] Added a Preview-row toggle for Cover image versus Background and matched portrait backdrop bounds to the avatar frame. Unshipped.
 - 2026-09-04 [CODE] Corrected the Cover & background preview layering so background media sits behind the avatar preview while cover remains an independent idle asset. Unshipped.
 - 2026-09-04 [CODE] Added a Cover & background setup tab preview that layers configured image/video media and cover content without starting a live session. Unshipped.
@@ -145,6 +147,7 @@
 
 # Receipts
 
+- 2026-09-04 [TOOL] Cover-first preview toggle passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Cover/background preview toggle and portrait framing passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Background-layer correction passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Cover/background preview checks passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.

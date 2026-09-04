@@ -146,6 +146,7 @@ describe('Avatar setup', () => {
     expect(createSource).toContain("import { AvatarBackgroundPreview } from '@/components/avatar/AvatarBackgroundPreview';");
     expect(createSource).toContain('<AvatarBackgroundPreview');
     expect(createSource).toContain('backgroundPreviewMode');
+    expect(createSource).toContain("useState<'cover' | 'background'>('cover')");
     expect(createSource).toContain('Show cover image');
     expect(createSource).toContain('Show background');
     expect(createSource).toContain("avatarOrientation={selectedAvatar?.orientation ?? 'landscape'}");

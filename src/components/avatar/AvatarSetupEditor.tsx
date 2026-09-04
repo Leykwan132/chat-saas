@@ -36,7 +36,7 @@ export function AvatarSetupEditor({ agentId, onSaved, showBackLink = false }: Av
   const [avatars, setAvatars] = useState<OrientedAvatarOption[]>();
   const [selectedAvatarId, setSelectedAvatarId] = useState('');
   const [activeTab, setActiveTab] = useState<'avatar' | 'background'>('avatar');
-  const [backgroundPreviewMode, setBackgroundPreviewMode] = useState<'cover' | 'background'>('background');
+  const [backgroundPreviewMode, setBackgroundPreviewMode] = useState<'cover' | 'background'>('cover');
   const [catalogError, setCatalogError] = useState<string>();
   const [saving, setSaving] = useState(false);
 
