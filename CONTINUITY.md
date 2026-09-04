@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-04 [CODE] Avatar Opening text and Voice save actions now appear only while their fields are dirty; Opening text saves directly below its input. Unshipped.
 - 2026-09-04 [CODE] Avatar Opening text and Voice now share one row when the context editor has no media panel, removing the unused right-side column. Unshipped.
 - 2026-09-04 [CODE] Avatar Edit modal now uses a responsive `sm:max-w-5xl` width so desktop editing has more room while mobile remains viewport-safe. Unshipped.
 - 2026-09-04 [CODE] Configured Avatar overview Edit now opens an in-page modal with the shared Preview/Avatar/Background editor; the standalone `/avatar/create` route still uses the same editor. Unshipped.
@@ -70,6 +71,7 @@
 
 # Done (recent)
 
+- 2026-09-04 [CODE] Added dirty-state-only save buttons for Avatar Opening text and Gemini Live Voice, placing the Opening text action directly beneath its input. Unshipped.
 - 2026-09-04 [CODE] Placed the Avatar Opening text and Voice controls side-by-side in the context editor when media controls are absent. Unshipped.
 - 2026-09-04 [CODE] Increased the responsive Edit modal width to 5xl and added a regression assertion for the desktop breakpoint. Unshipped.
 - 2026-09-04 [CODE] Added a reusable Avatar setup editor and opened it from the overview’s ghost Edit action in a scrollable modal; standalone creation remains available. Unshipped.
@@ -137,6 +139,7 @@
 
 # Receipts
 
+- 2026-09-04 [TOOL] Dirty-state save controls passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] One-row context layout passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Modal-width regression passed the AvatarPage test (4/4) and targeted Node v22 ESLint.
 - 2026-09-04 [TOOL] Edit-modal extraction passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.

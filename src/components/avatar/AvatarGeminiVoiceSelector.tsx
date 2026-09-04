@@ -29,6 +29,7 @@ export function AvatarGeminiVoiceSelector({
 
   const voice = draftVoice ?? savedVoice;
   const canSave = draftVoice !== undefined && voice !== savedVoice && !saving;
+  const showSave = draftVoice !== undefined || saving;
 
   const save = async () => {
     if (!canSave) return;
@@ -63,7 +64,7 @@ export function AvatarGeminiVoiceSelector({
         </Select>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <div className="flex justify-end"><Button onClick={() => void save()} disabled={!canSave}>{saving ? 'Saving…' : 'Save voice'}</Button></div>
+      {showSave ? <div className="flex justify-end"><Button onClick={() => void save()} disabled={!canSave}>{saving ? 'Saving…' : 'Save voice'}</Button></div> : null}
     </section>
   );
 }
