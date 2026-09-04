@@ -14,8 +14,8 @@ const shareDialogSource = readFileSync(
   new URL('../components/avatar/AvatarShareDialog.tsx', import.meta.url),
   'utf8',
 );
-const createPageSource = readFileSync(
-  new URL('./AvatarCreatePage.tsx', import.meta.url),
+const setupEditorSource = readFileSync(
+  new URL('../components/avatar/AvatarSetupEditor.tsx', import.meta.url),
   'utf8',
 );
 
@@ -24,7 +24,11 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('font-title text-3xl font-normal');
     expect(pageSource).toContain('sm:flex-row sm:items-start sm:justify-between');
     expect(pageSource).toContain('Edit');
-    expect(pageSource).toContain('<Button variant="ghost" size="sm" asChild>\n              <Link to={`/dashboard/${typedAgentId}/avatar/create`}>');
+    expect(pageSource).toContain("import { AvatarSetupEditor } from '@/components/avatar/AvatarSetupEditor';");
+    expect(pageSource).toContain("import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';");
+    expect(pageSource).toContain('<Dialog open={editOpen} onOpenChange={setEditOpen}>');
+    expect(pageSource).toContain('<AvatarSetupEditor agentId={typedAgentId} onSaved={() => setEditOpen(false)} />');
+    expect(pageSource).not.toContain('<Button variant="ghost" size="sm" asChild>\n              <Link to={`/dashboard/${typedAgentId}/avatar/create`}>');
     expect(pageSource).not.toContain('Edit avatar');
     expect(pageSource).toContain('<AvatarShareDialog publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('buildAvatarLiveUrl(configuration.publicKey)');
@@ -71,7 +75,7 @@ describe('Avatar configured overview', () => {
     expect(coverEditorSource).toContain('api.avatarCover.generateCoverUploadUrl');
     expect(coverEditorSource).toContain('api.avatarCover.saveCoverImage');
     expect(coverEditorSource).toContain('Click to replace');
-    expect(createPageSource).toContain("import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';");
+    expect(setupEditorSource).toContain("import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';");
   });
 
   it('offers a copyable public link and a new-tab preview', () => {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { ExternalLink, Pencil, ScanFace } from 'lucide-react';
 import { Link, useParams } from 'react-router';
@@ -6,11 +6,13 @@ import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { AvatarContextEditor } from '@/components/avatar/AvatarContextEditor';
 import { AvatarGeminiVoiceSelector } from '@/components/avatar/AvatarGeminiVoiceSelector';
+import { AvatarSetupEditor } from '@/components/avatar/AvatarSetupEditor';
 import { AvatarShareDialog } from '@/components/avatar/AvatarShareDialog';
 import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/usePermissions';
 import { buildAvatarLiveUrl } from '@/lib/avatarEmbed';
@@ -24,6 +26,7 @@ export default function AvatarPage() {
   const canManage = !permissionsLoading && can(Permission.CHANNELS_MANAGE);
   const configuration = useQuery(api.avatar.getForAgent, canRead ? { agentId: typedAgentId } : 'skip');
   const ensureConfiguration = useMutation(api.avatar.ensureForAgent);
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (configuration === null && canManage) void ensureConfiguration({ agentId: typedAgentId });
@@ -43,12 +46,21 @@ export default function AvatarPage() {
         {configuration.configured ? (
           <div className="flex items-center gap-2">
             {canManage ? (
-            <Button variant="ghost" size="sm" asChild>
-              <Link to={`/dashboard/${typedAgentId}/avatar/create`}>
-                <Pencil data-icon="inline-start" />
-                Edit
-              </Link>
-              </Button>
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" type="button">
+                  <Pencil data-icon="inline-start" />
+                  Edit
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Edit Avatar</DialogTitle>
+                  <DialogDescription>Update the avatar, background, and media used for live conversations.</DialogDescription>
+                </DialogHeader>
+                <AvatarSetupEditor agentId={typedAgentId} onSaved={() => setEditOpen(false)} />
+              </DialogContent>
+            </Dialog>
             ) : null}
             <AvatarShareDialog publicKey={configuration.publicKey} />
           </div>

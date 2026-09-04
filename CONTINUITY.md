@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-04 [CODE] Configured Avatar overview Edit now opens an in-page modal with the shared Preview/Avatar/Background editor; the standalone `/avatar/create` route still uses the same editor. Unshipped.
 - 2026-09-04 [CODE] Avatar Preview now fills its dashboard column, and Cover/Background editing is consolidated in the Edit page’s Background tab; setup no longer shows the old chooser title or description. Unshipped.
 - 2026-09-04 [CODE] Avatar overview now uses a ghost Edit action, and avatar setup shows a top Preview with line tabs for Avatar/Background plus one Selected card before orientation groups. Unshipped.
 - 2026-09-04 [CODE] Configured Avatar pages now expose a primary Share action with Live link/embed instructions in a modal, while Preview has an adjacent new-tab action. Unshipped.
@@ -67,6 +68,7 @@
 
 # Done (recent)
 
+- 2026-09-04 [CODE] Added a reusable Avatar setup editor and opened it from the overview’s ghost Edit action in a scrollable modal; standalone creation remains available. Unshipped.
 - 2026-09-04 [CODE] Removed the dashboard preview width cap, moved Cover and Background editors into Edit → Background, and removed the redundant Avatar chooser heading/copy. Unshipped.
 - 2026-09-04 [CODE] Reworked Avatar setup navigation and selection hierarchy, added the background media tab and top preview, replaced Default with a single Selected item, and simplified the overview action to ghost Edit; unshipped.
 - 2026-09-04 [CODE] Added a reusable Avatar Share dialog, moved duplicate Live link/embed panels into it, and added a new-tab Preview icon beside the Preview heading; unshipped.
@@ -131,6 +133,7 @@
 
 # Receipts
 
+- 2026-09-04 [TOOL] Edit-modal extraction passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Full-width preview and Edit-page media checks passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, diff validation, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Avatar setup and Edit-action checks passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, diff validation, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Share-dialog and Preview-link checks passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, diff validation, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.

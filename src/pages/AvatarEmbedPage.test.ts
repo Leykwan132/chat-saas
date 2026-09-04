@@ -13,7 +13,7 @@ const stageSource = readFileSync(
   new URL('../components/avatar/AvatarVideoStage.tsx', import.meta.url),
   'utf8',
 );
-const createSource = readFileSync(new URL('./AvatarCreatePage.tsx', import.meta.url), 'utf8');
+const createSource = readFileSync(new URL('../components/avatar/AvatarSetupEditor.tsx', import.meta.url), 'utf8');
 const previewMediaSource = readFileSync(new URL('../components/avatar/AvatarPreviewMedia.tsx', import.meta.url), 'utf8');
 const voiceDialogSource = readFileSync(new URL('../components/avatar/AvatarVoicePickerDialog.tsx', import.meta.url), 'utf8');
 const embedCardSource = readFileSync(new URL('../components/avatar/AvatarEmbedCard.tsx', import.meta.url), 'utf8');
