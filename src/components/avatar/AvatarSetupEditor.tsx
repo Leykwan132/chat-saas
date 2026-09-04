@@ -36,6 +36,7 @@ export function AvatarSetupEditor({ agentId, onSaved, showBackLink = false }: Av
   const [avatars, setAvatars] = useState<OrientedAvatarOption[]>();
   const [selectedAvatarId, setSelectedAvatarId] = useState('');
   const [activeTab, setActiveTab] = useState<'avatar' | 'background'>('avatar');
+  const [backgroundPreviewMode, setBackgroundPreviewMode] = useState<'cover' | 'background'>('background');
   const [catalogError, setCatalogError] = useState<string>();
   const [saving, setSaving] = useState(false);
 
@@ -89,10 +90,21 @@ export function AvatarSetupEditor({ agentId, onSaved, showBackLink = false }: Av
       {catalogError ? <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{catalogError}</div> : null}
       <div className="flex flex-col gap-6">
         <section className="flex flex-col gap-3">
-          <h2 className="text-base font-medium">Preview</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-base font-medium">Preview</h2>
+            {activeTab === 'background' ? (
+              <Button type="button" variant="outline" size="sm" onClick={() => setBackgroundPreviewMode((mode) => mode === 'background' ? 'cover' : 'background')}>
+                {backgroundPreviewMode === 'background' ? 'Show cover image' : 'Show background'}
+              </Button>
+            ) : null}
+          </div>
           {activeTab === 'background' ? (
             <AvatarBackgroundPreview
+              mode={backgroundPreviewMode}
+              avatarOrientation={selectedAvatar?.orientation ?? 'landscape'}
               previewUrl={selectedAvatar?.previewUrl ?? configuration?.avatarPreviewUrl}
+              coverImageUrl={configuration?.coverImageUrl}
+              coverImageType={configuration?.coverImageType}
               backgroundUrl={configuration?.backgroundUrl}
               backgroundType={configuration?.backgroundType}
             />

@@ -145,14 +145,19 @@ describe('Avatar setup', () => {
     expect(createSource).toContain('<TabsTrigger value="background">Cover &amp; background</TabsTrigger>');
     expect(createSource).toContain("import { AvatarBackgroundPreview } from '@/components/avatar/AvatarBackgroundPreview';");
     expect(createSource).toContain('<AvatarBackgroundPreview');
+    expect(createSource).toContain('backgroundPreviewMode');
+    expect(createSource).toContain('Show cover image');
+    expect(createSource).toContain('Show background');
+    expect(createSource).toContain("avatarOrientation={selectedAvatar?.orientation ?? 'landscape'}");
     const backgroundPreviewUsage = createSource.slice(
       createSource.indexOf('<AvatarBackgroundPreview'),
       createSource.indexOf('/>', createSource.indexOf('<AvatarBackgroundPreview')) + 2,
     );
-    expect(backgroundPreviewUsage).not.toContain('coverImageUrl');
+    expect(backgroundPreviewUsage).toContain('coverImageUrl={configuration?.coverImageUrl}');
     expect(backgroundPreviewSource).toContain('previewUrl');
     expect(backgroundPreviewSource).toContain('backgroundUrl');
-    expect(backgroundPreviewSource).not.toContain('coverImageUrl');
+    expect(backgroundPreviewSource).toContain("type PreviewMode = 'cover' | 'background'");
+    expect(backgroundPreviewSource).toContain("type AvatarOrientation = 'landscape' | 'portrait'");
     expect(createSource).toContain('title="Selected"');
     expect(createSource).toContain('selectedAvatar?.previewUrl');
     expect(createSource).toContain('<AvatarBackgroundEditor');
