@@ -5,8 +5,6 @@ import { Link, useParams } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { AvatarContextEditor } from '@/components/avatar/AvatarContextEditor';
-import { AvatarBackgroundEditor } from '@/components/avatar/AvatarBackgroundEditor';
-import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';
 import { AvatarGeminiVoiceSelector } from '@/components/avatar/AvatarGeminiVoiceSelector';
 import { AvatarShareDialog } from '@/components/avatar/AvatarShareDialog';
 import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
@@ -94,16 +92,6 @@ export default function AvatarPage() {
               prompt={configuration.providerContextPrompt ?? ''}
               openingText={configuration.providerContextOpeningText ?? ''}
               voiceSlot={<AvatarGeminiVoiceSelector agentId={typedAgentId} geminiVoice={configuration.geminiVoice} />}
-              mediaSlot={(
-                <>
-                  <AvatarCoverImageEditor
-                    agentId={typedAgentId}
-                    coverImageUrl={configuration.coverImageUrl}
-                    coverImageType={configuration.coverImageType}
-                  />
-                  <AvatarBackgroundEditor agentId={typedAgentId} backgroundUrl={configuration.backgroundUrl} backgroundType={configuration.backgroundType} />
-                </>
-              )}
             />
           ) : null}
         </>

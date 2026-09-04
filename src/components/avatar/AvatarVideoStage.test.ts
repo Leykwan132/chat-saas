@@ -7,7 +7,8 @@ describe('Avatar video stage', () => {
   it('supports a viewport-filling public embed mode', () => {
     expect(source).toContain('fullScreen');
     expect(source).toContain('size-full overflow-hidden bg-zinc-950 text-white');
-    expect(source).toContain('aspect-video w-full max-w-4xl');
+    expect(source).toContain('aspect-video w-full');
+    expect(source).not.toContain('max-w-4xl');
   });
 
   it('uses the approved neutral bottom-centered Start Chat control', () => {

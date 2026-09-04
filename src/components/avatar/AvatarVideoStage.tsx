@@ -48,7 +48,7 @@ export function AvatarVideoStage({
   useAvatarBackgroundCompositor(sourceVideoRef, canvasRef, active && Boolean(backgroundUrl));
   const stageClassName = fullScreen
     ? 'relative size-full overflow-hidden bg-zinc-950 text-white'
-    : 'relative mx-auto aspect-video w-full max-w-4xl overflow-hidden rounded-2xl bg-zinc-950 text-white';
+    : 'relative aspect-video w-full overflow-hidden rounded-2xl bg-zinc-950 text-white';
 
   return (
     <section className={stageClassName}>

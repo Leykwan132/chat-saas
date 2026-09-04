@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { AvatarBackgroundEditor } from '@/components/avatar/AvatarBackgroundEditor';
+import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';
 import { AvatarPreviewMedia } from '@/components/avatar/AvatarPreviewMedia';
 import { filterBackgroundFreeAvatars, splitAvatarOptions } from '@/components/avatar/avatarCatalog';
 import { loadAvatarOrientations, type OrientedAvatarOption } from '@/components/avatar/avatarOrientation';
@@ -80,7 +81,6 @@ export default function AvatarCreatePage() {
       <Button variant="ghost" size="sm" className="-ml-3 self-start" asChild><Link to={`/dashboard/${typedAgentId}/avatar`}><ArrowLeft data-icon="inline-start" />Back to Avatar</Link></Button>
       {catalogError ? <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{catalogError}</div> : null}
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1"><h1 className="text-2xl font-semibold">Choose your avatar</h1><p className="text-sm text-muted-foreground">Select the face visitors will see during a conversation. You can change this later.</p></div>
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-medium">Preview</h2>
           <AvatarPreviewMedia
@@ -100,11 +100,18 @@ export default function AvatarCreatePage() {
               {availablePortraitAvatars.length ? <AvatarSection title="Portrait" avatars={availablePortraitAvatars} selectedAvatarId={selectedAvatarId} onSelect={setSelectedAvatarId} /> : null}
             </TabsContent>
             <TabsContent value="background">
-              <AvatarBackgroundEditor
-                agentId={typedAgentId}
-                backgroundUrl={configuration?.backgroundUrl}
-                backgroundType={configuration?.backgroundType}
-              />
+              <div className="grid gap-6 sm:grid-cols-2">
+                <AvatarCoverImageEditor
+                  agentId={typedAgentId}
+                  coverImageUrl={configuration?.coverImageUrl}
+                  coverImageType={configuration?.coverImageType}
+                />
+                <AvatarBackgroundEditor
+                  agentId={typedAgentId}
+                  backgroundUrl={configuration?.backgroundUrl}
+                  backgroundType={configuration?.backgroundType}
+                />
+              </div>
             </TabsContent>
           </Tabs>
         )}

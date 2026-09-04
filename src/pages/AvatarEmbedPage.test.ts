@@ -133,8 +133,8 @@ describe('Avatar setup', () => {
   it('uses a Gemini Live avatar-only flow with curated catalog sections', () => {
     expect(createSource).not.toContain('Avatar ID');
     expect(createSource).not.toContain('Voice ID');
-    expect(createSource).toContain('Choose your avatar');
-    expect(createSource).toContain('Select the face visitors will see during a conversation. You can change this later.');
+    expect(createSource).not.toContain('Choose your avatar');
+    expect(createSource).not.toContain('Select the face visitors will see during a conversation. You can change this later.');
     expect(createSource).toContain('AvatarGridSkeleton');
     expect(createSource).toContain('loadAvatarOrientations');
     expect(createSource).toContain('filterBackgroundFreeAvatars');
@@ -145,11 +145,11 @@ describe('Avatar setup', () => {
     expect(createSource).toContain('title="Selected"');
     expect(createSource).toContain('selectedAvatar?.previewUrl');
     expect(createSource).toContain('<AvatarBackgroundEditor');
+    expect(createSource).toContain('<AvatarCoverImageEditor');
     expect(createSource).not.toContain('defaultAvatars');
     expect(createSource).not.toContain('title="Default"');
     expect(createSource).toContain('title="Landscape"');
     expect(createSource).toContain('title="Portrait"');
-    expect(createSource.indexOf('title="Default"')).toBeLessThan(createSource.indexOf('title="Landscape"'));
     expect(createSource.indexOf('title="Landscape"')).toBeLessThan(createSource.indexOf('title="Portrait"'));
     expect(createSource).toContain('<Skeleton');
     expect(createSource).toContain('onSelect={setSelectedAvatarId}');
