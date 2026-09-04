@@ -1,4 +1,5 @@
 import { useQuery } from 'convex/react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { PanelLeftOpen } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
@@ -24,6 +25,7 @@ import { getNavItems, type NavItem } from './app-sidebar-nav';
 import { SidebarNavMenuItem } from './app-sidebar-nav-item';
 import {
   isProductFeatureEnabled,
+  isAvatarUserAllowed,
   useEnableAvatarFeature,
   useShowSavedReplies,
 } from '@/lib/posthogFeatureFlags';
@@ -41,11 +43,12 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const { can, isLoading } = usePermissions();
+  const { user } = useAuth();
   const savedRepliesState = useShowSavedReplies();
   const avatarFeatureState = useEnableAvatarFeature();
   const navItems = getNavItems(agent._id, {
     showSavedReplies: isProductFeatureEnabled(savedRepliesState),
-    enableAvatarFeature: isProductFeatureEnabled(avatarFeatureState),
+    enableAvatarFeature: isProductFeatureEnabled(avatarFeatureState) && isAvatarUserAllowed(user?.email),
   });
   const canReadChats = !isLoading && can(Permission.CHATS_READ);
   const totalUnread = useQuery(

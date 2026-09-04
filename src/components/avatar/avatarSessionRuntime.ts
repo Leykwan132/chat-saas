@@ -6,7 +6,7 @@ import type {
   AvatarSessionSnapshot,
   AvatarStoppedEvent,
 } from './avatarSessionRuntimeTypes';
-
+import { createAvatarInactivityController } from './avatarInactivityController';
 export type {
   AvatarSessionClient,
   AvatarSessionEvent,
@@ -19,20 +19,19 @@ export type {
   AvatarStoppedEvent,
   AvatarTranscriptionEvent,
 } from './avatarSessionRuntimeTypes';
-
 const initialSnapshot: AvatarSessionSnapshot = {
   phase: 'idle',
   muted: false,
   userSpeaking: false,
   avatarSpeaking: false,
+  subtitle: null,
+  inactivityCountdown: null,
   error: null,
   identity: null,
 };
-
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Avatar session failed';
 }
-
 export class AvatarSessionRuntime {
   private readonly services: AvatarSessionServices;
   private snapshot: AvatarSessionSnapshot = initialSnapshot;
@@ -41,41 +40,43 @@ export class AvatarSessionRuntime {
   private unbind: (() => void) | null = null;
   private video: HTMLMediaElement | null = null;
   private generation = 0;
-  private startedAt = 0;
-  private activeSourceEventId: string | null = null;
-  private turn = 0;
-  private pendingSpeech: string[] = [];
-  private spokenIds = new Set<string>();
-  private speechResolver: (() => void) | null = null;
-  private draining = false;
   private voiceStarting = false;
+  private subtitleSourceEventId: string | null = null;
   private cleanupPromise: Promise<void> | null = null;
-
-  constructor(services: AvatarSessionServices) { this.services = services; }
+  private readonly inactivityController: ReturnType<typeof createAvatarInactivityController>;
+  constructor(services: AvatarSessionServices) {
+    this.services = services;
+    this.inactivityController = createAvatarInactivityController(
+      (seconds) => {
+        if (this.snapshot.phase === 'active') this.publish({ ...this.snapshot, inactivityCountdown: seconds });
+      },
+      () => {
+        if (this.snapshot.phase === 'active') void this.stop('idle_timeout');
+      },
+    );
+  }
   getSnapshot = () => this.snapshot;
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   };
-
   attachVideo = (element: HTMLMediaElement | null) => {
     this.video = element;
     if (element && this.snapshot.phase === 'active') this.client?.attach(element);
   };
-
   start = async () => {
     if (['starting', 'active', 'stopping'].includes(this.snapshot.phase)) return;
     const generation = ++this.generation;
-    this.startedAt = this.services.now();
-    this.activeSourceEventId = null;
-    this.turn = 0;
-    this.pendingSpeech = [];
-    this.spokenIds = new Set();
+    this.clearInactivityTimer();
+    this.subtitleSourceEventId = null;
     this.publish({ ...initialSnapshot, phase: 'starting' });
     try {
       const access = await this.services.begin();
-      if (generation !== this.generation) return;
       const { sessionToken, ...identity } = access;
+      if (generation !== this.generation) {
+        await this.recordClientStopped(identity);
+        return;
+      }
       const client = this.services.createClient(sessionToken);
       this.client = client;
       this.publish({ ...this.snapshot, identity });
@@ -86,20 +87,32 @@ export class AvatarSessionRuntime {
     }
   };
 
-  stop = async () => {
+  stop = async (endReason = 'client_ended') => {
     if (this.snapshot.phase === 'idle' || this.snapshot.phase === 'ended') return;
+    this.clearInactivityTimer();
+    const identity = this.snapshot.identity;
+    const shouldRecordStop = Boolean(identity) && this.snapshot.phase !== 'error';
     if (this.snapshot.phase !== 'error') {
       this.publish({ ...this.snapshot, phase: 'stopping' });
     }
     ++this.generation;
     try {
-      await this.cleanup();
+      const results = await Promise.allSettled([
+        this.cleanup(),
+        shouldRecordStop && identity
+          ? this.recordClientStopped(identity, endReason)
+          : Promise.resolve(),
+      ]);
+      const failure = results.find((result) => result.status === 'rejected');
+      if (failure?.status === 'rejected') throw failure.reason;
       this.publish({
         ...this.snapshot,
         phase: 'ended',
         muted: false,
         userSpeaking: false,
         avatarSpeaking: false,
+        subtitle: null,
+        inactivityCountdown: null,
         error: null,
       });
     } catch (error) {
@@ -119,21 +132,7 @@ export class AvatarSessionRuntime {
     this.publish({ ...this.snapshot, muted: false });
   };
 
-  syncMessages = (messages: AvatarSessionMessage[]) => {
-    if (!this.activeSourceEventId || !this.snapshot.identity) return;
-    for (const message of messages) {
-      if (
-        message.direction !== 'outgoing'
-        || message.contentType !== 'text'
-        || message.createdAt < this.startedAt
-        || message.sourceEventId !== this.activeSourceEventId
-        || this.spokenIds.has(message.id)
-      ) continue;
-      this.spokenIds.add(message.id);
-      this.pendingSpeech.push(...this.services.splitSpeech(message.content));
-    }
-    this.startSpeechDrain(this.generation, this.turn);
-  };
+  syncMessages = (messages: AvatarSessionMessage[]) => { void messages; };
 
   destroy = async () => this.stop();
   private handlers(generation: number): AvatarSessionHandlers {
@@ -149,30 +148,38 @@ export class AvatarSessionRuntime {
       },
       userSpeechStarted: () => {
         if (!current() || !this.client) return;
-        this.turn += 1;
-        this.activeSourceEventId = null;
-        this.pendingSpeech = [];
-        this.releaseSpeechWait();
-        this.client.interrupt();
+        this.clearInactivityTimer();
         this.publish({ ...this.snapshot, userSpeaking: true });
       },
       userSpeechEnded: () => {
-        if (current()) this.publish({ ...this.snapshot, userSpeaking: false });
+        if (!current()) return;
+        this.publish({ ...this.snapshot, userSpeaking: false });
+        this.scheduleInactivityTimeout(generation);
       },
-      userTranscription: (event) => {
-        if (!current() || !this.snapshot.identity) return;
-        this.activeSourceEventId = event.eventId;
-        void this.services
-          .receiveTranscript(this.snapshot.identity, event)
-          .catch((error) => this.fail(generation, error));
+      userTranscription: () => {
+        if (current()) this.scheduleInactivityTimeout(generation);
       },
       avatarSpeechStarted: () => {
-        if (current()) this.publish({ ...this.snapshot, avatarSpeaking: true });
+        if (!current()) return;
+        this.clearInactivityTimer();
+        this.publish({ ...this.snapshot, avatarSpeaking: true });
       },
       avatarSpeechEnded: () => {
         if (!current()) return;
-        this.publish({ ...this.snapshot, avatarSpeaking: false });
-        this.releaseSpeechWait();
+        this.subtitleSourceEventId = null;
+        this.publish({ ...this.snapshot, avatarSpeaking: false, subtitle: null });
+        this.scheduleInactivityTimeout(generation);
+      },
+      avatarTranscription: (event) => {
+        if (!current()) return;
+        this.scheduleInactivityTimeout(generation);
+        const sourceEventId = event.sourceEventId ?? this.subtitleSourceEventId ?? event.eventId;
+        const previous = this.subtitleSourceEventId === sourceEventId
+          ? this.snapshot.subtitle ?? ''
+          : '';
+        const text = event.isChunk ? `${previous}${event.text}` : event.text;
+        this.subtitleSourceEventId = sourceEventId;
+        this.publish({ ...this.snapshot, subtitle: text.trim() || null });
       },
       stopped: (event) => {
         if (current()) void this.handleStopped(generation, event);
@@ -186,40 +193,12 @@ export class AvatarSessionRuntime {
       await this.client?.startVoiceChat();
       if (generation === this.generation) {
         this.publish({ ...this.snapshot, phase: 'active' });
+        this.scheduleInactivityTimeout(generation);
       }
     } catch (error) {
       await this.fail(generation, error);
     } finally {
       this.voiceStarting = false;
-    }
-  }
-
-  private startSpeechDrain(generation: number, turn: number) {
-    void this.drainSpeech(generation, turn).catch((error) => this.fail(generation, error));
-  }
-
-  private async drainSpeech(generation: number, turn: number) {
-    if (this.draining) return;
-    this.draining = true;
-    try {
-      while (
-        generation === this.generation
-        && turn === this.turn
-        && this.pendingSpeech.length > 0
-        && this.client
-      ) {
-        const text = this.pendingSpeech.shift();
-        if (!text) continue;
-        this.client.repeat(text);
-        await new Promise<void>((resolve) => {
-          this.speechResolver = resolve;
-        });
-      }
-    } finally {
-      this.draining = false;
-      if (this.pendingSpeech.length > 0) {
-        this.startSpeechDrain(this.generation, this.turn);
-      }
     }
   }
 
@@ -240,7 +219,8 @@ export class AvatarSessionRuntime {
       this.publish({ ...this.snapshot, phase: 'error', error: errorMessage(failure.reason) });
       return;
     }
-    this.publish({ ...this.snapshot, phase: 'ended', avatarSpeaking: false });
+    this.subtitleSourceEventId = null;
+    this.publish({ ...this.snapshot, phase: 'ended', avatarSpeaking: false, subtitle: null, inactivityCountdown: null });
   }
 
   private async fail(generation: number, error: unknown) {
@@ -248,6 +228,7 @@ export class AvatarSessionRuntime {
     const identity = this.snapshot.identity;
     const message = errorMessage(error);
     ++this.generation;
+    this.subtitleSourceEventId = null;
     await Promise.allSettled([
       this.cleanup(),
       identity
@@ -259,23 +240,28 @@ export class AvatarSessionRuntime {
         })
         : Promise.resolve(),
     ]);
-    this.publish({ ...this.snapshot, phase: 'error', error: message });
+    this.publish({ ...this.snapshot, phase: 'error', subtitle: null, inactivityCountdown: null, error: message });
   }
 
-  private releaseSpeechWait() {
-    const resolver = this.speechResolver;
-    this.speechResolver = null;
-    resolver?.();
+  private recordClientStopped(
+    identity: NonNullable<AvatarSessionSnapshot['identity']>,
+    endReason = 'client_ended',
+  ) {
+    return this.services.recordEvent(identity, {
+      eventId: crypto.randomUUID(),
+      sourceEventId: null,
+      eventType: 'session.stopped',
+      endReason,
+    });
   }
 
   private async cleanup() {
+    this.clearInactivityTimer();
     if (this.cleanupPromise) return this.cleanupPromise;
     const client = this.client;
     const unbind = this.unbind;
     this.client = null;
     this.unbind = null;
-    this.pendingSpeech = [];
-    this.releaseSpeechWait();
     const cleanupPromise = (async () => {
       if (!client) {
         unbind?.();
@@ -296,5 +282,19 @@ export class AvatarSessionRuntime {
   private publish(snapshot: AvatarSessionSnapshot) {
     this.snapshot = snapshot;
     for (const listener of this.listeners) listener();
+  }
+
+  private scheduleInactivityTimeout(generation: number) {
+    if (generation !== this.generation || this.snapshot.phase !== 'active' || !this.client) return;
+    this.clearInactivityTimer();
+    if (this.snapshot.userSpeaking || this.snapshot.avatarSpeaking) return;
+    this.inactivityController.start();
+  }
+
+  private clearInactivityTimer() {
+    this.inactivityController.stop();
+    if (this.snapshot.inactivityCountdown !== null) {
+      this.publish({ ...this.snapshot, inactivityCountdown: null });
+    }
   }
 }

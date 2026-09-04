@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { Navigate, useParams } from 'react-router';
 import { AvatarUnavailableState } from '@/components/avatar/AvatarUnavailableState';
 import { Spinner } from '@/components/ui/spinner';
 import {
   isProductFeatureEnabled,
+  isAvatarUserAllowed,
   useEnableAvatarFeature,
 } from '@/lib/posthogFeatureFlags';
 import AvatarCreatePage from '@/pages/AvatarCreatePage';
@@ -20,10 +22,11 @@ function AvatarFlagLoadingState() {
 
 function AvatarDashboardFeatureRoute({ children }: { children: ReactNode }) {
   const { agentId } = useParams();
+  const { user, isLoading: authLoading } = useAuth();
   const avatarFeatureState = useEnableAvatarFeature();
 
-  if (avatarFeatureState === undefined) return <AvatarFlagLoadingState />;
-  if (!isProductFeatureEnabled(avatarFeatureState)) {
+  if (authLoading || avatarFeatureState === undefined) return <AvatarFlagLoadingState />;
+  if (!isProductFeatureEnabled(avatarFeatureState) || !isAvatarUserAllowed(user?.email)) {
     return <Navigate to={`/dashboard/${agentId}/inbox`} replace />;
   }
   return children;

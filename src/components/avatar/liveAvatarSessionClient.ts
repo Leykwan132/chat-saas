@@ -16,19 +16,31 @@ export function createLiveAvatarSessionClient(token: string): AvatarSessionClien
       };
       const userSpeechStarted = () => handlers.userSpeechStarted();
       const userSpeechEnded = () => handlers.userSpeechEnded();
-      const userTranscription = (event: {
+      const avatarSpeechStarted = () => handlers.avatarSpeechStarted();
+      const avatarSpeechEnded = () => handlers.avatarSpeechEnded();
+      const avatarTranscription = (event: {
         event_id: string;
         source_event_id?: string;
         text: string;
       }) => {
-        handlers.userTranscription({
+        handlers.avatarTranscription({
           eventId: event.event_id,
           sourceEventId: event.source_event_id ?? null,
           text: event.text,
         });
       };
-      const avatarSpeechStarted = () => handlers.avatarSpeechStarted();
-      const avatarSpeechEnded = () => handlers.avatarSpeechEnded();
+      const avatarTranscriptionChunk = (event: {
+        event_id: string;
+        source_event_id?: string;
+        text: string;
+      }) => {
+        handlers.avatarTranscription({
+          eventId: event.event_id,
+          sourceEventId: event.source_event_id ?? null,
+          text: event.text,
+          isChunk: true,
+        });
+      };
       const stopped = (event: {
         event_id: string;
         source_event_id?: string;
@@ -44,18 +56,20 @@ export function createLiveAvatarSessionClient(token: string): AvatarSessionClien
       session.on(SessionEvent.SESSION_DISCONNECTED, disconnected);
       session.on(AgentEventsEnum.USER_SPEAK_STARTED, userSpeechStarted);
       session.on(AgentEventsEnum.USER_SPEAK_ENDED, userSpeechEnded);
-      session.on(AgentEventsEnum.USER_TRANSCRIPTION, userTranscription);
       session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, avatarSpeechStarted);
       session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, avatarSpeechEnded);
+      session.on(AgentEventsEnum.AVATAR_TRANSCRIPTION, avatarTranscription);
+      session.on(AgentEventsEnum.AVATAR_TRANSCRIPTION_CHUNK, avatarTranscriptionChunk);
       session.on(AgentEventsEnum.SESSION_STOPPED, stopped);
       return () => {
         session.off(SessionEvent.SESSION_STREAM_READY, streamReady);
         session.off(SessionEvent.SESSION_DISCONNECTED, disconnected);
         session.off(AgentEventsEnum.USER_SPEAK_STARTED, userSpeechStarted);
         session.off(AgentEventsEnum.USER_SPEAK_ENDED, userSpeechEnded);
-        session.off(AgentEventsEnum.USER_TRANSCRIPTION, userTranscription);
         session.off(AgentEventsEnum.AVATAR_SPEAK_STARTED, avatarSpeechStarted);
         session.off(AgentEventsEnum.AVATAR_SPEAK_ENDED, avatarSpeechEnded);
+        session.off(AgentEventsEnum.AVATAR_TRANSCRIPTION, avatarTranscription);
+        session.off(AgentEventsEnum.AVATAR_TRANSCRIPTION_CHUNK, avatarTranscriptionChunk);
         session.off(AgentEventsEnum.SESSION_STOPPED, stopped);
       };
     },

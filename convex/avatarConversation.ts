@@ -39,7 +39,13 @@ async function recordEventOnce(
     .withIndex('by_eventId', (q) => q.eq('eventId', args.eventId))
     .unique();
   if (existing) return false;
-  await ctx.db.insert('avatarEvents', { ...args, createdAt: Date.now() });
+  await ctx.db.insert('avatarEvents', {
+    sessionId: args.sessionId,
+    eventId: args.eventId,
+    eventType: args.eventType,
+    ...(args.sourceEventId !== undefined ? { sourceEventId: args.sourceEventId } : {}),
+    createdAt: Date.now(),
+  });
   return true;
 }
 

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import * as avatarProvider from './avatarProvider';
-import { buildLiveAvatarTokenRequest, parseSandboxMode } from './avatarProvider';
+import { buildGeminiLiveTokenRequest, buildLiveAvatarTokenRequest, parseSandboxMode } from './avatarProvider';
 
 describe('LiveAvatar provider configuration', () => {
   it('configures validated metadata without creating a provider context or embedding', () => {
@@ -14,6 +14,8 @@ describe('LiveAvatar provider configuration', () => {
     expect(configureSource).not.toContain("'/v1/contexts'");
     expect(configureSource).not.toContain("'/v2/embeddings'");
     expect(configureSource).not.toContain('buildLiveAvatarEmbedRequest({');
+    expect(configureSource).toContain("args: { agentId: v.id('agents'), avatarId: v.string() }");
+    expect(configureSource).not.toContain('voiceId: v.string(),\n    language: v.string(),');
   });
 
   it('proxies public voice previews without exposing the API key', () => {
@@ -50,6 +52,34 @@ describe('LiveAvatar provider configuration', () => {
       max_session_duration: 60,
       avatar_persona: { voice_id: 'voice-id', language: 'en' },
     });
+  });
+
+  it('builds a sandbox Gemini Live connector token without a FULL persona', () => {
+    expect(buildGeminiLiveTokenRequest({
+      sandbox: true,
+      avatarId: 'production-avatar',
+      contextId: 'context-id',
+      secretId: 'secret-id',
+      voice: 'Aoede',
+    })).toEqual({
+      mode: 'LITE',
+      is_sandbox: true,
+      avatar_id: 'dd73ea75-1218-4ef3-92ce-606d5f7fbc0a',
+      max_session_duration: 60,
+      gemini_realtime_config: {
+        secret_id: 'secret-id',
+        context_id: 'context-id',
+        voice: 'Aoede',
+        model: 'gemini-3.1-flash-live-preview',
+        temperature: 0.8,
+      },
+    });
+  });
+
+  it('exposes every supported Gemini Live voice', () => {
+    expect(avatarProvider.GEMINI_LIVE_VOICES).toHaveLength(30);
+    expect(avatarProvider.GEMINI_LIVE_VOICES).toContain('Puck');
+    expect(avatarProvider.GEMINI_LIVE_VOICES).toContain('Zubenelgenubi');
   });
 
   it('keeps production sessions at ten minutes', () => {
@@ -115,6 +145,16 @@ describe('LiveAvatar provider configuration', () => {
     const source = readFileSync(new URL('./avatarEmbed.ts', import.meta.url), 'utf8');
     expect(source).toContain("providerRequest<ProviderLanguage[]>(apiKey, '/v1/languages')");
     expect(source).toContain('languages: mapSupportedLanguages(languageRecords)');
+  });
+
+  it('keeps the Gemini Live setup catalog avatar-only', () => {
+    const source = readFileSync(new URL('./avatarEmbed.ts', import.meta.url), 'utf8');
+    const listOptionsSource = source.slice(
+      source.indexOf('export const listOptions = action'),
+      source.indexOf('export const previewVoice = action'),
+    );
+    expect(listOptionsSource).toContain('loadAvatars(requireApiKey())');
+    expect(listOptionsSource).not.toContain('loadCatalog(requireApiKey())');
   });
 
   it('builds a horizontal sandbox Embed V2 request without context or voice agent ids', () => {

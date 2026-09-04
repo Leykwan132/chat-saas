@@ -4,10 +4,7 @@ import {
   internalQuery,
   mutation,
   query,
-  type MutationCtx,
-  type QueryCtx,
 } from './_generated/server';
-import type { Id } from './_generated/dataModel';
 import {
   dashboardAvatarConfiguration,
   generateAvatarPublicKey,
@@ -17,33 +14,34 @@ import {
 } from './avatarCore';
 import {
   MAX_AVATAR_CONCURRENT_SESSIONS,
-  MAX_AVATAR_SESSION_DURATION_SECONDS,
 } from './avatarProvider';
-
-async function countActiveSessions(
-  ctx: QueryCtx | MutationCtx,
-  configurationId: Id<'avatarConfigurations'>,
-) {
-  const recent = await ctx.db
-    .query('avatarSessions')
-    .withIndex('by_configurationId_and_startedAt', (q) => q
-      .eq('configurationId', configurationId)
-      .gte('startedAt', Date.now() - MAX_AVATAR_SESSION_DURATION_SECONDS * 1000))
-    .order('desc')
-    .take(100);
-  const now = Date.now();
-  return recent.filter((session) => {
-    const durationSeconds = session.isSandbox ? 90 : MAX_AVATAR_SESSION_DURATION_SECONDS;
-    return session.status === 'active' && session.startedAt >= now - durationSeconds * 1000;
-  }).length;
-}
-
+import {
+  DEFAULT_GEMINI_LIVE_VOICE,
+  isGeminiLiveVoice,
+} from '../shared/geminiLiveVoices';
+import { getPublicMediaUrl } from './media/r2';
+import { countActiveAvatarSessions } from './avatarSessionCapacity';
 export const getForAgent = query({
   args: { agentId: v.id('agents') },
   handler: async (ctx, args) => {
     const { channelOrgId, userId } = await getAuthorizedAvatarAgent(ctx, args.agentId);
     const configuration = await getWorkspaceAvatarConfiguration(ctx, channelOrgId, userId);
-    return configuration ? dashboardAvatarConfiguration(configuration) : null;
+    if (!configuration) return null;
+    const coverImageUrl = configuration.coverImageR2Key
+      ? getPublicMediaUrl(configuration.coverImageR2Key)
+      : undefined;
+    const background = configuration.backgroundR2Key && configuration.backgroundType
+      ? {
+        url: getPublicMediaUrl(configuration.backgroundR2Key),
+        type: configuration.backgroundType,
+      }
+      : undefined;
+    return dashboardAvatarConfiguration(
+      configuration,
+      coverImageUrl,
+      background,
+      configuration.coverImageType ?? 'image',
+    );
   },
 });
 
@@ -72,12 +70,30 @@ export const ensureForAgent = mutation({
       publicKey: await generateAvatarPublicKey(ctx),
       enabled: false,
       language: 'en',
+      geminiVoice: DEFAULT_GEMINI_LIVE_VOICE,
       createdAt: now,
       updatedAt: now,
     });
     const configuration = await ctx.db.get(configurationId);
     if (!configuration) throw new Error('Could not create Avatar configuration');
     return dashboardAvatarConfiguration(configuration);
+  },
+});
+
+export const updateGeminiVoice = mutation({
+  args: {
+    agentId: v.id('agents'),
+    voice: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { channelOrgId, userId } = await getAuthorizedAvatarAgent(ctx, args.agentId);
+    const configuration = await getWorkspaceAvatarConfiguration(ctx, channelOrgId, userId);
+    if (!configuration) throw new Error('Avatar configuration not found');
+    if (!isGeminiLiveVoice(args.voice)) throw new Error('Choose a supported Gemini Live voice');
+    await ctx.db.patch(configuration._id, {
+      geminiVoice: args.voice,
+      updatedAt: Date.now(),
+    });
   },
 });
 
@@ -90,8 +106,8 @@ export const updateSettings = mutation({
     const { channelOrgId, userId } = await getAuthorizedAvatarAgent(ctx, args.agentId);
     const configuration = await getWorkspaceAvatarConfiguration(ctx, channelOrgId, userId);
     if (!configuration) throw new Error('Avatar configuration not found');
-    if (args.enabled && (!configuration.avatarId || !configuration.voiceId)) {
-      throw new Error('Configure an avatar and voice first');
+    if (args.enabled && !configuration.avatarId) {
+      throw new Error('Configure an avatar first');
     }
     await ctx.db.patch(configuration._id, {
       enabled: args.enabled,
@@ -121,11 +137,6 @@ export const saveConfiguration = internalMutation({
     avatarId: v.string(),
     avatarName: v.string(),
     avatarPreviewUrl: v.optional(v.string()),
-    voiceId: v.string(),
-    voiceName: v.string(),
-    voiceLanguage: v.string(),
-    voiceGender: v.string(),
-    language: v.string(),
   },
   handler: async (ctx, args) => {
     const configuration = await ctx.db.get(args.configurationId);
@@ -135,11 +146,6 @@ export const saveConfiguration = internalMutation({
       avatarId: args.avatarId,
       avatarName: args.avatarName,
       avatarPreviewUrl: args.avatarPreviewUrl,
-      voiceId: args.voiceId,
-      voiceName: args.voiceName,
-      voiceLanguage: args.voiceLanguage,
-      voiceGender: args.voiceGender,
-      language: args.language,
       updatedAt: Date.now(),
     });
   },
@@ -187,6 +193,25 @@ export const saveProviderEmbed = internalMutation({
   },
 });
 
+export const saveProviderContext = internalMutation({
+  args: {
+    configurationId: v.id('avatarConfigurations'),
+    contextId: v.string(),
+    prompt: v.string(),
+    openingText: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const configuration = await ctx.db.get(args.configurationId);
+    if (!configuration) throw new Error('Avatar configuration not found');
+    await ctx.db.patch(configuration._id, {
+      providerContextId: args.contextId,
+      providerContextPrompt: args.prompt,
+      providerContextOpeningText: args.openingText,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 export const publicGetConfig = query({
   args: { publicKey: v.string() },
   returns: v.union(
@@ -195,6 +220,10 @@ export const publicGetConfig = query({
       publicKey: v.string(),
       language: v.string(),
       avatarPreviewUrl: v.optional(v.string()),
+      coverImageUrl: v.optional(v.string()),
+      coverImageType: v.optional(v.union(v.literal('image'), v.literal('video'))),
+      backgroundUrl: v.optional(v.string()),
+      backgroundType: v.optional(v.union(v.literal('image'), v.literal('video'))),
     }),
   ),
   handler: async (ctx, args) => {
@@ -209,6 +238,18 @@ export const publicGetConfig = query({
       ...(configuration.avatarPreviewUrl
         ? { avatarPreviewUrl: configuration.avatarPreviewUrl }
         : {}),
+      ...(configuration.coverImageR2Key
+        ? {
+          coverImageUrl: getPublicMediaUrl(configuration.coverImageR2Key),
+          coverImageType: configuration.coverImageType ?? 'image',
+        }
+        : {}),
+      ...(configuration.backgroundR2Key && configuration.backgroundType
+        ? {
+          backgroundUrl: getPublicMediaUrl(configuration.backgroundR2Key),
+          backgroundType: configuration.backgroundType,
+        }
+        : {}),
     };
   },
 });
@@ -217,7 +258,7 @@ export const assertSessionCapacity = internalQuery({
   args: { publicKey: v.string() },
   handler: async (ctx, args) => {
     const configuration = await getAvatarConfigurationByPublicKey(ctx, args.publicKey);
-    const activeCount = await countActiveSessions(ctx, configuration._id);
+    const activeCount = await countActiveAvatarSessions(ctx, configuration._id);
     if (activeCount >= MAX_AVATAR_CONCURRENT_SESSIONS) {
       throw new Error('Avatar concurrent session limit reached');
     }
@@ -243,7 +284,7 @@ export const registerSession = internalMutation({
       .unique();
     if (existing) return existing._id;
     const configuration = await getAvatarConfigurationByPublicKey(ctx, args.publicKey);
-    const activeCount = await countActiveSessions(ctx, configuration._id);
+    const activeCount = await countActiveAvatarSessions(ctx, configuration._id);
     if (activeCount >= MAX_AVATAR_CONCURRENT_SESSIONS) {
       throw new Error('Avatar concurrent session limit reached');
     }
@@ -257,29 +298,5 @@ export const registerSession = internalMutation({
       startedAt: now,
       updatedAt: now,
     });
-  },
-});
-
-export const recordLifecycleEvent = internalMutation({
-  args: {
-    sessionId: v.string(),
-    eventId: v.string(),
-    eventType: v.string(),
-    sourceEventId: v.union(v.string(), v.null()),
-  },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query('avatarEvents')
-      .withIndex('by_eventId', (q) => q.eq('eventId', args.eventId))
-      .unique();
-    if (existing) return false;
-    await ctx.db.insert('avatarEvents', {
-      sessionId: args.sessionId,
-      eventId: args.eventId,
-      eventType: args.eventType,
-      sourceEventId: args.sourceEventId ?? undefined,
-      createdAt: Date.now(),
-    });
-    return true;
   },
 });

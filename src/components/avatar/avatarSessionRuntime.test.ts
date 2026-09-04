@@ -85,6 +85,14 @@ class FakeAvatarSessionClient implements AvatarSessionClient {
     await settle();
   }
 
+  emitAvatarTranscription(event: {
+    eventId: string;
+    sourceEventId: string | null;
+    text: string;
+  }) {
+    this.boundHandlers.avatarTranscription(event);
+  }
+
   async emitDisconnected(reason: string) {
     this.boundHandlers.disconnected(reason);
     await settle();
@@ -119,6 +127,7 @@ function createRuntimeHarness(options?: {
     options?.voiceStartError,
   );
   let beginCalls = 0;
+  const recordEvent = vi.fn(async () => undefined);
   const runtime = new AvatarSessionRuntime({
     begin: async () => {
       beginCalls += 1;
@@ -130,7 +139,7 @@ function createRuntimeHarness(options?: {
       };
     },
     receiveTranscript: vi.fn(async () => undefined),
-    recordEvent: vi.fn(async () => undefined),
+    recordEvent,
     createClient: () => client,
     splitSpeech: (text) => text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((part) => part.trim()) ?? [],
     now: () => 100,
@@ -138,6 +147,7 @@ function createRuntimeHarness(options?: {
   return {
     runtime,
     client,
+    recordEvent,
     get beginCalls() {
       return beginCalls;
     },
@@ -153,6 +163,80 @@ async function createActiveRuntimeHarness() {
 }
 
 describe('AvatarSessionRuntime', () => {
+  it('ends an inactive active session after eight seconds', async () => {
+    vi.useFakeTimers();
+    try {
+      const harness = createRuntimeHarness();
+      await harness.runtime.start();
+      const streamReady = harness.client.emitStreamReady();
+      await vi.advanceTimersByTimeAsync(0);
+      await streamReady;
+
+      expect(harness.runtime.getSnapshot().phase).toBe('active');
+      await vi.advanceTimersByTimeAsync(7_999);
+      expect(harness.runtime.getSnapshot().phase).toBe('active');
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(harness.runtime.getSnapshot().phase).toBe('ended');
+      expect(harness.recordEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ sessionId: 'session-1' }),
+        expect.objectContaining({ eventType: 'session.stopped', endReason: 'idle_timeout' }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('publishes a three-second countdown before ending an inactive session', async () => {
+    vi.useFakeTimers();
+    try {
+      const harness = createRuntimeHarness();
+      await harness.runtime.start();
+      const streamReady = harness.client.emitStreamReady();
+      await vi.advanceTimersByTimeAsync(0);
+      await streamReady;
+
+      await vi.advanceTimersByTimeAsync(4_999);
+      expect(harness.runtime.getSnapshot()).toMatchObject({ inactivityCountdown: null });
+      await vi.advanceTimersByTimeAsync(1);
+      expect(harness.runtime.getSnapshot()).toMatchObject({ inactivityCountdown: 3 });
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(harness.runtime.getSnapshot()).toMatchObject({ inactivityCountdown: 2 });
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(harness.runtime.getSnapshot()).toMatchObject({ inactivityCountdown: 1 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('resets the inactivity timeout while the user is speaking', async () => {
+    vi.useFakeTimers();
+    try {
+      const harness = createRuntimeHarness();
+      await harness.runtime.start();
+      const streamReady = harness.client.emitStreamReady();
+      await vi.advanceTimersByTimeAsync(0);
+      await streamReady;
+
+      await vi.advanceTimersByTimeAsync(7_000);
+      harness.client.emitUserSpeechStarted();
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(harness.runtime.getSnapshot().phase).toBe('active');
+      harness.client.boundHandlers.userSpeechEnded();
+      await vi.advanceTimersByTimeAsync(7_999);
+      expect(harness.runtime.getSnapshot().phase).toBe('active');
+      await vi.advanceTimersByTimeAsync(1);
+
+      expect(harness.runtime.getSnapshot().phase).toBe('ended');
+      expect(harness.recordEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ sessionId: 'session-1' }),
+        expect.objectContaining({ eventType: 'session.stopped', endReason: 'idle_timeout' }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('allows only one start and activates after stream readiness', async () => {
     const harness = createRuntimeHarness();
     const first = harness.runtime.start();
@@ -176,10 +260,59 @@ describe('AvatarSessionRuntime', () => {
     expect(harness.client.muteCalls).toBe(1);
     expect(harness.client.unmuteCalls).toBe(1);
     expect(harness.client.stopCalls).toBe(1);
+    expect(harness.recordEvent).toHaveBeenCalledTimes(1);
     expect(harness.runtime.getSnapshot().phase).toBe('ended');
   });
 
-  it('interrupts stale speech when the user starts another turn', async () => {
+  it('records a stopped session when the user ends the call', async () => {
+    const harness = await createActiveRuntimeHarness();
+
+    await harness.runtime.stop();
+
+    expect(harness.recordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: 'session-1' }),
+      expect.objectContaining({
+        eventType: 'session.stopped',
+        endReason: 'client_ended',
+      }),
+    );
+  });
+
+  it('records a stopped session when the user ends while access is loading', async () => {
+    let resolveBegin!: (access: {
+      publicKey: string;
+      visitorId: string;
+      sessionId: string;
+      sessionToken: string;
+    }) => void;
+    const recordEvent = vi.fn(async () => undefined);
+    const runtime = new AvatarSessionRuntime({
+      begin: () => new Promise((resolve) => { resolveBegin = resolve; }),
+      receiveTranscript: vi.fn(async () => undefined),
+      recordEvent,
+      createClient: () => new FakeAvatarSessionClient(),
+      splitSpeech: () => [],
+      now: () => 100,
+    });
+    const start = runtime.start();
+
+    await settle();
+    await runtime.stop();
+    resolveBegin({
+      publicKey: 'public-key',
+      visitorId: 'visitor-id',
+      sessionId: 'session-1',
+      sessionToken: 'token-1',
+    });
+    await start;
+
+    expect(recordEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: 'session-1' }),
+      expect.objectContaining({ eventType: 'session.stopped', endReason: 'client_ended' }),
+    );
+  });
+
+  it('leaves response speech and interruption handling to the LiveAvatar connector', async () => {
     const harness = await createActiveRuntimeHarness();
     harness.client.emitUserTranscription({
       eventId: 'turn-1',
@@ -189,27 +322,26 @@ describe('AvatarSessionRuntime', () => {
     harness.runtime.syncMessages([
       outgoingMessage('reply-1', 'turn-1', 'First. Second.'),
     ]);
-    expect(harness.client.repeated).toEqual(['First.']);
+    expect(harness.client.repeated).toEqual([]);
     harness.client.emitUserSpeechStarted();
-    expect(harness.client.interruptCalls).toBe(1);
+    expect(harness.client.interruptCalls).toBe(0);
     await harness.client.emitAvatarSpeechEnded();
-    expect(harness.client.repeated).toEqual(['First.']);
+    expect(harness.client.repeated).toEqual([]);
   });
 
-  it('speaks only messages for the active source event in order', async () => {
+  it('shows the current Avatar response as a subtitle while it speaks', async () => {
     const harness = await createActiveRuntimeHarness();
-    harness.client.emitUserTranscription({
-      eventId: 'turn-2',
+
+    harness.client.emitAvatarTranscription({
+      eventId: 'reply-1',
       sourceEventId: null,
-      text: 'Continue',
+      text: 'Hello, how can I help?',
     });
-    harness.runtime.syncMessages([
-      outgoingMessage('stale', 'turn-1', 'Ignore me.'),
-      outgoingMessage('current', 'turn-2', 'One. Two.'),
-    ]);
-    expect(harness.client.repeated).toEqual(['One.']);
+    expect(harness.runtime.getSnapshot().subtitle).toBe('Hello, how can I help?');
+
     await harness.client.emitAvatarSpeechEnded();
-    expect(harness.client.repeated).toEqual(['One.', 'Two.']);
+
+    expect(harness.runtime.getSnapshot().subtitle).toBeNull();
   });
 
   it('cleans up and exposes a retryable error when voice start fails', async () => {

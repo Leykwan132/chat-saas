@@ -1,8 +1,9 @@
-import type { MouseEventHandler, ReactNode } from 'react';
-import { Mic, MicOff, PhoneOff } from 'lucide-react';
+import { useCallback, useRef, type MouseEventHandler, type ReactNode } from 'react';
+import { PhoneOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AvatarPreviewMedia } from './AvatarPreviewMedia';
 import { useAvatarSession } from './useAvatarSession';
+import { useAvatarBackgroundCompositor } from './avatarBackgroundCompositor';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -14,83 +15,147 @@ import {
 export function AvatarVideoStage({
   publicKey,
   previewUrl,
+  coverImageUrl,
+  coverImageType,
+  backgroundUrl,
+  backgroundType,
+  fullScreen = false,
 }: {
   publicKey: string;
   previewUrl?: string;
+  coverImageUrl?: string;
+  coverImageType?: 'image' | 'video';
+  backgroundUrl?: string;
+  backgroundType?: 'image' | 'video';
+  fullScreen?: boolean;
 }) {
   const {
     phase,
-    muted,
-    avatarSpeaking,
     error,
+    inactivityCountdown,
     videoRef,
     start,
     stop,
-    mute,
-    unmute,
   } = useAvatarSession(publicKey);
   const active = phase === 'active' || phase === 'stopping';
   const starting = phase === 'starting';
+  const sourceVideoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const attachVideo = useCallback((element: HTMLMediaElement | null) => {
+    sourceVideoRef.current = element instanceof HTMLVideoElement ? element : null;
+    videoRef(element);
+  }, [videoRef]);
+  useAvatarBackgroundCompositor(sourceVideoRef, canvasRef, active && Boolean(backgroundUrl));
+  const stageClassName = fullScreen
+    ? 'relative size-full overflow-hidden bg-zinc-950 text-white'
+    : 'relative aspect-video w-full overflow-hidden rounded-2xl bg-zinc-950 text-white';
 
   return (
-    <section className="relative mx-auto aspect-video w-full max-w-4xl overflow-hidden rounded-2xl bg-zinc-950 text-white">
+    <section className={stageClassName}>
+      {backgroundUrl ? (
+        backgroundType === 'video' ? (
+          <video
+            src={backgroundUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-0 size-full object-cover"
+          />
+        ) : (
+          <img
+            src={backgroundUrl}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-0 size-full object-cover"
+          />
+        )
+      ) : null}
       <video
-        ref={videoRef}
+        ref={attachVideo}
         autoPlay
         playsInline
-        className="absolute inset-0 size-full object-cover"
+        className={cn(
+          'pointer-events-none absolute inset-0 z-10 size-full object-cover',
+          active && backgroundUrl ? 'opacity-0' : null,
+        )}
       />
-      {!active ? (
-        <AvatarPreviewMedia
-          previewUrl={previewUrl}
-          className="absolute inset-0 size-full rounded-none [&_img]:object-cover"
+      {active && backgroundUrl ? (
+        <canvas
+          ref={canvasRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-10 size-full object-cover"
         />
       ) : null}
-      {active ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1.5 text-xs backdrop-blur"
-        >
-          {avatarSpeaking ? 'KiloBot is speaking' : 'Listening'}
+      {!active ? (
+        <>
+          <AvatarPreviewMedia
+            previewUrl={coverImageUrl ?? previewUrl}
+            previewType={coverImageUrl ? coverImageType : 'image'}
+            className={cn(
+              'pointer-events-none absolute inset-0 size-full rounded-none',
+              coverImageUrl ? '[&_img]:object-cover [&_video]:object-cover' : '[&_img]:object-contain [&_video]:object-contain',
+            )}
+          />
+          {coverImageUrl || previewUrl ? (
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-zinc-950/40" />
+          ) : null}
+        </>
+      ) : null}
+      {starting ? (
+        <div className="absolute inset-0 z-40">
+          <div
+            role="status"
+            aria-live="polite"
+            className="absolute inset-0 z-20 flex items-center justify-center bg-black/45"
+          >
+            <div className="flex flex-col items-center gap-3 text-white">
+              <Spinner className="size-8" />
+              <span className="text-sm font-medium">Connecting...</span>
+            </div>
+          </div>
         </div>
+      ) : null}
+      {active && inactivityCountdown !== null ? (
+        <p
+          aria-live="polite"
+          className="absolute left-1/2 top-6 z-10 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-sm font-medium text-white shadow-lg"
+        >
+          Chat closing in {inactivityCountdown}
+        </p>
       ) : null}
       {error ? (
         <p className="absolute inset-x-6 bottom-20 text-center text-sm text-red-200">
           {error}
         </p>
       ) : null}
-      <div className="absolute inset-x-0 bottom-6 flex justify-center gap-3 px-4 sm:bottom-8">
-        {active ? (
-          <>
-            <StageControl
-              label={muted ? 'Unmute microphone' : 'Mute microphone'}
-              disabled={phase === 'stopping'}
-              onClick={() => void (muted ? unmute() : mute())}
-            >
-              {muted ? <MicOff /> : <Mic />}
-            </StageControl>
-            <StageControl
-              label="End chat"
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={phase === 'stopping'}
-              onClick={() => void stop()}
-            >
-              <PhoneOff />
-            </StageControl>
-          </>
-        ) : (
+      {active ? (
+        <div className="absolute right-6 top-1/2 z-30 -translate-y-1/2">
+          <StageControl
+            label="End chat"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={phase === 'stopping'}
+            onClick={() => void stop()}
+          >
+            <PhoneOff />
+          </StageControl>
+        </div>
+      ) : starting ? null : (
+        <div className="pointer-events-none absolute inset-0 z-30">
           <Button
             variant="secondary"
-            className="min-w-28 shadow-lg"
+            className="pointer-events-auto absolute bottom-6 left-1/2 min-w-36 min-h-12 -translate-x-1/2 rounded-4xl border-[6px] border-transparent bg-white bg-clip-padding text-zinc-950 shadow-lg hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+            style={{
+              background: 'linear-gradient(#fff, #fff) padding-box, linear-gradient(to right, #166534, #86efac) border-box',
+            }}
             disabled={starting}
             onClick={() => void start()}
           >
-            {starting ? <Spinner /> : null}
-            {starting ? 'Starting…' : 'Start Chat'}
+            Start Chat
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }

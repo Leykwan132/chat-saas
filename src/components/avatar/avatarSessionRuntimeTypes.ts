@@ -17,23 +17,17 @@ export type AvatarSessionEvent = {
   sourceEventId: string | null;
 };
 
-export type AvatarTranscriptionEvent = AvatarSessionEvent & { text: string };
 export type AvatarStoppedEvent = AvatarSessionEvent & { stopReason: string };
-
-export type AvatarSessionMessage = {
-  id: string;
-  direction: 'incoming' | 'outgoing';
-  content: string;
-  contentType: string;
-  sourceEventId?: string;
-  createdAt: number;
-};
+export type AvatarTranscriptionEvent = AvatarSessionEvent & { text: string; isChunk?: boolean };
+export type AvatarSessionMessage = { id: string; direction: 'incoming' | 'outgoing'; content: string; contentType: string; sourceEventId?: string; createdAt: number };
 
 export type AvatarSessionSnapshot = {
   phase: AvatarSessionPhase;
   muted: boolean;
   userSpeaking: boolean;
   avatarSpeaking: boolean;
+  subtitle: string | null;
+  inactivityCountdown: number | null;
   error: string | null;
   identity: AvatarSessionIdentity | null;
 };
@@ -44,6 +38,7 @@ export type AvatarSessionHandlers = {
   userSpeechStarted: () => void;
   userSpeechEnded: () => void;
   userTranscription: (event: AvatarTranscriptionEvent) => void;
+  avatarTranscription: (event: AvatarTranscriptionEvent) => void;
   avatarSpeechStarted: () => void;
   avatarSpeechEnded: () => void;
   stopped: (event: AvatarStoppedEvent) => void;
@@ -64,10 +59,7 @@ export type AvatarSessionClient = {
 
 export type AvatarSessionServices = {
   begin(): Promise<AvatarSessionIdentity & { sessionToken: string }>;
-  receiveTranscript(
-    identity: AvatarSessionIdentity,
-    event: AvatarTranscriptionEvent,
-  ): Promise<void>;
+  receiveTranscript(identity: AvatarSessionIdentity, event: AvatarTranscriptionEvent): Promise<void>;
   recordEvent(
     identity: AvatarSessionIdentity,
     event: AvatarSessionEvent & {

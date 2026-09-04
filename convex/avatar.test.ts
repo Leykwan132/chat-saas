@@ -20,8 +20,67 @@ test('dashboard Avatar configuration never exposes provider ids', () => {
   } as never);
 
   expect(result).toMatchObject({ avatarName: 'Wayne', voiceName: 'Calm English' });
+  expect(result.geminiVoice).toBe('Puck');
   expect(result).not.toHaveProperty('avatarId');
   expect(result).not.toHaveProperty('voiceId');
+});
+
+test('dashboard Avatar configuration is ready with an avatar alone', () => {
+  const result = dashboardAvatarConfiguration({
+    avatarId: 'avatar-id',
+    avatarName: 'Wayne',
+    publicKey: 'avatar_public',
+    enabled: true,
+    language: 'en',
+    updatedAt: 1,
+  } as never);
+
+  expect(result.configured).toBe(true);
+});
+
+test('dashboard Avatar configuration exposes the public cover image URL', () => {
+  const result = dashboardAvatarConfiguration({
+    publicKey: 'avatar_public',
+    enabled: true,
+    language: 'en',
+    updatedAt: 1,
+  } as never, 'https://cdn.example.com/avatar-cover.mp4', undefined, 'video');
+
+  expect(result).toMatchObject({
+    coverImageUrl: 'https://cdn.example.com/avatar-cover.mp4',
+    coverImageType: 'video',
+  });
+});
+
+test('dashboard Avatar configuration exposes the public background media', () => {
+  const result = dashboardAvatarConfiguration(
+    {
+      publicKey: 'avatar_public',
+      enabled: true,
+      language: 'en',
+      updatedAt: 1,
+    } as never,
+    undefined,
+    { url: 'https://cdn.example.com/avatar-background.mp4', type: 'video' },
+  );
+
+  expect(result).toMatchObject({
+    backgroundUrl: 'https://cdn.example.com/avatar-background.mp4',
+    backgroundType: 'video',
+  });
+});
+
+test('persists a selected Gemini Live voice for an Avatar manager', async () => {
+  const t = convexTest(schema, modules);
+  const agentId = await createAgent(t, 'voice_owner');
+  const authed = t.withIdentity({ subject: 'voice_owner' });
+  await authed.mutation(api.avatar.ensureForAgent, { agentId });
+
+  await authed.mutation(api.avatar.updateGeminiVoice, { agentId, voice: 'Aoede' });
+
+  await expect(authed.query(api.avatar.getForAgent, { agentId })).resolves.toMatchObject({
+    geminiVoice: 'Aoede',
+  });
 });
 
 async function createAgent(t: TestConvex<typeof schema>, userId: string) {
@@ -74,6 +133,39 @@ test('Avatar setup is stable and creates an Avatar channel', async () => {
   expect(stored.configurations).toHaveLength(1);
 });
 
+test('public Avatar config exposes the uploaded background media', async () => {
+  const previousBaseUrl = process.env.MEDIA_CDN_BASE_URL;
+  process.env.MEDIA_CDN_BASE_URL = 'https://cdn.example.com';
+  try {
+    const t = convexTest(schema, modules);
+    const agentId = await createAgent(t, 'background_owner');
+    const setup = await t.withIdentity({ subject: 'background_owner' }).mutation(
+      api.avatar.ensureForAgent,
+      { agentId },
+    );
+    await t.run(async (ctx) => {
+      const configuration = await ctx.db
+        .query('avatarConfigurations')
+        .withIndex('by_publicKey', (q) => q.eq('publicKey', setup.publicKey))
+        .unique();
+      if (!configuration) throw new Error('Avatar configuration not found');
+      await ctx.db.patch(configuration._id, {
+        enabled: true,
+        backgroundR2Key: 'avatar-backgrounds/personal/agent/background.mp4',
+        backgroundType: 'video',
+      });
+    });
+
+    await expect(t.query(api.avatar.publicGetConfig, { publicKey: setup.publicKey })).resolves.toMatchObject({
+      backgroundUrl: 'https://cdn.example.com/avatar-backgrounds/personal/agent/background.mp4',
+      backgroundType: 'video',
+    });
+  } finally {
+    if (previousBaseUrl === undefined) delete process.env.MEDIA_CDN_BASE_URL;
+    else process.env.MEDIA_CDN_BASE_URL = previousBaseUrl;
+  }
+});
+
 test('validated Avatar metadata configures the Web SDK runtime without an embed', async () => {
   const t = convexTest(schema, modules);
   const agentId = await createAgent(t, 'configured_owner');
@@ -93,11 +185,6 @@ test('validated Avatar metadata configures the Web SDK runtime without an embed'
     avatarId: 'avatar-id',
     avatarName: 'Wayne',
     avatarPreviewUrl: 'https://example.com/avatar.png',
-    voiceId: 'voice-id',
-    voiceName: 'Calm English',
-    voiceLanguage: 'en',
-    voiceGender: 'male',
-    language: 'en',
   });
 
   const configured = await authed.query(api.avatar.getForAgent, { agentId });
@@ -173,13 +260,13 @@ test('LiveAvatar session ids and event ids are idempotent', async () => {
 
   expect(second).toBe(first);
 
-  const eventOne = await t.mutation(internal.avatar.recordLifecycleEvent, {
+  const eventOne = await t.mutation(internal.avatarLifecycle.recordLifecycleEvent, {
     sessionId: 'session-1',
     eventId: 'event-1',
     eventType: 'session.started',
     sourceEventId: null,
   });
-  const eventTwo = await t.mutation(internal.avatar.recordLifecycleEvent, {
+  const eventTwo = await t.mutation(internal.avatarLifecycle.recordLifecycleEvent, {
     sessionId: 'session-1',
     eventId: 'event-1',
     eventType: 'session.started',
@@ -214,6 +301,45 @@ test('Avatar allows at most two concurrent sessions per workspace', async () => 
     sessionId: 'session-3',
     isSandbox: false,
   })).rejects.toThrow('concurrent');
+});
+
+test('ending an Avatar session releases its active session slot', async () => {
+  const t = convexTest(schema, modules);
+  const agentId = await createAgent(t, 'ending_owner');
+  const setup = await t.withIdentity({ subject: 'ending_owner' }).mutation(
+    api.avatar.ensureForAgent,
+    { agentId },
+  );
+  await enableAvatarConfiguration(t, setup.publicKey);
+
+  await t.mutation(internal.avatar.registerSession, {
+    publicKey: setup.publicKey,
+    visitorId: 'visitor-1',
+    sessionId: 'session-1',
+    isSandbox: false,
+  });
+
+  await t.mutation(api.avatarConversation.recordEvent, {
+    publicKey: setup.publicKey,
+    visitorId: 'visitor-1',
+    sessionId: 'session-1',
+    eventId: 'event-stop-1',
+    eventType: 'session.stopped',
+    endReason: 'client_ended',
+  });
+
+  const session = await t.run(async (ctx) => await ctx.db
+    .query('avatarSessions')
+    .withIndex('by_sessionId', (q) => q.eq('sessionId', 'session-1'))
+    .unique());
+  expect(session?.status).toBe('stopped');
+
+  await expect(t.mutation(internal.avatar.registerSession, {
+    publicKey: setup.publicKey,
+    visitorId: 'visitor-2',
+    sessionId: 'session-2',
+    isSandbox: false,
+  })).resolves.toBeTruthy();
 });
 
 test('disabled Avatar embeds resolve as unavailable', async () => {

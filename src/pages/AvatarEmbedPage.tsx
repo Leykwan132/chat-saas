@@ -11,7 +11,7 @@ export default function AvatarEmbedPage() {
 
   if (config === undefined) {
     return (
-      <div className="flex size-full min-h-80 items-center justify-center">
+      <div className="flex h-[100dvh] w-full items-center justify-center bg-zinc-950">
         <Spinner className="size-6" />
       </div>
     );
@@ -20,10 +20,15 @@ export default function AvatarEmbedPage() {
   if (config === null) return <AvatarUnavailableState />;
 
   return (
-    <main className="w-full">
+    <main className="h-[100dvh] w-full overflow-hidden bg-zinc-950">
       <AvatarVideoStage
         publicKey={publicKey}
         previewUrl={config.avatarPreviewUrl}
+        coverImageUrl={config.coverImageUrl}
+        coverImageType={config.coverImageType}
+        backgroundUrl={config.backgroundUrl}
+        backgroundType={config.backgroundType}
+        fullScreen
       />
     </main>
   );

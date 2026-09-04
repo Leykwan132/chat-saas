@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   POSTHOG_FEATURE_FLAGS,
+  isAvatarUserAllowed,
   isProductFeatureEnabled,
 } from './posthogFeatureFlags';
 
@@ -22,5 +23,14 @@ describe('PostHog product feature flags', () => {
     [undefined, false],
   ] as const)('treats %s as enabled=%s', (state, expected) => {
     expect(isProductFeatureEnabled(state)).toBe(expected);
+  });
+
+  test.each([
+    ['leykwan132@gmail.com', true],
+    ['LEYKWAN132@GMAIL.COM', true],
+    ['other@example.com', false],
+    [undefined, false],
+  ] as const)('allows Avatar only for the approved email: %s', (email, expected) => {
+    expect(isAvatarUserAllowed(email)).toBe(expected);
   });
 });

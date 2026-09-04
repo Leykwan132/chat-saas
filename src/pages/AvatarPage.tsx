@@ -1,16 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { Pencil, ScanFace } from 'lucide-react';
+import { ExternalLink, Pencil, ScanFace } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
-import { AvatarEmbedCard } from '@/components/avatar/AvatarEmbedCard';
+import { AvatarContextEditor } from '@/components/avatar/AvatarContextEditor';
+import { AvatarGeminiVoiceSelector } from '@/components/avatar/AvatarGeminiVoiceSelector';
+import { AvatarSetupEditor } from '@/components/avatar/AvatarSetupEditor';
+import { AvatarShareDialog } from '@/components/avatar/AvatarShareDialog';
 import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/usePermissions';
+import { buildAvatarLiveUrl } from '@/lib/avatarEmbed';
 import { Permission } from '../../shared/permissions';
 
 export default function AvatarPage() {
@@ -21,6 +26,7 @@ export default function AvatarPage() {
   const canManage = !permissionsLoading && can(Permission.CHANNELS_MANAGE);
   const configuration = useQuery(api.avatar.getForAgent, canRead ? { agentId: typedAgentId } : 'skip');
   const ensureConfiguration = useMutation(api.avatar.ensureForAgent);
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (configuration === null && canManage) void ensureConfiguration({ agentId: typedAgentId });
@@ -37,26 +43,70 @@ export default function AvatarPage() {
           <div className="flex items-center gap-2"><h1 className="font-title text-3xl font-normal">Avatar</h1><Badge variant="secondary" className="bg-muted text-muted-foreground">Beta</Badge></div>
           <p className="mt-1 text-sm text-muted-foreground">Give visitors a face and voice for live conversations with KiloBot.</p>
         </div>
-        {configuration.configured && canManage ? (
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`/dashboard/${typedAgentId}/avatar/create`}>
-              <Pencil data-icon="inline-start" />
-              Edit avatar
-            </Link>
-          </Button>
+        {configuration.configured ? (
+          <div className="flex items-center gap-2">
+            {canManage ? (
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" type="button">
+                  <Pencil data-icon="inline-start" />
+                  Edit
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] sm:max-w-5xl overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Edit Avatar</DialogTitle>
+                  <DialogDescription>Update the avatar, background, and media used for live conversations.</DialogDescription>
+                </DialogHeader>
+                <AvatarSetupEditor agentId={typedAgentId} onSaved={() => setEditOpen(false)} />
+              </DialogContent>
+            </Dialog>
+            ) : null}
+            <AvatarShareDialog publicKey={configuration.publicKey} />
+          </div>
         ) : null}
       </div>
       {configuration.configured ? (
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-          <section className="flex min-w-0 flex-col gap-3">
-            <h2 className="text-sm font-semibold">Preview</h2>
-            <AvatarVideoStage
-              publicKey={configuration.publicKey}
-              previewUrl={configuration.avatarPreviewUrl}
+        <>
+          <div className="grid items-start gap-6">
+            <section className="flex min-w-0 flex-col gap-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-1">
+                  <h2 className="text-base font-medium">Preview</h2>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Open Avatar preview"
+                    title="Open Avatar preview"
+                    asChild
+                  >
+                    <a href={buildAvatarLiveUrl(configuration.publicKey)} target="_blank" rel="noreferrer">
+                      <ExternalLink />
+                      <span className="sr-only">Open Avatar preview</span>
+                    </a>
+                  </Button>
+                </div>
+                <AvatarVideoStage
+                  publicKey={configuration.publicKey}
+                  previewUrl={configuration.avatarPreviewUrl}
+                  coverImageUrl={configuration.coverImageUrl}
+                  coverImageType={configuration.coverImageType}
+                  backgroundUrl={configuration.backgroundUrl}
+                  backgroundType={configuration.backgroundType}
+                />
+              </div>
+            </section>
+          </div>
+          {canManage ? (
+            <AvatarContextEditor
+              agentId={typedAgentId}
+              prompt={configuration.providerContextPrompt ?? ''}
+              openingText={configuration.providerContextOpeningText ?? ''}
+              voiceSlot={<AvatarGeminiVoiceSelector agentId={typedAgentId} geminiVoice={configuration.geminiVoice} />}
             />
-          </section>
-          <AvatarEmbedCard publicKey={configuration.publicKey} />
-        </div>
+          ) : null}
+        </>
       ) : (
         <Empty className="min-h-[420px] border">
           <EmptyHeader>

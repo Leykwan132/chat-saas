@@ -1,6 +1,7 @@
 import type { Doc, Id } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { getAuthContext, resolveChannelOrgId } from './authUtils';
+import { DEFAULT_GEMINI_LIVE_VOICE } from '../shared/geminiLiveVoices';
 
 const PUBLIC_KEY_PREFIX = 'avatar_';
 
@@ -59,21 +60,27 @@ export async function generateAvatarPublicKey(ctx: MutationCtx) {
   throw new Error('Could not generate Avatar key');
 }
 
-export function dashboardAvatarConfiguration(configuration: Doc<'avatarConfigurations'>) {
+export function dashboardAvatarConfiguration(
+  configuration: Doc<'avatarConfigurations'>,
+  coverImageUrl?: string,
+  background?: { url: string; type: 'image' | 'video' },
+  coverImageType: 'image' | 'video' = 'image',
+) {
   return {
     publicKey: configuration.publicKey,
-    configured: Boolean(
-      configuration.avatarId
-      && configuration.voiceId
-      && configuration.language,
-    ),
+    configured: Boolean(configuration.avatarId),
     enabled: configuration.enabled,
     avatarName: configuration.avatarName,
     avatarPreviewUrl: configuration.avatarPreviewUrl,
+    ...(coverImageUrl ? { coverImageUrl, coverImageType } : {}),
+    ...(background ? { backgroundUrl: background.url, backgroundType: background.type } : {}),
     voiceName: configuration.voiceName,
     voiceLanguage: configuration.voiceLanguage,
     voiceGender: configuration.voiceGender,
+    geminiVoice: configuration.geminiVoice ?? DEFAULT_GEMINI_LIVE_VOICE,
     language: configuration.language,
+    providerContextPrompt: configuration.providerContextPrompt,
+    providerContextOpeningText: configuration.providerContextOpeningText,
     embedUrl: configuration.providerEmbedUrl,
     embedScript: configuration.providerEmbedScript,
     updatedAt: configuration.updatedAt,

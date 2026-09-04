@@ -120,3 +120,28 @@ export function buildLiveAvatarTokenRequest(args: {
     },
   };
 }
+
+export function buildGeminiLiveTokenRequest(args: {
+  sandbox: boolean;
+  avatarId: string;
+  contextId: string;
+  secretId: string;
+  voice: string;
+}) {
+  return {
+    mode: 'LITE',
+    ...(args.sandbox ? { is_sandbox: true } : {}),
+    avatar_id: args.sandbox ? SANDBOX_AVATAR_ID : args.avatarId,
+    max_session_duration: args.sandbox
+      ? MAX_SANDBOX_AVATAR_SESSION_DURATION_SECONDS
+      : MAX_AVATAR_SESSION_DURATION_SECONDS,
+    gemini_realtime_config: {
+      secret_id: args.secretId,
+      context_id: args.contextId,
+      voice: args.voice,
+      model: 'gemini-3.1-flash-live-preview',
+      temperature: 0.8,
+    },
+  };
+}
+export { DEFAULT_GEMINI_LIVE_VOICE, GEMINI_LIVE_VOICES, isGeminiLiveVoice } from '../shared/geminiLiveVoices';

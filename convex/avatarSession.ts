@@ -1,7 +1,8 @@
 import { v } from 'convex/values';
 import { action } from './_generated/server';
 import { internal } from './_generated/api';
-import { buildLiveAvatarTokenRequest, parseSandboxMode } from './avatarProvider';
+import { buildGeminiLiveTokenRequest, parseSandboxMode } from './avatarProvider';
+import { DEFAULT_GEMINI_LIVE_VOICE } from '../shared/geminiLiveVoices';
 
 type TokenResponse = {
   data?: {
@@ -27,17 +28,21 @@ export const begin = action({
       publicKey: args.publicKey,
     });
     const avatarId = configuration.avatarId?.trim();
-    const voiceId = configuration.voiceId?.trim();
-    if (!avatarId || !voiceId) throw new Error('Avatar and voice must be configured');
+    if (!avatarId) throw new Error('Avatar must be configured');
+    const contextId = configuration.providerContextId?.trim();
+    if (!contextId) throw new Error('Save an Avatar context before starting a session');
+    const secretId = process.env.HEYGEN_GEMINI_SECRET_ID?.trim();
+    if (!secretId) throw new Error('HEYGEN_GEMINI_SECRET_ID is required');
 
     const response = await fetch('https://api.liveavatar.com/v1/sessions/token', {
       method: 'POST',
       headers: { 'X-API-KEY': apiKey, 'content-type': 'application/json' },
-      body: JSON.stringify(buildLiveAvatarTokenRequest({
+      body: JSON.stringify(buildGeminiLiveTokenRequest({
         sandbox,
         avatarId,
-        voiceId,
-        language: configuration.language,
+        contextId,
+        secretId,
+        voice: configuration.geminiVoice ?? DEFAULT_GEMINI_LIVE_VOICE,
       })),
     });
     const body = await response.json() as TokenResponse;
