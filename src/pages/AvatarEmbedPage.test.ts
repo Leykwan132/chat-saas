@@ -14,6 +14,7 @@ const stageSource = readFileSync(
   'utf8',
 );
 const createSource = readFileSync(new URL('../components/avatar/AvatarSetupEditor.tsx', import.meta.url), 'utf8');
+const backgroundPreviewSource = readFileSync(new URL('../components/avatar/AvatarBackgroundPreview.tsx', import.meta.url), 'utf8');
 const previewMediaSource = readFileSync(new URL('../components/avatar/AvatarPreviewMedia.tsx', import.meta.url), 'utf8');
 const voiceDialogSource = readFileSync(new URL('../components/avatar/AvatarVoicePickerDialog.tsx', import.meta.url), 'utf8');
 const embedCardSource = readFileSync(new URL('../components/avatar/AvatarEmbedCard.tsx', import.meta.url), 'utf8');
@@ -144,6 +145,14 @@ describe('Avatar setup', () => {
     expect(createSource).toContain('<TabsTrigger value="background">Cover &amp; background</TabsTrigger>');
     expect(createSource).toContain("import { AvatarBackgroundPreview } from '@/components/avatar/AvatarBackgroundPreview';");
     expect(createSource).toContain('<AvatarBackgroundPreview');
+    const backgroundPreviewUsage = createSource.slice(
+      createSource.indexOf('<AvatarBackgroundPreview'),
+      createSource.indexOf('/>', createSource.indexOf('<AvatarBackgroundPreview')) + 2,
+    );
+    expect(backgroundPreviewUsage).not.toContain('coverImageUrl');
+    expect(backgroundPreviewSource).toContain('previewUrl');
+    expect(backgroundPreviewSource).toContain('backgroundUrl');
+    expect(backgroundPreviewSource).not.toContain('coverImageUrl');
     expect(createSource).toContain('title="Selected"');
     expect(createSource).toContain('selectedAvatar?.previewUrl');
     expect(createSource).toContain('<AvatarBackgroundEditor');

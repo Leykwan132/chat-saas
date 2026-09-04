@@ -2,20 +2,13 @@ import { Button } from '@/components/ui/button';
 
 export function AvatarBackgroundPreview({
   previewUrl,
-  coverImageUrl,
-  coverImageType,
   backgroundUrl,
   backgroundType,
 }: {
   previewUrl?: string;
-  coverImageUrl?: string;
-  coverImageType?: 'image' | 'video';
   backgroundUrl?: string;
   backgroundType?: 'image' | 'video';
 }) {
-  const foregroundUrl = coverImageUrl ?? previewUrl;
-  const foregroundType = coverImageUrl ? coverImageType : 'image';
-
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-zinc-900">
       {backgroundUrl ? (
@@ -25,14 +18,8 @@ export function AvatarBackgroundPreview({
           <img src={backgroundUrl} alt="" aria-hidden="true" className="absolute inset-0 size-full object-cover" />
         )
       ) : null}
-      {foregroundUrl ? (
-        foregroundType === 'video' ? (
-          <video src={foregroundUrl} autoPlay loop muted playsInline aria-label="Avatar cover video preview" className="absolute inset-0 z-10 size-full object-contain" />
-        ) : (
-          <img src={foregroundUrl} alt="Avatar cover preview" className="absolute inset-0 z-10 size-full object-contain" />
-        )
-      ) : null}
-      {backgroundUrl || foregroundUrl ? <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-zinc-950/40" /> : null}
+      {previewUrl ? <img src={previewUrl} alt="Avatar preview" className="absolute inset-0 z-10 size-full object-contain" /> : null}
+      {backgroundUrl || previewUrl ? <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-zinc-950/40" /> : null}
       <Button
         type="button"
         variant="secondary"

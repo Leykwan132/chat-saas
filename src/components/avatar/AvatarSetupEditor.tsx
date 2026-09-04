@@ -93,8 +93,6 @@ export function AvatarSetupEditor({ agentId, onSaved, showBackLink = false }: Av
           {activeTab === 'background' ? (
             <AvatarBackgroundPreview
               previewUrl={selectedAvatar?.previewUrl ?? configuration?.avatarPreviewUrl}
-              coverImageUrl={configuration?.coverImageUrl}
-              coverImageType={configuration?.coverImageType}
               backgroundUrl={configuration?.backgroundUrl}
               backgroundType={configuration?.backgroundType}
             />
