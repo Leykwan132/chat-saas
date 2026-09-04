@@ -43,20 +43,21 @@ export function AvatarBackgroundPreview({
             <img src={displayUrl} alt={mode === 'cover' && coverImageUrl ? 'Avatar cover preview' : 'Avatar preview'} className="absolute inset-0 z-10 size-full object-contain" />
           )
         ) : null}
-        {mode === 'background' && (backgroundUrl || displayUrl) ? <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-zinc-950/40" /> : null}
         {mode === 'cover' && displayUrl ? <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-zinc-950/40" /> : null}
       </div>
-      <Button
-        type="button"
-        variant="secondary"
-        tabIndex={-1}
-        className="pointer-events-none absolute bottom-6 left-1/2 z-30 min-h-12 min-w-36 -translate-x-1/2 rounded-4xl border-[6px] border-transparent bg-white bg-clip-padding text-zinc-950 shadow-lg"
-        style={{
-          background: 'linear-gradient(#fff, #fff) padding-box, linear-gradient(to right, #166534, #86efac) border-box',
-        }}
-      >
-        Start Chat
-      </Button>
+      {mode === 'cover' ? (
+        <Button
+          type="button"
+          variant="secondary"
+          tabIndex={-1}
+          className="pointer-events-none absolute bottom-6 left-1/2 z-30 min-h-12 min-w-36 -translate-x-1/2 rounded-4xl border-[6px] border-transparent bg-white bg-clip-padding text-zinc-950 shadow-lg"
+          style={{
+            background: 'linear-gradient(#fff, #fff) padding-box, linear-gradient(to right, #166534, #86efac) border-box',
+          }}
+        >
+          Start Chat
+        </Button>
+      ) : null}
     </div>
   );
 }

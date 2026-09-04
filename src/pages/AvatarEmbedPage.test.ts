@@ -159,6 +159,8 @@ describe('Avatar setup', () => {
     expect(backgroundPreviewSource).toContain('backgroundUrl');
     expect(backgroundPreviewSource).toContain("type PreviewMode = 'cover' | 'background'");
     expect(backgroundPreviewSource).toContain("type AvatarOrientation = 'landscape' | 'portrait'");
+    expect(backgroundPreviewSource).toContain("mode === 'cover' ? (");
+    expect(backgroundPreviewSource).toContain("mode === 'cover' && displayUrl");
     expect(createSource).toContain('title="Selected"');
     expect(createSource).toContain('selectedAvatar?.previewUrl');
     expect(createSource).toContain('<AvatarBackgroundEditor');
