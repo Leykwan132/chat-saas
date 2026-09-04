@@ -53,7 +53,7 @@ export default function AvatarPage() {
                   Edit
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+              <DialogContent className="max-h-[90vh] sm:max-w-5xl overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Edit Avatar</DialogTitle>
                   <DialogDescription>Update the avatar, background, and media used for live conversations.</DialogDescription>
