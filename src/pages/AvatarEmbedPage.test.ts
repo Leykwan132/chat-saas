@@ -141,7 +141,9 @@ describe('Avatar setup', () => {
     expect(createSource).toContain('<Tabs');
     expect(createSource).toContain('<TabsList variant="line"');
     expect(createSource).toContain('<TabsTrigger value="avatar">Avatar</TabsTrigger>');
-    expect(createSource).toContain('<TabsTrigger value="background">Background</TabsTrigger>');
+    expect(createSource).toContain('<TabsTrigger value="background">Cover &amp; background</TabsTrigger>');
+    expect(createSource).toContain("import { AvatarBackgroundPreview } from '@/components/avatar/AvatarBackgroundPreview';");
+    expect(createSource).toContain('<AvatarBackgroundPreview');
     expect(createSource).toContain('title="Selected"');
     expect(createSource).toContain('selectedAvatar?.previewUrl');
     expect(createSource).toContain('<AvatarBackgroundEditor');

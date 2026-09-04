@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { AvatarBackgroundEditor } from '@/components/avatar/AvatarBackgroundEditor';
+import { AvatarBackgroundPreview } from '@/components/avatar/AvatarBackgroundPreview';
 import { AvatarCoverImageEditor } from '@/components/avatar/AvatarCoverImageEditor';
 import { AvatarPreviewMedia } from '@/components/avatar/AvatarPreviewMedia';
 import { filterBackgroundFreeAvatars, splitAvatarOptions } from '@/components/avatar/avatarCatalog';
@@ -34,6 +35,7 @@ export function AvatarSetupEditor({ agentId, onSaved, showBackLink = false }: Av
   const configureAvatar = useAction(api.avatarEmbed.configure);
   const [avatars, setAvatars] = useState<OrientedAvatarOption[]>();
   const [selectedAvatarId, setSelectedAvatarId] = useState('');
+  const [activeTab, setActiveTab] = useState<'avatar' | 'background'>('avatar');
   const [catalogError, setCatalogError] = useState<string>();
   const [saving, setSaving] = useState(false);
 
@@ -88,16 +90,26 @@ export function AvatarSetupEditor({ agentId, onSaved, showBackLink = false }: Av
       <div className="flex flex-col gap-6">
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-medium">Preview</h2>
-          <AvatarPreviewMedia
-            previewUrl={selectedAvatar?.previewUrl ?? configuration?.avatarPreviewUrl}
-            className="w-full rounded-2xl [&_img]:object-contain"
-          />
+          {activeTab === 'background' ? (
+            <AvatarBackgroundPreview
+              previewUrl={selectedAvatar?.previewUrl ?? configuration?.avatarPreviewUrl}
+              coverImageUrl={configuration?.coverImageUrl}
+              coverImageType={configuration?.coverImageType}
+              backgroundUrl={configuration?.backgroundUrl}
+              backgroundType={configuration?.backgroundType}
+            />
+          ) : (
+            <AvatarPreviewMedia
+              previewUrl={selectedAvatar?.previewUrl ?? configuration?.avatarPreviewUrl}
+              className="w-full rounded-2xl [&_img]:object-contain"
+            />
+          )}
         </section>
         {avatars === undefined ? <AvatarGridSkeleton /> : backgroundFreeAvatars.length === 0 ? <CatalogEmpty /> : (
-          <Tabs defaultValue="avatar" className="gap-6">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'avatar' | 'background')} className="gap-6">
             <TabsList variant="line" aria-label="Avatar setup sections" className="w-full justify-start">
               <TabsTrigger value="avatar">Avatar</TabsTrigger>
-              <TabsTrigger value="background">Background</TabsTrigger>
+              <TabsTrigger value="background">Cover &amp; background</TabsTrigger>
             </TabsList>
             <TabsContent value="avatar" className="flex flex-col gap-8">
               {selectedAvatar ? <AvatarSection title="Selected" avatars={[selectedAvatar]} selectedAvatarId={selectedAvatarId} onSelect={setSelectedAvatarId} /> : null}
