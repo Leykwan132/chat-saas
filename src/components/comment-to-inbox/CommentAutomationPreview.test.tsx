@@ -27,4 +27,6 @@ test('highlights the matching keyword and previews both outgoing messages', () =
   expect(markup).not.toContain('Hide replies');
   expect(markup).toContain('Message sent to alex.m');
   expect(markup).toContain('Here is the pricing guide.');
+  expect(markup).toContain('Your Page');
+  expect(markup).not.toContain('Luma Studio');
 });
