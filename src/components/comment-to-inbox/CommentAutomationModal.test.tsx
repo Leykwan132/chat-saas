@@ -53,7 +53,7 @@ test('renders keyword chips above the send controls', () => {
   expect(markup).toContain('max-h-[95vh]');
   expect(markup).toContain('sm:max-w-6xl');
   expect(markup).toContain('aria-busy="false"');
-  expect(markup).toContain('Save automation');
+  expect(markup).toContain('Create automation');
   expect(markup).not.toContain('No public reply will be sent.');
   expect(markup).not.toContain('Your private message will appear here.');
   expect(markup).not.toContain('See what happens when someone comments on your post.');

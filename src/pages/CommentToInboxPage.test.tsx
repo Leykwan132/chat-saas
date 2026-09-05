@@ -85,7 +85,8 @@ test('uses the empty component when no automations exist', () => {
   expect(markup).toContain('bg-muted/20');
   expect(markup).toContain('No automations yet');
   expect(markup).toContain('Create an automation to start sending messages when people comment.');
-  expect(markup.match(/Create automation/g)).toHaveLength(2);
+  expect(markup.match(/Create automation/g)).toHaveLength(1);
+  expect(markup).toContain('+ Create');
 });
 
 test('renders automation rows as openable detail actions', () => {
