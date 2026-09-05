@@ -14,6 +14,10 @@ import { CommentAutomationNoPagesEmptyState } from '@/components/comment-to-inbo
 import { isTesting } from '../../shared/commentAutomationConfig';
 import { toast } from 'sonner';
 
+function isCommentAutomationPage(channel: { service: string }) {
+  return channel.service === 'instagram' || channel.service === 'messenger';
+}
+
 const testingPages = [
   {
     _id: 'comment-testing-instagram' as Id<'channels'>,
@@ -47,7 +51,9 @@ export default function CommentToInboxPage() {
     api.commentAutomations.get,
     selectedId ? { automationId: selectedId, paginationOpts: { numItems: 20, cursor: null } } : 'skip',
   );
-  const availablePages = isTesting && channels?.length === 0 ? testingPages : channels;
+  const availablePages = isTesting && channels?.length === 0
+    ? testingPages
+    : channels?.filter(isCommentAutomationPage);
 
   if (!agentId) return null;
 

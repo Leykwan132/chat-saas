@@ -67,7 +67,7 @@ export function CommentAutomationModal({
   const loadedAutomationId = useRef<Id<'commentAutomations'> | null>(null);
   const selectedIds = useMemo(() => new Set(channelIds), [channelIds]);
   const selectedChannels = useMemo(() => channels.filter((channel) => selectedIds.has(channel._id)), [channels, selectedIds]);
-  const trigger = keywords.length > 0 ? 'keywords' : 'any_comment';
+  const trigger: Automation['trigger'] = keywords.length > 0 ? 'keywords' : 'any_comment';
   const isEditing = loading || Boolean(automation);
 
   useEffect(() => {
