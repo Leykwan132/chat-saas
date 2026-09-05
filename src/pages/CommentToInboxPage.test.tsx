@@ -7,11 +7,13 @@ let queryCount = 0;
 let loadingState = false;
 let emptyAutomationState = false;
 let automationState = false;
+let pageQueryArgs: unknown;
 
 vi.mock('convex/react', () => ({
   useMutation: () => vi.fn(),
-  useQuery: () => {
+  useQuery: (_query: unknown, args: unknown) => {
     queryCount += 1;
+    if (queryCount === 2) pageQueryArgs = args;
     if (loadingState) return undefined;
     if (automationState) {
       return queryCount === 1
@@ -46,6 +48,7 @@ test('guides users to connect a channel when no pages are connected', () => {
   emptyAutomationState = false;
   automationState = false;
   queryCount = 0;
+  pageQueryArgs = undefined;
   const markup = renderPage();
 
   expect(markup).toContain('No pages connected');
@@ -53,6 +56,7 @@ test('guides users to connect a channel when no pages are connected', () => {
   expect(markup).toContain('href="/dashboard/agent-1/channels"');
   expect(markup).toContain('Connect a channel');
   expect(markup).not.toContain('Create automation');
+  expect(pageQueryArgs).toEqual({ agentId: 'agent-1' });
 });
 
 test('shows a skeleton while comment automation data is loading', () => {

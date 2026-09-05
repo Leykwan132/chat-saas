@@ -37,6 +37,7 @@ function getInitialChannelIds(channels: Channel[], initialChannelIds?: Id<'chann
 
 export function CommentAutomationModal({
   automation,
+  agentId,
   channels,
   initialChannelIds,
   loading = false,
@@ -44,6 +45,7 @@ export function CommentAutomationModal({
   onOpenChange,
 }: {
   automation?: Automation;
+  agentId: Id<'agents'>;
   channels: Channel[];
   initialChannelIds?: Id<'channels'>[];
   loading?: boolean;
@@ -118,6 +120,7 @@ export function CommentAutomationModal({
     try {
       const input = {
         name,
+        agentId,
         channelIds,
         trigger,
         keywords,

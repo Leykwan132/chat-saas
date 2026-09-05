@@ -31,7 +31,7 @@ function CommentToInboxPageSkeleton() {
 export default function CommentToInboxPage() {
   const { agentId } = useParams();
   const automations = useQuery(api.commentAutomations.list);
-  const channels = useQuery(api.commentAutomations.listPages);
+  const channels = useQuery(api.commentAutomations.listPages, agentId ? { agentId: agentId as Id<'agents'> } : 'skip');
   const setActive = useMutation(api.commentAutomations.setActive);
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<Id<'commentAutomations'> | null>(null);
@@ -66,7 +66,7 @@ export default function CommentToInboxPage() {
           <span className="font-medium">{automation.name}</span><Tooltip><TooltipTrigger asChild><span aria-label={`${automation.sentCount} messages sent`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground"><Users className="size-4" aria-hidden="true" /><span>{automation.sentCount}</span></span></TooltipTrigger><TooltipContent side="top">{automation.sentCount} messages sent</TooltipContent></Tooltip><Switch checked={automation.status === 'active'} onClick={(event) => event.stopPropagation()} onCheckedChange={(active) => void toggle(automation._id, active)} />
         </button>)}
       </div>}
-      {availablePages && <CommentAutomationModal key={selectedId !== null ? `${selectedId}-${detail ? 'loaded' : 'loading'}` : 'create'} automation={selectedId !== null ? detail?.automation : undefined} channels={availablePages} initialChannelIds={selectedId !== null ? detail?.pages.map((page) => page.channelId) : undefined} loading={selectedId !== null && detail === undefined} open={open || selectedId !== null} onOpenChange={(isOpen) => { if (!isOpen) { setOpen(false); setSelectedId(null); } }} />}
+      {availablePages && <CommentAutomationModal key={selectedId !== null ? `${selectedId}-${detail ? 'loaded' : 'loading'}` : 'create'} automation={selectedId !== null ? detail?.automation : undefined} agentId={agentId as Id<'agents'>} channels={availablePages} initialChannelIds={selectedId !== null ? detail?.pages.map((page) => page.channelId) : undefined} loading={selectedId !== null && detail === undefined} open={open || selectedId !== null} onOpenChange={(isOpen) => { if (!isOpen) { setOpen(false); setSelectedId(null); } }} />}
     </main>
     </TooltipProvider>
   );

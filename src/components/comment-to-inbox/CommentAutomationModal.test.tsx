@@ -31,6 +31,7 @@ test('renders keyword chips above the send controls', () => {
   const markup = renderToStaticMarkup(
     <CommentAutomationModal
       channels={[]}
+      agentId={'agent-1' as Id<'agents'>}
       open
       onOpenChange={() => undefined}
     />,
@@ -74,6 +75,7 @@ test('renders connected pages as selected cards above the name field', () => {
           displayUsername: 'Kilobot Messenger',
         },
       ]}
+      agentId={'agent-1' as Id<'agents'>}
       open
       onOpenChange={() => undefined}
     />,
@@ -115,6 +117,7 @@ test('prefills the same form for editing an automation', () => {
         service: 'instagram',
         displayUsername: 'kilobot.instagram',
       }]}
+      agentId={'agent-1' as Id<'agents'>}
       initialChannelIds={['instagram-page' as Id<'channels'>]}
       open
       onOpenChange={() => undefined}
@@ -136,6 +139,7 @@ test('shows the edit modal shell immediately while automation details load', () 
     <CommentAutomationModal
       loading
       channels={[]}
+      agentId={'agent-1' as Id<'agents'>}
       open
       onOpenChange={() => undefined}
     />,

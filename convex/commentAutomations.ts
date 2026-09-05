@@ -2,6 +2,7 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
+import { getOwnedAgentForAuth } from "./agentAccess";
 import { normalizeCommentAutomationInput } from "./commentAutomationInput";
 import { getPlanFromStripe } from "./plans";
 import type { Id } from "./_generated/dataModel";
@@ -19,6 +20,7 @@ async function validateChannelIds(
   ctx: QueryCtx | MutationCtx,
   channelIds: Id<"channels">[],
   orgId: string,
+  agentId: Id<"agents">,
 ) {
   if (channelIds.length === 0) throw new Error("Select at least one page");
   const uniqueChannelIds = [...new Set(channelIds)];
@@ -28,6 +30,7 @@ async function validateChannelIds(
     if (
       channel === null ||
       channel.orgId !== orgId ||
+      channel.defaultAgentId !== agentId ||
       channel.status !== "connected" ||
       (channel.service !== "instagram" && channel.service !== "messenger")
     ) {
@@ -50,17 +53,21 @@ export const list = query({
 });
 
 export const listPages = query({
-  args: {},
-  handler: async (ctx) => {
-    const { channelOrgId } = await getCommentAutomationAuth(ctx);
-    const channels = await ctx.db
-      .query("channels")
-      .withIndex("by_orgId_and_service", (q) => q.eq("orgId", channelOrgId))
-      .take(100);
-    return channels.filter(
-      (channel) =>
-        channel.status === "connected" &&
-        (channel.service === "instagram" || channel.service === "messenger"),
+  args: { agentId: v.id("agents") },
+  handler: async (ctx, args) => {
+    const auth = await getCommentAutomationAuth(ctx);
+    const agent = await getOwnedAgentForAuth(ctx, auth, args.agentId);
+    if (agent === null) throw new Error("Agent not found");
+    const [instagramPages, messengerPages] = await Promise.all([
+      ctx.db.query("channels").withIndex("by_defaultAgentId_and_service", (q) => (
+        q.eq("defaultAgentId", args.agentId).eq("service", "instagram")
+      )).take(100),
+      ctx.db.query("channels").withIndex("by_defaultAgentId_and_service", (q) => (
+        q.eq("defaultAgentId", args.agentId).eq("service", "messenger")
+      )).take(100),
+    ]);
+    return [...instagramPages, ...messengerPages].filter(
+      (channel) => channel.orgId === auth.channelOrgId && channel.status === "connected",
     );
   },
 });
@@ -92,9 +99,11 @@ export const create = mutation({
     privateMessage: v.string(),
     publicReply: v.optional(v.string()),
     channelIds: v.array(v.id("channels")),
+    agentId: v.id("agents"),
   },
   handler: async (ctx, args) => {
-    const { userId, channelOrgId } = await getCommentAutomationAuth(ctx);
+    const auth = await getCommentAutomationAuth(ctx);
+    const { userId, channelOrgId } = auth;
     const existing = await ctx.db
       .query("commentAutomations")
       .withIndex("by_orgId", (q) => q.eq("orgId", channelOrgId))
@@ -103,7 +112,9 @@ export const create = mutation({
     if (plan.plan === "free" && existing.length >= 1) {
       throw new Error("Free workspaces can create one Comment automation");
     }
-    const channelIds = await validateChannelIds(ctx, args.channelIds, channelOrgId);
+    const agent = await getOwnedAgentForAuth(ctx, auth, args.agentId);
+    if (agent === null) throw new Error("Agent not found");
+    const channelIds = await validateChannelIds(ctx, args.channelIds, channelOrgId, args.agentId);
     const input = normalizeCommentAutomationInput(args);
     const now = Date.now();
     const automationId = await ctx.db.insert("commentAutomations", {
@@ -137,13 +148,17 @@ export const update = mutation({
     privateMessage: v.string(),
     publicReply: v.optional(v.string()),
     channelIds: v.array(v.id("channels")),
+    agentId: v.id("agents"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const { channelOrgId } = await getCommentAutomationAuth(ctx);
+    const auth = await getCommentAutomationAuth(ctx);
+    const { channelOrgId } = auth;
     const automation = await ctx.db.get(args.automationId);
     if (automation === null || automation.orgId !== channelOrgId) throw new Error("Automation not found");
-    const channelIds = await validateChannelIds(ctx, args.channelIds, channelOrgId);
+    const agent = await getOwnedAgentForAuth(ctx, auth, args.agentId);
+    if (agent === null) throw new Error("Agent not found");
+    const channelIds = await validateChannelIds(ctx, args.channelIds, channelOrgId, args.agentId);
     const input = normalizeCommentAutomationInput(args);
     const now = Date.now();
     await ctx.db.patch(automation._id, { ...input, updatedAt: now });
