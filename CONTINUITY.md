@@ -12,6 +12,7 @@
 - 2026-09-04 [TOOL] Pull request #89 is open from `codex/gemini-live-connector` into `main`; the feature remains unshipped pending review.
 - 2026-09-05 [TOOL] Pull request #90 merged the initial Comment-to-Inbox implementation. Pull request #91 is open from `codex/comment-to-inbox` into `main` for the agent-scoped page selection and runtime-test-scaffolding cleanup; focused UI coverage passed, while the full suite exceeds this environment's 30-second command cap.
 - 2026-09-05 [TOOL] Merged `origin/main` at `e28e6ad` into `codex/comment-to-inbox`, retaining both Avatar connector and Comment-to-Inbox shared navigation/feature-flag registrations; unshipped.
+- 2026-09-05 [TOOL] Merged `origin/main` at `d52ee6b` into `codex/comment-to-inbox`, retaining the newer agent-scoped Comment-to-Inbox implementation through all overlapping files; focused tests, lint, and TypeScript checks passed; unshipped.
 - 2026-09-05 [CODE] Fixed Comment-to-Inbox build typing by preserving the automation trigger literal union and narrowing queried pages to Instagram/Messenger with a generic type predicate before rendering the modal; unshipped.
 - 2026-09-04 [CODE] Background preview mode now omits the Start Chat CTA and dimming overlay while keeping backdrop media clipped to the avatar frame, including portrait avatars. Unshipped.
 - 2026-09-04 [CODE] Cover & background preview opens on the Cover image view; its end-of-row toggle switches to the avatar-over-background view and back. Unshipped.
