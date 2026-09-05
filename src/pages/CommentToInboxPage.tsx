@@ -14,7 +14,9 @@ import { CommentAutomationNoPagesEmptyState } from '@/components/comment-to-inbo
 import { isTesting } from '../../shared/commentAutomationConfig';
 import { toast } from 'sonner';
 
-function isCommentAutomationPage(channel: { service: string }) {
+function isCommentAutomationPage<T extends { service: string }>(
+  channel: T,
+): channel is T & { service: 'instagram' | 'messenger' } {
   return channel.service === 'instagram' || channel.service === 'messenger';
 }
 
