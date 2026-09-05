@@ -45,7 +45,7 @@ export function CommentAutomationPreview({
             <SiInstagram className="size-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <p className="truncate text-xs font-semibold">Luma Studio</p>
+            <p className="truncate text-xs font-semibold">Your Page</p>
             <p className="text-[11px] text-muted-foreground">@luma_studio · 2h</p>
           </div>
         </div>
@@ -66,7 +66,7 @@ export function CommentAutomationPreview({
               </span>
               <div className="min-w-0">
                 <div className="flex items-baseline gap-2">
-                  <p className="text-xs font-semibold">Luma Studio</p>
+                  <p className="text-xs font-semibold">Your Page</p>
                   <span className="text-[11px] text-muted-foreground">now</span>
                 </div>
                 <p className="mt-0.5 max-w-[16rem] break-words text-xs text-muted-foreground">{publicReply}</p>
