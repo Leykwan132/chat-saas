@@ -4,6 +4,7 @@
 
 - 2026-09-05 [CODE] Removed all Comment-to-Inbox runtime test scaffolding: the testing bypass, demo pages, fake-channel migration, generated API entry, and test-mode-only coverage. Real connected Instagram/Messenger pages are now always required; unshipped.
 - 2026-09-05 [CODE] Comment-to-Inbox now scopes connected page selection and page-validation to the route’s authenticated agent via `defaultAgentId`, so each agent sees and can select only their own Instagram/Messenger channels; unshipped.
+- 2026-09-05 [CODE] Comment-to-Inbox automations now persist `agentId` and scope list, detail, update, and activation operations to that authenticated agent; legacy records without an agent ID are intentionally inaccessible pending a backfill decision; unshipped.
 - 2026-09-05 [CODE] Changed the Comment-to-Inbox preview account name from “Luma Studio” to “Your Page” in the post header and public reply; unshipped.
 - 2026-09-04 [CODE] Comment-to-Inbox sits inside Tools below Avatar and uses the shared Avatar-style title, description, and page-header layout; unshipped.
 - 2026-09-04 [TOOL] Created active PostHog flag `enable_comment_to_inbox` (ID 866490) at 100% rollout. Application-level email authorization still limits Comment-to-Inbox visibility and backend access to `leykwan132@gmail.com`.

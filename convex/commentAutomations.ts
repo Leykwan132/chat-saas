@@ -41,12 +41,16 @@ async function validateChannelIds(
 }
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const { channelOrgId } = await getCommentAutomationAuth(ctx);
+  args: { agentId: v.id("agents") },
+  handler: async (ctx, args) => {
+    const auth = await getCommentAutomationAuth(ctx);
+    const agent = await getOwnedAgentForAuth(ctx, auth, args.agentId);
+    if (agent === null) throw new Error("Agent not found");
     return await ctx.db
       .query("commentAutomations")
-      .withIndex("by_orgId", (q) => q.eq("orgId", channelOrgId))
+      .withIndex("by_orgId_and_agentId", (q) => (
+        q.eq("orgId", auth.channelOrgId).eq("agentId", args.agentId)
+      ))
       .order("desc")
       .take(100);
   },
@@ -73,11 +77,21 @@ export const listPages = query({
 });
 
 export const get = query({
-  args: { automationId: v.id("commentAutomations"), paginationOpts: paginationOptsValidator },
+  args: {
+    automationId: v.id("commentAutomations"),
+    agentId: v.id("agents"),
+    paginationOpts: paginationOptsValidator,
+  },
   handler: async (ctx, args) => {
-    const { channelOrgId } = await getCommentAutomationAuth(ctx);
+    const auth = await getCommentAutomationAuth(ctx);
+    const agent = await getOwnedAgentForAuth(ctx, auth, args.agentId);
+    if (agent === null) throw new Error("Agent not found");
     const automation = await ctx.db.get(args.automationId);
-    if (automation === null || automation.orgId !== channelOrgId) throw new Error("Automation not found");
+    if (
+      automation === null ||
+      automation.orgId !== auth.channelOrgId ||
+      automation.agentId !== args.agentId
+    ) throw new Error("Automation not found");
     const pages = await ctx.db
       .query("commentAutomationPages")
       .withIndex("by_automationId", (q) => q.eq("automationId", automation._id))
@@ -119,6 +133,7 @@ export const create = mutation({
     const now = Date.now();
     const automationId = await ctx.db.insert("commentAutomations", {
       orgId: channelOrgId,
+      agentId: args.agentId,
       ...input,
       status: "inactive",
       sentCount: 0,
@@ -155,9 +170,13 @@ export const update = mutation({
     const auth = await getCommentAutomationAuth(ctx);
     const { channelOrgId } = auth;
     const automation = await ctx.db.get(args.automationId);
-    if (automation === null || automation.orgId !== channelOrgId) throw new Error("Automation not found");
     const agent = await getOwnedAgentForAuth(ctx, auth, args.agentId);
     if (agent === null) throw new Error("Agent not found");
+    if (
+      automation === null ||
+      automation.orgId !== channelOrgId ||
+      automation.agentId !== args.agentId
+    ) throw new Error("Automation not found");
     const channelIds = await validateChannelIds(ctx, args.channelIds, channelOrgId, args.agentId);
     const input = normalizeCommentAutomationInput(args);
     const now = Date.now();
@@ -187,11 +206,21 @@ export const update = mutation({
 });
 
 export const setActive = mutation({
-  args: { automationId: v.id("commentAutomations"), active: v.boolean() },
+  args: {
+    automationId: v.id("commentAutomations"),
+    agentId: v.id("agents"),
+    active: v.boolean(),
+  },
   handler: async (ctx, args) => {
-    const { channelOrgId } = await getCommentAutomationAuth(ctx);
+    const auth = await getCommentAutomationAuth(ctx);
+    const agent = await getOwnedAgentForAuth(ctx, auth, args.agentId);
+    if (agent === null) throw new Error("Agent not found");
     const automation = await ctx.db.get(args.automationId);
-    if (automation === null || automation.orgId !== channelOrgId) throw new Error("Automation not found");
+    if (
+      automation === null ||
+      automation.orgId !== auth.channelOrgId ||
+      automation.agentId !== args.agentId
+    ) throw new Error("Automation not found");
     if (args.active) {
       const pages = await ctx.db
         .query("commentAutomationPages")

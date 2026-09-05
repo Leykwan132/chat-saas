@@ -30,14 +30,14 @@ function CommentToInboxPageSkeleton() {
 
 export default function CommentToInboxPage() {
   const { agentId } = useParams();
-  const automations = useQuery(api.commentAutomations.list);
+  const automations = useQuery(api.commentAutomations.list, agentId ? { agentId: agentId as Id<'agents'> } : 'skip');
   const channels = useQuery(api.commentAutomations.listPages, agentId ? { agentId: agentId as Id<'agents'> } : 'skip');
   const setActive = useMutation(api.commentAutomations.setActive);
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<Id<'commentAutomations'> | null>(null);
   const detail = useQuery(
     api.commentAutomations.get,
-    selectedId ? { automationId: selectedId, paginationOpts: { numItems: 20, cursor: null } } : 'skip',
+    selectedId && agentId ? { automationId: selectedId, agentId: agentId as Id<'agents'>, paginationOpts: { numItems: 20, cursor: null } } : 'skip',
   );
   const availablePages = channels?.filter(isCommentAutomationPage);
 
@@ -45,7 +45,7 @@ export default function CommentToInboxPage() {
 
   const toggle = async (automationId: Id<'commentAutomations'>, active: boolean) => {
     try {
-      await setActive({ automationId, active });
+      await setActive({ automationId, agentId: agentId as Id<'agents'>, active });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not update automation');
     }

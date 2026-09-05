@@ -824,6 +824,7 @@ export default defineSchema({
     .index("by_connectedByUserId", ["connectedByUserId"]),
   commentAutomations: defineTable({
     orgId: v.string(),
+    agentId: v.optional(v.id("agents")),
     name: v.string(),
     status: v.union(v.literal("inactive"), v.literal("active")),
     trigger: v.union(v.literal("any_comment"), v.literal("keywords")),
@@ -835,7 +836,8 @@ export default defineSchema({
     createdByUserId: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_orgId", ["orgId"]),
+  }).index("by_orgId", ["orgId"])
+    .index("by_orgId_and_agentId", ["orgId", "agentId"]),
   commentAutomationPages: defineTable({
     automationId: v.id("commentAutomations"),
     channelId: v.id("channels"),
