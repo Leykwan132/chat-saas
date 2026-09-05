@@ -1,6 +1,7 @@
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { getOwnedAgentForAuth } from "./agentAccess";
 import { normalizeCommentAutomationInput } from "./commentAutomationInput";
@@ -150,6 +151,9 @@ export const create = mutation({
         updatedAt: now,
       });
     }
+    await ctx.scheduler.runAfter(0, internal.commentAutomationSubscriptions.activateAutomationPages, {
+      automationId,
+    });
     return automationId;
   },
 });
@@ -201,6 +205,10 @@ export const update = mutation({
         });
       }
     }
+    await ctx.db.patch(automation._id, { status: "inactive", updatedAt: now });
+    await ctx.scheduler.runAfter(0, internal.commentAutomationSubscriptions.activateAutomationPages, {
+      automationId: automation._id,
+    });
     return null;
   },
 });
@@ -222,16 +230,12 @@ export const setActive = mutation({
       automation.agentId !== args.agentId
     ) throw new Error("Automation not found");
     if (args.active) {
-      const pages = await ctx.db
-        .query("commentAutomationPages")
-        .withIndex("by_automationId", (q) => q.eq("automationId", automation._id))
-        .take(100);
-      if (pages.some((page) => page.subscriptionStatus !== "subscribed")) {
-        throw new Error("Subscribe selected pages before activating");
-      }
+      await ctx.scheduler.runAfter(0, internal.commentAutomationSubscriptions.activateAutomationPages, {
+        automationId: automation._id,
+      });
     }
     await ctx.db.patch(automation._id, {
-      status: args.active ? "active" : "inactive",
+      status: "inactive",
       updatedAt: Date.now(),
     });
   },

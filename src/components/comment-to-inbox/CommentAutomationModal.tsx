@@ -151,7 +151,7 @@ export function CommentAutomationModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[95vh] overflow-y-auto sm:max-w-6xl">
-        <DialogHeader><DialogTitle>{isEditing ? 'Automation Details' : 'New automation'}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{isEditing ? 'Automation Details' : 'Create automation'}</DialogTitle></DialogHeader>
         {loading ? (
           <div role="status" aria-label="Loading automation details" className="grid gap-3">
             <Skeleton className="h-5 w-40" />
@@ -229,7 +229,7 @@ export function CommentAutomationModal({
           />
         </div>
         )}
-        <DialogFooter><Button onClick={() => void save()} disabled={loading || saving || selectedChannels.length === 0} aria-busy={loading || saving}>{loading ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />Loading…</> : saving ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />Saving…</> : automation ? 'Save changes' : 'Save automation'}</Button></DialogFooter>
+        <DialogFooter><Button onClick={() => void save()} disabled={loading || saving || selectedChannels.length === 0} aria-busy={loading || saving}>{loading ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />Loading…</> : saving ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />{automation ? 'Saving…' : 'Creating…'}</> : automation ? 'Save changes' : 'Create automation'}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
