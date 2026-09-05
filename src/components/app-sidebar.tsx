@@ -26,7 +26,9 @@ import { SidebarNavMenuItem } from './app-sidebar-nav-item';
 import {
   isProductFeatureEnabled,
   isAvatarUserAllowed,
+  isCommentToInboxUserAllowed,
   useEnableAvatarFeature,
+  useEnableCommentToInboxFeature,
   useShowSavedReplies,
 } from '@/lib/posthogFeatureFlags';
 import { ExpandedAppSidebarHeader } from './ExpandedAppSidebarHeader';
@@ -46,9 +48,11 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const { user } = useAuth();
   const savedRepliesState = useShowSavedReplies();
   const avatarFeatureState = useEnableAvatarFeature();
+  const commentToInboxFeatureState = useEnableCommentToInboxFeature();
   const navItems = getNavItems(agent._id, {
     showSavedReplies: isProductFeatureEnabled(savedRepliesState),
     enableAvatarFeature: isProductFeatureEnabled(avatarFeatureState) && isAvatarUserAllowed(user?.email),
+    enableCommentToInbox: isProductFeatureEnabled(commentToInboxFeatureState) && isCommentToInboxUserAllowed(user?.email),
   });
   const canReadChats = !isLoading && can(Permission.CHATS_READ);
   const totalUnread = useQuery(

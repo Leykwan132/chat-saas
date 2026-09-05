@@ -68,6 +68,7 @@ import {
   PlaygroundRedirect,
 } from '@/router/AppRouteComponents'
 import { QuickRepliesFeatureRoute } from '@/router/QuickRepliesFeatureRoute'
+import { CommentToInboxFeatureRoute } from '@/router/CommentToInboxFeatureRoute'
 import { ReferralFeatureRoute } from '@/router/ReferralFeatureRoute'
 import { PartnerFeatureRoute } from '@/router/PartnerFeatureRoute'
 import {
@@ -136,6 +137,7 @@ const router = createBrowserRouter(
         <Route path="inbox" element={<PromptInputProvider><ChatsPage /></PromptInputProvider>} />
         <Route path="chats" element={<ChatsToInboxRedirect />} />
         <Route path="quick-replies" element={<QuickRepliesFeatureRoute />} />
+        <Route path="comment-to-inbox" element={<CommentToInboxFeatureRoute />} />
         <Route path="avatar" element={<AvatarOverviewFeatureRoute />} />
         <Route path="avatar/create" element={<AvatarCreateFeatureRoute />} />
         <Route path="overview" element={<AgentOverviewPage />} />

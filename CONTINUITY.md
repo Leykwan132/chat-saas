@@ -2,6 +2,10 @@
 
 # Snapshot
 
+- 2026-09-05 [USER] Comment-to-Inbox testing bypass is currently enabled via `shared/commentAutomationConfig.ts`; set `isTesting` back to false before release.
+- 2026-09-04 [CODE] Comment-to-Inbox sits inside Tools below Avatar and uses the shared Avatar-style title, description, and page-header layout; unshipped.
+- 2026-09-04 [TOOL] Created active PostHog flag `enable_comment_to_inbox` (ID 866490) at 100% rollout. Application-level email authorization still limits Comment-to-Inbox visibility and backend access to `leykwan132@gmail.com`.
+- 2026-09-04 [USER] Goal: add a feature-flagged Comment-to-Inbox sidebar feature for `leykwan132@gmail.com`; Comment automations select connected Instagram/Messenger pages, trigger on any comment or keywords, send a private inbox message with an optional public reply, persist the customer first, and report sent/responded metrics. Free workspaces may store one automation; paid workspaces are unlimited. Approved design and implementation plan are at `docs/superpowers/{specs,plans}/2026-09-04-comment-to-inbox*`; partial implementation is uncommitted.
 - 2026-09-04 [TOOL] Pull request #89 is open from `codex/gemini-live-connector` into `main`; the feature remains unshipped pending review.
 - 2026-09-04 [CODE] Background preview mode now omits the Start Chat CTA and dimming overlay while keeping backdrop media clipped to the avatar frame, including portrait avatars. Unshipped.
 - 2026-09-04 [CODE] Cover & background preview opens on the Cover image view; its end-of-row toggle switches to the avatar-over-background view and back. Unshipped.
@@ -58,6 +62,8 @@
 
 # Decisions
 
+- 2026-09-04 [TOOL] D781 OPEN: Live Meta comment subscriptions and sends are paused pending verification of the Instagram/Messenger endpoint and required scopes. Official Meta documentation requests returned rate-limit errors; do not infer a production endpoint from the user payload alone.
+- 2026-09-04 [USER] D780 ACTIVE: The customer-facing navigation label is “Comment-to-Inbox”; Comment automations use the unshipped `commentAutomations` backend tables and APIs.
 - 2026-09-03 [USER] D778 ACTIVE: Avatar cover images are stored in R2 under agent-scoped keys and served through the configured media CDN URL.
 - 2026-09-03 [CODE] D779 ACTIVE: Avatar background media uses separate agent-scoped R2 keys and a stored image/video type; LiveAvatar background replacement is browser-side chroma-key compositing.
 - 2026-09-02 [USER] D757 ACTIVE: Gemini credentials are externally registered with LiveAvatar. The app reads only opaque `HEYGEN_GEMINI_SECRET_ID` server-side and never persists or exposes the Gemini API key.
@@ -77,6 +83,60 @@
 
 # Done (recent)
 
+- 2026-09-05 [CODE] Simplified the Comment-to-Inbox edit modal to a single “Automation Details” form, removing the unused Details/Stats navigation and delivery Stats panel; unshipped.
+- 2026-09-05 [CODE] Comment-to-Inbox edits now restore saved page selections; testing-mode edits restore all visible demo pages because fake page IDs are intentionally not persisted; unshipped.
+- 2026-09-05 [CODE] Replaced the Comment-to-Inbox sent-count browser title with the shared styled tooltip, showing the exact sent-message total on hover; unshipped.
+- 2026-09-05 [CODE] Hardened Comment-to-Inbox edit hydration so a loaded automation explicitly fills its name, pages, keywords, private message, public reply, and preview regardless of detail-query timing; unshipped.
+- 2026-09-05 [CODE] Comment-to-Inbox edit clicks now open the modal immediately with an edit shell and skeleton fields while automation details load, then remount the prefilled form when data arrives; unshipped.
+- 2026-09-05 [CODE] Comment-to-Inbox automation clicks now reuse the create form for editing with prefilled values and persisted page/message updates; list rows show a people icon with the sent count and a hover label; unshipped.
+- 2026-09-05 [CODE] Comment-to-Inbox automation rows now open a responsive detail modal with loading state, configuration, page status, and recent activity instead of rendering an inline detail panel; unshipped.
+- 2026-09-05 [CODE] Comment-to-Inbox Save automation now shows a spinning loader and “Saving…” while the request is in progress, with duplicate submits disabled; unshipped.
+- 2026-09-05 [CODE] Made the Comment-to-Inbox empty state actionable with a Create automation button and a subtle neutral panel background; unshipped.
+- 2026-09-05 [CODE] Replaced the plain Comment-to-Inbox “No automations yet” box with a dedicated empty component containing an icon and creation guidance; unshipped.
+- 2026-09-05 [CODE] Made Comment-to-Inbox Name and Send message required, with trim-aware red inline warnings shown after an invalid Save attempt; unshipped.
+- 2026-09-05 [TOOL] Updated both fake test channels to `defaultAgentId` `j9770cdvys5z6859qafj8x5pjn8c723e` (`dawdwa`), selected from the current page context; follow-up dry-run confirmed both assignments.
+- 2026-09-05 [CODE] Hardened the fake-channel migration to require an explicit personal agent when a user has multiple personal agents, preventing accidental cross-agent assignment.
+- 2026-09-05 [CODE] Replaced the Comment-to-Inbox page’s plain loading text with accessible skeleton automation rows while data is loading; unshipped.
+- 2026-09-05 [CODE] Added an idempotent Convex migration for Comment-to-Inbox test channels, targeting the requested user by email and supporting a dry-run before writes.
+- 2026-09-05 [TOOL] Seeded one connected fake Instagram channel and one connected fake Messenger channel for `leykwan132@gmail.com` in the configured dev deployment; channel IDs are `kd7asm5ndznkp6qxe02gtytqes8dvfcp` and `kd7d6mcvavgpskncsvd6ggg4ss8dt5ht`.
+- 2026-09-05 [CODE] Increased the Comment-to-Inbox automation modal height from 90vh to 95vh while retaining overflow scrolling; unshipped.
+- 2026-09-05 [CODE] Increased the Comment-to-Inbox automation modal from `sm:max-w-5xl` to `sm:max-w-6xl` while preserving viewport-safe scrolling; unshipped.
+- 2026-09-05 [CODE] Capped the demo Comment-to-Inbox public reply at 16rem so long response text wraps within the Instagram-style thread preview; unshipped.
+- 2026-09-05 [CODE] Removed checks from selected Comment-to-Inbox page cards, added one checked live-status line per selected page, and blocked saving with an “At least one page is needed” state when none are selected; unshipped.
+- 2026-09-05 [CODE] Bounded long Comment-to-Inbox preview comments and outgoing messages so they wrap within the preview column instead of expanding the modal; unshipped.
+- 2026-09-05 [CODE] Indented the Instagram-style public reply beneath the original comment and kept the preview free of a Hide replies control; unshipped.
+- 2026-09-05 [CODE] Reworked the Comment-to-Inbox public reply preview into an Instagram-style thread row with the account avatar, Luma Studio name, reply content, and “now” timestamp; unshipped.
+- 2026-09-05 [CODE] Updated the Comment-to-Inbox preview outcome copy to “Message sent to alex.m”; unshipped.
+- 2026-09-05 [CODE] Increased the selected page-card outline to a 3px dark-green border while keeping the white background and top-aligned check; unshipped.
+- 2026-09-05 [CODE] Changed selected page cards to a thick dark-green border with a white background and aligned their check marks to the top edge; unshipped.
+- 2026-09-05 [CODE] Strengthened selected page cards with a light green active state and added separators around the Name, comment-behavior, and Reply-to-comment sections; unshipped.
+- 2026-09-05 [CODE] Removed the Pages heading, added active check marks to selected page cards, and separated Reply to comment into its own section below Send message; unshipped.
+- 2026-09-05 [CODE] Moved Comment-to-Inbox page selection above Name into compact two-column clickable cards, defaulting all available pages to selected; renamed the outgoing section “Send message”; unshipped.
+- 2026-09-05 [CODE] Tightened the internal spacing between the Comment-to-Inbox Send label and message textarea; unshipped.
+- 2026-09-05 [CODE] Grouped the Comment-to-Inbox “If comment contains” and “Send” controls into one section with tighter internal spacing; unshipped.
+- 2026-09-05 [CODE] Increased vertical spacing between Comment-to-Inbox form sections and slightly widened spacing within Send for clearer grouping; unshipped.
+- 2026-09-05 [CODE] Removed the visible “Private message” label from the Comment-to-Inbox Send section while retaining an accessible message textarea; unshipped.
+- 2026-09-05 [CODE] Removed the “Leave empty for any word.” helper text from the Comment-to-Inbox keyword chip section; unshipped.
+- 2026-09-05 [CODE] Replaced Comment-to-Inbox keyword toggles with an “If comment contains” chip editor supporting multiple removable keywords, and grouped outgoing actions under “Send”; unshipped.
+- 2026-09-05 [CODE] Renamed the Comment-to-Inbox form label from “Matching keyword” to “Keyword Matching”; unshipped.
+- 2026-09-05 [CODE] Reduced the Comment-to-Inbox sample media frame back to a compact 4:3 ratio and shrank the Lucide image icon; unshipped.
+- 2026-09-05 [CODE] Changed the Comment-to-Inbox sample media area from 4:3 to a square 1:1 Instagram-style post frame; unshipped.
+- 2026-09-05 [CODE] Replaced the sample post’s Kilobot asset with Lucide’s neutral image icon; unshipped.
+- 2026-09-05 [CODE] Replaced the Comment-to-Inbox sample post’s gradient artwork and text with a neutral background and the existing logo image; unshipped.
+- 2026-09-05 [CODE] Comment-to-Inbox preview now hides empty outcomes, shows configured public replies with a business icon, and shows configured private messages with a check-mark “Message sent” row; unshipped.
+- 2026-09-05 [CODE] Removed the redundant “Sample post” label and Preview description from the Comment-to-Inbox preview.
+- 2026-09-05 [CODE] Changed the sample post preview to a neutral zinc/stone palette for a quieter placeholder visual.
+- 2026-09-05 [CODE] Simplified the Comment-to-Inbox preview to one main container with divider rows instead of nested outcome cards.
+- 2026-09-05 [CODE] The Comment-to-Inbox preview now adapts its sample comment so any entered keyword is highlighted.
+- 2026-09-05 [CODE] Added a live right-side Comment-to-Inbox preview with a sample post, comment, public reply, private message, and keyword highlighting; unshipped.
+- 2026-09-05 [CODE] Added the requested question mark to the Comment-to-Inbox “Reply to comment?” label; unshipped.
+- 2026-09-05 [CODE] Testing mode now supplies demo Instagram and Facebook/Messenger pages for exercising the automation form without real connections; fake page IDs are excluded from saved test automations.
+- 2026-09-05 [CODE] Added helper text explaining that the Comment-to-Inbox “Reply to comment” message is used when a comment matches a keyword; unshipped.
+- 2026-09-05 [CODE] Renamed the conditional Comment-to-Inbox public reply field to “Message”; unshipped.
+- 2026-09-05 [USER] Enabled the Comment-to-Inbox testing bypass by setting shared `isTesting` to true; revert before release.
+- 2026-09-05 [CODE] Added a shared Comment-to-Inbox `isTesting` switch, defaulting to false, that bypasses the connected-page creation gate and empty-page validation for local automation-form testing; unshipped.
+- 2026-09-05 [CODE] Comment-to-Inbox page selection now renders each connected page as an icon-led Instagram/Messenger row with a trailing switch; unshipped.
+- 2026-09-05 [CODE] Comment-to-Inbox now labels the optional public action “Reply to comment” and shows a connected-page empty state with a Channels link when no Instagram or Messenger pages are available; unshipped.
 - 2026-09-04 [CODE] Removed the Start Chat button from the Background preview and kept portrait background media fitted to the human frame. Unshipped.
 - 2026-09-04 [CODE] Set the Cover & background preview toggle’s initial state to Cover image, with Background as the click-through state. Unshipped.
 - 2026-09-04 [CODE] Added a Preview-row toggle for Cover image versus Background and matched portrait backdrop bounds to the avatar frame. Unshipped.
@@ -150,6 +210,56 @@
 
 # Receipts
 
+- 2026-09-05 [TOOL] Comment-to-Inbox single-form edit modal passed 12 focused UI tests, Node v22 ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox edit page-selection hydration passed 12 focused UI tests, Node v22 ESLint, TypeScript no-emit, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox sent-count tooltip passed 11 focused UI tests, Node v22 ESLint, TypeScript no-emit, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox edit hydration passed 11 focused UI tests, Node v22 ESLint, TypeScript no-emit, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox immediate edit modal loading passed 11 focused UI tests, Node v22 ESLint, TypeScript no-emit, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox edit form and sent-count UI passed 10 focused UI tests, Node v22 ESLint, TypeScript no-emit, and `git diff --check`; Convex codegen was blocked by unavailable telemetry DNS.
+- 2026-09-05 [TOOL] Comment-to-Inbox detail modal passed 9 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox Save spinner passed 8 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox empty-state action and neutral background passed 8 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox empty-state update passed 8 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Required-field validation passed 7 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Personal-agent channel assignment passed Convex deployment/typechecking, agent-candidate dry-run, targeted update, idempotency dry-run, targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox loading skeleton passed 6 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Test-channel migration passed Convex deployment/typechecking, exact-user dry-run, write, idempotency dry-run, targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Automation-modal height update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Automation-modal width update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Public-reply max-width update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Page-selection status update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Preview width containment passed its focused UI test, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Indented public-reply preview update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Instagram-style public reply preview passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Message-recipient preview copy update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Thicker selected page-card border update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Selected page-card border and check alignment update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Active page-card styling and three-section separators passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Page-card active state and Reply-to-comment section separation passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Selectable page-card layout and Send-message copy passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Send-label spacing update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox keyword-and-Send grouping update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox section-spacing update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Private-message label removal passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Keyword helper-text removal passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox keyword-chip and Send-section update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Keyword Matching label update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Compact sample-post sizing update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Square Instagram-style sample-post update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Lucide image-icon sample-post update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Neutral logo sample-post update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Conditional Comment-to-Inbox outcome rows passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox Preview text cleanup passed 3 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Neutral sample-post palette passed 3 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox preview container simplification passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox matching-keyword copy and live sample-flow preview passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox question-mark label passed 4 focused tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox demo-page fixtures passed 4 focused UI tests, the existing Comment-to-Inbox helper tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox reply explanation passed 4 focused tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox public reply field rename passed 4 focused tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox testing-mode bypass passed the UI bypass regression, the existing Comment-to-Inbox focused tests, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox page-picker icon and switch rendering passed focused Vitest coverage, Node v22 targeted ESLint, and `git diff --check`.
+- 2026-09-05 [TOOL] Comment-to-Inbox label and no-connected-page UI passed focused Vitest coverage (2 tests), Node v22 targeted ESLint, and `git diff --check`.
 - 2026-09-04 [TOOL] Background-preview cleanup passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Cover-first preview toggle passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
 - 2026-09-04 [TOOL] Cover/background preview toggle and portrait framing passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
