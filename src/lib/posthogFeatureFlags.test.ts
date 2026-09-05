@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   POSTHOG_FEATURE_FLAGS,
   isAvatarUserAllowed,
+  isCommentToInboxUserAllowed,
   isProductFeatureEnabled,
 } from './posthogFeatureFlags';
 
@@ -10,7 +11,8 @@ describe('PostHog product feature flags', () => {
     expect(POSTHOG_FEATURE_FLAGS).toEqual({
       showTokenUsage: 'show-token-usage',
       showSavedReplies: 'show-saved-replies',
-      enableAvatarFeature: 'enable_avatar_feature',
+    enableAvatarFeature: 'enable_avatar_feature',
+    enableCommentToInbox: 'enable_comment_to_inbox',
       enableReferralProgram: 'enable_referral_program',
       enableGoogleCalendarConnect: 'enable_google_calendar_connect',
       enablePartnerPortal: 'enable_partner_portal',
@@ -32,5 +34,13 @@ describe('PostHog product feature flags', () => {
     [undefined, false],
   ] as const)('allows Avatar only for the approved email: %s', (email, expected) => {
     expect(isAvatarUserAllowed(email)).toBe(expected);
+  });
+
+  test.each([
+    ['leykwan132@gmail.com', true],
+    ['LEYKWAN132@GMAIL.COM', true],
+    ['other@example.com', false],
+  ] as const)('allows Comment-to-Inbox only for the approved email: %s', (email, expected) => {
+    expect(isCommentToInboxUserAllowed(email)).toBe(expected);
   });
 });

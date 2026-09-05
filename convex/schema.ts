@@ -822,6 +822,63 @@ export default defineSchema({
     .index("by_fbUserId", ["fbUserId"])
     .index("by_defaultAgentId_and_service", ["defaultAgentId", "service"])
     .index("by_connectedByUserId", ["connectedByUserId"]),
+  commentAutomations: defineTable({
+    orgId: v.string(),
+    name: v.string(),
+    status: v.union(v.literal("inactive"), v.literal("active")),
+    trigger: v.union(v.literal("any_comment"), v.literal("keywords")),
+    keywords: v.array(v.string()),
+    privateMessage: v.string(),
+    publicReply: v.optional(v.string()),
+    sentCount: v.number(),
+    respondedCount: v.number(),
+    createdByUserId: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_orgId", ["orgId"]),
+  commentAutomationPages: defineTable({
+    automationId: v.id("commentAutomations"),
+    channelId: v.id("channels"),
+    subscriptionStatus: v.union(
+      v.literal("pending"),
+      v.literal("subscribed"),
+      v.literal("failed"),
+    ),
+    subscriptionError: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_automationId", ["automationId"])
+    .index("by_automationId_and_channelId", ["automationId", "channelId"])
+    .index("by_channelId", ["channelId"]),
+  commentAutomationDeliveries: defineTable({
+    automationId: v.id("commentAutomations"),
+    channelId: v.id("channels"),
+    externalCommentId: v.string(),
+    contactAddress: v.string(),
+    commentText: v.string(),
+    commentCreatedAt: v.number(),
+    conversationId: v.optional(v.id("conversations")),
+    customerId: v.optional(v.id("customers")),
+    privateStatus: v.union(
+      v.literal("pending"),
+      v.literal("sent"),
+      v.literal("failed"),
+    ),
+    publicStatus: v.optional(v.union(v.literal("sent"), v.literal("failed"))),
+    privateError: v.optional(v.string()),
+    publicError: v.optional(v.string()),
+    sentAt: v.optional(v.number()),
+    respondedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_externalCommentId", ["externalCommentId"])
+    .index("by_automationId_and_createdAt", ["automationId", "createdAt"])
+    .index("by_channelId_and_contactAddress_and_respondedAt", [
+      "channelId",
+      "contactAddress",
+      "respondedAt",
+    ]),
   webWidgetSettings: defineTable({
     channelId: v.id("channels"),
     agentId: v.id("agents"),

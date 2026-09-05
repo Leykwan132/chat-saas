@@ -10,6 +10,7 @@ import {
   FileText,
   Megaphone,
   MessagesSquare,
+  MessageCircleReply,
   Plug,
   ReplyAll,
   ScanFace,
@@ -34,11 +35,12 @@ export type NavItem = {
 export type NavFeatureOptions = {
   showSavedReplies: boolean;
   enableAvatarFeature: boolean;
+  enableCommentToInbox?: boolean;
 };
 
 export function getNavItems(
   agentId: string,
-  { showSavedReplies, enableAvatarFeature }: NavFeatureOptions,
+  { showSavedReplies, enableAvatarFeature, enableCommentToInbox }: NavFeatureOptions,
 ): {
   topLevel: NavItem[];
   engagement: NavItem[];
@@ -69,6 +71,9 @@ export function getNavItems(
             badgeLabel: 'Beta',
             requiredPermission: Permission.CHANNELS_READ,
           }]
+        : []),
+      ...(enableCommentToInbox
+        ? [{ to: `/dashboard/${agentId}/comment-to-inbox`, icon: MessageCircleReply, label: 'Comment-to-Inbox', requiredPermission: Permission.AUTOMATION_READ }]
         : []),
       ...(showSavedReplies
         ? [{
