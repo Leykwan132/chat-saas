@@ -131,31 +131,6 @@ test('prefills the same form for editing an automation', () => {
   expect(markup).toContain('Save changes');
 });
 
-test('keeps demo pages selected when testing edits have no persisted page IDs', () => {
-  const markup = renderToStaticMarkup(
-    <CommentAutomationModal
-      automation={{
-        _id: 'automation-1' as Id<'commentAutomations'>,
-        name: 'Pricing automation',
-        trigger: 'any_comment',
-        keywords: [],
-        privateMessage: 'Here is the pricing guide.',
-      }}
-      channels={[
-        { _id: 'instagram-page' as Id<'channels'>, service: 'instagram', displayUsername: 'Demo Instagram Page' },
-        { _id: 'messenger-page' as Id<'channels'>, service: 'messenger', displayUsername: 'Demo Facebook Page' },
-      ]}
-      initialChannelIds={[]}
-      open
-      onOpenChange={() => undefined}
-    />,
-  );
-
-  expect(markup.match(/aria-pressed="true"/g)).toHaveLength(2);
-  expect(markup).toContain('Automation will be live for Demo Instagram Page');
-  expect(markup).toContain('Automation will be live for Demo Facebook Page');
-});
-
 test('shows the edit modal shell immediately while automation details load', () => {
   const markup = renderToStaticMarkup(
     <CommentAutomationModal

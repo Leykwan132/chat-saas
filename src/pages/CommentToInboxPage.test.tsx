@@ -31,10 +31,6 @@ vi.mock('convex/react', () => ({
   },
 }));
 
-vi.mock('../../shared/commentAutomationConfig', () => ({
-  isTesting: false,
-}));
-
 function renderPage() {
   return renderToStaticMarkup(
     <MemoryRouter initialEntries={['/dashboard/agent-1/comment-to-inbox']}>

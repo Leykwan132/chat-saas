@@ -11,7 +11,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { CommentAutomationModal } from '@/components/comment-to-inbox/CommentAutomationModal';
 import { CommentAutomationEmptyState } from '@/components/comment-to-inbox/CommentAutomationEmptyState';
 import { CommentAutomationNoPagesEmptyState } from '@/components/comment-to-inbox/CommentAutomationNoPagesEmptyState';
-import { isTesting } from '../../shared/commentAutomationConfig';
 import { toast } from 'sonner';
 
 function isCommentAutomationPage<T extends { service: string }>(
@@ -19,19 +18,6 @@ function isCommentAutomationPage<T extends { service: string }>(
 ): channel is T & { service: 'instagram' | 'messenger' } {
   return channel.service === 'instagram' || channel.service === 'messenger';
 }
-
-const testingPages = [
-  {
-    _id: 'comment-testing-instagram' as Id<'channels'>,
-    service: 'instagram' as const,
-    displayUsername: 'Demo Instagram Page',
-  },
-  {
-    _id: 'comment-testing-messenger' as Id<'channels'>,
-    service: 'messenger' as const,
-    displayUsername: 'Demo Facebook Page',
-  },
-];
 
 function CommentToInboxPageSkeleton() {
   return (
@@ -53,9 +39,7 @@ export default function CommentToInboxPage() {
     api.commentAutomations.get,
     selectedId ? { automationId: selectedId, paginationOpts: { numItems: 20, cursor: null } } : 'skip',
   );
-  const availablePages = isTesting && channels?.length === 0
-    ? testingPages
-    : channels?.filter(isCommentAutomationPage);
+  const availablePages = channels?.filter(isCommentAutomationPage);
 
   if (!agentId) return null;
 
@@ -77,7 +61,7 @@ export default function CommentToInboxPage() {
         </div>
         {availablePages?.length ? <Button onClick={() => setOpen(true)}>Create automation</Button> : null}
       </div>
-      {automations === undefined || channels === undefined ? <CommentToInboxPageSkeleton /> : !isTesting && channels.length === 0 ? <CommentAutomationNoPagesEmptyState connectHref={`/dashboard/${agentId}/channels`} /> : automations.length === 0 ? <CommentAutomationEmptyState onCreate={() => setOpen(true)} /> : <div className="grid gap-2">
+      {automations === undefined || channels === undefined ? <CommentToInboxPageSkeleton /> : channels.length === 0 ? <CommentAutomationNoPagesEmptyState connectHref={`/dashboard/${agentId}/channels`} /> : automations.length === 0 ? <CommentAutomationEmptyState onCreate={() => setOpen(true)} /> : <div className="grid gap-2">
         {automations.map((automation) => <button key={automation._id} aria-label={`Open automation ${automation.name}`} onClick={() => setSelectedId(automation._id)} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left hover:bg-muted/40">
           <span className="font-medium">{automation.name}</span><Tooltip><TooltipTrigger asChild><span aria-label={`${automation.sentCount} messages sent`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground"><Users className="size-4" aria-hidden="true" /><span>{automation.sentCount}</span></span></TooltipTrigger><TooltipContent side="top">{automation.sentCount} messages sent</TooltipContent></Tooltip><Switch checked={automation.status === 'active'} onClick={(event) => event.stopPropagation()} onCheckedChange={(active) => void toggle(automation._id, active)} />
         </button>)}

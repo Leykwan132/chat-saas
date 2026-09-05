@@ -150,7 +150,6 @@ import type * as cloudflare from "../cloudflare.js";
 import type * as commentAutomationInput from "../commentAutomationInput.js";
 import type * as commentAutomationMatching from "../commentAutomationMatching.js";
 import type * as commentAutomations from "../commentAutomations.js";
-import type * as commentTestingChannelMigration from "../commentTestingChannelMigration.js";
 import type * as contactAdmin from "../contactAdmin.js";
 import type * as contactAdminAuth from "../contactAdminAuth.js";
 import type * as contactAdminMigration from "../contactAdminMigration.js";
@@ -635,7 +634,6 @@ declare const fullApi: ApiFromModules<{
   commentAutomationInput: typeof commentAutomationInput;
   commentAutomationMatching: typeof commentAutomationMatching;
   commentAutomations: typeof commentAutomations;
-  commentTestingChannelMigration: typeof commentTestingChannelMigration;
   contactAdmin: typeof contactAdmin;
   contactAdminAuth: typeof contactAdminAuth;
   contactAdminMigration: typeof contactAdminMigration;

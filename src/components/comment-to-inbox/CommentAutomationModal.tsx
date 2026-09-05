@@ -12,7 +12,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { CHANNEL_SERVICE_META } from '@/lib/channelServiceMeta';
-import { isTesting } from '../../../shared/commentAutomationConfig';
 import { toast } from 'sonner';
 
 type Channel = {
@@ -33,7 +32,6 @@ type Automation = {
 };
 
 function getInitialChannelIds(channels: Channel[], initialChannelIds?: Id<'channels'>[]) {
-  if (isTesting && initialChannelIds?.length === 0) return channels.map((channel) => channel._id);
   return initialChannelIds ?? channels.map((channel) => channel._id);
 }
 
@@ -120,7 +118,7 @@ export function CommentAutomationModal({
     try {
       const input = {
         name,
-        channelIds: isTesting ? [] : channelIds,
+        channelIds,
         trigger,
         keywords,
         privateMessage,

@@ -5,7 +5,6 @@ import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { normalizeCommentAutomationInput } from "./commentAutomationInput";
 import { getPlanFromStripe } from "./plans";
 import type { Id } from "./_generated/dataModel";
-import { isTesting } from "../shared/commentAutomationConfig";
 
 const allowedEmail = "leykwan132@gmail.com";
 const triggerValidator = v.union(v.literal("any_comment"), v.literal("keywords"));
@@ -104,9 +103,7 @@ export const create = mutation({
     if (plan.plan === "free" && existing.length >= 1) {
       throw new Error("Free workspaces can create one Comment automation");
     }
-    const channelIds = isTesting && args.channelIds.length === 0
-      ? []
-      : await validateChannelIds(ctx, args.channelIds, channelOrgId);
+    const channelIds = await validateChannelIds(ctx, args.channelIds, channelOrgId);
     const input = normalizeCommentAutomationInput(args);
     const now = Date.now();
     const automationId = await ctx.db.insert("commentAutomations", {
@@ -146,9 +143,7 @@ export const update = mutation({
     const { channelOrgId } = await getCommentAutomationAuth(ctx);
     const automation = await ctx.db.get(args.automationId);
     if (automation === null || automation.orgId !== channelOrgId) throw new Error("Automation not found");
-    const channelIds = isTesting && args.channelIds.length === 0
-      ? []
-      : await validateChannelIds(ctx, args.channelIds, channelOrgId);
+    const channelIds = await validateChannelIds(ctx, args.channelIds, channelOrgId);
     const input = normalizeCommentAutomationInput(args);
     const now = Date.now();
     await ctx.db.patch(automation._id, { ...input, updatedAt: now });

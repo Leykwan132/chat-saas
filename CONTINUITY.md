@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-05 [USER] Comment-to-Inbox testing bypass is currently enabled via `shared/commentAutomationConfig.ts`; set `isTesting` back to false before release.
+- 2026-09-05 [CODE] Removed all Comment-to-Inbox runtime test scaffolding: the testing bypass, demo pages, fake-channel migration, generated API entry, and test-mode-only coverage. Real connected Instagram/Messenger pages are now always required; unshipped.
 - 2026-09-04 [CODE] Comment-to-Inbox sits inside Tools below Avatar and uses the shared Avatar-style title, description, and page-header layout; unshipped.
 - 2026-09-04 [TOOL] Created active PostHog flag `enable_comment_to_inbox` (ID 866490) at 100% rollout. Application-level email authorization still limits Comment-to-Inbox visibility and backend access to `leykwan132@gmail.com`.
 - 2026-09-04 [USER] Goal: add a feature-flagged Comment-to-Inbox sidebar feature for `leykwan132@gmail.com`; Comment automations select connected Instagram/Messenger pages, trigger on any comment or keywords, send a private inbox message with an optional public reply, persist the customer first, and report sent/responded metrics. Free workspaces may store one automation; paid workspaces are unlimited. Approved design and implementation plan are at `docs/superpowers/{specs,plans}/2026-09-04-comment-to-inbox*`; partial implementation is uncommitted.
