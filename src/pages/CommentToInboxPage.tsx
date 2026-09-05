@@ -59,7 +59,7 @@ export default function CommentToInboxPage() {
           <h1 className="font-title text-3xl font-normal">Comment-to-Inbox</h1>
           <p className="mt-1 text-sm text-muted-foreground">Automatically send inbox messages when people comment on your posts.</p>
         </div>
-        {availablePages?.length ? <Button onClick={() => setOpen(true)}>Create automation</Button> : null}
+        {availablePages?.length ? <Button onClick={() => setOpen(true)}>+ Create</Button> : null}
       </div>
       {automations === undefined || channels === undefined ? <CommentToInboxPageSkeleton /> : channels.length === 0 ? <CommentAutomationNoPagesEmptyState connectHref={`/dashboard/${agentId}/channels`} /> : automations.length === 0 ? <CommentAutomationEmptyState onCreate={() => setOpen(true)} /> : <div className="grid gap-2">
         {automations.map((automation) => <button key={automation._id} aria-label={`Open automation ${automation.name}`} onClick={() => setSelectedId(automation._id)} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left hover:bg-muted/40">

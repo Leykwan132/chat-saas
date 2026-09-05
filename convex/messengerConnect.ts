@@ -125,7 +125,7 @@ async function subscribePage(page: PageEdge): Promise<void> {
   );
   subscribeUrl.searchParams.set(
     "subscribed_fields",
-    "messages,messaging_postbacks",
+    "messages,messaging_postbacks,feed",
   );
   await graphFetch(
     subscribeUrl.toString(),
