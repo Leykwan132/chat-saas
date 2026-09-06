@@ -13,6 +13,7 @@ import { logConversationEvent } from "./conversationLogs";
 import { customerSearchText } from "./customerSearch";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 import { customerRecipientLabel } from "./customerRecipientPresentation";
+import { customerPhonePresentation } from "../shared/customerPhonePresentation";
 
 const customerServiceValidator = v.union(
   v.literal("whatsapp"),
@@ -225,13 +226,11 @@ export const getSidebarDetailsForConversation = query({
       fromConvName ||
       "Unnamed customer";
 
-    let phone: string | null = null;
-    const custRecipientLabel = customer ? customerRecipientLabel(customer) : "";
-    if (custRecipientLabel) {
-      phone = custRecipientLabel;
-    } else if (conv.service === "whatsapp") {
-      phone = conv.contactAddress.trim() || null;
-    }
+    const phone = customer
+      ? customerPhonePresentation(customer)
+      : conv.service === "whatsapp"
+        ? customerPhonePresentation({ contactAddress: conv.contactAddress })
+        : null;
 
     const platformLabel =
       conv.service === "whatsapp"
