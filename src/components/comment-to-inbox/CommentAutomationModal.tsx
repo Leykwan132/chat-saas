@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'convex/react';
-import { Check, Loader2, X } from 'lucide-react';
+import { Check, Loader2, Trash2, X } from 'lucide-react';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { api } from '../../../convex/_generated/api';
 import { CommentAutomationPreview } from '@/components/comment-to-inbox/CommentAutomationPreview';
@@ -247,7 +247,7 @@ export function CommentAutomationModal({
           />
         </div>
         )}
-        <DialogFooter>{automation ? <Button type="button" variant="destructive" onClick={() => setDeleteOpen(true)}>Delete automation</Button> : null}<Button onClick={() => void save()} disabled={loading || saving || selectedChannels.length === 0} aria-busy={loading || saving}>{loading ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />Loading…</> : saving ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />{automation ? 'Saving…' : 'Creating…'}</> : automation ? 'Save changes' : 'Create automation'}</Button></DialogFooter>
+        <DialogFooter>{automation ? <Button type="button" size="icon" variant="destructive" aria-label="Delete automation" onClick={() => setDeleteOpen(true)}><Trash2 className="size-4" aria-hidden="true" /></Button> : null}<Button onClick={() => void save()} disabled={loading || saving || selectedChannels.length === 0} aria-busy={loading || saving}>{loading ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />Loading…</> : saving ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />{automation ? 'Saving…' : 'Creating…'}</> : automation ? 'Save changes' : 'Create automation'}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
     <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>

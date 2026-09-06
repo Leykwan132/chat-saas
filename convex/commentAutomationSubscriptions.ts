@@ -1,7 +1,9 @@
 import { v } from "convex/values";
-import { internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { getOwnedAgentForAuth } from "./agentAccess";
 import { ensureCommentSubscription } from "./commentAutomationMeta";
+import { getCommentAutomationAuth } from "./commentAutomations";
 
 export const internalGetSubscriptionTargets = internalQuery({
   args: { automationId: v.id("commentAutomations") },
@@ -17,6 +19,30 @@ export const internalGetSubscriptionTargets = internalQuery({
       channel: await ctx.db.get(page.channelId),
     })));
     return { targets };
+  },
+});
+
+export const getActivationStatus = query({
+  args: {
+    automationId: v.id("commentAutomations"),
+    agentId: v.id("agents"),
+  },
+  handler: async (ctx, args) => {
+    const auth = await getCommentAutomationAuth(ctx);
+    const agent = await getOwnedAgentForAuth(ctx, auth, args.agentId);
+    if (agent === null) throw new Error("Agent not found");
+    const automation = await ctx.db.get(args.automationId);
+    if (
+      automation === null ||
+      automation.orgId !== auth.channelOrgId ||
+      automation.agentId !== args.agentId
+    ) throw new Error("Automation not found");
+    const pages = await ctx.db
+      .query("commentAutomationPages")
+      .withIndex("by_automationId", (q) => q.eq("automationId", automation._id))
+      .take(100);
+    const failedPage = pages.find((page) => page.subscriptionStatus === "failed");
+    return { active: automation.status === "active", error: failedPage?.subscriptionError };
   },
 });
 

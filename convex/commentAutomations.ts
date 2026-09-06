@@ -5,13 +5,14 @@ import { internal } from "./_generated/api";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { getOwnedAgentForAuth } from "./agentAccess";
 import { normalizeCommentAutomationInput } from "./commentAutomationInput";
+import { getAutomationToggleResult } from "./commentAutomationStatus";
 import { getPlanFromStripe } from "./plans";
 import type { Id } from "./_generated/dataModel";
 
 const allowedEmail = "leykwan132@gmail.com";
 const triggerValidator = v.union(v.literal("any_comment"), v.literal("keywords"));
 
-async function getCommentAutomationAuth(ctx: QueryCtx | MutationCtx) {
+export async function getCommentAutomationAuth(ctx: QueryCtx | MutationCtx) {
   const auth = await getAuthContext(ctx);
   if (auth.email !== allowedEmail) throw new Error("Comment-to-Inbox is unavailable");
   return { ...auth, channelOrgId: resolveChannelOrgId(auth.orgId, auth.userId) };
@@ -229,13 +230,21 @@ export const setActive = mutation({
       automation.orgId !== auth.channelOrgId ||
       automation.agentId !== args.agentId
     ) throw new Error("Automation not found");
-    if (args.active) {
+    const pages = await ctx.db
+      .query("commentAutomationPages")
+      .withIndex("by_automationId", (q) => q.eq("automationId", automation._id))
+      .take(100);
+    const result = getAutomationToggleResult(
+      args.active,
+      pages.map((page) => page.subscriptionStatus),
+    );
+    if (result.needsSubscription) {
       await ctx.scheduler.runAfter(0, internal.commentAutomationSubscriptions.activateAutomationPages, {
         automationId: automation._id,
       });
     }
     await ctx.db.patch(automation._id, {
-      status: "inactive",
+      status: result.status,
       updatedAt: Date.now(),
     });
   },
