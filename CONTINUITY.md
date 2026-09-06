@@ -3,6 +3,7 @@
 # Snapshot
 
 - 2026-09-06 [CODE] Every AI booking tool now queries `appointmentBookingSessions` for a live session before acting; `getActiveBookingSession` is required before booking replies; unshipped.
+- 2026-09-06 [TOOL] Pull request #94 is open from `codex/verify-booking-sessions` into `main`; both Cloudflare builds passed, but repository policy requires an approving review before merge.
 - 2026-09-06 [CODE] Chat/playground booking replies no longer send invented “confirmation link emailed” copy; a verified booking uses the canonical confirmation (Meet link only for Google Meet + connected calendar); unshipped.
 - 2026-09-06 [CODE] AI booking `confirming` is the post-availability wait state; it only becomes `booked` after `bookAppointment` succeeds. Slot confirm no longer bumps `updatedAt`, so a failed book can retry the same customer yes; unshipped.
 - 2026-09-06 [CODE] Chat booking confirmations now verify a persisted current booking for the conversation after an AI turn; only that verified booking may send the single canonical confirmation, while an unverified reacted confirmation is suppressed; unshipped.
