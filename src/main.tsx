@@ -80,6 +80,23 @@ import {
 posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN as string, {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string,
   defaults: '2026-01-30',
+  before_send: (event) => {
+    if (event?.event === '$exception') {
+      const exceptions = (event.properties?.$exception_list ?? []) as Array<{
+        value?: string
+        stacktrace?: { frames?: unknown[] }
+      }>
+      const isOpaqueScriptError = exceptions.every(
+        (exception) =>
+          exception.value === 'Script error.' &&
+          !exception.stacktrace?.frames?.length,
+      )
+      if (exceptions.length > 0 && isOpaqueScriptError) {
+        return null
+      }
+    }
+    return event
+  },
 })
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
