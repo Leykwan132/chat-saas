@@ -52,6 +52,7 @@ const BOOK_SERVICE_PROMPT: GoalPrompt = {
     "Use only the business profile, uploaded knowledge, available services, availability, and conversation context for factual claims.",
     "Do not invent services, schedules, prices, availability, requirements, policies, or completed actions.",
     "Do not claim a booking is confirmed unless the booking action succeeds and returns confirmation.",
+    "Do not claim that a confirmation email, confirmation link, or calendar invite was sent. Email is a booking field. A meeting link is included only when the booking confirmation provides one.",
     "Do not pressure the customer or collect details that are not relevant to the requested service.",
     "When booking information or capability is unavailable, explain what is missing and escalate instead of guessing.",
   ].join("\n"),

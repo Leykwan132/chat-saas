@@ -24,6 +24,7 @@ import { checkModelAccess, getPlanFromStripe } from "../plans";
 import { getModelProvider } from "../llm/modelPricing";
 import { logConversationEvent } from "../conversationLogs";
 import { splitAiReplyMessages } from "./aiReplyMessages";
+import { applyBookingReplyGate } from "./applyBookingReply";
 
 /* ── Mutations / Queries / Actions ─────────────────────── */
 
@@ -197,6 +198,11 @@ export const generatePlaygroundResponseAsync = internalAction({
       workflowRuntimeContext,
       args.promptMessageId,
     );
+    const bookingBeforeReply = conv
+      ? await ctx.runQuery(internal.appointmentBooking.currentBooking.getCurrentBooking, {
+          conversationId: conv._id,
+        })
+      : undefined;
     const result = await configuredAgent.streamText(
       ctx,
       { threadId: args.threadId },
@@ -210,7 +216,14 @@ export const generatePlaygroundResponseAsync = internalAction({
     );
 
     const rawReplyText = await result.text;
-    const replyMessages = splitAiReplyMessages(rawReplyText);
+    let replyMessages = splitAiReplyMessages(rawReplyText);
+    if (conv && activeBooking.services.length > 0) {
+      replyMessages = await applyBookingReplyGate(ctx, {
+        conversationId: conv._id,
+        generatedMessages: replyMessages,
+        hadBookingBefore: bookingBeforeReply?.success === true,
+      });
+    }
     if (replyMessages.length === 0) return;
 
     const streamedAssistant = result.savedMessages

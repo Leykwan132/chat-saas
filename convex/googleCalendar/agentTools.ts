@@ -17,6 +17,7 @@ import {
   runCancelBookingSession,
   runUpdateBookingAppointment,
 } from "./bookingSync";
+import { queryActiveBookingSession } from "../chat/bookingToolSession";
 import type { BookingToolResult } from "./bookingTypes";
 
 type PrepareListResult =
@@ -227,6 +228,7 @@ export function registerGoogleCalendarTools(args: {
       rangeEndIso: z.string().optional().describe("Range end as an ISO timestamp."),
     }),
     execute: async (ctx, input) => {
+      await queryActiveBookingSession(ctx, conversationId);
       const rangeStartAt = input.rangeStartIso ? Date.parse(input.rangeStartIso) : Date.now();
       const rangeEndAt = input.rangeEndIso
         ? Date.parse(input.rangeEndIso)
@@ -250,6 +252,7 @@ export function registerGoogleCalendarTools(args: {
       confirmed: z.boolean().describe("True only when the customer explicitly confirmed this change in the current request."),
     }),
     execute: async (ctx, input) => {
+      await queryActiveBookingSession(ctx, conversationId);
       const startAt = input.startTimeIso ? Date.parse(input.startTimeIso) : Number.NaN;
       return await ctx.runAction(googleInternal.agentTools.updateCalendarEvent, {
         conversationId,
@@ -267,6 +270,7 @@ export function registerGoogleCalendarTools(args: {
       confirmed: z.boolean().describe("True only when the customer explicitly asked to cancel in the current request."),
     }),
     execute: async (ctx, input) => {
+      await queryActiveBookingSession(ctx, conversationId);
       return await ctx.runAction(googleInternal.agentTools.deleteCalendarEvent, {
         conversationId,
         eventId: input.eventId as Id<"calendarEvents">,

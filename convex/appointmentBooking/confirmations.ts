@@ -1,16 +1,21 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
 import { buildBookingConfirmationMessage, serviceTimeZone } from "./fields";
-import { getLatestBookedSession } from "./sessionStore";
+import { activeSessionSnapshot, getActiveSession, getLatestBookedSession } from "./sessionStore";
 
 async function buildConfirmation(ctx: Parameters<typeof getLatestBookedSession>[0], conversationId: Parameters<typeof getLatestBookedSession>[1], updated: boolean) {
+  const active = await getActiveSession(ctx, conversationId);
   const session = await getLatestBookedSession(ctx, conversationId);
   if (session === undefined || session.calendarEventId === undefined || session.serviceId === undefined) {
     return {
       success: false,
-      message: updated
-        ? "No updated booking found. Call updateBookingAppointment first."
-        : "No completed booking found. Call bookAppointment first.",
+      hasActiveSession: active !== undefined,
+      activeSession: active === undefined ? null : activeSessionSnapshot(active),
+      message: active
+        ? `No completed booking found. Active session status is ${active.status}. Call bookAppointment first.`
+        : updated
+          ? "No updated booking found. Call updateBookingAppointment first."
+          : "No completed booking found. Call bookAppointment first.",
     };
   }
 

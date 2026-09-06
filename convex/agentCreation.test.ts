@@ -59,6 +59,7 @@ describe("goal-based agent creation", () => {
     expect(agent?.goal).toBe("bookService");
     expect(agent?.templateKey).toBe("sales");
     expect(agent?.systemPrompt).toContain("Do not claim a booking is confirmed");
+    expect(agent?.systemPrompt).toContain("Do not claim that a confirmation email");
   });
 
   test("rejects an empty business name", async () => {

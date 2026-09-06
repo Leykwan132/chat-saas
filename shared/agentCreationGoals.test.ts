@@ -40,6 +40,7 @@ describe("agent creation goals", () => {
 
     expect(prompt).toContain("help customers book services");
     expect(prompt).toContain("Do not claim a booking is confirmed");
+    expect(prompt).toContain("Do not claim that a confirmation email, confirmation link, or calendar invite was sent.");
     expect(prompt).toContain("# Conversation approach");
     expect(prompt).toContain(
       "Do not open by pushing a booking, demo, plan, or other next step. First understand the customer's needs, then introduce the relevant option when it genuinely helps.",
@@ -63,6 +64,7 @@ describe("agent creation goals", () => {
       "Use the business profile, uploaded knowledge, and conversation context to understand what the business offers and what customers need.",
     );
     expect(prompt).toContain("Do not claim a booking is confirmed");
+    expect(prompt).toContain("Do not claim that a confirmation email, confirmation link, or calendar invite was sent.");
     expect(prompt).not.toContain("undefined");
     expect(prompt).not.toContain("Business name:");
     expect(prompt).not.toContain("Business description:");
