@@ -455,17 +455,18 @@ function getCurrentDateInfo(timeZone: string) {
   };
 }
 
-function buildBookingFlowBlock() {
+export function buildBookingFlowBlock() {
   return `\n\n## Booking Flow
 Use the Workflow Runtime first to decide whether the customer is in a Book appointment stage. Use the available Services listed above for service IDs and required fields.
 Available Services are the complete booking catalog for this turn. Knowledge-base results can help you understand or explain how a customer request relates to those Services, but they are not bookable Services and must not be used as service IDs.
 
-- Call \`getActiveBookingSession\` before any booking-related reply or booking tool. It queries the live session. Do not infer session or booking state from chat history.
+- Call \`getActiveBookingSession\` before booking-state replies or booking tools except a first \`checkAvailability\` preview. Availability itself checks the live database and does not require a session.
 - Call \`getTodayDate\` whenever you need today's date or current time — for example when interpreting "today", "tomorrow", "next week", or validating booking dates. Do not guess the current date.
-1. *Start session* — When the customer wants to book, call \`startBookingSession\` with the matching service ID. If they have already shared details, include them in \`collectedFields\`.
-2. *Collect details* — Read \`missingFields\` from the tool response and ask only for what is still missing. Always ask in chat for name, phone, date, and time for the person being booked — do not use the chatter's contact details. Call \`startBookingSession\` again with new \`collectedFields\` until \`readyForAvailability\` is true.
-3. *Check slots* — Call \`checkAvailability\` only after the session is ready. Present the returned slots to the customer.
-4. *Book* — After the customer clearly confirms a slot, call \`bookAppointment\`. You may also call \`giveReaction\` as a best-effort acknowledgement, but reaction delivery does not determine whether the booking can proceed.
+- Do not narrate tool steps or send progress updates such as "I will start the booking session" or "I will check availability." Call the tools immediately and reply only with the result or the next information the customer must provide.
+1. *Check slots* — For any availability question, call \`checkAvailability\` immediately with the matching service ID. Do not collect customer details first. For a specific time use \`preferredTimeIso\`; for a day or range use \`rangeStartIso\` and \`rangeEndIso\`.
+2. *Select slot* — A customer's exact requested time or choice from offered slots counts as confirmation. Call \`checkAvailability\` for that exact time. When available, it starts the session and returns only the missing booking fields.
+3. *Collect details* — Ask only for \`missingFields\`, then call \`startBookingSession\` with the new values. Always obtain name, phone, date, and time in chat for the person being booked. Do not use the chatter's contact details.
+4. *Book* — As soon as \`startBookingSession\` returns \`readyForBooking: true\`, call \`bookAppointment\` in the same turn. Do not ask for another confirmation. Booking creation revalidates the selected slot before writing the calendar event.
 5. *Confirm* — Immediately after \`bookAppointment\` succeeds, call \`sendBookingConfirmation\` and send the returned \`confirmationMessage\` to the customer exactly as written. Do not rewrite it.
 
 ## Editing an existing booking
@@ -642,7 +643,7 @@ export function buildAgent(
 
     tools.startBookingSession = createTool({
       description:
-        "Starts or updates the Services session when the customer wants to book, or updates collected details during a booking edit. Use only a service ID from Available Appointment Services. Returns which required fields are still missing. Call this first for new bookings, or after beginBookingEdit when changing details.",
+        "Adds customer details to the active booking session after an available slot was requested or selected, or updates details during a booking edit. Returns missingFields and readyForBooking. When readyForBooking is true, call bookAppointment immediately without asking for another confirmation.",
       inputSchema: z.object({
         serviceId: z.string().optional().describe("The selected Services service ID."),
         collectedFields: collectedFieldsSchema.optional().describe("Booking details collected from the customer so far, keyed by field key."),
@@ -659,7 +660,7 @@ export function buildAgent(
 
     tools.checkAvailability = createTool({
       description:
-        "Checks available appointment slots for the active booking or booking-edit session. Use only a service ID from Available Appointment Services. Call only after startBookingSession returns readyForAvailability true. For customer-suggested times, pass preferredTimeIso.",
+        "Checks live appointment availability directly without requiring a booking session or customer details. Use a service ID from Available Appointment Services. Call immediately for availability questions. If an exact customer-requested or selected preferredTimeIso is available, this starts the booking session and returns missingFields.",
       inputSchema: z.object({
         serviceId: z.string().optional().describe("The selected Services service ID."),
         preferredTimeIso: z.string().optional().describe("Customer's preferred appointment start time as an ISO timestamp."),
@@ -689,19 +690,20 @@ export function buildAgent(
         if (Number.isFinite(rangeEndAt)) {
           args.rangeEndAt = rangeEndAt;
         }
-        const activeSession = await queryActiveBookingSession(ctx, conversationId);
-        if (!activeSession.hasActiveSession) return { ...activeSession, slots: [] };
-        return await ctx.runMutation(internal.appointmentBooking.sessions.checkAvailability, args);
+        return await ctx.runMutation(internal.appointmentBooking.sessions.checkAvailability, {
+          ...args,
+          ...(sourceAgentMessageId ? { customerRequestAgentMessageId: sourceAgentMessageId } : {}),
+        });
       },
     });
 
     tools.bookAppointment = createTool({
       description:
-        "Creates the official calendar appointment for the active booking session. Use only a service ID from Available Appointment Services. Call only after the customer explicitly confirms the selected service and slot from checkAvailability.",
+        "Creates the official calendar appointment for the active booking session. Call immediately when startBookingSession returns readyForBooking true. The customer's requested or selected available slot is already confirmation; do not ask again.",
       inputSchema: z.object({
         serviceId: z.string().describe("The selected Services service ID."),
         startTimeIso: z.string().describe("Confirmed appointment start time as an ISO timestamp from checkAvailability."),
-        customerConfirmed: z.literal(true).describe("Set only after the customer explicitly confirms this offered slot."),
+        customerConfirmed: z.literal(true).describe("Set only when the customer explicitly requested this exact slot or confirmed it after it was offered."),
       }),
       execute: async (ctx, input) => {
         const startAt = Date.parse(input.startTimeIso);
@@ -903,6 +905,14 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${aiReplyMessageBreakBlock}${tone
     instructions,
     stopWhen: stepCountIs(8),
     tools,
+    rawRequestResponseHandler: async (_ctx, { request, response }) => {
+      console.log("request", request);
+      console.log("response", response);
+    },
+    contextHandler: async (_ctx, { allMessages }) => {
+      console.log("context", allMessages);
+      return allMessages;
+    },
     usageHandler: async (ctx, args) => {
       const {
         userId,

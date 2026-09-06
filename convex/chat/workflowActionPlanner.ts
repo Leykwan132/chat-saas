@@ -1,5 +1,7 @@
 import { z } from "zod/v3";
+import { NoObjectGeneratedError } from "ai";
 import type { ActionCtx } from "../_generated/server";
+import { AI_GENERATION_MAX_RETRIES } from "../llm/retryPolicy";
 import { openRouterModel } from "../llm/openRouter";
 import type { buildAgent } from "./threads";
 import type { WorkflowRuntimeContextForPrompt } from "./workflowPrompt";
@@ -32,9 +34,6 @@ export const workflowActionPlanSchema = z.object({
   responseLanguage: z.string().describe(
     "Common English name of the language used in the latest user message, such as Chinese, English, or Malay.",
   ),
-  responseGuidance: z.string().describe(
-    "A short instruction for the later customer-visible reply, without URLs, uploaded filenames, or internal metadata.",
-  ),
 });
 
 export type WorkflowActionPlan = z.infer<typeof workflowActionPlanSchema>;
@@ -43,6 +42,29 @@ export type AiReplyPromptArgs = {
   promptContent?: string;
   promptMessageId?: string;
 };
+
+export async function retryWorkflowActionPlanGeneration<T>(
+  generate: () => Promise<T>,
+  maxRetries = AI_GENERATION_MAX_RETRIES,
+): Promise<T> {
+  for (let retryCount = 0; ; retryCount += 1) {
+    try {
+      return await generate();
+    } catch (error) {
+      if (
+        !NoObjectGeneratedError.isInstance(error) ||
+        retryCount >= maxRetries
+      ) {
+        throw error;
+      }
+      console.warn("Workflow action planner returned invalid structured output; retrying", {
+        retry: retryCount + 1,
+        maxRetries,
+        error: error.message,
+      });
+    }
+  }
+}
 
 export function aiReplyPromptArgs(args: AiReplyPromptArgs) {
   if (args.promptMessageId) return { promptMessageId: args.promptMessageId };
@@ -81,7 +103,6 @@ export function buildWorkflowActionPlanReplyGuidance(
   if (matchedMediaNodes.length === 0) {
     return [
       "Workflow action plan for this reply:",
-      `- Planner guidance: ${plan.responseGuidance}`,
       languageLine,
       "- No workflow media is being sent in this turn.",
       "- Do not claim that an image, video, file, brochure, or attachment is attached or sent unless it is selected to send.",
@@ -95,7 +116,6 @@ export function buildWorkflowActionPlanReplyGuidance(
 
   return [
     "Workflow action plan for this reply:",
-    `- Planner guidance: ${plan.responseGuidance}`,
     languageLine,
     "- The backend is sending the selected workflow media now.",
     "- These exact assets are being sent automatically:",
@@ -109,7 +129,7 @@ export function buildWorkflowActionPlanReplyGuidance(
 
 const PLANNER_LANGUAGE_RULES = `Rules:
 - Detect the language of the latest user message and set responseLanguage to that language. If the message mixes languages, use the dominant language. Never default to English unless the user wrote in English.
-- responseGuidance must never include uploaded filenames or instruct the later reply to display them.`;
+- Do not decide or describe the customer-visible reply. Do not make factual claims about bookings, availability, payments, account state, or completed actions.`;
 
 const PLANNER_OUTPUT_EXAMPLES = `Example outputs (follow this exact JSON object shape; do not wrap in markdown):
 
@@ -124,16 +144,14 @@ Example 1 — one matching media action:
     }
   ],
   "mediaNodeIdsToSend": ["jn7abc123"],
-  "responseLanguage": "English",
-  "responseGuidance": "Tell the customer the Type B video is being sent now."
+  "responseLanguage": "English"
 }
 
 Example 2 — no matching workflow actions:
 {
   "workflowMatches": [],
   "mediaNodeIdsToSend": [],
-  "responseLanguage": "Malay",
-  "responseGuidance": "Answer the customer's question normally without claiming any attachment was sent."
+  "responseLanguage": "Malay"
 }`;
 
 export function buildWorkflowActionPlannerSystemPrompt(
@@ -148,7 +166,6 @@ Return a strict object matching the schema:
 - workflowMatches: always [].
 - mediaNodeIdsToSend: always [].
 - responseLanguage: common English name of the language used in the latest user message (e.g. Chinese, English, Malay).
-- responseGuidance: one short instruction for the later customer-visible reply.
 
 ${PLANNER_LANGUAGE_RULES}
 - There are no Workflow Runtime actions available this turn. Always return empty workflowMatches and mediaNodeIdsToSend.
@@ -196,7 +213,6 @@ Return a strict object matching the schema:
 - workflowMatches: every workflow action whose condition/customer intent matches this turn. Every listed match will execute.
 - mediaNodeIdsToSend: every matched sendImage/sendFile node ID. The backend validates and reconciles this field from workflowMatches.
 - responseLanguage: common English name of the language used in the latest user message (e.g. Chinese, English, Malay).
-- responseGuidance: one short instruction for the later customer-visible reply.
 
 ${PLANNER_LANGUAGE_RULES}
 - Do not return media URLs. The backend resolves URLs from node IDs.
@@ -221,16 +237,18 @@ export async function generateWorkflowActionPlan(
   args: AiReplyPromptArgs,
   workflowRuntimeContext: WorkflowRuntimeContextForPrompt,
 ): Promise<WorkflowActionPlan> {
-  const result = await configuredAgent.generateObject(
-    ctx,
-    { threadId },
-    {
-      ...aiReplyPromptArgs(args),
-      model: openRouterModel(WORKFLOW_ACTION_PLANNER_MODEL),
-      system: buildWorkflowActionPlannerSystemPrompt(workflowRuntimeContext),
-      schema: workflowActionPlanSchema,
-    },
-    { storageOptions: { saveMessages: "none" } },
+  const result = await retryWorkflowActionPlanGeneration(() =>
+    configuredAgent.generateObject(
+      ctx,
+      { threadId },
+      {
+        ...aiReplyPromptArgs(args),
+        model: openRouterModel(WORKFLOW_ACTION_PLANNER_MODEL),
+        system: buildWorkflowActionPlannerSystemPrompt(workflowRuntimeContext),
+        schema: workflowActionPlanSchema,
+      },
+      { storageOptions: { saveMessages: "none" } },
+    ),
   );
 
   const reconciledPlan = reconcileWorkflowActionPlan(

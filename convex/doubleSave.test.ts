@@ -39,7 +39,6 @@ vi.mock('./llm/openRouter', () => {
     workflowMatches: [],
     mediaNodeIdsToSend: [],
     responseLanguage: 'English',
-    responseGuidance: 'Answer normally.',
   });
   const delimitedReply =
     'Mock response part one\n<<<MESSAGE_BREAK>>>\nMock response part two';
@@ -734,11 +733,16 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   });
 
   // Directly run generateAiReplyWorker (normally run by the workpool)
+  const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
   await t.action(internal.chat.inbox.generateAiReplyWorker, {
     conversationId: result.conversationId,
     promptContent: 'Help me',
     promptMessageId: result.agentMessageId,
   });
+  expect(log).toHaveBeenCalledWith('context', expect.any(Array));
+  expect(log).toHaveBeenCalledWith('request', expect.anything());
+  expect(log).toHaveBeenCalledWith('response', expect.anything());
+  log.mockRestore();
 
   // Query messages inside the agent component
   const agentMessages = await withComponents(t).runInComponent(

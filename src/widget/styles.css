@@ -300,6 +300,8 @@ header {
   border-radius: 16px;
   font-size: 14px;
   line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 .messages p.incoming {
   color: #fff;

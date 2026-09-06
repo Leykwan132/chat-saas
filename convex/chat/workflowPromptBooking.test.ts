@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import type { Id } from "../_generated/dataModel";
+import { buildBookingFlowBlock } from "./threads";
 import { buildWorkflowRuntimeBlock } from "./workflowPrompt";
 
 test("workflow runtime describes book appointment by services instead of goal", () => {
@@ -37,4 +38,15 @@ test("workflow runtime describes book appointment by services instead of goal", 
   expect(block).toContain("Showroom viewing");
   expect(block).not.toContain("- Goal:");
   expect(block).not.toContain("Legacy booking goal should not steer this node.");
+});
+
+test("booking flow chains a fully specified requested slot without progress chatter", () => {
+  const block = buildBookingFlowBlock();
+
+  expect(block).toContain("Do not narrate tool steps");
+  expect(block).toContain("call `checkAvailability` immediately");
+  expect(block).toContain("does not require a session");
+  expect(block).toContain("counts as confirmation");
+  expect(block).toContain("returns `readyForBooking: true`");
+  expect(block).toContain("Do not ask for another confirmation");
 });

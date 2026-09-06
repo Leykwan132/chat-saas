@@ -2,8 +2,10 @@
 
 # Snapshot
 
+- 2026-09-07 [CODE] Web-widget message bubbles preserve canonical confirmation line breaks and safely wrap long references; booking confirmations are grouped in stable schedule, customer, assignment/meeting, reference, and closing sections. Thirty-one focused tests and ESLint passed; unshipped.
+- 2026-09-06 [CODE] Workflow action planning retries invalid structured output up to three times and can influence only configured actions, media, and language; model-written factual guidance was removed. The configured Agent now uses SDK `contextHandler` and `rawRequestResponseHandler` diagnostics to log model context plus every raw request and response, including tool-call traffic; unshipped.
 - 2026-09-06 [CODE] Every AI booking tool now queries `appointmentBookingSessions` for a live session before acting; `getActiveBookingSession` is required before booking replies; unshipped.
-- 2026-09-06 [CODE] Customer confirmation now comes from the latest inbound message after availability was offered; Meta reactions are optional and no longer block booking. Invalid model-written booking claims return a safe retry message instead of suppressing all replies; unshipped.
+- 2026-09-06 [CODE] Availability previews now run without a session or customer details. An exact requested/selected available slot opens the session; once missing details are supplied, `readyForBooking` triggers immediate creation without another confirmation, and creation revalidates the slot. Diagnostics remain enabled; unshipped.
 - 2026-09-06 [TOOL] Pull request #94 merged live booking-session verification and canonical confirmation safeguards into `main`.
 - 2026-09-06 [TOOL] Pull request #95 is open from `codex/fix-booking-confirmation-race` into `main`; focused booking tests, TypeScript, diagnostics, and diff validation passed.
 - 2026-09-06 [CODE] Chat/playground booking replies no longer send invented “confirmation link emailed” copy; a verified booking uses the canonical confirmation (Meet link only for Google Meet + connected calendar); unshipped.
@@ -26,7 +28,6 @@
 - 2026-09-05 [TOOL] Pull request #92 merged automatic selected-page subscriptions and active-on-success Comment-to-Inbox creation; focused verification passed.
 - 2026-09-06 [TOOL] Pull request #93 is open from `codex/delete-comment-automations` into `main` for confirmed, agent-scoped Comment-to-Inbox deletion and bounded related-record cleanup; focused verification passed.
 - 2026-09-05 [TOOL] Merged `origin/main` at `e28e6ad` into `codex/comment-to-inbox`, retaining both Avatar connector and Comment-to-Inbox shared navigation/feature-flag registrations; unshipped.
-- 2026-09-05 [TOOL] Merged `origin/main` at `d52ee6b` into `codex/comment-to-inbox`, retaining the newer agent-scoped Comment-to-Inbox implementation through all overlapping files; focused tests, lint, and TypeScript checks passed; unshipped.
 - 2026-09-05 [CODE] Fixed Comment-to-Inbox build typing by preserving the automation trigger literal union and narrowing queried pages to Instagram/Messenger with a generic type predicate before rendering the modal; unshipped.
 - 2026-09-04 [CODE] Background preview mode now omits the Start Chat CTA and dimming overlay while keeping backdrop media clipped to the avatar frame, including portrait avatars. Unshipped.
 - 2026-09-04 [CODE] Cover & background preview opens on the Cover image view; its end-of-row toggle switches to the avatar-over-background view and back. Unshipped.
@@ -83,6 +84,7 @@
 
 # Decisions
 
+- 2026-09-06 [USER] D782 ACTIVE: availability checks precede session creation and customer-detail collection; an exact requested/selected available slot is confirmation, and complete details must proceed directly to booking and canonical confirmation without an extra confirmation turn.
 - 2026-09-04 [TOOL] D781 OPEN: Live Meta comment subscriptions and sends are paused pending verification of the Instagram/Messenger endpoint and required scopes. Official Meta documentation requests returned rate-limit errors; do not infer a production endpoint from the user payload alone.
 - 2026-09-04 [USER] D780 ACTIVE: The customer-facing navigation label is “Comment-to-Inbox”; Comment automations use the unshipped `commentAutomations` backend tables and APIs.
 - 2026-09-03 [USER] D778 ACTIVE: Avatar cover images are stored in R2 under agent-scoped keys and served through the configured media CDN URL.
@@ -105,6 +107,8 @@
 
 # Done (recent)
 
+- 2026-09-07 [CODE] Preserved message newlines in the web widget and reformatted canonical booking confirmations into readable ordered sections; unshipped.
+- 2026-09-06 [CODE] Decoupled availability previews from booking sessions/details and chained confirmed slots to immediate booking once required fields are complete; unshipped.
 - 2026-09-06 [CODE] Removed the asynchronous reaction dependency from slot confirmation and removed empty-list booking reply suppression; unshipped.
 - 2026-09-06 [CODE] Booking tools query the live `appointmentBookingSessions` row before create, confirm, update, cancel, or calendar list/edit; unshipped.
 - 2026-09-06 [CODE] Invented booking confirmation emails/links are replaced with the canonical confirmation when a booking exists, or dropped when it does not; unshipped.
@@ -221,6 +225,7 @@
 
 # Working set
 
+- 2026-09-07 [CODE] `convex/{appointmentBooking/{availability.ts,fields.ts,sessions.ts},appointmentBookingFields.test.ts,appointmentBookingStatus.test.ts,chat/{inbox.ts,threads.ts,workflowPromptBooking.test.ts,workflowActionExecution.ts,workflowActionPlanner.ts,workflowActionPlanner.test.ts},doubleSave.test.ts}`; `src/widget/{styles.css,WidgetComposer.test.ts}`
 - 2026-09-03 [CODE] `convex/{avatar.ts,avatarContext.ts,avatarCore.ts,avatarProvider.ts,avatarSession.ts,avatarLifecycle.ts,schema.ts}`
 - 2026-09-03 [CODE] `convex/{avatarCover.ts,avatarSessionCapacity.ts,media/r2.ts}` and `src/components/avatar/{AvatarCoverImageEditor.tsx,AvatarBackgroundEditor.tsx,avatarBackgroundCompositor.ts}`
 - 2026-09-03 [CODE] `shared/geminiLiveVoices.ts`
@@ -235,6 +240,8 @@
 
 # Receipts
 
+- 2026-09-07 [TOOL] Booking-confirmation layout and widget newline preservation passed 31 focused tests, targeted ESLint, and `git diff --check`.
+- 2026-09-06 [TOOL] Sessionless availability and direct post-collection booking passed 11 booking regression tests, targeted ESLint, TypeScript build checking, and `git diff --check`.
 - 2026-09-05 [TOOL] Comment-to-Inbox single-form edit modal passed 12 focused UI tests, Node v22 ESLint, and `git diff --check`.
 - 2026-09-05 [TOOL] Comment-to-Inbox edit page-selection hydration passed 12 focused UI tests, Node v22 ESLint, TypeScript no-emit, and `git diff --check`.
 - 2026-09-05 [TOOL] Comment-to-Inbox sent-count tooltip passed 11 focused UI tests, Node v22 ESLint, TypeScript no-emit, and `git diff --check`.
