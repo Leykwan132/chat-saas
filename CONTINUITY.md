@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-06 [CODE] Chat booking confirmations now verify a persisted current booking for the conversation after an AI turn; only that verified booking may send the single canonical confirmation, while an unverified reacted confirmation is suppressed; unshipped.
 - 2026-09-06 [CODE] Customer list and chat-detail Phone fields now use a phone-only presentation helper: WhatsApp usernames and provider user IDs are never displayed as phone numbers, while explicit and legacy numeric phone values remain visible; unshipped.
 - 2026-09-05 [CODE] Removed all Comment-to-Inbox runtime test scaffolding: the testing bypass, demo pages, fake-channel migration, generated API entry, and test-mode-only coverage. Real connected Instagram/Messenger pages are now always required; unshipped.
 - 2026-09-05 [CODE] Comment-to-Inbox now scopes connected page selection and page-validation to the route’s authenticated agent via `defaultAgentId`, so each agent sees and can select only their own Instagram/Messenger channels; unshipped.
