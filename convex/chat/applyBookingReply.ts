@@ -19,14 +19,6 @@ type BookingReplyGateRefs = {
         }
       >;
     };
-    sessions: {
-      shouldSuppressUnverifiedConfirmationReply: FunctionReference<
-        "query",
-        "internal",
-        { conversationId: Id<"conversations"> },
-        boolean
-      >;
-    };
   };
 };
 
@@ -53,18 +45,11 @@ export async function applyBookingReplyGate(
         conversationId: args.conversationId,
       })
     : undefined;
-  const shouldSuppressUnverified = bookingAfterReply.success
-    ? false
-    : await ctx.runQuery(
-        bookingReplyGateRefs.appointmentBooking.sessions.shouldSuppressUnverifiedConfirmationReply,
-        { conversationId: args.conversationId },
-      );
 
   return resolveBookingReply({
     generatedMessages: args.generatedMessages,
     confirmationMessage: confirmation?.success ? confirmation.confirmationMessage : undefined,
     bookingExists: bookingAfterReply.success,
     hadBookingBefore: args.hadBookingBefore,
-    shouldSuppressUnverified,
   });
 }

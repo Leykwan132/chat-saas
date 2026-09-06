@@ -6,7 +6,7 @@ import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
 
-test("confirmBookingSlot stays retryable without leaving confirming", async () => {
+test("confirmBookingSlot uses the customer message without waiting for a reaction", async () => {
   const t = convexTest(schema, modules);
   const startAt = Date.UTC(2028, 6, 1, 9, 0, 0);
   const ids = await t.run(async (ctx) => {
@@ -75,15 +75,6 @@ test("confirmBookingSlot stays retryable without leaving confirming", async () =
       direction: "incoming",
       contentType: "text",
       content: "Yes",
-      reactions: [{
-        emoji: "👍",
-        source: "ai",
-        actorKey: `ai:${agentId}`,
-        actorAgentId: agentId,
-        actorName: "Booking Agent",
-        createdAt: offeredAt + 2,
-        updatedAt: offeredAt + 2,
-      }],
       createdAt: offeredAt + 1,
     });
     const sessionId = await ctx.db.insert("appointmentBookingSessions", {

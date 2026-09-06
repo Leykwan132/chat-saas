@@ -3,6 +3,9 @@
 # Snapshot
 
 - 2026-09-06 [CODE] Every AI booking tool now queries `appointmentBookingSessions` for a live session before acting; `getActiveBookingSession` is required before booking replies; unshipped.
+- 2026-09-06 [CODE] Customer confirmation now comes from the latest inbound message after availability was offered; Meta reactions are optional and no longer block booking. Invalid model-written booking claims return a safe retry message instead of suppressing all replies; unshipped.
+- 2026-09-06 [TOOL] Pull request #94 merged live booking-session verification and canonical confirmation safeguards into `main`.
+- 2026-09-06 [TOOL] Pull request #95 is open from `codex/fix-booking-confirmation-race` into `main`; focused booking tests, TypeScript, diagnostics, and diff validation passed.
 - 2026-09-06 [CODE] Chat/playground booking replies no longer send invented “confirmation link emailed” copy; a verified booking uses the canonical confirmation (Meet link only for Google Meet + connected calendar); unshipped.
 - 2026-09-06 [CODE] AI booking `confirming` is the post-availability wait state; it only becomes `booked` after `bookAppointment` succeeds. Slot confirm no longer bumps `updatedAt`, so a failed book can retry the same customer yes; unshipped.
 - 2026-09-06 [CODE] Chat booking confirmations now verify a persisted current booking for the conversation after an AI turn; only that verified booking may send the single canonical confirmation, while an unverified reacted confirmation is suppressed; unshipped.
@@ -98,10 +101,11 @@
 - 2026-08-25 [USER] D776 ACTIVE: partner-created customers authenticate only through their assigned connected partner hostname; native Kilobot sign-in rejects them while native users retain AuthKit.
 - 2026-09-03 [USER] D777 ACTIVE: each partner customer remains restricted to one assigned workspace and cannot create additional workspaces.
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
-- 2026-09-06 [CODE] I001 OPEN: Hallucinated “confirmation email/link” copy is now replaced or suppressed after the turn. Remaining gap: playground still streams the invented text before the saved message is rewritten.
+- 2026-09-06 [CODE] I001 OPEN: Hallucinated booking/email-link copy is replaced after generation; unverified claims now receive a safe retry response rather than silence. Remaining gap: playground can briefly stream model text before the saved message is rewritten.
 
 # Done (recent)
 
+- 2026-09-06 [CODE] Removed the asynchronous reaction dependency from slot confirmation and removed empty-list booking reply suppression; unshipped.
 - 2026-09-06 [CODE] Booking tools query the live `appointmentBookingSessions` row before create, confirm, update, cancel, or calendar list/edit; unshipped.
 - 2026-09-06 [CODE] Invented booking confirmation emails/links are replaced with the canonical confirmation when a booking exists, or dropped when it does not; unshipped.
 - 2026-09-06 [CODE] `confirmBookingSlot` is idempotent for the same offered slot and no longer advances `updatedAt`, so a failed `bookAppointment` can retry without a new customer message; unshipped.
