@@ -83,3 +83,26 @@ export const activateAutomationPages = internalAction({
     });
   },
 });
+
+export const deleteAutomationData = internalMutation({
+  args: { automationId: v.id("commentAutomations") },
+  handler: async (ctx, args) => {
+    const [pages, deliveries] = await Promise.all([
+      ctx.db
+        .query("commentAutomationPages")
+        .withIndex("by_automationId", (q) => q.eq("automationId", args.automationId))
+        .take(100),
+      ctx.db
+        .query("commentAutomationDeliveries")
+        .withIndex("by_automationId_and_createdAt", (q) => q.eq("automationId", args.automationId))
+        .take(100),
+    ]);
+    for (const page of pages) await ctx.db.delete(page._id);
+    for (const delivery of deliveries) await ctx.db.delete(delivery._id);
+    if (pages.length === 100 || deliveries.length === 100) {
+      await ctx.scheduler.runAfter(0, internal.commentAutomationSubscriptions.deleteAutomationData, {
+        automationId: args.automationId,
+      });
+    }
+  },
+});

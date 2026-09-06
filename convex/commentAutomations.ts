@@ -240,3 +240,27 @@ export const setActive = mutation({
     });
   },
 });
+
+export const remove = mutation({
+  args: {
+    automationId: v.id("commentAutomations"),
+    agentId: v.id("agents"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const auth = await getCommentAutomationAuth(ctx);
+    const agent = await getOwnedAgentForAuth(ctx, auth, args.agentId);
+    if (agent === null) throw new Error("Agent not found");
+    const automation = await ctx.db.get(args.automationId);
+    if (
+      automation === null ||
+      automation.orgId !== auth.channelOrgId ||
+      automation.agentId !== args.agentId
+    ) throw new Error("Automation not found");
+    await ctx.db.delete(automation._id);
+    await ctx.scheduler.runAfter(0, internal.commentAutomationSubscriptions.deleteAutomationData, {
+      automationId: automation._id,
+    });
+    return null;
+  },
+});
