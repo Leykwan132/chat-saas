@@ -15,7 +15,6 @@ type WorkflowActionPlanShape = {
   workflowMatches: WorkflowMatch[];
   mediaNodeIdsToSend: string[];
   responseLanguage: string;
-  responseGuidance: string;
 };
 
 type WorkflowNode = NonNullable<WorkflowRuntimeContextForPrompt>["nodes"][number];

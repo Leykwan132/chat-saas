@@ -245,29 +245,33 @@ export function buildBookingConfirmationMessage(args: {
     args.endAt,
     args.timeZone ?? args.service.timeZone ?? DEFAULT_TEAM_TIME_ZONE,
   );
-  const detailLines = args.service.fields
+  const customerDetailLines = args.service.fields
+    .filter((field) => field.key !== "date" && field.key !== "time")
     .map((field) => {
       const value = formatCollectedFieldValue(args.collectedFields[field.key]);
       if (!value) return undefined;
       return `${field.label}: ${value}`;
     })
     .filter((line): line is string => line !== undefined);
-
-  const lines = [
-    args.updated ? "Your booking has been updated!" : "Your booking is confirmed!",
-    "",
+  const scheduleLines = [
     `Service: ${args.service.name}`,
     `Date: ${date}`,
     `Time: ${timeRange}`,
-    ...detailLines.filter((line) => !line.startsWith("Booking Date:") && !line.startsWith("Booking Time:")),
+  ];
+  const assignmentLines = [
     args.assignedTo ? `Team Member: ${args.assignedTo}` : undefined,
     args.service.locationMode === "remote" && args.meetingLink?.trim()
       ? `Meeting link: ${args.meetingLink.trim()}`
       : undefined,
-    `Booking reference: ${args.bookingId}`,
-    "",
-    "Thank you — we look forward to seeing you!",
   ].filter((line): line is string => line !== undefined);
+  const sections = [
+    args.updated ? "Your booking has been updated!" : "Your booking is confirmed!",
+    scheduleLines.join("\n"),
+    customerDetailLines.length > 0 ? customerDetailLines.join("\n") : undefined,
+    assignmentLines.length > 0 ? assignmentLines.join("\n") : undefined,
+    `Booking reference: ${args.bookingId}`,
+    "Thank you — we look forward to seeing you!",
+  ].filter((section): section is string => section !== undefined);
 
-  return lines.join("\n");
+  return sections.join("\n\n");
 }

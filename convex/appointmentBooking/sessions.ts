@@ -11,6 +11,16 @@ import {
 import { collectedFieldsValidator } from "./validators";
 import { getActiveSession, getOrCreateSession } from "./sessionStore";
 
+function availabilityInputTimestamp(value: number | undefined) {
+  return value === undefined
+    ? undefined
+    : { epochMs: value, iso: new Date(value).toISOString() };
+}
+
+function logAvailabilityDiagnostic(event: string, data: unknown) {
+  console.log(event, JSON.stringify(data));
+}
+
 export const startBookingSession = internalMutation({
   args: {
     conversationId: v.id("conversations"),
@@ -46,17 +56,25 @@ export const startBookingSession = internalMutation({
     const collectedFields = mergeCollectedFields(session.collectedFields, args.collectedFields);
     const missing = missingServiceFields(service, collectedFields);
     const isEditing = session.calendarEventId !== undefined;
+    const keepsConfirmedAvailability =
+      session.serviceId === service._id &&
+      session.customerConfirmationMessageId !== undefined &&
+      (session.proposedSlots?.length ?? 0) > 0;
     const nextStatus = isEditing
       ? AppointmentBookingSessionStatus.Editing
-      : AppointmentBookingSessionStatus.Collecting;
+      : keepsConfirmedAvailability && missing.length === 0
+        ? AppointmentBookingSessionStatus.Confirming
+        : AppointmentBookingSessionStatus.Collecting;
 
     await ctx.db.patch(session._id, {
       serviceId: service._id,
       collectedFields,
       status: nextStatus,
-      proposedSlots: undefined,
+      proposedSlots: keepsConfirmedAvailability ? session.proposedSlots : undefined,
       selectedSlot: undefined,
-      customerConfirmationMessageId: undefined,
+      customerConfirmationMessageId: keepsConfirmedAvailability
+        ? session.customerConfirmationMessageId
+        : undefined,
       updatedAt: now,
     });
 
@@ -70,12 +88,15 @@ export const startBookingSession = internalMutation({
       collectedFields,
       missingFields: missing,
       readyForAvailability: missing.length === 0,
+      readyForBooking: keepsConfirmedAvailability && missing.length === 0,
       message:
         missing.length > 0
           ? `${isEditing ? "Booking edit in progress" : "Booking session started"}. Still collecting: ${missing.join(", ")}`
           : isEditing
             ? "Booking details updated. Check availability if the time changed, then call updateBookingAppointment after the customer confirms."
-            : "Booking session started. All required details are collected - you can check availability next.",
+            : keepsConfirmedAvailability
+              ? "All required details are collected. Create the booking now."
+              : "Booking session started. All required details are collected - you can check availability next.",
     };
   },
 });
@@ -87,6 +108,7 @@ export const checkAvailability = internalMutation({
     preferredStartAt: v.optional(v.number()),
     rangeStartAt: v.optional(v.number()),
     rangeEndAt: v.optional(v.number()),
+    customerRequestAgentMessageId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const conversation = await ctx.db.get(args.conversationId);
@@ -99,14 +121,11 @@ export const checkAvailability = internalMutation({
     }
 
     const session = await getActiveSession(ctx, conversation._id);
-    if (session === undefined) {
-      return { success: false, message: "No active booking session. Call startBookingSession first when the customer wants to book.", slots: [] };
-    }
 
     const { services, service } = await resolveBookingService(
       ctx,
       conversation.assignedAgentId,
-      args.serviceId ?? session.serviceId,
+      args.serviceId ?? session?.serviceId,
     );
     if (services.length === 0) {
       return { success: false, slots: [], message: "No active Services are configured." };
@@ -122,25 +141,15 @@ export const checkAvailability = internalMutation({
           durationMinutes: row.durationMinutes,
         })),
         slots: [],
-        message: "The booking session does not have a selected service yet.",
+        message: "Select which service to check.",
       };
     }
-    if (session.serviceId !== undefined && session.serviceId !== service._id) {
+    if (session?.serviceId !== undefined && session.serviceId !== service._id) {
       return { success: false, message: "The active booking session is for a different service. Cancel it or continue with the same service.", slots: [] };
     }
 
-    const collectedFields = session.collectedFields;
+    const collectedFields = session?.collectedFields ?? {};
     const missing = missingServiceFields(service, collectedFields);
-    if (missing.length > 0) {
-      return {
-        success: false,
-        status: AppointmentBookingSessionStatus.Collecting,
-        service: serviceSnapshot(service),
-        missingFields: missing,
-        slots: [],
-        message: `Still collecting booking details: ${missing.join(", ")}. Call startBookingSession with the new details.`,
-      };
-    }
 
     const team = await resolveTeamForAgent(ctx, agent);
     const now = Date.now();
@@ -150,7 +159,35 @@ export const checkAvailability = internalMutation({
       : args.rangeEndAt ?? rangeStartAt + 14 * 24 * 60 * 60 * 1000;
     const startAt = args.preferredStartAt ?? rangeStartAt;
     const limit = args.preferredStartAt ? 1 : 5;
-    const isEditing = session.calendarEventId !== undefined;
+    const isEditing = session?.calendarEventId !== undefined;
+    logAvailabilityDiagnostic("booking_availability_request", {
+      conversationId: conversation._id,
+      sessionId: session?._id,
+      service: {
+        serviceId: service._id,
+        name: service.name,
+        durationMinutes: service.durationMinutes,
+        bufferMinutes: service.bufferMinutes ?? 0,
+        timeZone: service.timeZone,
+        locationMode: service.locationMode,
+        assignmentStrategy: service.assignmentStrategy,
+        specificWorkosUserId: service.specificWorkosUserId,
+        assignedWorkosUserIds: service.assignedWorkosUserIds,
+      },
+      collectedDate: collectedFields.date,
+      collectedTime: collectedFields.time,
+      input: {
+        preferredStart: availabilityInputTimestamp(args.preferredStartAt),
+        rangeStart: availabilityInputTimestamp(args.rangeStartAt),
+        rangeEnd: availabilityInputTimestamp(args.rangeEndAt),
+      },
+      resolvedWindow: {
+        now: availabilityInputTimestamp(now),
+        start: availabilityInputTimestamp(startAt),
+        end: availabilityInputTimestamp(rangeEndAt),
+        limit,
+      },
+    });
     const slots = await generateSlots(ctx, {
       service,
       conversation,
@@ -158,25 +195,84 @@ export const checkAvailability = internalMutation({
       rangeStartAt: startAt,
       rangeEndAt,
       limit,
-      excludeEventId: session.calendarEventId,
+      excludeEventId: session?.calendarEventId,
     });
-
-    await ctx.db.patch(session._id, {
+    logAvailabilityDiagnostic("booking_availability_result", {
+      conversationId: conversation._id,
+      sessionId: session?._id,
       serviceId: service._id,
-      collectedFields,
-      proposedSlots: slots,
-      selectedSlot: undefined,
-      customerConfirmationMessageId: undefined,
-      status: AppointmentBookingSessionStatus.Confirming,
-      updatedAt: now,
+      slotCount: slots.length,
+      slots: slots.map((slot) => ({
+        start: availabilityInputTimestamp(slot.startAt),
+        end: availabilityInputTimestamp(slot.endAt),
+        assignedUserId: slot.assignedUserId,
+        assignedWorkosUserId: slot.assignedWorkosUserId,
+        assignedDisplayName: slot.assignedDisplayName,
+      })),
     });
+    const customerRequestMessage = args.preferredStartAt !== undefined &&
+        slots.some((slot) => slot.startAt === args.preferredStartAt) &&
+        args.customerRequestAgentMessageId !== undefined
+      ? await ctx.db
+          .query("messages")
+          .withIndex("by_agentMessageId", (q) =>
+            q.eq("agentMessageId", args.customerRequestAgentMessageId)
+          )
+          .order("desc")
+          .first()
+      : null;
+    const customerConfirmationMessageId =
+      customerRequestMessage?.conversationId === conversation._id &&
+      customerRequestMessage.direction === "incoming"
+        ? customerRequestMessage._id
+        : undefined;
+    const bookingSession = session ?? (
+      customerConfirmationMessageId !== undefined
+        ? await getOrCreateSession(ctx, conversation._id, conversation.assignedAgentId)
+        : undefined
+    );
+    const retainedConfirmationMessageId =
+      session?.customerConfirmationMessageId !== undefined &&
+      session.proposedSlots?.some((previousSlot) =>
+        slots.some((slot) => slot.startAt === previousSlot.startAt)
+      )
+        ? session.customerConfirmationMessageId
+        : undefined;
+    const effectiveConfirmationMessageId =
+      customerConfirmationMessageId ?? retainedConfirmationMessageId;
+    const nextStatus = isEditing
+      ? missing.length === 0
+        ? AppointmentBookingSessionStatus.Confirming
+        : AppointmentBookingSessionStatus.Editing
+      : missing.length === 0
+        ? AppointmentBookingSessionStatus.Confirming
+        : AppointmentBookingSessionStatus.Collecting;
+
+    if (bookingSession !== undefined) {
+      await ctx.db.patch(bookingSession._id, {
+        serviceId: service._id,
+        collectedFields,
+        proposedSlots: slots,
+        selectedSlot: undefined,
+        customerConfirmationMessageId: effectiveConfirmationMessageId,
+        status: nextStatus,
+        updatedAt: now,
+      });
+    }
 
     return {
       success: true,
+      previewOnly: bookingSession === undefined,
+      sessionStarted: session === undefined && bookingSession !== undefined,
       isEditing,
-      bookingId: session.calendarEventId,
-      status: AppointmentBookingSessionStatus.Confirming,
+      bookingId: bookingSession?.calendarEventId,
+      status: bookingSession === undefined ? undefined : nextStatus,
       service: serviceSnapshot(service),
+      missingFields: bookingSession === undefined ? undefined : missing,
+      readyForBooking:
+        bookingSession !== undefined &&
+        missing.length === 0 &&
+        effectiveConfirmationMessageId !== undefined,
       slots,
       message: isEditing
         ? "Slots ready for the booking update. Call updateBookingAppointment after the customer confirms."
@@ -210,11 +306,11 @@ export const confirmBookingSlot = internalMutation({
     if (selectedSlot === undefined) {
       return { success: false, message: "Confirm a slot returned by checkAvailability." };
     }
-    if (
-      session.selectedSlot?.startAt === args.startAt &&
-      session.customerConfirmationMessageId !== undefined
-    ) {
-      return { success: true, selectedSlot: session.selectedSlot };
+    if (session.customerConfirmationMessageId !== undefined) {
+      if (session.selectedSlot?.startAt !== args.startAt) {
+        await ctx.db.patch(session._id, { selectedSlot });
+      }
+      return { success: true, selectedSlot };
     }
     const messages = await ctx.db
       .query("messages")

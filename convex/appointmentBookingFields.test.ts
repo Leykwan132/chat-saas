@@ -1,6 +1,10 @@
 import { expect, test } from "vitest";
 import type { Doc, Id } from "./_generated/dataModel";
-import { buildCalendarEventDescription, serviceBookingLocation } from "./appointmentBooking/fields";
+import {
+  buildBookingConfirmationMessage,
+  buildCalendarEventDescription,
+  serviceBookingLocation,
+} from "./appointmentBooking/fields";
 
 test("uses an address only for in-person services", () => {
   expect(serviceBookingLocation({
@@ -12,6 +16,44 @@ test("uses an address only for in-person services", () => {
     location: "88 Jalan Ampang, Kuala Lumpur",
   })).toBeUndefined();
   expect(serviceBookingLocation({})).toBeUndefined();
+});
+
+test("booking confirmation groups details in a readable order", () => {
+  const message = buildBookingConfirmationMessage({
+    service: {
+      name: "Site Visit Sena",
+      fields: [
+        { key: "date", label: "Booking Date", type: "date" },
+        { key: "time", label: "Booking Time", type: "time" },
+        { key: "name", label: "Customer Name", type: "text" },
+        { key: "phone", label: "Phone Number", type: "phone" },
+      ],
+      locationMode: "in_person",
+      timeZone: "UTC",
+    },
+    collectedFields: {
+      date: "2026-09-07",
+      time: "15:00",
+      name: "Kwan",
+      phone: "0129499394",
+    },
+    startAt: Date.UTC(2026, 8, 7, 15),
+    endAt: Date.UTC(2026, 8, 7, 15, 30),
+    assignedTo: "Ley Kwan Choo",
+    bookingId: "booking-reference" as Id<"calendarEvents">,
+  });
+
+  expect(message).toBe(
+    "Your booking is confirmed!\n\n" +
+      "Service: Site Visit Sena\n" +
+      "Date: September 7 (Monday)\n" +
+      "Time: 3:00 PM - 3:30 PM\n\n" +
+      "Customer Name: Kwan\n" +
+      "Phone Number: 0129499394\n\n" +
+      "Team Member: Ley Kwan Choo\n\n" +
+      "Booking reference: booking-reference\n\n" +
+      "Thank you — we look forward to seeing you!",
+  );
 });
 
 test("calendar event description includes customer context and interest details", () => {

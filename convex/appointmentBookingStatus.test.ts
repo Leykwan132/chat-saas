@@ -97,6 +97,7 @@ test("bookAppointment marks the conversation as booked", async () => {
       direction: "incoming",
       contentType: "text",
       content: "I would like to book an appointment.",
+      agentMessageId: "booking-request-agent-message",
       createdAt: now + 1,
     });
     const serviceId = await ctx.db.insert("appointmentServices", {
@@ -105,7 +106,12 @@ test("bookAppointment marks the conversation as booked", async () => {
       isActive: true,
       sortOrder: 0,
       durationMinutes: 30,
-      fields: [],
+      fields: [
+        { key: "date", label: "Booking Date", type: "date" },
+        { key: "time", label: "Booking Time", type: "time" },
+        { key: "name", label: "Customer Name", type: "text" },
+        { key: "phone", label: "Phone Number", type: "phone" },
+      ],
       timeSlotPolicy: "offer_slots",
       salesStyle: "neutral",
       assignmentStrategy: "balanced",
@@ -133,15 +139,6 @@ test("bookAppointment marks the conversation as booked", async () => {
       createdAt: now,
       updatedAt: now,
     });
-    await ctx.db.insert("appointmentBookingSessions", {
-      conversationId,
-      agentId,
-      serviceId,
-      status: "collecting",
-      collectedFields: {},
-      createdAt: now,
-      updatedAt: now,
-    });
     return { agentId, conversationId, previousMessageId, serviceId };
   });
 
@@ -152,46 +149,56 @@ test("bookAppointment marks the conversation as booked", async () => {
   });
 
   expect(unconfirmedResult.success).toBe(false);
-  expect(unconfirmedResult.message).toContain("customer must confirm");
+  expect(unconfirmedResult.message).toContain("No active booking session");
+
+  const preview = await t.mutation(internal.appointmentBooking.sessions.checkAvailability, {
+    conversationId: ids.conversationId as Id<"conversations">,
+    serviceId: ids.serviceId as Id<"appointmentServices">,
+    rangeStartAt: startAt,
+    rangeEndAt: startAt + 30 * 60 * 1000,
+  });
+
+  expect(preview.success).toBe(true);
+  expect(preview.previewOnly).toBe(true);
+  expect(preview.slots).toHaveLength(1);
+  const sessionsAfterPreview = await t.run(async (ctx) =>
+    ctx.db
+      .query("appointmentBookingSessions")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", ids.conversationId))
+      .collect()
+  );
+  expect(sessionsAfterPreview).toHaveLength(0);
 
   const availability = await t.mutation(internal.appointmentBooking.sessions.checkAvailability, {
     conversationId: ids.conversationId as Id<"conversations">,
     serviceId: ids.serviceId as Id<"appointmentServices">,
     preferredStartAt: startAt,
+    customerRequestAgentMessageId: "booking-request-agent-message",
   });
 
   expect(availability.success).toBe(true);
+  expect(availability.sessionStarted).toBe(true);
+  expect(availability.status).toBe("collecting");
+  expect(availability.missingFields).toEqual([
+    "Booking Date",
+    "Booking Time",
+    "Customer Name",
+    "Phone Number",
+  ]);
 
-  const offeredResult = await t.action(internal.appointmentBooking.bookAppointment.bookAppointment, {
+  const details = await t.mutation(internal.appointmentBooking.sessions.startBookingSession, {
     conversationId: ids.conversationId as Id<"conversations">,
     serviceId: ids.serviceId as Id<"appointmentServices">,
-    startAt,
+    collectedFields: {
+      date: "2028-07-01",
+      time: "09:00",
+      name: "Jane Doe",
+      phone: "+60123456789",
+    },
   });
 
-  expect(offeredResult.success).toBe(false);
-  expect(offeredResult.message).toContain("customer must confirm");
-
-  const staleConfirmation = await t.mutation(internal.appointmentBooking.sessions.confirmBookingSlot, {
-    conversationId: ids.conversationId as Id<"conversations">,
-    serviceId: ids.serviceId as Id<"appointmentServices">,
-    startAt,
-  });
-
-  expect(staleConfirmation.success).toBe(false);
-  expect(staleConfirmation.message).toContain("after availability was offered");
-
-  const confirmationMessageId = await t.run(async (ctx) => await ctx.db.insert("messages", {
-    orgId: "",
-    conversationId: ids.conversationId,
-    service: "whatsapp",
-    externalId: "booking-confirmation-message",
-    orgAddress: "business",
-    contactAddress: "+60123456789",
-    direction: "incoming",
-    contentType: "text",
-    content: "Yes, that time works for me.",
-    createdAt: Date.now() + 1000,
-  }));
+  expect(details.readyForBooking).toBe(true);
+  expect(details.status).toBe("confirming");
 
   const confirmation = await t.mutation(internal.appointmentBooking.sessions.confirmBookingSlot, {
     conversationId: ids.conversationId as Id<"conversations">,
@@ -207,7 +214,7 @@ test("bookAppointment marks the conversation as booked", async () => {
       .collect();
     return sessions[0];
   });
-  expect(confirmedSession?.customerConfirmationMessageId).toBe(confirmationMessageId);
+  expect(confirmedSession?.customerConfirmationMessageId).toBe(ids.previousMessageId);
 
   const result = await t.action(internal.appointmentBooking.bookAppointment.bookAppointment, {
     conversationId: ids.conversationId as Id<"conversations">,
