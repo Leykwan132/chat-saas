@@ -306,6 +306,8 @@ test("widget message bubbles size to their content", () => {
   const bubbleStyles = widgetStyles.match(/\.messages p \{[^}]+\}/)?.[0] ?? "";
 
   expect(bubbleStyles).toContain("width: fit-content;");
+  expect(bubbleStyles).toContain("white-space: pre-wrap;");
+  expect(bubbleStyles).toContain("overflow-wrap: anywhere;");
   expect(widgetStyles).toMatch(
     /\.message-row\.outgoing \{[^}]+justify-items: start;/,
   );
