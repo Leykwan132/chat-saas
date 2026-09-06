@@ -747,7 +747,7 @@ http.route({
 });
 
 // Classic Facebook OAuth for Messenger (`dialog/oauth` with scopes
-// `pages_messaging,pages_show_list`). The `redirect_uri` here MUST match
+// `pages_messaging,pages_show_list,pages_manage_metadata`). The `redirect_uri` here MUST match
 // `messengerAuth.start` and `exchangeCodeForUserToken` exactly:
 // `${CONVEX_SITE_URL}/auth/messenger/callback` (trim trailing slash on site).
 const messengerOAuthCallback = httpAction(async (ctx, req) => {

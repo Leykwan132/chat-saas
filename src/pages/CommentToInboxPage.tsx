@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { useParams } from 'react-router';
 import { Users } from 'lucide-react';
@@ -35,18 +35,36 @@ export default function CommentToInboxPage() {
   const setActive = useMutation(api.commentAutomations.setActive);
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<Id<'commentAutomations'> | null>(null);
+  const [pendingActivationId, setPendingActivationId] = useState<Id<'commentAutomations'> | null>(null);
   const detail = useQuery(
     api.commentAutomations.get,
     selectedId && agentId ? { automationId: selectedId, agentId: agentId as Id<'agents'>, paginationOpts: { numItems: 20, cursor: null } } : 'skip',
   );
+  const activationStatus = useQuery(
+    api.commentAutomationSubscriptions.getActivationStatus,
+    pendingActivationId && agentId ? { automationId: pendingActivationId, agentId: agentId as Id<'agents'> } : 'skip',
+  );
   const availablePages = channels?.filter(isCommentAutomationPage);
+
+  useEffect(() => {
+    if (pendingActivationId === null || activationStatus === undefined) return;
+    if (activationStatus.error) {
+      toast.error(activationStatus.error);
+    } else if (!activationStatus.active) {
+      return;
+    }
+    const timeout = window.setTimeout(() => setPendingActivationId(null), 0);
+    return () => window.clearTimeout(timeout);
+  }, [activationStatus, pendingActivationId]);
 
   if (!agentId) return null;
 
   const toggle = async (automationId: Id<'commentAutomations'>, active: boolean) => {
+    if (active) setPendingActivationId(automationId);
     try {
       await setActive({ automationId, agentId: agentId as Id<'agents'>, active });
     } catch (error) {
+      setPendingActivationId(null);
       toast.error(error instanceof Error ? error.message : 'Could not update automation');
     }
   };
@@ -63,7 +81,7 @@ export default function CommentToInboxPage() {
       </div>
       {automations === undefined || channels === undefined ? <CommentToInboxPageSkeleton /> : channels.length === 0 ? <CommentAutomationNoPagesEmptyState connectHref={`/dashboard/${agentId}/channels`} /> : automations.length === 0 ? <CommentAutomationEmptyState onCreate={() => setOpen(true)} /> : <div className="grid gap-2">
         {automations.map((automation) => <button key={automation._id} aria-label={`Open automation ${automation.name}`} onClick={() => setSelectedId(automation._id)} className="grid grid-cols-[1fr_auto_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left hover:bg-muted/40">
-          <span className="font-medium">{automation.name}</span><Tooltip><TooltipTrigger asChild><span aria-label={`${automation.sentCount} messages sent`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground"><Users className="size-4" aria-hidden="true" /><span>{automation.sentCount}</span></span></TooltipTrigger><TooltipContent side="top">{automation.sentCount} messages sent</TooltipContent></Tooltip><Switch checked={automation.status === 'active'} onClick={(event) => event.stopPropagation()} onCheckedChange={(active) => void toggle(automation._id, active)} />
+          <span className="font-medium">{automation.name}</span><Tooltip><TooltipTrigger asChild><span aria-label={`${automation.sentCount} messages sent`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground"><Users className="size-4" aria-hidden="true" /><span>{automation.sentCount}</span></span></TooltipTrigger><TooltipContent side="top">{automation.sentCount} messages sent</TooltipContent></Tooltip><Switch checked={automation.status === 'active' || pendingActivationId === automation._id} disabled={pendingActivationId === automation._id} onClick={(event) => event.stopPropagation()} onCheckedChange={(active) => void toggle(automation._id, active)} />
         </button>)}
       </div>}
       {availablePages && <CommentAutomationModal key={selectedId !== null ? `${selectedId}-${detail ? 'loaded' : 'loading'}` : 'create'} automation={selectedId !== null ? detail?.automation : undefined} agentId={agentId as Id<'agents'>} channels={availablePages} initialChannelIds={selectedId !== null ? detail?.pages.map((page) => page.channelId) : undefined} loading={selectedId !== null && detail === undefined} open={open || selectedId !== null} onOpenChange={(isOpen) => { if (!isOpen) { setOpen(false); setSelectedId(null); } }} />}

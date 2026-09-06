@@ -8,6 +8,7 @@ import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
+import { customerPhonePresentation } from '../../shared/customerPhonePresentation';
 import { cn } from '@/lib/utils';
 import { ImportCustomersDialog, ImportProgressBanner } from '@/components/ImportCustomersDialog';
 import { Badge } from "@/components/ui/badge";
@@ -94,13 +95,7 @@ function serviceLabel(service: Customer['service']): keyof typeof sourceBadgeInf
 }
 
 function customerPhone(customer: Customer): string | null {
-  const phone = customer.phone?.trim();
-  if (phone) return phone;
-  if (customer.service === 'whatsapp') {
-    const addr = customer.contactAddress?.trim();
-    if (addr) return addr;
-  }
-  return null;
+  return customerPhonePresentation(customer);
 }
 
 function formatRelative(timestamp: number): string {

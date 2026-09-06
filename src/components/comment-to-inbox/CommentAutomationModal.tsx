@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'convex/react';
-import { Check, Loader2, X } from 'lucide-react';
+import { Check, Loader2, Trash2, X } from 'lucide-react';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { api } from '../../../convex/_generated/api';
 import { CommentAutomationPreview } from '@/components/comment-to-inbox/CommentAutomationPreview';
@@ -54,6 +54,7 @@ export function CommentAutomationModal({
 }) {
   const create = useMutation(api.commentAutomations.create);
   const update = useMutation(api.commentAutomations.update);
+  const remove = useMutation(api.commentAutomations.remove);
   const [name, setName] = useState(automation?.name ?? '');
   const [channelIds, setChannelIds] = useState<Id<'channels'>[]>(() => getInitialChannelIds(channels, initialChannelIds));
   const [keywords, setKeywords] = useState<string[]>(automation?.keywords ?? []);
@@ -63,6 +64,8 @@ export function CommentAutomationModal({
   const [replyPublicly, setReplyPublicly] = useState(Boolean(automation?.publicReply));
   const [publicReply, setPublicReply] = useState(automation?.publicReply ?? '');
   const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [validationErrors, setValidationErrors] = useState({ name: false, privateMessage: false });
   const loadedAutomationId = useRef<Id<'commentAutomations'> | null>(null);
   const selectedIds = useMemo(() => new Set(channelIds), [channelIds]);
@@ -148,7 +151,22 @@ export function CommentAutomationModal({
     }
   };
 
+  const deleteAutomation = async () => {
+    if (!automation) return;
+    setDeleting(true);
+    try {
+      await remove({ automationId: automation._id, agentId });
+      setDeleteOpen(false);
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not delete automation');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[95vh] overflow-y-auto sm:max-w-6xl">
         <DialogHeader><DialogTitle>{isEditing ? 'Automation Details' : 'Create automation'}</DialogTitle></DialogHeader>
@@ -229,8 +247,16 @@ export function CommentAutomationModal({
           />
         </div>
         )}
-        <DialogFooter><Button onClick={() => void save()} disabled={loading || saving || selectedChannels.length === 0} aria-busy={loading || saving}>{loading ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />Loading…</> : saving ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />{automation ? 'Saving…' : 'Creating…'}</> : automation ? 'Save changes' : 'Create automation'}</Button></DialogFooter>
+        <DialogFooter>{automation ? <Button type="button" size="icon" variant="destructive" aria-label="Delete automation" onClick={() => setDeleteOpen(true)}><Trash2 className="size-4" aria-hidden="true" /></Button> : null}<Button onClick={() => void save()} disabled={loading || saving || selectedChannels.length === 0} aria-busy={loading || saving}>{loading ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />Loading…</> : saving ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />{automation ? 'Saving…' : 'Creating…'}</> : automation ? 'Save changes' : 'Create automation'}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
+    <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <DialogContent showCloseButton={false}>
+        <DialogHeader><DialogTitle>Delete this automation?</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">This removes the automation and its delivery history. This cannot be undone.</p>
+        <DialogFooter><Button type="button" variant="outline" disabled={deleting} onClick={() => setDeleteOpen(false)}>Cancel</Button><Button type="button" variant="destructive" disabled={deleting} onClick={() => void deleteAutomation()}>{deleting ? <><Loader2 className="size-4 animate-spin" aria-hidden="true" />Deleting…</> : 'Delete automation'}</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

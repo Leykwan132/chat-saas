@@ -132,6 +132,8 @@ test('prefills the same form for editing an automation', () => {
   expect(markup).toContain('Here is the pricing guide.');
   expect(markup).toContain('I sent you the pricing guide.');
   expect(markup).toContain('Save changes');
+  expect(markup).toContain('aria-label="Delete automation"');
+  expect(markup).toContain('Delete this automation?');
 });
 
 test('shows the edit modal shell immediately while automation details load', () => {
