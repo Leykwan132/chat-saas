@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation, internalQuery } from "../_generated/server";
+import { internalMutation } from "../_generated/server";
 import { AppointmentBookingSessionStatus } from "../appointmentBookingSessionStatus";
 import { generateSlots } from "./availability";
 import { resolveBookingService, resolveTeamForAgent } from "./access";
@@ -222,51 +222,19 @@ export const confirmBookingSlot = internalMutation({
       .order("desc")
       .take(50);
     const confirmationMessage = messages.find((message) => message.direction === "incoming");
-    const confirmationReaction = confirmationMessage?.reactions?.find(
-      (reaction) =>
-        reaction.source === "ai" &&
-        reaction.actorAgentId === conversation.assignedAgentId &&
-        reaction.updatedAt >= session.updatedAt,
-    );
     if (
-      confirmationReaction === undefined ||
       confirmationMessage === undefined ||
       confirmationMessage.createdAt <= session.updatedAt
     ) {
-      return { success: false, message: "React to the customer's confirmation before booking the selected slot." };
+      return {
+        success: false,
+        message: "Wait for the customer to confirm a slot after availability was offered.",
+      };
     }
     await ctx.db.patch(session._id, {
       selectedSlot,
       customerConfirmationMessageId: confirmationMessage._id,
     });
     return { success: true, selectedSlot };
-  },
-});
-
-export const shouldSuppressUnverifiedConfirmationReply = internalQuery({
-  args: { conversationId: v.id("conversations") },
-  returns: v.boolean(),
-  handler: async (ctx, args) => {
-    const conversation = await ctx.db.get(args.conversationId);
-    if (conversation?.assignedAgentId === undefined) return false;
-    const sessions = await ctx.db
-      .query("appointmentBookingSessions")
-      .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
-      .take(100);
-    const session = sessions.find((row) => row.status === AppointmentBookingSessionStatus.Confirming);
-    if (session === undefined) return false;
-    const messages = await ctx.db
-      .query("messages")
-      .withIndex("by_conversationId_and_createdAt", (q) => q.eq("conversationId", args.conversationId))
-      .order("desc")
-      .take(50);
-    const latestIncoming = messages.find((message) => message.direction === "incoming");
-    if (latestIncoming === undefined || latestIncoming.createdAt <= session.updatedAt) return false;
-    return latestIncoming.reactions?.some(
-      (reaction) =>
-        reaction.source === "ai" &&
-        reaction.actorAgentId === conversation.assignedAgentId &&
-        reaction.updatedAt >= session.updatedAt,
-    ) ?? false;
   },
 });

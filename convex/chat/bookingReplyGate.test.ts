@@ -1,5 +1,9 @@
 import { expect, test } from "vitest";
-import { inventedBookingConfirmation, resolveBookingReply } from "./bookingReplyGate";
+import {
+  BOOKING_NOT_COMPLETED_MESSAGE,
+  inventedBookingConfirmation,
+  resolveBookingReply,
+} from "./bookingReplyGate";
 
 test("replaces model-written booking text with the verified canonical confirmation", () => {
   expect(
@@ -8,7 +12,6 @@ test("replaces model-written booking text with the verified canonical confirmati
       confirmationMessage: "Your appointment is confirmed for Monday at 2:00 PM.",
       bookingExists: true,
       hadBookingBefore: false,
-      shouldSuppressUnverified: false,
     }),
   ).toEqual(["Your appointment is confirmed for Monday at 2:00 PM."]);
 });
@@ -22,23 +25,21 @@ test("replaces invented email confirmation copy even when a booking already exis
       confirmationMessage: "Your booking is confirmed!",
       bookingExists: true,
       hadBookingBefore: true,
-      shouldSuppressUnverified: false,
     }),
   ).toEqual(["Your booking is confirmed!"]);
 });
 
-test("does not send a booking reply when booking verification fails", () => {
+test("keeps ordinary replies when booking verification finds no booking", () => {
   expect(
     resolveBookingReply({
-      generatedMessages: ["Your appointment is booked!"],
+      generatedMessages: ["That slot is no longer available. What other time works for you?"],
       bookingExists: false,
       hadBookingBefore: false,
-      shouldSuppressUnverified: true,
     }),
-  ).toEqual([]);
+  ).toEqual(["That slot is no longer available. What other time works for you?"]);
 });
 
-test("suppresses invented confirmation email copy when no booking exists", () => {
+test("replaces invented confirmation email copy when no booking exists", () => {
   expect(
     resolveBookingReply({
       generatedMessages: [
@@ -46,9 +47,8 @@ test("suppresses invented confirmation email copy when no booking exists", () =>
       ],
       bookingExists: false,
       hadBookingBefore: false,
-      shouldSuppressUnverified: false,
     }),
-  ).toEqual([]);
+  ).toEqual([BOOKING_NOT_COMPLETED_MESSAGE]);
 });
 
 test("keeps ordinary replies when no booking finalization was attempted", () => {
@@ -57,7 +57,6 @@ test("keeps ordinary replies when no booking finalization was attempted", () => 
       generatedMessages: ["What time works for you?"],
       bookingExists: false,
       hadBookingBefore: false,
-      shouldSuppressUnverified: false,
     }),
   ).toEqual(["What time works for you?"]);
 });
