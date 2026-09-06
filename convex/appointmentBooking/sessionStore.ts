@@ -11,12 +11,24 @@ import {
 import type { DbCtx } from "./types";
 import { DEFAULT_TEAM_TIME_ZONE } from "../teamHelpers";
 
-export async function getActiveSession(ctx: MutationCtx, conversationId: Id<"conversations">) {
+export async function getActiveSession(ctx: DbCtx, conversationId: Id<"conversations">) {
   const sessions = await ctx.db
     .query("appointmentBookingSessions")
     .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
     .take(100);
   return sessions.find((session) => isActiveAppointmentBookingSessionStatus(session.status));
+}
+
+export function activeSessionSnapshot(session: Doc<"appointmentBookingSessions">) {
+  return {
+    sessionId: session._id,
+    status: session.status,
+    serviceId: session.serviceId,
+    calendarEventId: session.calendarEventId,
+    collectedFields: session.collectedFields,
+    hasProposedSlots: (session.proposedSlots?.length ?? 0) > 0,
+    hasSelectedSlot: session.selectedSlot !== undefined,
+  };
 }
 
 export async function getLatestBookedSession(ctx: DbCtx, conversationId: Id<"conversations">) {

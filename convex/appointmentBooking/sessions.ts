@@ -210,6 +210,12 @@ export const confirmBookingSlot = internalMutation({
     if (selectedSlot === undefined) {
       return { success: false, message: "Confirm a slot returned by checkAvailability." };
     }
+    if (
+      session.selectedSlot?.startAt === args.startAt &&
+      session.customerConfirmationMessageId !== undefined
+    ) {
+      return { success: true, selectedSlot: session.selectedSlot };
+    }
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_conversationId_and_createdAt", (q) => q.eq("conversationId", conversation._id))
@@ -232,7 +238,6 @@ export const confirmBookingSlot = internalMutation({
     await ctx.db.patch(session._id, {
       selectedSlot,
       customerConfirmationMessageId: confirmationMessage._id,
-      updatedAt: Date.now(),
     });
     return { success: true, selectedSlot };
   },

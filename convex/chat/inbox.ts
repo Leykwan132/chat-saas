@@ -12,7 +12,7 @@ import { INBOX_IMAGE_PLACEHOLDER } from "../../shared/inboxAttachments";
 import { components } from "../_generated/api";
 import { syncStreams, vStreamArgs } from "@convex-dev/agent";
 import { messageDocsToInboxUIMessages, listMessages, getChannelName } from "./inboxMessageMapping";
-import { paginationOptsValidator, type FunctionReference } from "convex/server";
+import { paginationOptsValidator } from "convex/server";
 import { getAuthContext } from "../authUtils";
 import {
   ingestChannelMessage,
@@ -46,28 +46,13 @@ import { markConversationAnalyticsDirty } from "../analyticsDirtyRequest";
 import { canProcessWorkspaceActivity } from "../teamDeletion/access";
 import { notifyHumanEscalation } from "../telegramNotifications/events";
 import { splitAiReplyMessages } from "./aiReplyMessages";
-import { bookingReplyMessages } from "./bookingReplyGate";
+import { applyBookingReplyGate } from "./applyBookingReply";
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
   mediaType: v.string(),
   filename: v.optional(v.string()),
 });
-
-type BookingReplyGateRefs = {
-  appointmentBooking: {
-    sessions: {
-      shouldSuppressUnverifiedConfirmationReply: FunctionReference<
-        "query",
-        "internal",
-        { conversationId: Id<"conversations"> },
-        boolean
-      >;
-    };
-  };
-};
-
-const bookingReplyGateRefs = internal as unknown as BookingReplyGateRefs;
 
 function contentTypeForMediaItem(item: ChannelMediaItem) {
   const mediaType = item.mediaType ?? inferMediaMimeType(item.url);
@@ -771,27 +756,12 @@ export const generateAiReplyWorker = internalAction({
         replyMessages = splitAiReplyMessages(result.text);
       }
 
-      if (activeBooking.enabled && !bookingBeforeReply?.success) {
-        const bookingAfterReply = await ctx.runQuery(
-          internal.appointmentBooking.currentBooking.getCurrentBooking,
-          { conversationId: conv._id },
-        );
-        if (bookingAfterReply.success) {
-          const confirmation = await ctx.runMutation(
-            internal.appointmentBooking.confirmations.sendBookingConfirmation,
-            { conversationId: conv._id },
-          );
-          replyMessages = bookingReplyMessages(replyMessages, {
-            confirmationMessage: confirmation.success ? confirmation.confirmationMessage : undefined,
-            shouldSuppress: !confirmation.success,
-          });
-        } else {
-          const shouldSuppress = await ctx.runQuery(
-            bookingReplyGateRefs.appointmentBooking.sessions.shouldSuppressUnverifiedConfirmationReply,
-            { conversationId: conv._id },
-          );
-          replyMessages = bookingReplyMessages(replyMessages, { shouldSuppress });
-        }
+      if (activeBooking.enabled) {
+        replyMessages = await applyBookingReplyGate(ctx, {
+          conversationId: conv._id,
+          generatedMessages: replyMessages,
+          hadBookingBefore: bookingBeforeReply?.success === true,
+        });
       }
 
       const convAfterGeneration = await ctx.runQuery(

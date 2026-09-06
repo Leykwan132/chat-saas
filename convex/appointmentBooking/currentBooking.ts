@@ -7,7 +7,9 @@ import { Permission } from "../../shared/permissions";
 import { permissionsForCurrentUser } from "./access";
 import { serviceTimeZone } from "./fields";
 import {
+  activeSessionSnapshot,
   formatBookingDetailsResponse,
+  getActiveSession,
   getExistingBookingSession,
 } from "./sessionStore";
 
@@ -106,16 +108,46 @@ export const getCurrentBookingForConversation = query({
   },
 });
 
+export const getActiveBookingSession = internalQuery({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const session = await getActiveSession(ctx, args.conversationId);
+    if (session === undefined) {
+      return {
+        success: false,
+        hasActiveSession: false,
+        message: "No active booking session exists for this conversation.",
+      };
+    }
+    return {
+      success: true,
+      hasActiveSession: true,
+      ...activeSessionSnapshot(session),
+    };
+  },
+});
+
 export const getCurrentBooking = internalQuery({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, args) => {
+    const session = await getActiveSession(ctx, args.conversationId);
     const booking = await loadActiveBookingDetailsForConversation(ctx, args.conversationId);
+    const activeSession = session === undefined ? null : activeSessionSnapshot(session);
     if (booking === null) {
-      return { success: false, message: "No active booking found for this conversation." };
+      return {
+        success: false,
+        hasActiveSession: session !== undefined,
+        activeSession,
+        message: session
+          ? `No completed booking yet. Active session status is ${session.status}.`
+          : "No active booking session or completed booking found for this conversation.",
+      };
     }
 
     return {
       success: true,
+      hasActiveSession: session !== undefined,
+      activeSession,
       ...booking,
     };
   },

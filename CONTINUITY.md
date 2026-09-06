@@ -2,6 +2,9 @@
 
 # Snapshot
 
+- 2026-09-06 [CODE] Every AI booking tool now queries `appointmentBookingSessions` for a live session before acting; `getActiveBookingSession` is required before booking replies; unshipped.
+- 2026-09-06 [CODE] Chat/playground booking replies no longer send invented “confirmation link emailed” copy; a verified booking uses the canonical confirmation (Meet link only for Google Meet + connected calendar); unshipped.
+- 2026-09-06 [CODE] AI booking `confirming` is the post-availability wait state; it only becomes `booked` after `bookAppointment` succeeds. Slot confirm no longer bumps `updatedAt`, so a failed book can retry the same customer yes; unshipped.
 - 2026-09-06 [CODE] Chat booking confirmations now verify a persisted current booking for the conversation after an AI turn; only that verified booking may send the single canonical confirmation, while an unverified reacted confirmation is suppressed; unshipped.
 - 2026-09-06 [CODE] Customer list and chat-detail Phone fields now use a phone-only presentation helper: WhatsApp usernames and provider user IDs are never displayed as phone numbers, while explicit and legacy numeric phone values remain visible; unshipped.
 - 2026-09-05 [CODE] Removed all Comment-to-Inbox runtime test scaffolding: the testing bypass, demo pages, fake-channel migration, generated API entry, and test-mode-only coverage. Real connected Instagram/Messenger pages are now always required; unshipped.
@@ -95,16 +98,19 @@
 - 2026-08-25 [USER] D776 ACTIVE: partner-created customers authenticate only through their assigned connected partner hostname; native Kilobot sign-in rejects them while native users retain AuthKit.
 - 2026-09-03 [USER] D777 ACTIVE: each partner customer remains restricted to one assigned workspace and cannot create additional workspaces.
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
+- 2026-09-06 [CODE] I001 OPEN: Hallucinated “confirmation email/link” copy is now replaced or suppressed after the turn. Remaining gap: playground still streams the invented text before the saved message is rewritten.
 
 # Done (recent)
 
+- 2026-09-06 [CODE] Booking tools query the live `appointmentBookingSessions` row before create, confirm, update, cancel, or calendar list/edit; unshipped.
+- 2026-09-06 [CODE] Invented booking confirmation emails/links are replaced with the canonical confirmation when a booking exists, or dropped when it does not; unshipped.
+- 2026-09-06 [CODE] `confirmBookingSlot` is idempotent for the same offered slot and no longer advances `updatedAt`, so a failed `bookAppointment` can retry without a new customer message; unshipped.
 - 2026-09-05 [CODE] Simplified the Comment-to-Inbox edit modal to a single “Automation Details” form, removing the unused Details/Stats navigation and delivery Stats panel; unshipped.
 - 2026-09-05 [CODE] Comment-to-Inbox edits now restore saved page selections; testing-mode edits restore all visible demo pages because fake page IDs are intentionally not persisted; unshipped.
 - 2026-09-05 [CODE] Replaced the Comment-to-Inbox sent-count browser title with the shared styled tooltip, showing the exact sent-message total on hover; unshipped.
 - 2026-09-05 [CODE] Hardened Comment-to-Inbox edit hydration so a loaded automation explicitly fills its name, pages, keywords, private message, public reply, and preview regardless of detail-query timing; unshipped.
 - 2026-09-05 [CODE] Comment-to-Inbox edit clicks now open the modal immediately with an edit shell and skeleton fields while automation details load, then remount the prefilled form when data arrives; unshipped.
 - 2026-09-05 [CODE] Comment-to-Inbox automation clicks now reuse the create form for editing with prefilled values and persisted page/message updates; list rows show a people icon with the sent count and a hover label; unshipped.
-- 2026-09-05 [CODE] Comment-to-Inbox automation rows now open a responsive detail modal with loading state, configuration, page status, and recent activity instead of rendering an inline detail panel; unshipped.
 - 2026-09-05 [CODE] Comment-to-Inbox Save automation now shows a spinning loader and “Saving…” while the request is in progress, with duplicate submits disabled; unshipped.
 - 2026-09-05 [CODE] Made the Comment-to-Inbox empty state actionable with a Create automation button and a subtle neutral panel background; unshipped.
 - 2026-09-05 [CODE] Replaced the plain Comment-to-Inbox “No automations yet” box with a dedicated empty component containing an icon and creation guidance; unshipped.

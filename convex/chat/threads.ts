@@ -41,6 +41,7 @@ import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildToolUsageBlock } from "./toolPrompt";
 import { buildIdentityPriorityBlock } from "./identityPriorityPrompt";
 import { registerGoogleCalendarTools } from "../googleCalendar/agentTools";
+import { queryActiveBookingSession } from "./bookingToolSession";
 import type {
   BroadcastMessageKind,
   BroadcastPresentation,
@@ -459,6 +460,7 @@ function buildBookingFlowBlock() {
 Use the Workflow Runtime first to decide whether the customer is in a Book appointment stage. Use the available Services listed above for service IDs and required fields.
 Available Services are the complete booking catalog for this turn. Knowledge-base results can help you understand or explain how a customer request relates to those Services, but they are not bookable Services and must not be used as service IDs.
 
+- Call \`getActiveBookingSession\` before any booking-related reply or booking tool. It queries the live session. Do not infer session or booking state from chat history.
 - Call \`getTodayDate\` whenever you need today's date or current time — for example when interpreting "today", "tomorrow", "next week", or validating booking dates. Do not guess the current date.
 1. *Start session* — When the customer wants to book, call \`startBookingSession\` with the matching service ID. If they have already shared details, include them in \`collectedFields\`.
 2. *Collect details* — Read \`missingFields\` from the tool response and ask only for what is still missing. Always ask in chat for name, phone, date, and time for the person being booked — do not use the chatter's contact details. Call \`startBookingSession\` again with new \`collectedFields\` until \`readyForAvailability\` is true.
@@ -468,7 +470,7 @@ Available Services are the complete booking catalog for this turn. Knowledge-bas
 
 ## Editing an existing booking
 If the customer wants to change their booking (time, name, phone, or any other detail):
-1. *View booking* — Call \`getCurrentBooking\` to show what is currently booked.
+1. *View booking* — Call \`getActiveBookingSession\`, then \`getCurrentBooking\` to show what is currently booked.
 2. *Start edit* — Call \`beginBookingEdit\` to open an edit session for that booking.
 3. *Update details* — Call \`startBookingSession\` with the changed \`collectedFields\`. Ask in chat for any details they want to change.
 4. *Check slots* — If the time is changing, call \`checkAvailability\` after \`readyForAvailability\` is true and present the new slots.
@@ -477,14 +479,16 @@ If the customer wants to change their booking (time, name, phone, or any other d
 
 ## Cancelling an existing booking
 If the customer wants to cancel a confirmed appointment:
-1. Call \`getCurrentBooking\` to verify the current appointment.
+1. Call \`getActiveBookingSession\` and \`getCurrentBooking\` to verify the current appointment.
 2. If the customer has clearly asked to cancel, call \`cancelBooking\`.
 3. Tell the customer the booking has been cancelled only after \`cancelBooking\` succeeds.
 
 Additional rules:
 - If multiple Services could apply and the customer has not chosen one, ask which service they want before starting the session.
 - Do not start a new booking unless the Book appointment workflow conditions match or the customer explicitly asks to book.
-- Do NOT say the appointment is booked until \`bookAppointment\` succeeds.
+- Do NOT say the appointment is booked until \`getCurrentBooking\` shows a completed booking after \`bookAppointment\` succeeds.
+- Do not say you emailed a confirmation, sent a confirmation link, or asked the customer to check inbox or spam. Email collected for a booking is stored on the booking only.
+- After booking succeeds, send only the \`confirmationMessage\` from \`sendBookingConfirmation\`. A Google Meet link appears there only when the service venue is Google Meet and the assigned teammate's Google Calendar is connected.
 - If the customer declines a slot, changes their mind, or asks to stop booking, call \`cancelBooking\` before replying.
 - During a booking edit, \`cancelBooking\` discards the changes and keeps the original booking.
 - Outside an edit, \`cancelBooking\` cancels the existing confirmed appointment when one exists.`;
@@ -603,11 +607,21 @@ export function buildAgent(
       execute: async (_ctx, { timeZone }) => getCurrentDateInfo(timeZone ?? defaultBookingTimeZone ?? DEFAULT_TEAM_TIME_ZONE),
     });
 
-    tools.getCurrentBooking = createTool({
+    tools.getActiveBookingSession = createTool({
       description:
-        "Returns the customer's current booked appointment for this conversation, including service, collected details, date, time, and team member. Call when the customer asks about or wants to change an existing booking.",
+        "Queries whether this conversation has a live booking session (collecting, confirming, or editing). MUST be called before any other booking tool and before saying anything about booking status. Do not infer this from chat history.",
       inputSchema: z.object({}),
       execute: async (ctx) => {
+        return await queryActiveBookingSession(ctx, conversationId);
+      },
+    });
+
+    tools.getCurrentBooking = createTool({
+      description:
+        "Queries the live booking session and any completed appointment for this conversation. Call after getActiveBookingSession when you need the booked service, date, time, or team member.",
+      inputSchema: z.object({}),
+      execute: async (ctx) => {
+        await queryActiveBookingSession(ctx, conversationId);
         return await ctx.runQuery(internal.appointmentBooking.currentBooking.getCurrentBooking, {
           conversationId,
         });
@@ -619,6 +633,7 @@ export function buildAgent(
         "Starts editing an existing booked appointment. Call when the customer wants to change their booking. After this, use startBookingSession to update details and updateBookingAppointment to save changes to the calendar.",
       inputSchema: z.object({}),
       execute: async (ctx) => {
+        await queryActiveBookingSession(ctx, conversationId);
         return await ctx.runMutation(internal.appointmentBooking.editing.beginBookingEdit, {
           conversationId,
         });
@@ -633,6 +648,7 @@ export function buildAgent(
         collectedFields: collectedFieldsSchema.optional().describe("Booking details collected from the customer so far, keyed by field key."),
       }),
       execute: async (ctx, input) => {
+        await queryActiveBookingSession(ctx, conversationId);
         return await ctx.runMutation(internal.appointmentBooking.sessions.startBookingSession, {
           conversationId,
           ...(input.serviceId ? { serviceId: input.serviceId as Id<"appointmentServices"> } : {}),
@@ -673,6 +689,8 @@ export function buildAgent(
         if (Number.isFinite(rangeEndAt)) {
           args.rangeEndAt = rangeEndAt;
         }
+        const activeSession = await queryActiveBookingSession(ctx, conversationId);
+        if (!activeSession.hasActiveSession) return { ...activeSession, slots: [] };
         return await ctx.runMutation(internal.appointmentBooking.sessions.checkAvailability, args);
       },
     });
@@ -690,6 +708,8 @@ export function buildAgent(
         if (!Number.isFinite(startAt)) {
           return { success: false, message: "Invalid appointment start time." };
         }
+        const activeSession = await queryActiveBookingSession(ctx, conversationId);
+        if (!activeSession.hasActiveSession) return activeSession;
         const confirmation = await ctx.runMutation(internal.appointmentBooking.sessions.confirmBookingSlot, {
           conversationId,
           serviceId: input.serviceId as Id<"appointmentServices">,
@@ -716,6 +736,8 @@ export function buildAgent(
         if (!Number.isFinite(startAt)) {
           return { success: false, message: "Invalid appointment start time." };
         }
+        const activeSession = await queryActiveBookingSession(ctx, conversationId);
+        if (!activeSession.hasActiveSession) return activeSession;
         return await ctx.runAction(internal.appointmentBooking.updateAppointment.updateBookingAppointment, {
           conversationId,
           serviceId: input.serviceId as Id<"appointmentServices">,
@@ -729,6 +751,7 @@ export function buildAgent(
         "Builds the final booking confirmation message after bookAppointment succeeds. Call only after `giveReaction` on the customer's slot confirmation. Send the returned confirmationMessage to the customer exactly as written.",
       inputSchema: z.object({}),
       execute: async (ctx) => {
+        await queryActiveBookingSession(ctx, conversationId);
         return await ctx.runMutation(internal.appointmentBooking.confirmations.sendBookingConfirmation, {
           conversationId,
         });
@@ -740,6 +763,7 @@ export function buildAgent(
         "Builds the updated booking confirmation message after updateBookingAppointment succeeds. Call only after `giveReaction` on the customer's change confirmation. Send the returned confirmationMessage to the customer exactly as written.",
       inputSchema: z.object({}),
       execute: async (ctx) => {
+        await queryActiveBookingSession(ctx, conversationId);
         return await ctx.runMutation(internal.appointmentBooking.confirmations.sendBookingUpdateConfirmation, {
           conversationId,
         });
@@ -751,6 +775,7 @@ export function buildAgent(
         "Cancels the customer's in-progress booking session or discards a booking edit. During an edit, this keeps the original booking unchanged.",
       inputSchema: z.object({}),
       execute: async (toolCtx) => {
+        await queryActiveBookingSession(toolCtx, conversationId);
         return await toolCtx.runAction(internal.appointmentBooking.cancellations.cancelBookingSession, {
           conversationId,
         });
