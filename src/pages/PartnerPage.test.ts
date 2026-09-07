@@ -352,6 +352,8 @@ describe("Partner Programme", () => {
     expect(portalSource).toContain(
       'logoStorageId: v.optional(v.id("_storage"))',
     );
+    expect(portalSource).toContain("pageTitle: v.optional(v.string())");
+    expect(pageSource).toContain("onPageTitleSave");
   });
 
   test("guides custom-domain setup through gated DNS confirmations", () => {

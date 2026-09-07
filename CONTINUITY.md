@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-08 [CODE] Now: partner hostnames use a customizable browser tab title (brand name if blank) and never keep “Kilobot | AI Agent for Every Inbox”. Unshipped.
 - 2026-09-07 [CODE] Now: partner custom hostnames use the uploaded logo PNG as the browser favicon; native Kilobot hosts keep the default icon. Unshipped.
 - 2026-09-07 [CODE] Now: partner organization credit periods schedule an exact-time automatic renewal; no existing-organization backfill is needed. Unshipped on `codex/partner-plan-change-timing`.
 - 2026-09-07 [CODE] Now: the Partner Programme Customers tab presents organizations and their users; account UI uses “user” terminology and Overview separates organization and user totals. Unshipped.
@@ -50,24 +51,25 @@
 
 # Done (recent)
 
+- 2026-09-08 [CODE] Partner Branding can set a browser tab title; partner hostnames no longer keep the Kilobot document title.
 - 2026-09-07 [CODE] Partner hostname branding now sets the browser tab favicon from the partner logo.
 - 2026-09-07 [CODE] Partner `createOrganization` now provisions the org and its first credit period atomically, closing the `getOverview` crash window (I003); in PR.
 - 2026-09-07 [CODE] Milestone: partner Branding brand name, green-check connected domain, logo preview tile, centered subtitle-free sign-in header, and sign-in preview link are on `main` (#101–#103).
 - 2026-09-07 [CODE] Implemented Instagram Embedded Signup with Page-linked account persistence and dual routing that preserves existing Instagram Login connections; unshipped.
 - 2026-09-07 [CODE] Messenger Comment-to-Inbox ingestion, deterministic matching, customer-first persistence, private/public sends, outcome counters, and response attribution merged via #98.
 - 2026-09-07 [CODE] Milestone: widget newline preservation and canonical booking confirmation layout shipped on `main` (#96).
-- 2026-09-06 [CODE] Milestone: sessionless availability, live booking-session checks, and confirmation-race fixes shipped on `main` (#94–#96).
 
 # Working set
 
 - 2026-09-07 [CODE] `convex/whiteLabel/{creditLedger,creditRenewal,portalProvisioning}*`, `convex/_generated/api.d.ts`
 - 2026-09-07 [CODE] `src/components/partner/{PartnerCustomerForms,PartnerCustomerList,PartnerCustomerCredentialsDialog,PartnerOrganizationList}*`, `src/pages/PartnerPage*`
 - 2026-09-07 [CODE] `shared/commentToInboxAccess.ts`, `src/components/Connect{Instagram,Messenger}Button*`, `convex/{instagramEmbeddedSignup,messengerConnect,messengerAuth,oauthSessions,commentAutomationMeta,schema}*`
-- 2026-09-07 [CODE] `src/lib/hostFavicon.ts`, `src/components/{AppRuntimeEffects,partner/PartnerBrandingTab}*`, `src/router/AppRouteComponents.tsx`
+- 2026-09-08 [CODE] `src/lib/host{Favicon,DocumentTitle}*`, `src/components/{AppRuntimeEffects,partner/PartnerBrandingTab}*`, `convex/whiteLabel/{portal,partnerAuthGateway}.ts`, `convex/schema.ts`
 - 2026-09-07 [CODE] `src/components/partner/PartnerBrandingTab*`, `src/pages/{PartnerPage,SignInPage}.tsx`, `convex/whiteLabel/{portal,portalActions,portalProvisioning,portalOverview,creditLedger}.ts`
 
 # Receipts
 
+- 2026-09-08 [TOOL] Partner browser tab title passed 39 focused tests, targeted ESLint, and `git diff --check`.
 - 2026-09-07 [TOOL] Partner PNG favicon link no longer keeps `image/svg+xml`; 4 focused tests, targeted ESLint, and `git diff --check` passed.
 - 2026-09-07 [TOOL] Hostname favicon from partner logo passed 10 focused tests, targeted ESLint, and `git diff --check`.
 - 2026-09-07 [TOOL] Separate Partner Overview Organizations and Users metrics passed 22 focused UI tests, targeted ESLint, and `git diff --check`.

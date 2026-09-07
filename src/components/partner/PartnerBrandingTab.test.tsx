@@ -12,6 +12,7 @@ function partnerWithDomain(
   return {
     partnerId: "partner_123",
     name: "Acme Studio",
+    pageTitle: null,
     logoStorageId: logoUrl === null ? null : "storage_1",
     logoUrl,
     domain: {
@@ -36,6 +37,7 @@ function render(partner: PartnerProfile) {
     <PartnerBrandingTab
       partner={partner}
       onNameSave={noop}
+      onPageTitleSave={noop}
       onLogoUpload={noop}
       onCreateCustomHostname={noop}
       onConfirmOwnershipDns={noop}
@@ -54,6 +56,15 @@ describe("PartnerBrandingTab", () => {
     expect(markup).toContain("Brand name");
     expect(markup).toContain('value="Acme Studio"');
     expect(markup).toContain("sign-in page");
+  });
+
+  test("lets partners set the browser tab title", () => {
+    const markup = render(partnerWithDomain("ownership_checking"));
+
+    expect(markup).toContain("Browser tab title");
+    expect(markup).toContain("partner-page-title");
+    expect(markup).toContain("Kilobot");
+    expect(markup).toContain("Leave blank to use");
   });
 
   test("previews an uploaded logo behind a click-to-replace overlay", () => {

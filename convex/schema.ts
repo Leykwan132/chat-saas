@@ -440,6 +440,7 @@ export default defineSchema({
   whiteLabelPartners: defineTable({
     controlTeamId: v.optional(v.id("teams")),
     name: v.string(),
+    pageTitle: v.optional(v.string()),
     logoStorageId: v.optional(v.id("_storage")),
     status: whiteLabelPartnerStatusValidator,
     createdAt: v.number(),

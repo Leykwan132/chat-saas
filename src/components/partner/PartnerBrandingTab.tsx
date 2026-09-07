@@ -22,6 +22,7 @@ import { type PartnerProfile } from "@/lib/whiteLabelApi";
 export function PartnerBrandingTab({
   partner,
   onNameSave,
+  onPageTitleSave,
   onLogoUpload,
   onCreateCustomHostname,
   onConfirmOwnershipDns,
@@ -32,6 +33,7 @@ export function PartnerBrandingTab({
 }: {
   partner: PartnerProfile;
   onNameSave: (name: string) => Promise<unknown>;
+  onPageTitleSave: (pageTitle: string) => Promise<unknown>;
   onLogoUpload: (file: File) => Promise<unknown>;
   onCreateCustomHostname: (hostname: string) => Promise<unknown>;
   onConfirmOwnershipDns: () => Promise<unknown>;
@@ -42,9 +44,12 @@ export function PartnerBrandingTab({
 }) {
   const [domainDialogOpen, setDomainDialogOpen] = useState(false);
   const [name, setName] = useState(partner.name);
+  const [pageTitle, setPageTitle] = useState(partner.pageTitle ?? "");
   const [isSavingName, setIsSavingName] = useState(false);
+  const [isSavingPageTitle, setIsSavingPageTitle] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const trimmedName = name.trim();
+  const trimmedPageTitle = pageTitle.trim();
   const isDomainConnected = partner.domain?.setupState === "connected";
   const signInPreviewUrl = partner.domain?.previewUrl
     ? `${partner.domain.previewUrl}/sign-in`
@@ -57,6 +62,16 @@ export function PartnerBrandingTab({
       await onNameSave(trimmedName);
     } finally {
       setIsSavingName(false);
+    }
+  };
+
+  const handlePageTitleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSavingPageTitle(true);
+    try {
+      await onPageTitleSave(trimmedPageTitle);
+    } finally {
+      setIsSavingPageTitle(false);
     }
   };
 
@@ -76,8 +91,8 @@ export function PartnerBrandingTab({
         <CardHeader>
           <CardTitle>Branding</CardTitle>
           <CardDescription>
-            Set the name and logo your customers see, and connect your own
-            domain.
+            Set the name, tab title, and logo your customers see, and connect
+            your own domain.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-7">
@@ -108,6 +123,37 @@ export function PartnerBrandingTab({
                 <FieldDescription>
                   Shown on your customers&apos; sign-in page and wherever your
                   brand appears in the portal.
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
+          <form onSubmit={handlePageTitleSubmit}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="partner-page-title">
+                  Browser tab title
+                </FieldLabel>
+                <div className="flex gap-2">
+                  <Input
+                    id="partner-page-title"
+                    value={pageTitle}
+                    onChange={(event) => setPageTitle(event.target.value)}
+                    placeholder={trimmedName || partner.name}
+                  />
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    disabled={
+                      isSavingPageTitle ||
+                      trimmedPageTitle === (partner.pageTitle ?? "")
+                    }
+                  >
+                    Save
+                  </Button>
+                </div>
+                <FieldDescription>
+                  Shown in the browser tab on your domain. Leave blank to use
+                  your brand name. Kilobot&apos;s title is not used.
                 </FieldDescription>
               </Field>
             </FieldGroup>

@@ -35,6 +35,7 @@ export const getCurrentPartner = query({
     return {
       partnerId: access.partner._id,
       name: access.partner.name,
+      pageTitle: access.partner.pageTitle ?? null,
       logoStorageId: access.partner.logoStorageId ?? null,
       logoUrl,
       domain: domain
@@ -187,6 +188,7 @@ export const generateLogoUploadUrl = mutation({
 export const updateBranding = mutation({
   args: {
     name: v.string(),
+    pageTitle: v.optional(v.string()),
     logoStorageId: v.optional(v.id("_storage")),
   },
   returns: v.null(),
@@ -197,6 +199,7 @@ export const updateBranding = mutation({
     const now = Date.now();
     await ctx.db.patch(partner._id, {
       name,
+      ...(args.pageTitle === undefined ? {} : { pageTitle: args.pageTitle.trim() }),
       ...(args.logoStorageId === undefined
         ? {}
         : { logoStorageId: args.logoStorageId }),

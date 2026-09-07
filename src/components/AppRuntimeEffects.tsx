@@ -5,6 +5,7 @@ import posthog from 'posthog-js';
 import { useLocation } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import { applyDocumentFavicon, resolveHostFaviconHref } from '@/lib/hostFavicon';
+import { applyDocumentTitle, resolveHostDocumentTitle } from '@/lib/hostDocumentTitle';
 
 export function ScrollToTop() {
   const { pathname } = useLocation();
@@ -29,6 +30,7 @@ export function HostFavicon() {
 
   useEffect(() => {
     applyDocumentFavicon(resolveHostFaviconHref(branding?.logoUrl));
+    applyDocumentTitle(resolveHostDocumentTitle(branding));
   }, [branding]);
 
   return null;

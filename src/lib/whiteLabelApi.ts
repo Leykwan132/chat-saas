@@ -20,6 +20,7 @@ export type PartnerCustomerRemoval =
 export type PartnerProfile = {
   partnerId: string;
   name: string;
+  pageTitle: string | null;
   logoStorageId: string | null;
   logoUrl: string | null;
   domain: {
@@ -131,7 +132,7 @@ export const whiteLabelApi = {
     >("whiteLabel/portal:generateLogoUploadUrl"),
     updateBranding: makeFunctionReference<
       "mutation",
-      { name: string; logoStorageId?: string },
+      { name: string; pageTitle?: string; logoStorageId?: string },
       null
     >("whiteLabel/portal:updateBranding"),
   },

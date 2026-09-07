@@ -72,7 +72,11 @@ test("resolves connected hostname branding and the matching customer surface", a
     gateway.resolvePartnerSurfaceForWorkosUser(ctx, workosUserId, hostname),
   );
 
-  expect(brand).toMatchObject({ hostname, partnerName: "Acme" });
+    expect(brand).toMatchObject({
+      hostname,
+      partnerName: "Acme",
+      pageTitle: null,
+    });
   expect(surface).toMatchObject({
     kind: "partner",
     hostname,
