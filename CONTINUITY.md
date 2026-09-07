@@ -3,8 +3,8 @@
 # Snapshot
 
 - 2026-09-07 [USER] Goal: replace Instagram redirect OAuth with Embedded Signup under the same Meta app, using IG-named frontend configuration variables.
-- 2026-09-07 [CODE] Now: Instagram connect uses only `VITE_IG_CONFIG_ID` plus the shared Messenger code-exchange redirect, resolves one authorized Page-linked professional account, and routes new messaging connections through Facebook Graph; unshipped.
-- 2026-09-07 [CODE] Next: supply `VITE_IG_CONFIG_ID`, deploy, and live-test connect, inbox backfill, inbound webhook, and reply.
+- 2026-09-07 [TOOL] Now: Instagram Embedded Signup is in review via #99; it uses only `VITE_IG_CONFIG_ID` plus the shared Messenger code-exchange redirect and routes new Page-linked connections through Facebook Graph.
+- 2026-09-07 [CODE] Next: review/merge #99, supply `VITE_IG_CONFIG_ID`, deploy Convex and the frontend, then live-test connect, inbox backfill, inbound webhook, and reply.
 - 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
 - 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
 - 2026-09-06 [CODE] Milestone: Comment-to-Inbox list/edit/delete/activation and Meta page subscriptions are on `main` (#90–#93); comment webhook ingestion remains unshipped (D781).
