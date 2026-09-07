@@ -9,8 +9,9 @@ export function PartnerOverviewTab({
   overview: PartnerOverview | undefined;
 }) {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-      <Metric label="Customers" value={overview?.activeOrganizations} />
+    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <Metric label="Organizations" value={overview?.activeOrganizations} />
+      <Metric label="Users" value={overview?.customers.length} />
       <Metric label="Credits spent" value={overview?.totalSpentCredits} />
       <Metric
         label="Credits top-up"

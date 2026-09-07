@@ -3,7 +3,7 @@
 # Snapshot
 
 - 2026-09-07 [CODE] Now: partner organization credit periods schedule an exact-time automatic renewal; no existing-organization backfill is needed. Unshipped on `codex/partner-plan-change-timing`.
-- 2026-09-07 [CODE] Now: the Partner Programme Customers tab presents organizations and their users; account creation/removal UI now uses “user” terminology. Unshipped.
+- 2026-09-07 [CODE] Now: the Partner Programme Customers tab presents organizations and their users; account UI uses “user” terminology and Overview separates organization and user totals. Unshipped.
 - 2026-09-07 [USER] Goal: replace Instagram redirect OAuth with Embedded Signup under the same Meta app, using IG-named frontend configuration variables.
 - 2026-09-07 [CODE] Now: partner Branding brand name, logo preview tile, sign-in header, sign-in preview link, and atomic organization credit provisioning merged via #101–#104. Partner Programme remains unshipped overall.
 - 2026-09-07 [CODE] Next: deploy #100, test ordinary and allowlisted connects for both channels, then verify live message/comment delivery.
@@ -31,7 +31,7 @@
 - 2026-08-19 [USER] D735 SUPERSEDED by D787: shared plan limits take effect immediately; only the new monthly allowance starts at the organization’s next credit cycle.
 - 2026-09-07 [USER] D787 ACTIVE: partners choose plan-change timing per organization. Immediate rewrites the current credit period to the new catalog allowance (used credits kept, remaining floored at zero); end-of-period keeps current credits and schedules the switch for the period end. Plan limits still change immediately. Overview Monthly reflects the current period’s granted credits, and a scheduled change is shown under the plan.
 - 2026-09-07 [USER] D788 ACTIVE: each new partner organization credit period durably schedules its next renewal for the exact period end; renewal is idempotent, applies pending credit plans, preserves manual grants, and keeps usage-time renewal as a delayed-job fallback.
-- 2026-09-07 [USER] D789 ACTIVE: retain the Partner Programme “Customers” tab, but call organization members “users”; one customer organization may contain many users.
+- 2026-09-07 [USER] D789 ACTIVE: retain the Partner Programme “Customers” tab, but call organization members “users”; one customer organization may contain many users, and Overview shows separate Organizations and Users metrics.
 - 2026-08-19 [USER] D736 ACTIVE: partner-created workspaces use their organization wallet and manual grants; Stripe payment and top-up paths are blocked.
 - 2026-08-19 [USER] D742 ACTIVE: Partner Programme has Overview, Customers, and Branding in a subtle vertical ghost navigation.
 - 2026-08-19 [USER] D743–D760 ACTIVE: custom hostnames use the configured Cloudflare SaaS zone, CNAME-only subdomains, DCV delegation, explicit DNS confirmations, concise polling, and expandable completed setup steps.
@@ -66,6 +66,7 @@
 
 # Receipts
 
+- 2026-09-07 [TOOL] Separate Partner Overview Organizations and Users metrics passed 22 focused UI tests, targeted ESLint, and `git diff --check`.
 - 2026-09-07 [TOOL] `origin/main` merged into `codex/partner-plan-change-timing` at `f14bdd4`; atomic provisioning, scheduled renewal, and plan-change integration passed 7 focused tests.
 - 2026-09-07 [TOOL] Automatic partner credit renewal passed 8 focused credit, plan-change, and workspace-access tests, targeted ESLint, Convex code generation/TypeScript validation, and `git diff --check`.
 - 2026-09-07 [TOOL] Partner customer-to-user terminology passed 26 focused UI tests, targeted ESLint, and `git diff --check`.
