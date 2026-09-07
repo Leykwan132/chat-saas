@@ -262,6 +262,7 @@ const whiteLabelCreditLedgerEventValidator = v.union(
   v.literal("monthly_allowance"),
   v.literal("manual_grant"),
   v.literal("usage_deduction"),
+  v.literal("plan_change"),
 );
 
 export default defineSchema({

@@ -419,6 +419,7 @@ import type * as whiteLabel_admin from "../whiteLabel/admin.js";
 import type * as whiteLabel_authSurface from "../whiteLabel/authSurface.js";
 import type * as whiteLabel_billing from "../whiteLabel/billing.js";
 import type * as whiteLabel_creditLedger from "../whiteLabel/creditLedger.js";
+import type * as whiteLabel_creditRenewal from "../whiteLabel/creditRenewal.js";
 import type * as whiteLabel_customHostnameActions from "../whiteLabel/customHostnameActions.js";
 import type * as whiteLabel_customHostnameCloudflare from "../whiteLabel/customHostnameCloudflare.js";
 import type * as whiteLabel_customHostnameData from "../whiteLabel/customHostnameData.js";
@@ -439,6 +440,7 @@ import type * as whiteLabel_partnerAuthTypes from "../whiteLabel/partnerAuthType
 import type * as whiteLabel_partnerCreditModel from "../whiteLabel/partnerCreditModel.js";
 import type * as whiteLabel_partnerUsage from "../whiteLabel/partnerUsage.js";
 import type * as whiteLabel_partnerUsageModel from "../whiteLabel/partnerUsageModel.js";
+import type * as whiteLabel_planChange from "../whiteLabel/planChange.js";
 import type * as whiteLabel_planResolver from "../whiteLabel/planResolver.js";
 import type * as whiteLabel_portal from "../whiteLabel/portal.js";
 import type * as whiteLabel_portalActions from "../whiteLabel/portalActions.js";
@@ -914,6 +916,7 @@ declare const fullApi: ApiFromModules<{
   "whiteLabel/authSurface": typeof whiteLabel_authSurface;
   "whiteLabel/billing": typeof whiteLabel_billing;
   "whiteLabel/creditLedger": typeof whiteLabel_creditLedger;
+  "whiteLabel/creditRenewal": typeof whiteLabel_creditRenewal;
   "whiteLabel/customHostnameActions": typeof whiteLabel_customHostnameActions;
   "whiteLabel/customHostnameCloudflare": typeof whiteLabel_customHostnameCloudflare;
   "whiteLabel/customHostnameData": typeof whiteLabel_customHostnameData;
@@ -934,6 +937,7 @@ declare const fullApi: ApiFromModules<{
   "whiteLabel/partnerCreditModel": typeof whiteLabel_partnerCreditModel;
   "whiteLabel/partnerUsage": typeof whiteLabel_partnerUsage;
   "whiteLabel/partnerUsageModel": typeof whiteLabel_partnerUsageModel;
+  "whiteLabel/planChange": typeof whiteLabel_planChange;
   "whiteLabel/planResolver": typeof whiteLabel_planResolver;
   "whiteLabel/portal": typeof whiteLabel_portal;
   "whiteLabel/portalActions": typeof whiteLabel_portalActions;

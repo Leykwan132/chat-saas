@@ -138,17 +138,17 @@ export function PartnerCustomerList({
   return (
     <section className="mt-8 flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 className="font-heading text-base font-medium">Customers</h2>
+        <h2 className="font-heading text-base font-medium">Users</h2>
         <p className="text-sm text-muted-foreground">
-          Review invited and active customer accounts.
+          Review invited and active users across your organizations.
         </p>
       </div>
       {customers.length === 0 ? (
         <Empty className="rounded-lg border border-dashed bg-muted/20">
           <EmptyHeader>
-            <EmptyTitle>No customers yet</EmptyTitle>
+            <EmptyTitle>No users yet</EmptyTitle>
             <EmptyDescription>
-              Create a customer account using the action above.
+              Create a user account using the action above.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -158,7 +158,7 @@ export function PartnerCustomerList({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Customer</TableHead>
+                  <TableHead>User</TableHead>
                   <TableHead>Organization</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
@@ -198,7 +198,7 @@ export function PartnerCustomerList({
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
-                              aria-label={`Customer actions for ${customer.email}`}
+                              aria-label={`User actions for ${customer.email}`}
                               size="icon"
                               variant="ghost"
                               onClick={(event) => event.stopPropagation()}
@@ -223,7 +223,7 @@ export function PartnerCustomerList({
                               onSelect={() => setPendingCustomer(customer)}
                             >
                               <Trash2 />
-                              Delete customer
+                              Delete user
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -244,7 +244,7 @@ export function PartnerCustomerList({
       >
         <DialogContent className="rounded-lg border border-border shadow-none ring-0">
           <DialogHeader>
-            <DialogTitle>Delete customer</DialogTitle>
+            <DialogTitle>Delete user</DialogTitle>
             <DialogDescription>
               Remove {pendingCustomer?.email} from this organization? Their
               WorkOS account will remain available elsewhere.
@@ -264,7 +264,7 @@ export function PartnerCustomerList({
               onClick={() => void confirmRemoval()}
             >
               {isRemoving ? <Spinner data-icon="inline-start" /> : null}
-              Delete customer
+              Delete user
             </Button>
           </DialogFooter>
         </DialogContent>

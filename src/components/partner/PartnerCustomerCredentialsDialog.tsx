@@ -83,9 +83,9 @@ export function PartnerCustomerCredentialsDialog({
     >
       <DialogContent className="rounded-lg border border-border shadow-none ring-0">
         <DialogHeader>
-          <DialogTitle>Customer account created</DialogTitle>
+          <DialogTitle>User account created</DialogTitle>
           <DialogDescription>
-            Share these one-time sign-in details securely. The customer can reset their password from Settings after signing in.
+            Share these one-time sign-in details securely. The user can reset their password from Settings after signing in.
           </DialogDescription>
         </DialogHeader>
         <CustomerCredentialsContent

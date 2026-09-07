@@ -25,6 +25,10 @@ const customerControlsSource = readFileSync(
   new URL("../components/partner/PartnerCustomerControls.tsx", import.meta.url),
   "utf8",
 );
+const planChangeDialogSource = readFileSync(
+  new URL("../components/partner/PartnerPlanChangeDialog.tsx", import.meta.url),
+  "utf8",
+);
 const brandingSource = readFileSync(
   new URL("../components/partner/PartnerBrandingTab.tsx", import.meta.url),
   "utf8",
@@ -72,9 +76,10 @@ describe("Partner Programme", () => {
     expect(customerListSource).toContain("<TableBody>");
   });
 
-  test("shows the six core summary metrics without an Overview table", () => {
+  test("shows organization and user counts as separate Overview metrics", () => {
     for (const label of [
-      "Customers",
+      "Organizations",
+      "Users",
       "Credits spent",
       "Credits top-up",
       "Starter plan",
@@ -84,7 +89,14 @@ describe("Partner Programme", () => {
       expect(overviewSource).toContain(`label="${label}"`);
     }
 
-    expect(overviewSource.match(/<Metric/g)).toHaveLength(6);
+    expect(overviewSource).toContain(
+      'label="Organizations" value={overview?.activeOrganizations}',
+    );
+    expect(overviewSource).toContain(
+      'label="Users" value={overview?.customers.length}',
+    );
+    expect(overviewSource.match(/<Metric/g)).toHaveLength(7);
+    expect(overviewSource).toContain("xl:grid-cols-4");
     expect(overviewSource).not.toContain('label="Credit grants"');
     expect(overviewSource).not.toContain('label="Highest spend"');
     expect(overviewSource).not.toContain('label="Biggest top-up"');
@@ -153,20 +165,20 @@ describe("Partner Programme", () => {
     );
   });
 
-  test("separates organizations and customers below the customer operations", () => {
+  test("separates organizations and users below the customer operations", () => {
     expect(customerFormsSource).toContain('from "@/components/ui/dialog"');
     expect(customerFormsSource.match(/<DialogTrigger asChild>/g)).toHaveLength(
       3,
     );
     expect(customerFormsSource).toContain("Create organization");
-    expect(customerFormsSource).toContain("Create customer");
+    expect(customerFormsSource).toContain("Create user");
     expect(customerFormsSource).toContain("Add credits");
     expect(customerFormsSource).toContain(
       'className="rounded-lg border border-border shadow-none ring-0"',
     );
     expect(customerListSource).toContain('from "@/components/ui/table"');
     expect(organizationListSource).toContain('from "@/components/ui/table"');
-    expect(organizationListSource).toContain("Customers");
+    expect(organizationListSource).toContain("Users");
     expect(organizationListSource).toContain("customerCount");
     expect(customerListSource).toContain("Organization");
     expect(customerListSource).toContain("<TableHead>Status</TableHead>");
@@ -174,7 +186,7 @@ describe("Partner Programme", () => {
     expect(customerListSource).toContain("<TableHeader>");
     expect(customerListSource).toContain("<TableBody>");
     expect(customerListSource).toContain(
-      "<EmptyTitle>No customers yet</EmptyTitle>",
+      "<EmptyTitle>No users yet</EmptyTitle>",
     );
     expect(pageSource.indexOf("<PartnerCustomerForms")).toBeLessThan(
       pageSource.indexOf("<PartnerOrganizationList"),
@@ -212,14 +224,20 @@ describe("Partner Programme", () => {
   });
 
   test("requires confirmation before applying a customer plan change", () => {
-    expect(organizationListSource).toContain('from "@/components/ui/dialog"');
-    expect(organizationListSource).toContain("Confirm plan change");
-    expect(organizationListSource).toContain("formatRenewalDate");
-    expect(organizationListSource).toContain('variant="ghost"');
+    expect(organizationListSource).toContain("PartnerPlanChangeDialog");
     expect(organizationListSource).toContain("setPendingPlanChange({");
-    expect(organizationListSource).toContain(
-      "onPlanChange(pendingPlanChange.organization, pendingPlanChange.planKey);",
-    );
+    expect(organizationListSource).toContain("organization.scheduledPlanChange");
+    expect(planChangeDialogSource).toContain('from "@/components/ui/dialog"');
+    expect(planChangeDialogSource).toContain('from "@/components/ui/radio-group"');
+    expect(planChangeDialogSource).toContain("Confirm plan change");
+    expect(planChangeDialogSource).toContain("formatRenewalDate");
+    expect(planChangeDialogSource).toContain('value="immediate"');
+    expect(planChangeDialogSource).toContain('value="next_period"');
+    expect(planChangeDialogSource).toContain('className="sm:justify-between"');
+    expect(planChangeDialogSource).toContain("onConfirm(timing)");
+    expect(pageSource).toContain("timing,");
+    expect(portalSource).toContain("timing: planChangeTimingValidator");
+    expect(apiSource).toContain("timing: PlanChangeTiming;");
     expect(apiSource).toContain("renewalAt: number;");
     expect(portalOverviewSource).toContain("renewalAt: v.number(),");
     expect(portalOverviewSource).toContain(
@@ -273,10 +291,10 @@ describe("Partner Programme", () => {
     expect(customerListSource).toContain("gap-1.5 capitalize");
   });
 
-  test("creates active customer accounts and closes the dialog on success", () => {
+  test("creates active user accounts and closes the dialog on success", () => {
     expect(pageSource).toContain("createCustomerAccount");
     expect(pageSource).toContain(
-      "Customer account created.",
+      "User account created.",
     );
     expect(customerFormsSource).toContain("isCustomerDialogOpen");
     expect(customerListSource).toContain(
@@ -285,10 +303,10 @@ describe("Partner Programme", () => {
     expect(customerListSource).toContain("bg-emerald-500");
   });
 
-  test("uses three-dot menus to confirm destructive customer access removal", () => {
+  test("uses three-dot menus to confirm destructive user access removal", () => {
     expect(customerListSource).toContain("MoreHorizontal");
     expect(customerListSource).toContain("DropdownMenu");
-    expect(customerListSource).toContain("Delete customer");
+    expect(customerListSource).toContain("Delete user");
     expect(organizationListSource).toContain("Delete organization");
     expect(organizationListSource).toContain("DropdownMenu");
     expect(pageSource).toContain("removeCustomerFromOrganization");
@@ -298,7 +316,7 @@ describe("Partner Programme", () => {
     );
   });
 
-  test("uses compact icon-first customer action buttons with descriptions and right arrows", () => {
+  test("uses compact icon-first user action buttons with descriptions and right arrows", () => {
     expect(customerFormsSource).toContain(
       '<div className="grid gap-4 sm:grid-cols-3">',
     );
@@ -317,7 +335,7 @@ describe("Partner Programme", () => {
       "Start a workspace and choose its plan.",
     );
     expect(customerFormsSource).toContain("Create an active account for an organization.");
-    expect(customerFormsSource).toContain("Top up a customer's balance.");
+    expect(customerFormsSource).toContain("Top up an organization&apos;s balance.");
   });
 
   test("shows the selected plan inclusions below the organization plan field", () => {

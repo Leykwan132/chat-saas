@@ -3,7 +3,7 @@ import { expect, test } from "vitest";
 import { preventCustomerRowClick } from "./customerRemovalMenu";
 import { PartnerCustomerList } from "./PartnerCustomerList";
 
-test("renders customer values in the same order as the table headers", () => {
+test("renders users in the same order as the table headers", () => {
   const markup = renderToStaticMarkup(
     <PartnerCustomerList
       customers={[
@@ -33,6 +33,8 @@ test("renders customer values in the same order as the table headers", () => {
     "active",
     "",
   ]);
+  expect(markup).toContain(">Users<");
+  expect(markup).toContain(">User<");
   expect(markup).not.toContain("cursor-pointer");
 });
 

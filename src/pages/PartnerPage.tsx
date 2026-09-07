@@ -143,7 +143,7 @@ export default function PartnerPage() {
           Partner Programme
         </h1>
         <p className="text-sm text-muted-foreground">
-          Manage customer organizations, customer accounts, credits, and your
+          Manage customer organizations, users, credits, and your
           portal branding.
         </p>
       </div>
@@ -221,7 +221,7 @@ export default function PartnerPage() {
                 });
                 setInviteEmail("");
                 return customer;
-              }, "Customer account created.")
+              }, "User account created.")
             }
             onGiveCredits={() =>
               void runCustomerAction("credits", async () => {
@@ -231,19 +231,22 @@ export default function PartnerPage() {
                   credits: Number(creditAmount),
                 });
                 setCreditAmount("");
-              }, "Credits added to this customer.")
+              }, "Credits added to this organization.")
             }
           />
           <PartnerOrganizationList
             organizations={organizations}
-            onPlanChange={(organization, planKey) =>
+            onPlanChange={(organization, planKey, timing) =>
               void run(
                 () =>
                   assignPlan({
                     partnerOrganizationId: organization.partnerOrganizationId,
                     planKey,
+                    timing,
                   }),
-                "Plan updated. Monthly credits change on the next cycle.",
+                timing === "immediate"
+                  ? "Plan updated. Monthly credits changed now."
+                  : "Plan updated. Monthly credits change at the end of the billing period.",
               )
             }
             onDelete={async (organization) =>
@@ -269,7 +272,7 @@ export default function PartnerPage() {
                       removal,
                     }),
                   ),
-                "Customer removed from organization.",
+                "User removed from organization.",
               )) === true
             }
             onShowCredentials={(partnerOrganizationId, workosUserId) =>
