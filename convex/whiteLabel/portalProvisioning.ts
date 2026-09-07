@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
 import { ensureOrganizationalTeam, ensureTeamMembership, getUserByWorkosId } from "../teamHelpers";
+import { createPartnerCreditPeriod } from "./creditLedger";
 
 const planKeyValidator = v.union(v.literal("free"), v.literal("starter"), v.literal("growth"), v.literal("business"));
 
@@ -24,10 +25,7 @@ export const initializeFirstCreditPeriod = internalMutation({
   args: { partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"), actorUserId: v.id("users"), planKey: planKeyValidator, periodStart: v.number(), periodEnd: v.number() },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const now = Date.now();
-    const monthlyCredits = { free: 300, starter: 2000, growth: 6000, business: 18000 }[args.planKey];
-    await ctx.db.insert("whiteLabelPartnerOrganizationCreditPeriods", { partnerOrganizationId: args.partnerOrganizationId, planKey: args.planKey, periodStart: args.periodStart, periodEnd: args.periodEnd, grantedCredits: monthlyCredits, usedCredits: 0, createdAt: now, updatedAt: now });
-    await ctx.db.insert("whiteLabelPartnerOrganizationCreditLedger", { partnerOrganizationId: args.partnerOrganizationId, event: "monthly_allowance", credits: monthlyCredits, actorUserId: args.actorUserId, createdAt: now });
+    await createPartnerCreditPeriod(ctx, args);
     return null;
   },
 });

@@ -157,20 +157,20 @@ describe("Partner Programme", () => {
     );
   });
 
-  test("separates organizations and customers below the customer operations", () => {
+  test("separates organizations and users below the customer operations", () => {
     expect(customerFormsSource).toContain('from "@/components/ui/dialog"');
     expect(customerFormsSource.match(/<DialogTrigger asChild>/g)).toHaveLength(
       3,
     );
     expect(customerFormsSource).toContain("Create organization");
-    expect(customerFormsSource).toContain("Create customer");
+    expect(customerFormsSource).toContain("Create user");
     expect(customerFormsSource).toContain("Add credits");
     expect(customerFormsSource).toContain(
       'className="rounded-lg border border-border shadow-none ring-0"',
     );
     expect(customerListSource).toContain('from "@/components/ui/table"');
     expect(organizationListSource).toContain('from "@/components/ui/table"');
-    expect(organizationListSource).toContain("Customers");
+    expect(organizationListSource).toContain("Users");
     expect(organizationListSource).toContain("customerCount");
     expect(customerListSource).toContain("Organization");
     expect(customerListSource).toContain("<TableHead>Status</TableHead>");
@@ -178,7 +178,7 @@ describe("Partner Programme", () => {
     expect(customerListSource).toContain("<TableHeader>");
     expect(customerListSource).toContain("<TableBody>");
     expect(customerListSource).toContain(
-      "<EmptyTitle>No customers yet</EmptyTitle>",
+      "<EmptyTitle>No users yet</EmptyTitle>",
     );
     expect(pageSource.indexOf("<PartnerCustomerForms")).toBeLessThan(
       pageSource.indexOf("<PartnerOrganizationList"),
@@ -283,10 +283,10 @@ describe("Partner Programme", () => {
     expect(customerListSource).toContain("gap-1.5 capitalize");
   });
 
-  test("creates active customer accounts and closes the dialog on success", () => {
+  test("creates active user accounts and closes the dialog on success", () => {
     expect(pageSource).toContain("createCustomerAccount");
     expect(pageSource).toContain(
-      "Customer account created.",
+      "User account created.",
     );
     expect(customerFormsSource).toContain("isCustomerDialogOpen");
     expect(customerListSource).toContain(
@@ -295,10 +295,10 @@ describe("Partner Programme", () => {
     expect(customerListSource).toContain("bg-emerald-500");
   });
 
-  test("uses three-dot menus to confirm destructive customer access removal", () => {
+  test("uses three-dot menus to confirm destructive user access removal", () => {
     expect(customerListSource).toContain("MoreHorizontal");
     expect(customerListSource).toContain("DropdownMenu");
-    expect(customerListSource).toContain("Delete customer");
+    expect(customerListSource).toContain("Delete user");
     expect(organizationListSource).toContain("Delete organization");
     expect(organizationListSource).toContain("DropdownMenu");
     expect(pageSource).toContain("removeCustomerFromOrganization");
@@ -308,7 +308,7 @@ describe("Partner Programme", () => {
     );
   });
 
-  test("uses compact icon-first customer action buttons with descriptions and right arrows", () => {
+  test("uses compact icon-first user action buttons with descriptions and right arrows", () => {
     expect(customerFormsSource).toContain(
       '<div className="grid gap-4 sm:grid-cols-3">',
     );
@@ -327,7 +327,7 @@ describe("Partner Programme", () => {
       "Start a workspace and choose its plan.",
     );
     expect(customerFormsSource).toContain("Create an active account for an organization.");
-    expect(customerFormsSource).toContain("Top up a customer's balance.");
+    expect(customerFormsSource).toContain("Top up an organization&apos;s balance.");
   });
 
   test("shows the selected plan inclusions below the organization plan field", () => {

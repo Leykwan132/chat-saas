@@ -1,9 +1,11 @@
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
+import { internal } from "../_generated/api";
 import { PLAN_CATALOG, type PlanKey } from "../planCatalog";
 import { deductPartnerOrganizationCredits } from "./partnerCreditModel";
 
 type DbCtx = QueryCtx | MutationCtx;
+const CREDIT_PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
 
 export async function getLatestPartnerCreditPeriod(
   ctx: DbCtx,
@@ -95,12 +97,12 @@ export async function createPartnerCreditPeriod(
     planKey: PlanKey;
     periodStart: number;
     periodEnd: number;
-    actorUserId: Id<"users">;
+    actorUserId?: Id<"users">;
   },
 ) {
   const now = Date.now();
   const grantedCredits = PLAN_CATALOG[args.planKey].monthlyCredits;
-  await ctx.db.insert("whiteLabelPartnerOrganizationCreditPeriods", {
+  const periodId = await ctx.db.insert("whiteLabelPartnerOrganizationCreditPeriods", {
     partnerOrganizationId: args.partnerOrganizationId,
     planKey: args.planKey,
     periodStart: args.periodStart,
@@ -117,11 +119,20 @@ export async function createPartnerCreditPeriod(
     actorUserId: args.actorUserId,
     createdAt: now,
   });
+  await ctx.scheduler.runAt(
+    args.periodEnd,
+    internal.whiteLabel.creditRenewal.renewOrganizationCredits,
+    {
+      partnerOrganizationId: args.partnerOrganizationId,
+      expectedPeriodId: periodId,
+    },
+  );
+  return periodId;
 }
 
 export async function ensureCurrentPartnerCreditPeriod(
   ctx: MutationCtx,
-  args: { partnerOrganizationId: Id<"whiteLabelPartnerOrganizations">; actorUserId: Id<"users"> },
+  args: { partnerOrganizationId: Id<"whiteLabelPartnerOrganizations">; actorUserId?: Id<"users"> },
 ) {
   const current = await getLatestPartnerCreditPeriod(ctx, args.partnerOrganizationId);
   const now = Date.now();
@@ -132,8 +143,9 @@ export async function ensureCurrentPartnerCreditPeriod(
   if (creditPlanKey !== plan.creditPlanKey || plan.pendingCreditPlanKey !== undefined) {
     await ctx.db.patch(plan._id, { creditPlanKey, pendingCreditPlanKey: undefined, pendingCreditPlanEffectiveAt: undefined, updatedAt: now });
   }
-  const periodStart = current?.periodEnd ?? now;
-  const periodEnd = periodStart + 30 * 24 * 60 * 60 * 1000;
+  const elapsedPeriods = current === null ? 1 : Math.floor((now - current.periodEnd) / CREDIT_PERIOD_MS) + 1;
+  const periodEnd = current === null ? now + CREDIT_PERIOD_MS : current.periodEnd + elapsedPeriods * CREDIT_PERIOD_MS;
+  const periodStart = periodEnd - CREDIT_PERIOD_MS;
   await createPartnerCreditPeriod(ctx, { partnerOrganizationId: args.partnerOrganizationId, planKey: creditPlanKey, periodStart, periodEnd, actorUserId: args.actorUserId });
   return await getLatestPartnerCreditPeriod(ctx, args.partnerOrganizationId);
 }

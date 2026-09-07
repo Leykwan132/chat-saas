@@ -173,7 +173,7 @@ export function PartnerCustomerForms({
           >
             <UserPlus data-icon="inline-start" />
             <span className="font-heading text-base font-medium">
-              Create customer
+              Create user
             </span>
             <span className="max-w-48 text-sm text-muted-foreground whitespace-normal">
               Create an active account for an organization.
@@ -186,9 +186,9 @@ export function PartnerCustomerForms({
         </DialogTrigger>
         <DialogContent className="rounded-lg border border-border shadow-none ring-0">
           <DialogHeader>
-            <DialogTitle>Create customer</DialogTitle>
+            <DialogTitle>Create user</DialogTitle>
             <DialogDescription>
-              Create an active customer account for an organization.
+              Create an active user account for an organization.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>
@@ -234,7 +234,7 @@ export function PartnerCustomerForms({
               onClick={() => void handleCreateCustomer()}
             >
               {isCreatingCustomer ? <Spinner data-icon="inline-start" /> : null}
-              Create customer
+              Create user
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -251,7 +251,7 @@ export function PartnerCustomerForms({
               Add credits
             </span>
             <span className="max-w-48 text-sm text-muted-foreground whitespace-normal">
-              Top up a customer's balance.
+              Top up an organization&apos;s balance.
             </span>
             <ArrowRight
               data-icon="inline-end"
@@ -263,7 +263,7 @@ export function PartnerCustomerForms({
           <DialogHeader>
             <DialogTitle>Add credits</DialogTitle>
             <DialogDescription>
-              Add manual credits to a customer organization.
+              Add manual credits to an organization.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup>

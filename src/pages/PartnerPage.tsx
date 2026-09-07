@@ -143,7 +143,7 @@ export default function PartnerPage() {
           Partner Programme
         </h1>
         <p className="text-sm text-muted-foreground">
-          Manage customer organizations, customer accounts, credits, and your
+          Manage customer organizations, users, credits, and your
           portal branding.
         </p>
       </div>
@@ -221,7 +221,7 @@ export default function PartnerPage() {
                 });
                 setInviteEmail("");
                 return customer;
-              }, "Customer account created.")
+              }, "User account created.")
             }
             onGiveCredits={() =>
               void runCustomerAction("credits", async () => {
@@ -231,7 +231,7 @@ export default function PartnerPage() {
                   credits: Number(creditAmount),
                 });
                 setCreditAmount("");
-              }, "Credits added to this customer.")
+              }, "Credits added to this organization.")
             }
           />
           <PartnerOrganizationList
@@ -272,7 +272,7 @@ export default function PartnerPage() {
                       removal,
                     }),
                   ),
-                "Customer removed from organization.",
+                "User removed from organization.",
               )) === true
             }
             onShowCredentials={(partnerOrganizationId, workosUserId) =>

@@ -113,7 +113,7 @@ export function PartnerOrganizationList({
               <TableHeader>
                 <TableRow>
                   <TableHead>Organization</TableHead>
-                  <TableHead className="text-center">Customers</TableHead>
+                  <TableHead className="text-center">Users</TableHead>
                   <TableHead className="text-center">Plan</TableHead>
                   <TableHead className="text-center">Monthly</TableHead>
                   <TableHead className="text-center">Top-up</TableHead>
@@ -217,7 +217,7 @@ export function PartnerOrganizationList({
             <DialogTitle>Delete organization</DialogTitle>
             <DialogDescription>
               Delete {pendingDeletion?.name}? This removes the workspace and
-              all customer access within it.
+              all user access within it.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
