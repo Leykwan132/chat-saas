@@ -83,10 +83,7 @@ function PartnerSignIn() {
           {branding.logoUrl ? (
             <img src={branding.logoUrl} alt={branding.partnerName} className="h-9 max-w-48 object-contain object-left" />
           ) : null}
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">Sign in to {branding.partnerName}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Use your email and password to continue.</p>
-          </div>
+          <h1 className="text-xl font-semibold text-foreground">Sign in to {branding.partnerName}</h1>
         </div>
         <div className="space-y-4">
           <label className="grid gap-2 text-sm font-medium text-foreground">
