@@ -307,6 +307,12 @@ export default function PartnerPage() {
             onNameSave={(name) =>
               run(() => updateBrand({ name }), "Brand name updated.")
             }
+            onPageTitleSave={(pageTitle) =>
+              run(
+                () => updateBrand({ name: partner.name, pageTitle }),
+                "Browser tab title updated.",
+              )
+            }
             onLogoUpload={uploadLogo}
             onCreateCustomHostname={(hostname) =>
               run(

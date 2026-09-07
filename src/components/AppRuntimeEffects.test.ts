@@ -7,9 +7,10 @@ const layoutSource = readFileSync(
   "utf8",
 );
 
-test("applies hostname branding as the document favicon on partner hosts only", () => {
+test("applies hostname branding as the document favicon and title on partner hosts only", () => {
   expect(source).toContain("getBrandingForHostname");
   expect(source).toContain("isNativeHost ? 'skip'");
   expect(source).toContain("resolveHostFaviconHref(branding?.logoUrl)");
+  expect(source).toContain("resolveHostDocumentTitle");
   expect(layoutSource).toContain("<HostFavicon />");
 });

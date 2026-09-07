@@ -12,6 +12,7 @@ type PartnerAuthSurface = {
 type PartnerAuthBrand = {
   hostname: string;
   partnerName: string;
+  pageTitle: string | null;
   logoUrl: string | null;
 };
 
@@ -42,6 +43,7 @@ export async function resolvePartnerBrandForHostname(
   return {
     hostname: connectedDomain.domain.hostname,
     partnerName: connectedDomain.partner.name,
+    pageTitle: connectedDomain.partner.pageTitle?.trim() || null,
     logoUrl: connectedDomain.partner.logoStorageId
       ? await ctx.storage.getUrl(connectedDomain.partner.logoStorageId)
       : null,
