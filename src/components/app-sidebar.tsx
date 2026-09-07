@@ -32,6 +32,8 @@ import {
   useShowSavedReplies,
 } from '@/lib/posthogFeatureFlags';
 import { ExpandedAppSidebarHeader } from './ExpandedAppSidebarHeader';
+import { HostBrandMark } from './HostBrandMark';
+import { useHostBrand } from '@/hooks/useHostBranding';
 import { SidebarScrollCue } from './SidebarScrollCue';
 
 function formatUnreadBadgeCount(count: number): string {
@@ -46,6 +48,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const { can, isLoading } = usePermissions();
   const { user } = useAuth();
+  const hostBrand = useHostBrand();
   const savedRepliesState = useShowSavedReplies();
   const avatarFeatureState = useEnableAvatarFeature();
   const commentToInboxFeatureState = useEnableCommentToInboxFeature();
@@ -82,11 +85,10 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             className="group/logo-toggle relative size-[1.8rem] text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
             aria-label="Expand sidebar"
           >
-            <img
-              src="/icon.svg"
-              alt=""
+            <HostBrandMark
+              brand={hostBrand}
               className={cn(
-                'size-[1.35rem] dark:invert transition-opacity duration-150',
+                'size-[1.35rem] transition-opacity duration-150',
                 'group-hover/logo-toggle:opacity-0',
               )}
             />
@@ -100,7 +102,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
           </Button>
         </SidebarHeader>
       ) : (
-        <ExpandedAppSidebarHeader onCollapse={toggleSidebar} />
+        <ExpandedAppSidebarHeader onCollapse={toggleSidebar} brand={hostBrand} />
       )}
 
       <div className="relative flex min-h-0 flex-1 flex-col">

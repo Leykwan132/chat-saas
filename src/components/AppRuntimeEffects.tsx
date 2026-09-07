@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
-import { useQuery } from 'convex/react';
 import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import posthog from 'posthog-js';
 import { useLocation } from 'react-router';
-import { api } from '../../convex/_generated/api';
+import { useHostBranding } from '@/hooks/useHostBranding';
 import { applyDocumentFavicon, resolveHostFaviconHref } from '@/lib/hostFavicon';
 import { applyDocumentTitle, resolveHostDocumentTitle } from '@/lib/hostDocumentTitle';
 
@@ -18,15 +17,7 @@ export function ScrollToTop() {
 }
 
 export function HostFavicon() {
-  const hostname = window.location.hostname;
-  const isNativeHost =
-    hostname === 'kilobot.app' ||
-    hostname === 'localhost' ||
-    hostname.endsWith('.localhost');
-  const branding = useQuery(
-    api.whiteLabel.partnerAuthGateway.getBrandingForHostname,
-    isNativeHost ? 'skip' : { hostname },
-  );
+  const branding = useHostBranding();
 
   useEffect(() => {
     applyDocumentFavicon(resolveHostFaviconHref(branding?.logoUrl));

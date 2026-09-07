@@ -2,10 +2,20 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
-const sourcePath = fileURLToPath(new URL('./AgentsSidebar.tsx', import.meta.url));
-const source = readFileSync(sourcePath, 'utf8');
+const source = readFileSync(
+  fileURLToPath(new URL('./AgentsSidebar.tsx', import.meta.url)),
+  'utf8',
+);
+const dashboardSource = readFileSync(
+  fileURLToPath(new URL('../app-sidebar.tsx', import.meta.url)),
+  'utf8',
+);
 
-test('matches the agent workflow sidebar Kilobot lockup spacing', () => {
-  expect(source).toContain("import { ExpandedAppSidebarHeader } from '@/components/ExpandedAppSidebarHeader';");
-  expect(source).toContain('<ExpandedAppSidebarHeader onCollapse={toggleSidebar} />');
+test('both sidebars show the hostname brand instead of a hardcoded Kilobot mark', () => {
+  for (const sidebar of [source, dashboardSource]) {
+    expect(sidebar).toContain('useHostBrand()');
+    expect(sidebar).toContain('<ExpandedAppSidebarHeader onCollapse={toggleSidebar} brand={hostBrand} />');
+    expect(sidebar).toContain('<HostBrandMark');
+    expect(sidebar).not.toContain('/icon.svg');
+  }
 });
