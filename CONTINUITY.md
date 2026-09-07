@@ -3,7 +3,7 @@
 # Snapshot
 
 - 2026-09-07 [USER] Goal: replace Instagram redirect OAuth with Embedded Signup under the same Meta app, using IG-named frontend configuration variables.
-- 2026-09-07 [CODE] Now: Partner Branding has an editable brand name (used on the partner sign-in heading) and a green-check connected-domain indicator; unshipped.
+- 2026-09-07 [CODE] Now: Partner Branding has an editable brand name, a click-to-replace logo preview tile, and a green-check connected-domain indicator; open in PR #101, unshipped.
 - 2026-09-07 [CODE] Next: deploy #100, test ordinary and allowlisted connects for both channels, then verify live message/comment delivery.
 - 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
 - 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
@@ -43,7 +43,7 @@
 
 # Done (recent)
 
-- 2026-09-07 [CODE] Partner Branding brand-name field wired to existing `updateBranding`; connected custom domain shows a green check instead of "is connected" copy; uncommitted.
+- 2026-09-07 [CODE] Partner Branding brand-name field wired to existing `updateBranding`, logo preview tile with hover replace overlay reusing the `AvatarCoverImageEditor` label pattern, and a green-check connected domain; pushed to PR #101.
 - 2026-09-07 [CODE] Implemented Instagram Embedded Signup with Page-linked account persistence and dual routing that preserves existing Instagram Login connections; unshipped.
 - 2026-09-07 [CODE] Messenger Comment-to-Inbox ingestion, deterministic matching, customer-first persistence, private/public sends, outcome counters, and response attribution merged via #98.
 - 2026-09-07 [CODE] Milestone: widget newline preservation and canonical booking confirmation layout shipped on `main` (#96).
@@ -56,7 +56,7 @@
 
 # Receipts
 
-- 2026-09-07 [TOOL] Partner Branding name/domain-check passed 25 focused tests, Node v22 targeted ESLint, `tsc --noEmit -p tsconfig.app.json`, and `git diff --check`.
+- 2026-09-07 [TOOL] Partner Branding name, logo preview, and domain check passed 27 focused tests, Node v22 targeted ESLint, `tsc --noEmit -p tsconfig.app.json`, and `git diff --check`; browser verification blocked by unauthenticated local session.
 - 2026-09-07 [TOOL] Feature-gated Instagram and Messenger Page subscriptions passed 31 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, and `git diff --check`.
 - 2026-09-07 [TOOL] Messenger Comment-to-Inbox passed 53 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, file-size limits, and `git diff --check`.
 - 2026-09-07 [TOOL] Booking-confirmation layout and widget newline preservation passed 31 focused tests, targeted ESLint, and `git diff --check`.
