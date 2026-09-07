@@ -3,8 +3,8 @@
 # Snapshot
 
 - 2026-09-07 [USER] Goal: replace Instagram redirect OAuth with Embedded Signup under the same Meta app, using IG-named frontend configuration variables.
-- 2026-09-07 [TOOL] Now: Instagram Embedded Signup is in review via #99; it uses only `VITE_IG_CONFIG_ID` plus the shared Messenger code-exchange redirect and routes new Page-linked connections through Facebook Graph.
-- 2026-09-07 [CODE] Next: review/merge #99, supply `VITE_IG_CONFIG_ID`, deploy Convex and the frontend, then live-test connect, inbox backfill, inbound webhook, and reply.
+- 2026-09-07 [CODE] Now: Instagram Embedded Signup in #99 associates the linked Facebook Page with `subscribed_fields=feed`; Instagram `comments`/`messages` remain app-level Instagram webhook subscriptions.
+- 2026-09-07 [CODE] Next: deploy the #99 update, retry Instagram connect, then verify app-dashboard Instagram `comments` and `messages` subscriptions with a live comment/message.
 - 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
 - 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
 - 2026-09-06 [CODE] Milestone: Comment-to-Inbox list/edit/delete/activation and Meta page subscriptions are on `main` (#90–#93); comment webhook ingestion remains unshipped (D781).
@@ -37,6 +37,7 @@
 - 2026-09-03 [USER] D777 ACTIVE: each partner customer remains restricted to one assigned workspace and cannot create additional workspaces.
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
 - 2026-09-06 [CODE] I001 OPEN: Hallucinated booking/email-link copy is replaced after generation; unverified claims now receive a safe retry response rather than silence. Remaining gap: playground can briefly stream model text before the saved message is rewritten.
+- 2026-09-07 [USER] I002 RESOLVED: Meta rejected `comments` on the Facebook Page `subscribed_apps` edge with error #100; use valid Page field `feed`, while configuring Instagram-specific fields on the app’s Instagram webhook object.
 
 # Done (recent)
 
@@ -53,7 +54,7 @@
 
 # Receipts
 
-- 2026-09-07 [TOOL] Instagram Embedded Signup passed 13 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, and `git diff --check`.
+- 2026-09-07 [TOOL] Instagram Embedded Signup passed 14 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, and `git diff --check`.
 - 2026-09-07 [TOOL] Messenger Comment-to-Inbox passed 53 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, file-size limits, and `git diff --check`.
 - 2026-09-07 [TOOL] Booking-confirmation layout and widget newline preservation passed 31 focused tests, targeted ESLint, and `git diff --check`.
 - 2026-09-06 [TOOL] Sessionless availability and direct post-collection booking passed 11 booking regression tests, targeted ESLint, TypeScript build checking, and `git diff --check`.

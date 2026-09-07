@@ -56,9 +56,11 @@ export async function listInstagramAccounts(userAccessToken: string) {
   );
 }
 
-async function subscribeInstagramPage(page: PageWithInstagram & { access_token: string }) {
+export async function subscribeInstagramPage(
+  page: PageWithInstagram & { access_token: string },
+) {
   const url = new URL(`${graphBase()}/${page.id}/subscribed_apps`);
-  url.searchParams.set("subscribed_fields", "messages,comments");
+  url.searchParams.set("subscribed_fields", "feed");
   await graphFetch(
     url.toString(),
     {

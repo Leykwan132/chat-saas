@@ -30,7 +30,7 @@ describe("ensureCommentSubscription", () => {
     );
   });
 
-  it("subscribes an Embedded Signup Instagram page through Facebook Graph", async () => {
+  it("associates an Embedded Signup Instagram page through a valid Page field", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -46,7 +46,7 @@ describe("ensureCommentSubscription", () => {
       "graph.facebook.com/v25.0/page-1/subscribed_apps",
     );
     expect(fetchMock.mock.calls[0]?.[0]).toContain(
-      "subscribed_fields=messages%2Ccomments",
+      "subscribed_fields=feed",
     );
   });
 

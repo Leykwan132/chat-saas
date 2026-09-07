@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { listInstagramAccounts } from "./instagramEmbeddedSignup";
+import {
+  listInstagramAccounts,
+  subscribeInstagramPage,
+} from "./instagramEmbeddedSignup";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -34,6 +37,25 @@ describe("Instagram Embedded Signup", () => {
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain("/me/accounts");
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
       "instagram_business_account",
+    );
+  });
+
+  it("associates the linked Page using the supported feed field", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ success: true }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await subscribeInstagramPage({
+      id: "page-1",
+      access_token: "page-token",
+    });
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+      "/page-1/subscribed_apps",
+    );
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(
+      "subscribed_fields=feed",
     );
   });
 });
