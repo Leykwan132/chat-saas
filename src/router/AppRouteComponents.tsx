@@ -5,7 +5,7 @@ import { ConvexProviderWithAuth, useQuery, type ConvexReactClient } from 'convex
 import { Navigate, Outlet, useParams } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import { POST_LOGIN_REDIRECT } from '@/constants';
-import { PostHogIdentifier, ScrollToTop } from '@/components/AppRuntimeEffects';
+import { HostFavicon, PostHogIdentifier, ScrollToTop } from '@/components/AppRuntimeEffects';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Spinner } from '@/components/ui/spinner';
 import { Toaster } from '@/components/ui/sonner';
@@ -176,6 +176,7 @@ function AppContent() {
     <TooltipProvider>
       <AdjustPlanProvider>
         <UpgradeModalProvider>
+          <HostFavicon />
           <PostHogIdentifier />
           <ScrollToTop />
           <Outlet />

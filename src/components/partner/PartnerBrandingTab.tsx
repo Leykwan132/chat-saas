@@ -156,7 +156,8 @@ export function PartnerBrandingTab({
                 ) : null}
               </label>
               <FieldDescription>
-                Shown above the heading on your customers&apos; sign-in page.
+                Shown above the heading on your customers&apos; sign-in page
+                and as the browser tab icon on your domain.
               </FieldDescription>
               {signInPreviewUrl ? (
                 <FieldDescription>

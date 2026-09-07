@@ -62,6 +62,7 @@ describe("PartnerBrandingTab", () => {
     );
 
     expect(markup).toContain('src="https://cdn.test/logo.png"');
+    expect(markup).toContain("browser tab icon");
     expect(markup).toContain("Replace logo");
     expect(markup).toContain("group-hover:opacity-100");
     expect(markup).toContain('for="partner-logo"');
