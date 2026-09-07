@@ -296,6 +296,7 @@ import type * as messengerConnect from "../messengerConnect.js";
 import type * as messengerSend from "../messengerSend.js";
 import type * as messengerSync from "../messengerSync.js";
 import type * as messengerWebhook from "../messengerWebhook.js";
+import type * as messengerWebhookCommentLog from "../messengerWebhookCommentLog.js";
 import type * as metaWebhookShared from "../metaWebhookShared.js";
 import type * as oauthSessions from "../oauthSessions.js";
 import type * as oauthShared from "../oauthShared.js";
@@ -786,6 +787,7 @@ declare const fullApi: ApiFromModules<{
   messengerSend: typeof messengerSend;
   messengerSync: typeof messengerSync;
   messengerWebhook: typeof messengerWebhook;
+  messengerWebhookCommentLog: typeof messengerWebhookCommentLog;
   metaWebhookShared: typeof metaWebhookShared;
   oauthSessions: typeof oauthSessions;
   oauthShared: typeof oauthShared;

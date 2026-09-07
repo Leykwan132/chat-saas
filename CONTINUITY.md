@@ -2,85 +2,16 @@
 
 # Snapshot
 
-- 2026-09-07 [CODE] Web-widget message bubbles preserve canonical confirmation line breaks and safely wrap long references; booking confirmations are grouped in stable schedule, customer, assignment/meeting, reference, and closing sections. Thirty-one focused tests and ESLint passed; unshipped.
-- 2026-09-06 [CODE] Workflow action planning retries invalid structured output up to three times and can influence only configured actions, media, and language; model-written factual guidance was removed. The configured Agent now uses SDK `contextHandler` and `rawRequestResponseHandler` diagnostics to log model context plus every raw request and response, including tool-call traffic; unshipped.
-- 2026-09-06 [CODE] Every AI booking tool now queries `appointmentBookingSessions` for a live session before acting; `getActiveBookingSession` is required before booking replies; unshipped.
-- 2026-09-06 [CODE] Availability previews now run without a session or customer details. An exact requested/selected available slot opens the session; once missing details are supplied, `readyForBooking` triggers immediate creation without another confirmation, and creation revalidates the slot. Diagnostics remain enabled; unshipped.
-- 2026-09-06 [TOOL] Pull request #94 merged live booking-session verification and canonical confirmation safeguards into `main`.
-- 2026-09-06 [TOOL] Pull request #95 is open from `codex/fix-booking-confirmation-race` into `main`; focused booking tests, TypeScript, diagnostics, and diff validation passed.
-- 2026-09-06 [CODE] Chat/playground booking replies no longer send invented “confirmation link emailed” copy; a verified booking uses the canonical confirmation (Meet link only for Google Meet + connected calendar); unshipped.
-- 2026-09-06 [CODE] AI booking `confirming` is the post-availability wait state; it only becomes `booked` after `bookAppointment` succeeds. Slot confirm no longer bumps `updatedAt`, so a failed book can retry the same customer yes; unshipped.
-- 2026-09-06 [CODE] Chat booking confirmations now verify a persisted current booking for the conversation after an AI turn; only that verified booking may send the single canonical confirmation, while an unverified reacted confirmation is suppressed; unshipped.
-- 2026-09-06 [CODE] Customer list and chat-detail Phone fields now use a phone-only presentation helper: WhatsApp usernames and provider user IDs are never displayed as phone numbers, while explicit and legacy numeric phone values remain visible; unshipped.
-- 2026-09-05 [CODE] Removed all Comment-to-Inbox runtime test scaffolding: the testing bypass, demo pages, fake-channel migration, generated API entry, and test-mode-only coverage. Real connected Instagram/Messenger pages are now always required; unshipped.
-- 2026-09-05 [CODE] Comment-to-Inbox now scopes connected page selection and page-validation to the route’s authenticated agent via `defaultAgentId`, so each agent sees and can select only their own Instagram/Messenger channels; unshipped.
-- 2026-09-05 [CODE] Comment-to-Inbox automations now persist `agentId` and scope list, detail, update, and activation operations to that authenticated agent; legacy records without an agent ID are intentionally inaccessible pending a backfill decision; unshipped.
-- 2026-09-05 [CODE] Creating or reactivating a Comment-to-Inbox automation now schedules per-page Meta comment subscriptions, records each page as subscribed or failed, and marks the automation active only after every selected page succeeds; create labels are simplified to “Create”; unshipped.
-- 2026-09-06 [CODE] Comment-to-Inbox edit details now offer a confirmed Delete automation action beside Save changes; the agent-scoped delete removes the automation immediately and cleans its related pages and delivery history in bounded batches; unshipped.
-- 2026-09-06 [CODE] Comment-to-Inbox activation now turns already-subscribed automations on immediately and retries only pending or failed page subscriptions; the edit delete control is now an icon-only trash button; unshipped.
-- 2026-09-06 [CODE] Comment-to-Inbox activation now keeps the switch pending while subscriptions run and shows the exact stored Meta subscription error as a toast on failure; classic Messenger OAuth requests `pages_manage_metadata`, while Embedded Signup still requires that permission in its Meta configuration; unshipped.
-- 2026-09-05 [CODE] Changed the Comment-to-Inbox preview account name from “Luma Studio” to “Your Page” in the post header and public reply; unshipped.
-- 2026-09-04 [CODE] Comment-to-Inbox sits inside Tools below Avatar and uses the shared Avatar-style title, description, and page-header layout; unshipped.
-- 2026-09-04 [TOOL] Created active PostHog flag `enable_comment_to_inbox` (ID 866490) at 100% rollout. Application-level email authorization still limits Comment-to-Inbox visibility and backend access to `leykwan132@gmail.com`.
-- 2026-09-04 [USER] Goal: add a feature-flagged Comment-to-Inbox sidebar feature for `leykwan132@gmail.com`; Comment automations select connected Instagram/Messenger pages, trigger on any comment or keywords, send a private inbox message with an optional public reply, persist the customer first, and report sent/responded metrics. Free workspaces may store one automation; paid workspaces are unlimited. Approved design and implementation plan are at `docs/superpowers/{specs,plans}/2026-09-04-comment-to-inbox*`; partial implementation is uncommitted.
-- 2026-09-04 [TOOL] Pull request #89 is open from `codex/gemini-live-connector` into `main`; the feature remains unshipped pending review.
-- 2026-09-05 [TOOL] Pull request #90 merged the initial Comment-to-Inbox implementation. Pull request #91 merged the agent-scoped page selection and runtime-test-scaffolding cleanup; focused UI coverage passed, while the full suite exceeds this environment's 30-second command cap.
-- 2026-09-05 [TOOL] Pull request #92 merged automatic selected-page subscriptions and active-on-success Comment-to-Inbox creation; focused verification passed.
-- 2026-09-06 [TOOL] Pull request #93 is open from `codex/delete-comment-automations` into `main` for confirmed, agent-scoped Comment-to-Inbox deletion and bounded related-record cleanup; focused verification passed.
-- 2026-09-05 [TOOL] Merged `origin/main` at `e28e6ad` into `codex/comment-to-inbox`, retaining both Avatar connector and Comment-to-Inbox shared navigation/feature-flag registrations; unshipped.
-- 2026-09-05 [CODE] Fixed Comment-to-Inbox build typing by preserving the automation trigger literal union and narrowing queried pages to Instagram/Messenger with a generic type predicate before rendering the modal; unshipped.
-- 2026-09-04 [CODE] Background preview mode now omits the Start Chat CTA and dimming overlay while keeping backdrop media clipped to the avatar frame, including portrait avatars. Unshipped.
-- 2026-09-04 [CODE] Cover & background preview opens on the Cover image view; its end-of-row toggle switches to the avatar-over-background view and back. Unshipped.
-- 2026-09-04 [CODE] Cover & background preview now has a header toggle between avatar-over-background and cover/idle views; portrait background media is clipped to a centered portrait frame. Unshipped.
-- 2026-09-04 [CODE] Cover & background modal preview now keeps background media behind the avatar preview; cover media is not layered into that backdrop preview. Unshipped.
-- 2026-09-04 [CODE] Avatar setup’s Cover & background tab now switches the top preview to a static background/cover media stage with the Start Chat treatment instead of the selected avatar preview. Unshipped.
-- 2026-09-04 [CODE] Avatar Opening text and Voice save actions now appear only while their fields are dirty; Opening text saves directly below its input. Unshipped.
-- 2026-09-04 [CODE] Avatar Opening text and Voice now share one row when the context editor has no media panel, removing the unused right-side column. Unshipped.
-- 2026-09-04 [CODE] Avatar Edit modal now uses a responsive `sm:max-w-5xl` width so desktop editing has more room while mobile remains viewport-safe. Unshipped.
-- 2026-09-04 [CODE] Configured Avatar overview Edit now opens an in-page modal with the shared Preview/Avatar/Background editor; the standalone `/avatar/create` route still uses the same editor. Unshipped.
-- 2026-09-04 [CODE] Avatar Preview now fills its dashboard column, and Cover/Background editing is consolidated in the Edit page’s Background tab; setup no longer shows the old chooser title or description. Unshipped.
-- 2026-09-04 [CODE] Avatar overview now uses a ghost Edit action, and avatar setup shows a top Preview with line tabs for Avatar/Background plus one Selected card before orientation groups. Unshipped.
-- 2026-09-04 [CODE] Configured Avatar pages now expose a primary Share action with Live link/embed instructions in a modal, while Preview has an adjacent new-tab action. Unshipped.
-- 2026-09-04 [CODE] Avatar settings now keep Instructions below the side-by-side section while Cover and Background share a responsive row on the right. Unshipped.
-- 2026-09-04 [CODE] Avatar cover media now accepts MP4/WebM alongside PNG/JPEG/WebP, persists its media type, and previews videos in the editor and idle stage. Unshipped.
-- 2026-09-04 [CODE] Avatar settings now place Opening text and Voice in a stacked left column, Cover image and Background in a stacked right column, and separate them responsively with a center separator. Media uses a single workflow-style preview/upload tile with hover replacement affordance. Unshipped.
-- 2026-09-04 [CODE] Avatar cover images are enabled again: managers can upload them below Preview, and dashboard/public chat stages use them before a session starts. Unshipped.
-- 2026-09-04 [CODE] Avatar cover/background upload keys now use the persisted workspace Avatar configuration agent, preventing multi-agent workspaces from rejecting valid R2 background uploads. Unshipped.
-- 2026-09-04 [CODE] Start Chat keeps its original pill shape with a white button body and a thicker horizontal dark-to-light green gradient border; its larger size and neutral idle-cover overlay remain in place. Unshipped.
-- 2026-09-04 [CODE] Avatar Start Chat is larger and uses a left-to-right dark-to-light green gradient while the neutral idle-cover overlay remains in place. Unshipped.
-- 2026-09-03 [CODE] Idle Avatar cover previews now receive a neutral dim overlay, while Start Chat uses a thicker green outline and remains the top visual focus. Unshipped.
-- 2026-09-03 [CODE] Avatar Start Chat now has a slightly thick green outline, and clicking it shows a top-layer Connecting overlay during session startup. Unshipped.
-- 2026-09-03 [CODE] Avatar stage media layers no longer intercept Start Chat; the idle control is explicitly top-layer and interactive. Unshipped.
-- 2026-09-03 [CODE] Avatar managers can upload PNG/JPEG/WebP or MP4/WebM backgrounds to R2; public Avatar sessions composite them behind keyed LiveAvatar streams in the browser. Unshipped.
-- 2026-09-03 [CODE] Avatar setup now shows four background-free Default choices, then remaining eligible Landscape and Portrait choices; the legacy Language and Voice step is removed for Gemini Live. Unshipped.
-- 2026-09-03 [CODE] Supersedes the prior Avatar settings order: Opening text and Voice now share a responsive row above Instructions. Unshipped.
-- 2026-09-03 [CODE] Avatar cover-image controls and preview handoff are hidden from dashboard/public UI while the R2 storage, schema, and editor implementation remain available for future reuse. Unshipped.
-- 2026-09-03 [CODE] Avatar settings now show a compact, title-only Cover image block below Preview, with Preview matching Instructions typography. Unshipped.
-- 2026-09-03 [CODE] Avatar settings now support manager-uploaded R2 cover images, and dashboard/public previews show a centered “Connecting...” overlay while a LiveAvatar session starts. Unshipped.
-- 2026-09-03 [CODE] Gemini Live Avatar connector remains implemented on `codex/gemini-live-connector`: managers save a provider context, LITE tokens use server-only `HEYGEN_GEMINI_SECRET_ID`, and browser turns bypass KiloBot. Focused tests and the Node 22 build passed before this merge; sandbox verification awaits a configured local Convex deployment.
-- 2026-09-03 [CODE] Avatar End now records `session.stopped` for both active sessions and canceled in-flight starts; event persistence strips request-only fields so Convex can finalize the session and release its capacity slot. Unshipped.
-- 2026-09-03 [CODE] Avatar context editing now presents the prompt field as “Instructions” without the extra bordered outer container. Unshipped.
-- 2026-09-03 [CODE] Avatar calls now place controls vertically on the right edge with no speaking/status or response-subtitle overlays. Unshipped.
-- 2026-09-03 [CODE] Avatar controls now show only a centered-right End button during calls and bottom-center Start Chat before calls, with no speaking/listening status labels. Unshipped.
-- 2026-09-03 [CODE] Avatar managers can choose one of the 30 supported Gemini Live voices; selected voices persist per Avatar configuration and are used for new LITE sessions. Opening text is composed into the saved provider system prompt instead of sent as a separate provider field. Unshipped.
-- 2026-09-03 [CODE] Avatar settings now place the Voice selector below the Context and Opening text fields, use the shorter “Voice” heading, and render the selector text at a larger size. Unshipped.
-- 2026-09-03 [CODE] Avatar settings now show only the single-line Voice, Instructions, and Opening text labels; the extra Voice and Context headings are removed. Unshipped.
-- 2026-09-03 [CODE] Avatar Instructions and Opening text labels now match Voice typography, and the Voice dropdown sizes to its content. Unshipped.
-- 2026-09-03 [CODE] Avatar context saves now include the provider-required `opening_text` field while retaining the opening message in the system prompt. Unshipped.
-- 2026-09-03 [CODE] Avatar setup now groups catalog choices into Landscape-first and Portrait sections using preview aspect ratios, and portrait previews fit without cropping. Unshipped.
-- 2026-09-03 [CODE] Configured Avatar overviews now expose a copyable public Live link and a new-tab Preview action below the video preview. Unshipped.
-- 2026-09-03 [CODE] Avatar public links now resolve to the active localhost origin during local testing and the production host elsewhere. Unshipped.
-- 2026-09-03 [CODE] Public Avatar embeds now fill the dynamic viewport on mobile and desktop, while the dashboard Live link sits above the website embed panel. Unshipped.
-- 2026-09-03 [CODE] Supersedes the previous Live-link placement: the dashboard now shows it below the embed code with a text copy action and icon-only preview action. Unshipped.
-- 2026-09-03 [CODE] Supersedes the previous Live-link controls: the URL now uses a muted code block with an in-block copy icon, and the external-link icon sits beside the heading. Unshipped.
-- 2026-09-03 [CODE] Removed the explanatory sentence beneath the Avatar Context heading for a cleaner settings layout. Unshipped.
-- 2026-09-01 [USER] Goal: test the white-label Partner Programme locally on `codex/white-label-partner-portal`.
-- 2026-09-01 [TOOL] Now: merging current `origin/main` into the white-label branch; concurrent Overview-test and Workspace-page edits are being reconciled without removing partner access controls.
-- 2026-08-31 [CODE] Now: `origin/main` adds WhatsApp username recipients and BSUID-change continuity; both remain unshipped.
-- 2026-08-27 [CODE] Now: mobile inbox/workspace behaviour and Google Calendar What’s new copy are present on `origin/main`; those customer-facing changes remain unshipped.
-- 2026-08-26 [CODE] Now: partner-customer provisioning, workspace access, retained credentials, deletion, role control, and permission-state work is committed locally as `734c0e9`; it remains unshipped.
-- 2026-08-26 [CODE] Next: deploy the committed Convex changes only with explicit approval; Convex code generation requires explicit outbound-data approval.
-- 2026-08-19 [ASSUMPTION] White-label work is unshipped; no release-changelog entry has been added.
+- 2026-09-07 [USER] Goal: inspect Convex logs for every event that enters `/webhook/messenger`, especially Page post comments.
+- 2026-09-07 [CODE] Now: Messenger webhook logs the raw Meta body/event JSON as `:raw-meta` strings, plus comment skip-sends and `[messenger-send]` request/result.
+- 2026-09-07 [CODE] Next: after a live comment, read `[messenger-webhook] receive:raw-meta` and `receive:change-event:raw-meta` for the exact Meta JSON.
+- 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
+- 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
+- 2026-09-06 [CODE] Milestone: Comment-to-Inbox list/edit/delete/activation and Meta page subscriptions are on `main` (#90–#93); comment webhook ingestion remains unshipped (D781).
+- 2026-09-04 [USER] Goal: feature-flagged Comment-to-Inbox for `leykwan132@gmail.com`; design/plan at `docs/superpowers/{specs,plans}/2026-09-04-comment-to-inbox*`.
+- 2026-09-04 [TOOL] PostHog flag `enable_comment_to_inbox` (ID 866490) is 100% rolled out; app email allowlist still limits access.
+- 2026-09-03 [CODE] Milestone: Gemini Live Avatar connector, cover/background media, and setup editor shipped via #89.
+- 2026-09-01 [USER] White-label Partner Programme remains unshipped on `codex/white-label-partner-portal`.
 
 # Decisions
 
@@ -107,139 +38,19 @@
 
 # Done (recent)
 
-- 2026-09-07 [CODE] Preserved message newlines in the web widget and reformatted canonical booking confirmations into readable ordered sections; unshipped.
-- 2026-09-06 [CODE] Decoupled availability previews from booking sessions/details and chained confirmed slots to immediate booking once required fields are complete; unshipped.
-- 2026-09-06 [CODE] Removed the asynchronous reaction dependency from slot confirmation and removed empty-list booking reply suppression; unshipped.
-- 2026-09-06 [CODE] Booking tools query the live `appointmentBookingSessions` row before create, confirm, update, cancel, or calendar list/edit; unshipped.
-- 2026-09-06 [CODE] Invented booking confirmation emails/links are replaced with the canonical confirmation when a booking exists, or dropped when it does not; unshipped.
-- 2026-09-06 [CODE] `confirmBookingSlot` is idempotent for the same offered slot and no longer advances `updatedAt`, so a failed `bookAppointment` can retry without a new customer message; unshipped.
-- 2026-09-05 [CODE] Simplified the Comment-to-Inbox edit modal to a single “Automation Details” form, removing the unused Details/Stats navigation and delivery Stats panel; unshipped.
-- 2026-09-05 [CODE] Comment-to-Inbox edits now restore saved page selections; testing-mode edits restore all visible demo pages because fake page IDs are intentionally not persisted; unshipped.
-- 2026-09-05 [CODE] Replaced the Comment-to-Inbox sent-count browser title with the shared styled tooltip, showing the exact sent-message total on hover; unshipped.
-- 2026-09-05 [CODE] Hardened Comment-to-Inbox edit hydration so a loaded automation explicitly fills its name, pages, keywords, private message, public reply, and preview regardless of detail-query timing; unshipped.
-- 2026-09-05 [CODE] Comment-to-Inbox edit clicks now open the modal immediately with an edit shell and skeleton fields while automation details load, then remount the prefilled form when data arrives; unshipped.
-- 2026-09-05 [CODE] Comment-to-Inbox automation clicks now reuse the create form for editing with prefilled values and persisted page/message updates; list rows show a people icon with the sent count and a hover label; unshipped.
-- 2026-09-05 [CODE] Comment-to-Inbox Save automation now shows a spinning loader and “Saving…” while the request is in progress, with duplicate submits disabled; unshipped.
-- 2026-09-05 [CODE] Made the Comment-to-Inbox empty state actionable with a Create automation button and a subtle neutral panel background; unshipped.
-- 2026-09-05 [CODE] Replaced the plain Comment-to-Inbox “No automations yet” box with a dedicated empty component containing an icon and creation guidance; unshipped.
-- 2026-09-05 [CODE] Made Comment-to-Inbox Name and Send message required, with trim-aware red inline warnings shown after an invalid Save attempt; unshipped.
-- 2026-09-05 [TOOL] Updated both fake test channels to `defaultAgentId` `j9770cdvys5z6859qafj8x5pjn8c723e` (`dawdwa`), selected from the current page context; follow-up dry-run confirmed both assignments.
-- 2026-09-05 [CODE] Hardened the fake-channel migration to require an explicit personal agent when a user has multiple personal agents, preventing accidental cross-agent assignment.
-- 2026-09-05 [CODE] Replaced the Comment-to-Inbox page’s plain loading text with accessible skeleton automation rows while data is loading; unshipped.
-- 2026-09-05 [CODE] Added an idempotent Convex migration for Comment-to-Inbox test channels, targeting the requested user by email and supporting a dry-run before writes.
-- 2026-09-05 [TOOL] Seeded one connected fake Instagram channel and one connected fake Messenger channel for `leykwan132@gmail.com` in the configured dev deployment; channel IDs are `kd7asm5ndznkp6qxe02gtytqes8dvfcp` and `kd7d6mcvavgpskncsvd6ggg4ss8dt5ht`.
-- 2026-09-05 [CODE] Increased the Comment-to-Inbox automation modal height from 90vh to 95vh while retaining overflow scrolling; unshipped.
-- 2026-09-05 [CODE] Increased the Comment-to-Inbox automation modal from `sm:max-w-5xl` to `sm:max-w-6xl` while preserving viewport-safe scrolling; unshipped.
-- 2026-09-05 [CODE] Capped the demo Comment-to-Inbox public reply at 16rem so long response text wraps within the Instagram-style thread preview; unshipped.
-- 2026-09-05 [CODE] Removed checks from selected Comment-to-Inbox page cards, added one checked live-status line per selected page, and blocked saving with an “At least one page is needed” state when none are selected; unshipped.
-- 2026-09-05 [CODE] Bounded long Comment-to-Inbox preview comments and outgoing messages so they wrap within the preview column instead of expanding the modal; unshipped.
-- 2026-09-05 [CODE] Indented the Instagram-style public reply beneath the original comment and kept the preview free of a Hide replies control; unshipped.
-- 2026-09-05 [CODE] Reworked the Comment-to-Inbox public reply preview into an Instagram-style thread row with the account avatar, Luma Studio name, reply content, and “now” timestamp; unshipped.
-- 2026-09-05 [CODE] Updated the Comment-to-Inbox preview outcome copy to “Message sent to alex.m”; unshipped.
-- 2026-09-05 [CODE] Increased the selected page-card outline to a 3px dark-green border while keeping the white background and top-aligned check; unshipped.
-- 2026-09-05 [CODE] Changed selected page cards to a thick dark-green border with a white background and aligned their check marks to the top edge; unshipped.
-- 2026-09-05 [CODE] Strengthened selected page cards with a light green active state and added separators around the Name, comment-behavior, and Reply-to-comment sections; unshipped.
-- 2026-09-05 [CODE] Removed the Pages heading, added active check marks to selected page cards, and separated Reply to comment into its own section below Send message; unshipped.
-- 2026-09-05 [CODE] Moved Comment-to-Inbox page selection above Name into compact two-column clickable cards, defaulting all available pages to selected; renamed the outgoing section “Send message”; unshipped.
-- 2026-09-05 [CODE] Tightened the internal spacing between the Comment-to-Inbox Send label and message textarea; unshipped.
-- 2026-09-05 [CODE] Grouped the Comment-to-Inbox “If comment contains” and “Send” controls into one section with tighter internal spacing; unshipped.
-- 2026-09-05 [CODE] Increased vertical spacing between Comment-to-Inbox form sections and slightly widened spacing within Send for clearer grouping; unshipped.
-- 2026-09-05 [CODE] Removed the visible “Private message” label from the Comment-to-Inbox Send section while retaining an accessible message textarea; unshipped.
-- 2026-09-05 [CODE] Removed the “Leave empty for any word.” helper text from the Comment-to-Inbox keyword chip section; unshipped.
-- 2026-09-05 [CODE] Replaced Comment-to-Inbox keyword toggles with an “If comment contains” chip editor supporting multiple removable keywords, and grouped outgoing actions under “Send”; unshipped.
-- 2026-09-05 [CODE] Renamed the Comment-to-Inbox form label from “Matching keyword” to “Keyword Matching”; unshipped.
-- 2026-09-05 [CODE] Reduced the Comment-to-Inbox sample media frame back to a compact 4:3 ratio and shrank the Lucide image icon; unshipped.
-- 2026-09-05 [CODE] Changed the Comment-to-Inbox sample media area from 4:3 to a square 1:1 Instagram-style post frame; unshipped.
-- 2026-09-05 [CODE] Replaced the sample post’s Kilobot asset with Lucide’s neutral image icon; unshipped.
-- 2026-09-05 [CODE] Replaced the Comment-to-Inbox sample post’s gradient artwork and text with a neutral background and the existing logo image; unshipped.
-- 2026-09-05 [CODE] Comment-to-Inbox preview now hides empty outcomes, shows configured public replies with a business icon, and shows configured private messages with a check-mark “Message sent” row; unshipped.
-- 2026-09-05 [CODE] Removed the redundant “Sample post” label and Preview description from the Comment-to-Inbox preview.
-- 2026-09-05 [CODE] Changed the sample post preview to a neutral zinc/stone palette for a quieter placeholder visual.
-- 2026-09-05 [CODE] Simplified the Comment-to-Inbox preview to one main container with divider rows instead of nested outcome cards.
-- 2026-09-05 [CODE] The Comment-to-Inbox preview now adapts its sample comment so any entered keyword is highlighted.
-- 2026-09-05 [CODE] Added a live right-side Comment-to-Inbox preview with a sample post, comment, public reply, private message, and keyword highlighting; unshipped.
-- 2026-09-05 [CODE] Added the requested question mark to the Comment-to-Inbox “Reply to comment?” label; unshipped.
-- 2026-09-05 [CODE] Testing mode now supplies demo Instagram and Facebook/Messenger pages for exercising the automation form without real connections; fake page IDs are excluded from saved test automations.
-- 2026-09-05 [CODE] Added helper text explaining that the Comment-to-Inbox “Reply to comment” message is used when a comment matches a keyword; unshipped.
-- 2026-09-05 [CODE] Renamed the conditional Comment-to-Inbox public reply field to “Message”; unshipped.
-- 2026-09-05 [USER] Enabled the Comment-to-Inbox testing bypass by setting shared `isTesting` to true; revert before release.
-- 2026-09-05 [CODE] Added a shared Comment-to-Inbox `isTesting` switch, defaulting to false, that bypasses the connected-page creation gate and empty-page validation for local automation-form testing; unshipped.
-- 2026-09-05 [CODE] Comment-to-Inbox page selection now renders each connected page as an icon-led Instagram/Messenger row with a trailing switch; unshipped.
-- 2026-09-05 [CODE] Comment-to-Inbox now labels the optional public action “Reply to comment” and shows a connected-page empty state with a Channels link when no Instagram or Messenger pages are available; unshipped.
-- 2026-09-04 [CODE] Removed the Start Chat button from the Background preview and kept portrait background media fitted to the human frame. Unshipped.
-- 2026-09-04 [CODE] Set the Cover & background preview toggle’s initial state to Cover image, with Background as the click-through state. Unshipped.
-- 2026-09-04 [CODE] Added a Preview-row toggle for Cover image versus Background and matched portrait backdrop bounds to the avatar frame. Unshipped.
-- 2026-09-04 [CODE] Corrected the Cover & background preview layering so background media sits behind the avatar preview while cover remains an independent idle asset. Unshipped.
-- 2026-09-04 [CODE] Added a Cover & background setup tab preview that layers configured image/video media and cover content without starting a live session. Unshipped.
-- 2026-09-04 [CODE] Added dirty-state-only save buttons for Avatar Opening text and Gemini Live Voice, placing the Opening text action directly beneath its input. Unshipped.
-- 2026-09-04 [CODE] Placed the Avatar Opening text and Voice controls side-by-side in the context editor when media controls are absent. Unshipped.
-- 2026-09-04 [CODE] Increased the responsive Edit modal width to 5xl and added a regression assertion for the desktop breakpoint. Unshipped.
-- 2026-09-04 [CODE] Added a reusable Avatar setup editor and opened it from the overview’s ghost Edit action in a scrollable modal; standalone creation remains available. Unshipped.
-- 2026-09-04 [CODE] Removed the dashboard preview width cap, moved Cover and Background editors into Edit → Background, and removed the redundant Avatar chooser heading/copy. Unshipped.
-- 2026-09-04 [CODE] Reworked Avatar setup navigation and selection hierarchy, added the background media tab and top preview, replaced Default with a single Selected item, and simplified the overview action to ghost Edit; unshipped.
-- 2026-09-04 [CODE] Added a reusable Avatar Share dialog, moved duplicate Live link/embed panels into it, and added a new-tab Preview icon beside the Preview heading; unshipped.
-- 2026-09-04 [CODE] Moved Instructions below the split Avatar settings area and aligned the Cover and Background upload tiles in one responsive row; unshipped.
-- 2026-09-04 [CODE] Extended the R2-backed Avatar cover component for MP4/WebM uploads with video-specific validation, persisted media type, and autoplaying editor/stage previews; unshipped.
-- 2026-09-04 [CODE] Reorganized Avatar settings into separated context and media columns, stacked each field group, and replaced media action buttons with one clickable upload/replace preview tile per asset. Unshipped.
-- 2026-09-04 [CODE] Restored the R2-backed Avatar cover-image editor and passed its configured cover URL to dashboard and public stages as the idle chat image; unshipped.
-- 2026-09-04 [CODE] Fixed Avatar R2 media uploads by generating and validating keys against the workspace Avatar configuration namespace instead of the requesting route agent; unshipped.
-- 2026-09-04 [CODE] Increased the Start Chat gradient border to 6px while preserving its original pill shape and white button body; unshipped.
-- 2026-09-04 [CODE] Corrected the Start Chat treatment so only the original pill-shaped border changes to a horizontal gradient while the button remains white; unshipped.
-- 2026-09-04 [CODE] Enlarged Start Chat and added its horizontal green gradient styling without changing the click-safe layering; unshipped.
-- 2026-09-03 [CODE] Strengthened the Avatar Start Chat border and added a neutral idle-cover overlay for clearer call-to-action focus; unshipped.
-- 2026-09-03 [CODE] Added green Start Chat styling and guaranteed the Connecting overlay covers the stage immediately during startup; unshipped.
-- 2026-09-03 [CODE] Fixed public Avatar Start Chat clicks after background compositing by isolating media hit testing and elevating the control layer; unshipped.
-- 2026-09-03 [CODE] Added R2-backed Avatar background image/video upload, replacement, removal, dashboard controls, and full-screen/public-stage compositing; unshipped.
-- 2026-09-03 [CODE] Simplified Avatar creation to curated background-free avatar choices with four Defaults and removed legacy setup voice/language selection; avatar-only persistence now supports Gemini Live.
-- 2026-09-03 [CODE] Reordered Avatar Opening text and Voice into a shared responsive row above Instructions.
-- 2026-09-03 [CODE] Hid the Avatar cover-image controls and preview handoff while preserving the R2-backed implementation for later reuse.
-- 2026-09-02 [CODE] Added LiveAvatar Gemini connector session tokens, manager-editable provider context, and direct connector-owned Avatar conversations; unshipped.
-- 2026-09-03 [CODE] Added R2-backed Avatar cover image upload, replacement, removal, and preview handoff plus a loading overlay during session startup; unshipped.
-- 2026-09-03 [CODE] Refined Avatar Preview and Cover image settings into matching, compact title-led sections; unshipped.
-- 2026-09-03 [CODE] Added the Gemini Live voice catalog and manager voice selector, persisted the choice, and embedded Avatar opening text into the provider system prompt; unshipped.
-- 2026-09-03 [CODE] Refined the Voice selector order, label, and typography for clearer Avatar settings.
-- 2026-09-03 [CODE] Flattened the Avatar settings labels and removed the redundant Voice and Context headings.
-- 2026-09-03 [CODE] Matched Avatar setting label sizes and made the Voice selector intrinsic-width.
-- 2026-09-03 [CODE] Fixed LiveAvatar context saves by restoring the required provider opening-text field.
-- 2026-09-03 [CODE] Added aspect-ratio-based Avatar orientation grouping and non-cropping portrait preview rendering.
-- 2026-09-03 [CODE] Removed the redundant Avatar Context description text.
-- 2026-09-03 [CODE] Hardened Avatar teardown so explicit End releases the backend session slot; unshipped.
-- 2026-09-03 [CODE] Simplified the Avatar context editor presentation and renamed its prompt label to “Instructions”; unshipped.
-- 2026-09-03 [CODE] Added right-edge call controls and centered AI response subtitles to the Avatar stage; unshipped.
-- 2026-09-03 [CODE] Refined Avatar controls and subtitle weight for the requested call-stage layout; unshipped.
-- 2026-09-03 [CODE] Moved the inactive Avatar Start Chat control to the bottom center of the video stage; unshipped.
-- 2026-09-03 [CODE] Removed the idle “Listening” label while keeping the speaking indicator during Avatar calls; unshipped.
-- 2026-09-03 [CODE] Lowered Avatar subtitles and softened their weight/stroke to prevent doubled-looking glyphs; unshipped.
-- 2026-09-03 [CODE] Increased subtitle weight to extra-bold and changed the outline/shadow to neutral tones; unshipped.
-- 2026-09-03 [CODE] Removed the “KiloBot is speaking” status pill from the Avatar stage; unshipped.
-- 2026-09-03 [CODE] Removed response subtitles from the Avatar stage for a clean video presentation; unshipped.
-- 2026-09-03 [CODE] Tightened the Live link heading and external-link icon spacing to match the compact reference layout; unshipped.
-- 2026-09-03 [CODE] Avatar sessions now close after eight seconds of silence, reset the timeout during speech, and record `idle_timeout` when they end automatically; unshipped.
-- 2026-09-03 [CODE] Avatar sessions now show “Chat closing in 3”, “2”, and “1” at the top during the final three idle seconds; unshipped.
-- 2026-08-31 [CODE] Added WhatsApp username recipients and BSUID-change continuity; both customer-facing changes are unshipped.
-- 2026-08-27 [CODE] Added responsive mobile inbox/workspace navigation, demo data, accessible customer details, and robust switcher search behaviour; unshipped.
-- 2026-08-27 [CODE] Added Google Calendar Support to What’s new and removed the Model Support New badge; unshipped.
-- 2026-08-26 [CODE] Prevented deleted Send Media nodes from crashing the Workflow editor; unshipped.
-- 2026-08-26 [CODE] Completed partner provisioning, assigned-workspace-only access, credentials, deletion, role controls, and permissions work in local commit `734c0e9`; unshipped.
-- 2026-09-03 [CODE] Added a regression guard confirming partner customers cannot create additional workspaces; unshipped.
+- 2026-09-07 [CODE] Logged raw Meta webhook JSON beside Messenger comment and send diagnostics; unshipped.
+- 2026-09-07 [CODE] Milestone: widget newline preservation and canonical booking confirmation layout shipped on `main` (#96).
+- 2026-09-06 [CODE] Milestone: sessionless availability, live booking-session checks, and confirmation-race fixes shipped on `main` (#94–#96).
+- 2026-09-06 [CODE] Milestone: Comment-to-Inbox delete, activation, and subscription UX shipped on `main` (#90–#93).
+- 2026-09-03 [CODE] Milestone: Gemini Live Avatar connector and editor shipped on `main` (#89).
 
 # Working set
 
-- 2026-09-07 [CODE] `convex/{appointmentBooking/{availability.ts,fields.ts,sessions.ts},appointmentBookingFields.test.ts,appointmentBookingStatus.test.ts,chat/{inbox.ts,threads.ts,workflowPromptBooking.test.ts,workflowActionExecution.ts,workflowActionPlanner.ts,workflowActionPlanner.test.ts},doubleSave.test.ts}`; `src/widget/{styles.css,WidgetComposer.test.ts}`
-- 2026-09-03 [CODE] `convex/{avatar.ts,avatarContext.ts,avatarCore.ts,avatarProvider.ts,avatarSession.ts,avatarLifecycle.ts,schema.ts}`
-- 2026-09-03 [CODE] `convex/{avatarCover.ts,avatarSessionCapacity.ts,media/r2.ts}` and `src/components/avatar/{AvatarCoverImageEditor.tsx,AvatarBackgroundEditor.tsx,avatarBackgroundCompositor.ts}`
-- 2026-09-03 [CODE] `shared/geminiLiveVoices.ts`
-- 2026-09-03 [CODE] `src/{pages/AvatarPage.tsx,pages/AvatarCreatePage.tsx,components/avatar/{AvatarLiveLink.tsx,AvatarGeminiVoiceSelector.tsx,avatarOrientation.ts},lib/avatarEmbed.ts}`
-- 2026-09-01 [CODE] `convex/whiteLabel/`
-- 2026-09-01 [CODE] `convex/{schema.ts,authUtils.ts,teamHelpers.ts}`
-- 2026-09-01 [CODE] `src/{pages/PartnerPage.tsx,pages/WorkspacePage.tsx,components/partner/}`
-- 2026-09-01 [CODE] `src/lib/whiteLabelApi.ts`
-- 2026-09-01 [CODE] `convex/{agentOverview.test.ts,agentOverviewTestHelpers.ts,avatarConversationIdentity.test.ts}`
-- 2026-09-01 [CODE] `docs/superpowers/specs/2026-08-19-partner-custom-hostnames-design.md`
-- 2026-09-01 [CODE] `docs/superpowers/specs/2026-08-24-partner-active-customer-accounts-design.md`
+- 2026-09-07 [CODE] `convex/{http.ts,messengerWebhook.ts,messengerWebhookCommentLog.ts,chat/channelSend.ts}`
 
 # Receipts
 
+- 2026-09-07 [TOOL] Messenger raw-meta event logging passed the comment log helper test, Node v22 ESLint, and `git diff --check`.
 - 2026-09-07 [TOOL] Booking-confirmation layout and widget newline preservation passed 31 focused tests, targeted ESLint, and `git diff --check`.
 - 2026-09-06 [TOOL] Sessionless availability and direct post-collection booking passed 11 booking regression tests, targeted ESLint, TypeScript build checking, and `git diff --check`.
 - 2026-09-05 [TOOL] Comment-to-Inbox single-form edit modal passed 12 focused UI tests, Node v22 ESLint, and `git diff --check`.
@@ -251,104 +62,4 @@
 - 2026-09-05 [TOOL] Comment-to-Inbox detail modal passed 9 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
 - 2026-09-05 [TOOL] Comment-to-Inbox Save spinner passed 8 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
 - 2026-09-05 [TOOL] Comment-to-Inbox empty-state action and neutral background passed 8 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox empty-state update passed 8 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Required-field validation passed 7 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Personal-agent channel assignment passed Convex deployment/typechecking, agent-candidate dry-run, targeted update, idempotency dry-run, targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox loading skeleton passed 6 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Test-channel migration passed Convex deployment/typechecking, exact-user dry-run, write, idempotency dry-run, targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Automation-modal height update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Automation-modal width update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Public-reply max-width update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Page-selection status update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Preview width containment passed its focused UI test, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Indented public-reply preview update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Instagram-style public reply preview passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Message-recipient preview copy update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Thicker selected page-card border update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Selected page-card border and check alignment update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Active page-card styling and three-section separators passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Page-card active state and Reply-to-comment section separation passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Selectable page-card layout and Send-message copy passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Send-label spacing update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox keyword-and-Send grouping update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox section-spacing update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Private-message label removal passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Keyword helper-text removal passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox keyword-chip and Send-section update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Keyword Matching label update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Compact sample-post sizing update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Square Instagram-style sample-post update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Lucide image-icon sample-post update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Neutral logo sample-post update passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Conditional Comment-to-Inbox outcome rows passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox Preview text cleanup passed 3 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Neutral sample-post palette passed 3 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox preview container simplification passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox matching-keyword copy and live sample-flow preview passed 5 focused UI tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox question-mark label passed 4 focused tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox demo-page fixtures passed 4 focused UI tests, the existing Comment-to-Inbox helper tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox reply explanation passed 4 focused tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox public reply field rename passed 4 focused tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox testing-mode bypass passed the UI bypass regression, the existing Comment-to-Inbox focused tests, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox page-picker icon and switch rendering passed focused Vitest coverage, Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-05 [TOOL] Comment-to-Inbox label and no-connected-page UI passed focused Vitest coverage (2 tests), Node v22 targeted ESLint, and `git diff --check`.
-- 2026-09-04 [TOOL] Background-preview cleanup passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Cover-first preview toggle passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Cover/background preview toggle and portrait framing passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Background-layer correction passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Cover/background preview checks passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Dirty-state save controls passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] One-row context layout passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Modal-width regression passed the AvatarPage test (4/4) and targeted Node v22 ESLint.
-- 2026-09-04 [TOOL] Edit-modal extraction passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, `git diff --check`, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Full-width preview and Edit-page media checks passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, diff validation, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Avatar setup and Edit-action checks passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, diff validation, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Share-dialog and Preview-link checks passed 85 focused Avatar/Convex tests, Node v22 targeted ESLint, diff validation, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Avatar settings layout checks passed 82 focused Avatar/Convex tests, Node v22 targeted ESLint, diff validation, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Video-cover focused tests passed 82 Avatar/Convex tests, Node v22 targeted ESLint, diff validation, and the Node v22 production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Avatar settings layout and workflow-style media tiles passed 81 Convex/Avatar/page tests, Node v22 targeted ESLint, diff validation, and the production build; Vite reported only the existing metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Cover-image restoration passed 81 Convex/Avatar/page tests, Node v22 targeted ESLint, diff validation, and the production build; Vite reported only the existing metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Avatar background ownership regression passed 66 Convex and Avatar tests, Node v22 targeted ESLint, and diff validation.
-- 2026-09-02 [TOOL] Gemini Avatar focused suite passed 27 tests and Node v22 production build passed. `bunx convex codegen` was blocked because the worktree lacked `CONVEX_DEPLOYMENT`.
-- 2026-08-31 [TOOL] WhatsApp username-recipient focused suite passed 19 tests, Node v22 TypeScript, changed-backend lint, and diff validation; unrelated full-suite failures remain.
-- 2026-08-27 [TOOL] Mobile inbox/workspace focused tests, targeted lint, diff validation, and Node v22 production build passed.
-- 2026-08-26 [TOOL] Before `734c0e9`, 15 focused partner/workspace regressions and Node v22 TypeScript passed.
-- 2026-08-25 [TOOL] Partner-created customer workspace regression, related auth/workspace suites, Node v22 production build, targeted lint, and diff validation passed.
-- 2026-08-25 [TOOL] A bounded partner-customer workspace migration ran successfully against the configured Convex development deployment and its temporary entrypoint was removed.
-- 2026-09-03 [TOOL] Focused customer-workspace regression passed for the explicit no-additional-workspace guard.
-- 2026-09-03 [TOOL] Node v22 production build passed after resolving the WorkOS sign-out overload in the partner-auth provider.
-- 2026-09-03 [TOOL] Avatar connector regression suite passed 44 tests, targeted ESLint passed, dependencies restored from the lockfile, and the Node v22 production build passed.
-- 2026-09-03 [TOOL] Avatar-focused suite passed 45 tests and the Node v22 production build passed after the context-editor presentation update.
-- 2026-09-03 [TOOL] Avatar stage and connector changes passed 48 focused tests, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Avatar control/subtitle iteration passed 48 focused tests, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Bottom-center Start Chat update passed 67 Avatar-focused tests, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Listening-label removal passed 67 Avatar-focused tests, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Subtitle position and typography update passed 67 Avatar-focused tests, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Extra-bold neutral subtitle styling passed 67 Avatar-focused tests, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Speaking-status removal passed 67 Avatar-focused tests, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Subtitle-overlay removal passed 68 Avatar-focused tests, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Gemini voice and prompt changes passed 72 Avatar-focused tests, Convex TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Voice selector layout and typography checks passed the focused Avatar tests, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Context-description removal passed the Avatar-focused suite, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Avatar settings label flattening passed 72 focused tests, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Avatar settings typography and intrinsic Voice-width checks passed 72 focused tests, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Provider opening-text fix passed 72 Avatar-focused tests, Convex TypeScript, targeted ESLint, diff validation, and the Node v22 production build; no deployment was configured locally.
-- 2026-09-03 [TOOL] Avatar orientation grouping and portrait preview checks passed 73 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Environment-aware Avatar link checks passed 84 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Full-screen Avatar embed and Live-link placement checks passed 85 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Screenshot-matched Live-link code block and icon controls passed 85 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Live-link heading spacing refinement passed the focused Live-link and Avatar overview tests plus diff validation.
-- 2026-09-03 [TOOL] Avatar idle-timeout coverage passed 87 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Avatar idle-countdown coverage passed 89 focused tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] R2 cover-image and connecting-overlay coverage passed 94 focused Avatar tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Compact Cover image and Preview typography checks passed 95 focused Avatar tests, TypeScript, targeted ESLint, diff validation, and the Node v22 production build.
-- 2026-09-03 [TOOL] Cover-image UI hiding checks passed 95 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-03 [TOOL] Avatar settings order checks passed 95 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-03 [TOOL] Gemini Live Avatar setup checks passed 99 focused tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-03 [TOOL] Avatar background media checks passed 69 focused tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-03 [TOOL] Start Chat hit-target regression passed 71 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-03 [TOOL] Green Start Chat and startup-overlay checks passed 72 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-03 [TOOL] Thicker Start Chat and cover-overlay checks passed 73 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Gradient Start Chat checks passed 74 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] White-button gradient-ring checks passed 74 focused Avatar tests, Node v22 TypeScript, targeted ESLint, diff validation, and the production build; Vite reported only the existing undefined metadata placeholder and large-chunk warnings.
-- 2026-09-04 [TOOL] Thicker Start Chat border checks passed 50 Avatar tests, Node v22 targeted ESLint, and diff validation.
+- 2026-09-05 [TOOL] Older Comment-to-Inbox, Avatar, partner, and booking receipts compressed; see #89–#96 and prior CONTINUITY history.

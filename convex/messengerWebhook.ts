@@ -13,18 +13,35 @@ import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
 import { inboxPromptContent } from "../shared/inboxAttachments";
 import type { IngestChannelMessageResult } from "./chat/threads";
 import { queueInboundMediaBatch } from "./inboundMediaBatch";
+import { messengerCommentOutboundLog } from "./messengerWebhookCommentLog";
 
 const LOG_PREFIX = "[messenger-webhook]";
 
 function logMessengerWebhook(
   step: string,
   data?: Record<string, unknown>,
+  rawMetaEvent?: unknown,
 ) {
-  if (data === undefined) {
+  const rawMetaEventJson =
+    rawMetaEvent === undefined
+      ? undefined
+      : typeof rawMetaEvent === "string"
+        ? rawMetaEvent
+        : JSON.stringify(rawMetaEvent);
+  if (data === undefined && rawMetaEventJson === undefined) {
     console.log(`${LOG_PREFIX}`, step);
     return;
   }
-  console.log(`${LOG_PREFIX}`, step, data);
+  console.log(
+    `${LOG_PREFIX}`,
+    step,
+    rawMetaEventJson === undefined
+      ? data
+      : { ...data, rawMetaEvent, rawMetaEventJson },
+  );
+  if (rawMetaEventJson !== undefined) {
+    console.log(`${LOG_PREFIX}`, `${step}:raw-meta`, rawMetaEventJson);
+  }
 }
 
 // POST handler for the product-specific /webhook/messenger route.
@@ -51,22 +68,45 @@ export async function receive(
   try {
     payload = JSON.parse(rawBody) as MessengerWebhookEnvelope;
   } catch {
-    logMessengerWebhook("receive:invalid-json");
+    logMessengerWebhook("receive:invalid-json", undefined, rawBody);
     return new Response("invalid json", { status: 400 });
   }
 
   const entries = payload.entry ?? [];
+  logMessengerWebhook("receive:raw-meta", {
+    object: payload.object,
+    entryCount: entries.length,
+  }, rawBody);
   logMessengerWebhook("receive:started", {
     object: payload.object,
     entryCount: entries.length,
-  });
+  }, payload);
 
   for (const entry of entries) {
     const messaging = entry.messaging ?? [];
+    const changes = entry.changes ?? [];
     logMessengerWebhook("receive:entry", {
       entryId: entry.id,
+      time: entry.time,
       eventCount: messaging.length,
-    });
+      changeCount: changes.length,
+      changeFields: changes.map((change) => change.field),
+    }, entry);
+
+    for (const change of changes) {
+      logMessengerWebhook("receive:change-event", {
+        entryId: entry.id,
+        field: change.field,
+      }, change);
+
+      const commentOutbound = messengerCommentOutboundLog(change);
+      if (commentOutbound) {
+        logMessengerWebhook("receive:comment-no-outbound", {
+          entryId: entry.id,
+          ...commentOutbound,
+        }, change);
+      }
+    }
 
     for (const event of messaging) {
       const recipientId = event.recipient?.id;
@@ -79,7 +119,7 @@ export async function receive(
           targetExternalId: reaction.mid,
           emoji: reaction.emoji,
           action: reaction.action,
-        });
+        }, event);
 
         try {
           await ctx.runMutation(internal.messengerWebhook.handleReaction, {
@@ -103,7 +143,7 @@ export async function receive(
           watermark: event.read?.watermark,
           watermarkMs: readWatermark,
           timestamp: event.timestamp,
-        });
+        }, event);
 
         try {
           await ctx.runMutation(internal.messengerWebhook.handleReadReceipt, {
@@ -125,7 +165,8 @@ export async function receive(
           senderId,
           hasMessage: Boolean(message),
           messageMid: message?.mid,
-        });
+          eventKeys: Object.keys(event),
+        }, event);
         continue;
       }
 
@@ -136,7 +177,17 @@ export async function receive(
         isEcho: message.is_echo === true,
         hasText: Boolean(message.text?.trim()),
         attachmentCount: message.attachments?.length ?? 0,
-      });
+        text: message.text,
+      }, event);
+
+      if (message.is_echo === true) {
+        logMessengerWebhook("receive:outgoing-echo", {
+          recipientId,
+          senderId,
+          externalId: message.mid,
+          text: message.text,
+        }, event);
+      }
 
       const webhookAttachments = message.attachments ?? [];
       const imageAttachments = webhookAttachments
@@ -503,6 +554,10 @@ type MessengerWebhookEnvelope = {
   entry?: Array<{
     id?: string;
     time?: number;
+    changes?: Array<{
+      field?: string;
+      value?: unknown;
+    }>;
     messaging?: Array<{
       sender?: { id?: string };
       recipient?: { id?: string };
