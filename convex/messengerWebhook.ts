@@ -13,7 +13,7 @@ import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
 import { inboxPromptContent } from "../shared/inboxAttachments";
 import type { IngestChannelMessageResult } from "./chat/threads";
 import { queueInboundMediaBatch } from "./inboundMediaBatch";
-import { messengerCommentOutboundLog } from "./messengerWebhookCommentLog";
+import { parseMessengerCommentEvent } from "./commentAutomationEvent";
 
 const LOG_PREFIX = "[messenger-webhook]";
 
@@ -99,12 +99,17 @@ export async function receive(
         field: change.field,
       }, change);
 
-      const commentOutbound = messengerCommentOutboundLog(change);
-      if (commentOutbound) {
-        logMessengerWebhook("receive:comment-no-outbound", {
+      const comment = parseMessengerCommentEvent(entry.id, change);
+      if (comment) {
+        logMessengerWebhook("receive:comment-detected", {
           entryId: entry.id,
-          ...commentOutbound,
+          commentId: comment.externalCommentId,
+          authorAddress: comment.authorAddress,
         }, change);
+        await ctx.runAction(
+          internal.commentAutomationIngest.processMessengerComment,
+          comment,
+        );
       }
     }
 
@@ -347,6 +352,14 @@ export const handleIncoming = internalMutation({
     );
     if (result.skipped) return result;
 
+    await ctx.runMutation(
+      internal.commentAutomationDelivery.recordCustomerResponse,
+      {
+        channelId: channel._id,
+        contactAddress,
+        timestampMs: args.timestampMs,
+      },
+    );
     await markConversationAnalyticsDirty(ctx, {
       conversationId: result.conversationId,
       earliestDirtyMessageAt: args.timestampMs,

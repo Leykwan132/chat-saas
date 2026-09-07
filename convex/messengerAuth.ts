@@ -19,7 +19,14 @@ function fbOAuthDialogVersion() {
 // OAuth helpers for Messenger. The in-app connect button uses Embedded
 // Signup (`messengerConnect.completeSignup` + `FB.login`). `start` remains
 // for classic `dialog/oauth` → `/auth/messenger/callback` if needed.
-const MESSENGER_OAUTH_SCOPES = "pages_messaging,pages_show_list,pages_manage_metadata";
+const MESSENGER_OAUTH_SCOPES = [
+  "pages_messaging",
+  "pages_show_list",
+  "pages_manage_metadata",
+  "pages_read_engagement",
+  "pages_read_user_content",
+  "pages_manage_engagement",
+].join(",");
 
 /**
  * Builds https://www.facebook.com/v25.0/dialog/oauth?client_id=...&redirect_uri=...&state=...&response_type=code with Messenger page management scopes.

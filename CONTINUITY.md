@@ -2,9 +2,9 @@
 
 # Snapshot
 
-- 2026-09-07 [USER] Goal: inspect Convex logs for every event that enters `/webhook/messenger`, especially Page post comments.
-- 2026-09-07 [CODE] Now: Messenger webhook logs the raw Meta body/event JSON as `:raw-meta` strings, plus comment skip-sends and `[messenger-send]` request/result.
-- 2026-09-07 [CODE] Next: after a live comment, read `[messenger-webhook] receive:raw-meta` and `receive:change-event:raw-meta` for the exact Meta JSON.
+- 2026-09-07 [USER] Goal: process Messenger Page `feed` comment webhooks through Comment-to-Inbox and send the configured private message plus optional public reply.
+- 2026-09-07 [CODE] Now: Messenger comments resolve `entry.id` to `channels.pageId`, select an active subscribed automation, persist the customer/conversation and one deduplicated delivery, then send and record private/public outcomes; unshipped.
+- 2026-09-07 [CODE] Next: review and merge the implementation PR, configure Embedded Signup with the added Page read/manage permissions, reconnect the Page if its existing token lacks them, then verify a live comment.
 - 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
 - 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
 - 2026-09-06 [CODE] Milestone: Comment-to-Inbox list/edit/delete/activation and Meta page subscriptions are on `main` (#90–#93); comment webhook ingestion remains unshipped (D781).
@@ -16,8 +16,9 @@
 # Decisions
 
 - 2026-09-06 [USER] D782 ACTIVE: availability checks precede session creation and customer-detail collection; an exact requested/selected available slot is confirmation, and complete details must proceed directly to booking and canonical confirmation without an extra confirmation turn.
-- 2026-09-04 [TOOL] D781 OPEN: Live Meta comment subscriptions and sends are paused pending verification of the Instagram/Messenger endpoint and required scopes. Official Meta documentation requests returned rate-limit errors; do not infer a production endpoint from the user payload alone.
+- 2026-09-07 [TOOL] D781 RESOLVED: Official Meta docs confirm Messenger private replies use `POST /{page-id}/messages` with `recipient.comment_id`; public replies use the comment’s `/comments` edge. Page read/manage permissions are required for keyword fetches and public replies.
 - 2026-09-04 [USER] D780 ACTIVE: The customer-facing navigation label is “Comment-to-Inbox”; Comment automations use the unshipped `commentAutomations` backend tables and APIs.
+- 2026-09-07 [CODE] D783 ACTIVE: Meta allows one private reply per comment, so overlapping Messenger automations choose one deterministic winner: keyword matches before catch-all matches, then oldest first.
 - 2026-09-03 [USER] D778 ACTIVE: Avatar cover images are stored in R2 under agent-scoped keys and served through the configured media CDN URL.
 - 2026-09-03 [CODE] D779 ACTIVE: Avatar background media uses separate agent-scoped R2 keys and a stored image/video type; LiveAvatar background replacement is browser-side chroma-key compositing.
 - 2026-09-02 [USER] D757 ACTIVE: Gemini credentials are externally registered with LiveAvatar. The app reads only opaque `HEYGEN_GEMINI_SECRET_ID` server-side and never persists or exposes the Gemini API key.
@@ -38,7 +39,7 @@
 
 # Done (recent)
 
-- 2026-09-07 [CODE] Logged raw Meta webhook JSON beside Messenger comment and send diagnostics; unshipped.
+- 2026-09-07 [CODE] Implemented Messenger Comment-to-Inbox ingestion, deterministic matching, customer-first persistence, private/public sends, outcome counters, and response attribution; unshipped.
 - 2026-09-07 [CODE] Milestone: widget newline preservation and canonical booking confirmation layout shipped on `main` (#96).
 - 2026-09-06 [CODE] Milestone: sessionless availability, live booking-session checks, and confirmation-race fixes shipped on `main` (#94–#96).
 - 2026-09-06 [CODE] Milestone: Comment-to-Inbox delete, activation, and subscription UX shipped on `main` (#90–#93).
@@ -46,11 +47,11 @@
 
 # Working set
 
-- 2026-09-07 [CODE] `convex/{http.ts,messengerWebhook.ts,messengerWebhookCommentLog.ts,chat/channelSend.ts}`
+- 2026-09-07 [CODE] `convex/{commentAutomation{Event,Ingest,Delivery,Meta}.{ts,test.ts},messengerAuth.ts,messengerWebhook.ts,schema.ts,_generated/api.d.ts}`
 
 # Receipts
 
-- 2026-09-07 [TOOL] Messenger raw-meta event logging passed the comment log helper test, Node v22 ESLint, and `git diff --check`.
+- 2026-09-07 [TOOL] Messenger Comment-to-Inbox passed 53 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, file-size limits, and `git diff --check`.
 - 2026-09-07 [TOOL] Booking-confirmation layout and widget newline preservation passed 31 focused tests, targeted ESLint, and `git diff --check`.
 - 2026-09-06 [TOOL] Sessionless availability and direct post-collection booking passed 11 booking regression tests, targeted ESLint, TypeScript build checking, and `git diff --check`.
 - 2026-09-05 [TOOL] Comment-to-Inbox single-form edit modal passed 12 focused UI tests, Node v22 ESLint, and `git diff --check`.

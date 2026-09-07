@@ -863,6 +863,7 @@ export default defineSchema({
     customerId: v.optional(v.id("customers")),
     privateStatus: v.union(
       v.literal("pending"),
+      v.literal("sending"),
       v.literal("sent"),
       v.literal("failed"),
     ),
