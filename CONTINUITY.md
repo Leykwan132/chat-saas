@@ -5,7 +5,7 @@
 - 2026-09-07 [CODE] Now: partner organization credit periods schedule an exact-time automatic renewal; no existing-organization backfill is needed. Unshipped on `codex/partner-plan-change-timing`.
 - 2026-09-07 [CODE] Now: the Partner Programme Customers tab presents organizations and their users; account creation/removal UI now uses “user” terminology. Unshipped.
 - 2026-09-07 [USER] Goal: replace Instagram redirect OAuth with Embedded Signup under the same Meta app, using IG-named frontend configuration variables.
-- 2026-09-07 [CODE] Now: partner Branding brand name, logo preview tile, sign-in header, and sign-in preview link merged via #101–#103; a fix for the create-organization credit-period race (I003) is in PR. Partner Programme remains unshipped overall.
+- 2026-09-07 [CODE] Now: partner Branding brand name, logo preview tile, sign-in header, sign-in preview link, and atomic organization credit provisioning merged via #101–#104. Partner Programme remains unshipped overall.
 - 2026-09-07 [CODE] Next: deploy #100, test ordinary and allowlisted connects for both channels, then verify live message/comment delivery.
 - 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
 - 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
@@ -66,6 +66,7 @@
 
 # Receipts
 
+- 2026-09-07 [TOOL] `origin/main` merged into `codex/partner-plan-change-timing` at `f14bdd4`; atomic provisioning, scheduled renewal, and plan-change integration passed 7 focused tests.
 - 2026-09-07 [TOOL] Automatic partner credit renewal passed 8 focused credit, plan-change, and workspace-access tests, targeted ESLint, Convex code generation/TypeScript validation, and `git diff --check`.
 - 2026-09-07 [TOOL] Partner customer-to-user terminology passed 26 focused UI tests, targeted ESLint, and `git diff --check`.
 - 2026-09-07 [TOOL] Atomic partner org provisioning: new `convex-test` regression fails on the old code (`expected null not to be null`) and passes on the fix; Node v22 targeted ESLint, `tsc --noEmit -p convex/tsconfig.json`, Convex codegen, and `git diff --check` pass. Prod verified read-only via `convex data --prod`.
