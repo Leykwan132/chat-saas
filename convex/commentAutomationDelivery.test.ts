@@ -82,4 +82,26 @@ test("counts a successful private reply and one later customer response", async 
   expect(result.automation?.respondedCount).toBe(1);
   expect(result.delivery?.privateStatus).toBe("sent");
   expect(result.delivery?.respondedAt).toBe(responseAt);
+
+  const invalidDeliveryId = await t.run(async (ctx) => {
+    await ctx.db.patch(fixture.channelId, { accessToken: undefined });
+    return await ctx.db.insert("commentAutomationDeliveries", {
+      automationId: fixture.automationId,
+      channelId: fixture.channelId,
+      externalCommentId: "comment-2",
+      contactAddress: "customer-2",
+      commentText: "Hello",
+      commentCreatedAt: responseAt,
+      privateStatus: "pending",
+      createdAt: responseAt,
+      updatedAt: responseAt,
+    });
+  });
+  expect(await t.mutation(
+    internal.commentAutomationDelivery.claimDelivery,
+    { deliveryId: invalidDeliveryId },
+  )).toBeNull();
+  expect(await t.run(async (ctx) =>
+    (await ctx.db.get(invalidDeliveryId))?.privateStatus
+  )).toBe("failed");
 });

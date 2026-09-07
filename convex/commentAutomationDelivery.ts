@@ -25,11 +25,22 @@ export const claimDelivery = internalMutation({
     ]);
     if (
       automation?.status !== "active" ||
-      page?.subscriptionStatus !== "subscribed" ||
+      page?.subscriptionStatus !== "subscribed"
+    ) {
+      return null;
+    }
+    if (
       channel === null ||
       channel.service !== "messenger" ||
-      channel.status !== "connected"
+      channel.status !== "connected" ||
+      !channel.pageId ||
+      !channel.accessToken?.trim()
     ) {
+      await ctx.db.patch(delivery._id, {
+        privateStatus: "failed",
+        privateError: "Messenger page is unavailable",
+        updatedAt: Date.now(),
+      });
       return null;
     }
     await ctx.db.patch(delivery._id, {
