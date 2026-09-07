@@ -25,7 +25,8 @@ function partnerWithDomain(
       hostnameStatus: null,
       certificateStatus: null,
       validationError: null,
-      previewUrl: null,
+      previewUrl:
+        setupState === "connected" ? "https://app.partner.test" : null,
     },
   };
 }
@@ -73,6 +74,22 @@ describe("PartnerBrandingTab", () => {
 
     expect(markup).toContain("Upload logo");
     expect(markup).not.toContain("Replace logo");
+  });
+
+  test("links to the live sign-in page once the domain is connected", () => {
+    const markup = render(partnerWithDomain("connected"));
+
+    expect(markup).toContain("Preview:");
+    expect(markup).toContain('href="https://app.partner.test/sign-in"');
+    expect(markup).toContain('target="_blank"');
+    expect(markup).toContain("https://app.partner.test/sign-in</a>");
+  });
+
+  test("hides the sign-in preview link until the domain is connected", () => {
+    const markup = render(partnerWithDomain("cutover_pending"));
+
+    expect(markup).not.toContain("Preview:");
+    expect(markup).not.toContain("/sign-in");
   });
 
   test("shows a green check next to a connected domain without extra copy", () => {
