@@ -3,8 +3,8 @@
 # Snapshot
 
 - 2026-09-07 [USER] Goal: replace Instagram redirect OAuth with Embedded Signup under the same Meta app, using IG-named frontend configuration variables.
-- 2026-09-07 [TOOL] Now: follow-up #100 fixes Instagram Embedded Signup by associating the linked Facebook Page with `subscribed_fields=feed`; Instagram `comments`/`messages` remain app-level Instagram webhook subscriptions.
-- 2026-09-07 [CODE] Next: merge/deploy #100, retry Instagram connect, then verify app-dashboard Instagram `comments` and `messages` subscriptions with a live comment/message.
+- 2026-09-07 [CODE] Now: follow-up #100 keeps ordinary Instagram connects on `messages`; only browser-flagged and backend-allowlisted Comment-to-Inbox users add `feed`. The single IG config ID remains unchanged.
+- 2026-09-07 [CODE] Next: deploy the #100 update, test an ordinary Instagram connect and the allowlisted account, then verify live message/comment delivery.
 - 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
 - 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
 - 2026-09-06 [CODE] Milestone: Comment-to-Inbox list/edit/delete/activation and Meta page subscriptions are on `main` (#90–#93); comment webhook ingestion remains unshipped (D781).
@@ -20,6 +20,7 @@
 - 2026-09-04 [USER] D780 ACTIVE: The customer-facing navigation label is “Comment-to-Inbox”; Comment automations use the unshipped `commentAutomations` backend tables and APIs.
 - 2026-09-07 [CODE] D783 ACTIVE: Meta allows one private reply per comment, so overlapping Messenger automations choose one deterministic winner: keyword matches before catch-all matches, then oldest first.
 - 2026-09-07 [USER] D784 ACTIVE: Instagram Embedded Signup uses the existing Meta app, shared `VITE_MESSENGER_CODE_EXCHANGE_REDIRECT_URI`, and only one new env value (`VITE_IG_CONFIG_ID`); the configuration must authorize exactly one Page-linked Instagram professional account.
+- 2026-09-07 [USER] D785 ACTIVE: keep one Instagram config ID; Page subscription fields are `messages` for ordinary accounts and `messages,feed` only when the Comment-to-Inbox PostHog flag and server-side email allowlist both pass.
 - 2026-09-03 [USER] D778 ACTIVE: Avatar cover images are stored in R2 under agent-scoped keys and served through the configured media CDN URL.
 - 2026-09-03 [CODE] D779 ACTIVE: Avatar background media uses separate agent-scoped R2 keys and a stored image/video type; LiveAvatar background replacement is browser-side chroma-key compositing.
 - 2026-09-02 [USER] D757 ACTIVE: Gemini credentials are externally registered with LiveAvatar. The app reads only opaque `HEYGEN_GEMINI_SECRET_ID` server-side and never persists or exposes the Gemini API key.
@@ -50,11 +51,11 @@
 
 # Working set
 
-- 2026-09-07 [CODE] `src/components/ConnectInstagramButton.{tsx,test.ts}`, `convex/{instagramEmbeddedSignup,instagramApi}.{ts,test.ts}`, `convex/{instagramSend,instagramSync,channels,schema,commentAutomationMeta}.ts`, `convex/chat/channelSend.ts`
+- 2026-09-07 [CODE] `shared/commentToInboxAccess.ts`, `src/{components/ConnectInstagramButton,lib/posthogFeatureFlags}.{ts,tsx}`, `convex/{instagramEmbeddedSignup,commentAutomationMeta}.{ts,test.ts}`
 
 # Receipts
 
-- 2026-09-07 [TOOL] Instagram Embedded Signup passed 14 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, and `git diff --check`.
+- 2026-09-07 [TOOL] Feature-gated Instagram Page subscriptions passed 27 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, and `git diff --check`.
 - 2026-09-07 [TOOL] Messenger Comment-to-Inbox passed 53 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, file-size limits, and `git diff --check`.
 - 2026-09-07 [TOOL] Booking-confirmation layout and widget newline preservation passed 31 focused tests, targeted ESLint, and `git diff --check`.
 - 2026-09-06 [TOOL] Sessionless availability and direct post-collection booking passed 11 booking regression tests, targeted ESLint, TypeScript build checking, and `git diff --check`.

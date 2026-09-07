@@ -46,7 +46,7 @@ describe("ensureCommentSubscription", () => {
       "graph.facebook.com/v25.0/page-1/subscribed_apps",
     );
     expect(fetchMock.mock.calls[0]?.[0]).toContain(
-      "subscribed_fields=feed",
+      "subscribed_fields=messages%2Cfeed",
     );
   });
 

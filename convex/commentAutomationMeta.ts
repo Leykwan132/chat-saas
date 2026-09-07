@@ -45,7 +45,7 @@ function getSubscriptionTarget(channel: CommentSubscriptionChannel) {
     subscribedFields: channel.service === "messenger"
       ? "messages,messaging_postbacks,feed"
       : channel.instagramPageId
-        ? "feed"
+        ? "messages,feed"
         : "comments",
   };
 }

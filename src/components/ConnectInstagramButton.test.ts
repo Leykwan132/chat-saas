@@ -12,5 +12,7 @@ test("uses the Instagram Embedded Signup configuration", () => {
   expect(source).not.toContain("VITE_IG_CODE_EXCHANGE_REDIRECT_URI");
   expect(source).toContain("api.instagramEmbeddedSignup.completeSignup");
   expect(source).toContain("config_id: configId");
+  expect(source).toContain("enableCommentWebhooks");
+  expect(source).toContain("isCommentToInboxUserAllowed(user?.email)");
   expect(source).not.toContain("api.instagramAuth.start");
 });
