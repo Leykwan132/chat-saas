@@ -2,9 +2,10 @@ import { v } from "convex/values";
 import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { messengerSyncPool } from "./channelSyncPools";
+import { isCommentToInboxUserAllowed } from "../shared/commentToInboxAccess";
 
 const DEFAULT_GRAPH_VERSION = "v25.0";
 
@@ -114,7 +115,23 @@ async function fetchFbUserId(
   }
 }
 
-async function subscribePage(page: PageEdge): Promise<void> {
+export function messengerSubscribedFields(enableCommentWebhooks: boolean) {
+  return enableCommentWebhooks
+    ? "messages,messaging_postbacks,feed"
+    : "messages,messaging_postbacks";
+}
+
+export function shouldEnableMessengerCommentWebhooks(
+  requested: boolean,
+  email: string | null | undefined,
+) {
+  return requested && isCommentToInboxUserAllowed(email);
+}
+
+async function subscribePage(
+  page: PageEdge,
+  enableCommentWebhooks: boolean,
+): Promise<void> {
   if (!page.access_token) {
     throw new Error(
       "Selected Page is unavailable or did not return an access token.",
@@ -125,7 +142,7 @@ async function subscribePage(page: PageEdge): Promise<void> {
   );
   subscribeUrl.searchParams.set(
     "subscribed_fields",
-    "messages,messaging_postbacks,feed",
+    messengerSubscribedFields(enableCommentWebhooks),
   );
   await graphFetch(
     subscribeUrl.toString(),
@@ -145,6 +162,7 @@ async function completeMessengerFromUserAccessToken(
     userId: string;
     userAccessToken: string;
     pageId?: string;
+    enableCommentWebhooks: boolean;
   },
 ): Promise<
   | { channelId: Id<"channels">; displayUsername?: string }
@@ -191,7 +209,7 @@ async function completeMessengerFromUserAccessToken(
       pageId,
     });
 
-    await subscribePage(selected);
+    await subscribePage(selected, args.enableCommentWebhooks);
 
     await ctx.runMutation(internal.channels.internalSetProgress, {
       orgId,
@@ -273,6 +291,7 @@ export const completeSignup = action({
     /** Classic `dialog/oauth`; omit for Facebook Login for Business Embedded Signup (`config_id`). */
     redirectUri: v.optional(v.string()),
     pageId: v.optional(v.string()),
+    enableCommentWebhooks: v.boolean(),
     /** Stored on the OAuth hold row when `needsPagePicker` (for finalizePick). */
     returnPath: v.optional(v.string()),
   },
@@ -289,6 +308,14 @@ export const completeSignup = action({
   > => {
     const { orgId, userId } = await getAuthContext(ctx);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
+    const user: Doc<"users"> | null = await ctx.runQuery(
+      internal.users.internalGetByWorkosUserId,
+      { workosUserId: userId },
+    );
+    const enableCommentWebhooks = shouldEnableMessengerCommentWebhooks(
+      args.enableCommentWebhooks,
+      user?.email,
+    );
 
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
@@ -311,6 +338,7 @@ export const completeSignup = action({
         userId,
         userAccessToken: userToken,
         pageId: args.pageId,
+        enableCommentWebhooks,
       });
 
       if ("needsPagePicker" in result) {
@@ -320,6 +348,7 @@ export const completeSignup = action({
             orgId: channelOrgId,
             userId,
             userAccessToken: userToken,
+            enableCommentWebhooks,
             returnPath: args.returnPath,
           },
         );
@@ -392,6 +421,7 @@ export const internalOAuthCallback = internalAction({
         orgId,
         userId,
         userAccessToken: userToken,
+        enableCommentWebhooks: false,
       });
 
       if ("needsPagePicker" in result) {
@@ -425,6 +455,7 @@ export const internalFinalizeMessengerPagePick = internalAction({
     userId: v.string(),
     pageId: v.string(),
     userAccessToken: v.string(),
+    enableCommentWebhooks: v.boolean(),
   },
   handler: async (
     ctx,
@@ -436,6 +467,7 @@ export const internalFinalizeMessengerPagePick = internalAction({
         userId: args.userId,
         userAccessToken: args.userAccessToken,
         pageId: args.pageId,
+        enableCommentWebhooks: args.enableCommentWebhooks,
       });
       if ("needsPagePicker" in result) {
         throw new Error("Page selection did not complete the connection.");

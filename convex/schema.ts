@@ -1542,6 +1542,7 @@ export default defineSchema({
     // stash the user access token between the callback and the in-app
     // Page picker (authorization codes are single-use).
     pendingUserAccessToken: v.optional(v.string()),
+    enableCommentWebhooks: v.optional(v.boolean()),
   })
     .index("by_csrf", ["csrf"])
     .index("by_orgId", ["orgId"]),
