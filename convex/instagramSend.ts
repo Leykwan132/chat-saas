@@ -7,16 +7,7 @@ import {
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
-
-const DEFAULT_GRAPH_VERSION = "v25.0";
-
-function graphVersion() {
-  return process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
-}
-
-function instagramGraphBase() {
-  return `https://graph.instagram.com/${graphVersion()}`;
-}
+import { instagramMessagingUrl } from "./instagramApi";
 
 /** Strip BOM, quotes, and accidental `Bearer ` prefix from dashboard/env pastes. */
 function normalizeMetaAccessToken(raw: string | undefined): string {
@@ -73,7 +64,7 @@ export const sendText = action({
       throw new Error("Instagram channel is not connected");
     }
 
-    const url = `${instagramGraphBase()}/me/messages`;
+    const url = instagramMessagingUrl(channel);
     const payload = {
       message: { text: trimmed },
       recipient: { id: conversation.contactAddress },
@@ -88,12 +79,13 @@ export const sendText = action({
       body: JSON.stringify(payload),
     });
     const text = await res.text();
-    let body: GraphSendResponse | null = null;
-    try {
-      body = text.length ? (JSON.parse(text) as GraphSendResponse) : null;
-    } catch {
-      body = null;
-    }
+    const body: GraphSendResponse | null = (() => {
+      try {
+        return text.length ? (JSON.parse(text) as GraphSendResponse) : null;
+      } catch {
+        return null;
+      }
+    })();
 
     if (!res.ok) {
       const errMsg = body?.error?.message ?? `HTTP ${res.status}`;

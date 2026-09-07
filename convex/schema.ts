@@ -770,6 +770,7 @@ export default defineSchema({
     phoneNumberId: v.optional(v.string()),
     displayPhoneNumber: v.optional(v.string()),
     igUserId: v.optional(v.string()),
+    instagramPageId: v.optional(v.string()),
     pageId: v.optional(v.string()),
     // Facebook user id of the person who completed the Messenger connect.
     // Meta deliver Deauthorize / Data Deletion callbacks at the FB-user
@@ -818,6 +819,7 @@ export default defineSchema({
     .index("by_phoneNumberId", ["phoneNumberId"])
     .index("by_wabaId", ["wabaId"])
     .index("by_igUserId", ["igUserId"])
+    .index("by_instagramPageId", ["instagramPageId"])
     .index("by_pageId", ["pageId"])
     .index("by_fbUserId", ["fbUserId"])
     .index("by_defaultAgentId_and_service", ["defaultAgentId", "service"])

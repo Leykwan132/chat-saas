@@ -2,6 +2,7 @@ type CommentSubscriptionChannel = {
   service: string;
   status: string;
   pageId?: string;
+  instagramPageId?: string;
   igUserId?: string;
   accessToken?: string;
 };
@@ -28,7 +29,9 @@ function getSubscriptionTarget(channel: CommentSubscriptionChannel) {
   if (channel.service !== "instagram" && channel.service !== "messenger") {
     throw new Error("Selected page is unavailable");
   }
-  const resourceId = channel.service === "messenger" ? channel.pageId : channel.igUserId;
+  const resourceId = channel.service === "messenger"
+    ? channel.pageId
+    : channel.instagramPageId ?? channel.igUserId;
   if (!resourceId || !channel.accessToken || channel.status !== "connected") {
     throw new Error("Selected page is unavailable");
   }
@@ -36,10 +39,14 @@ function getSubscriptionTarget(channel: CommentSubscriptionChannel) {
     resourceId,
     baseUrl: channel.service === "messenger"
       ? "https://graph.facebook.com"
-      : "https://graph.instagram.com",
+      : channel.instagramPageId
+        ? "https://graph.facebook.com"
+        : "https://graph.instagram.com",
     subscribedFields: channel.service === "messenger"
       ? "messages,messaging_postbacks,feed"
-      : "comments",
+      : channel.instagramPageId
+        ? "messages,comments"
+        : "comments",
   };
 }
 
