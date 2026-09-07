@@ -32,10 +32,8 @@ export const createOrganization = action({
     const organization = await workosRequest<WorkOSOrganization>("/organizations", { method: "POST", body: JSON.stringify({ name }) });
     await provisionOrganizationRoles(organization.id);
     await workosRequest("/user_management/organization_memberships", { method: "POST", body: JSON.stringify({ user_id: auth.userId, organization_id: organization.id, role_slug: WORKOS_OWNER_ROLE_SLUG }) });
-    const created: { partnerOrganizationId: Id<"whiteLabelPartnerOrganizations">; teamId: Id<"teams">; ownerId: Id<"users"> } = await ctx.runMutation(internal.whiteLabel.portalProvisioning.persistCreatedOrganization, { partnerId: access.partnerId, workosUserId: auth.userId, workosOrgId: organization.id, name: organization.name ?? name, planKey: args.planKey });
-    const start = Date.now();
-    await ctx.runMutation(internal.whiteLabel.portalProvisioning.initializeFirstCreditPeriod, { partnerOrganizationId: created.partnerOrganizationId, actorUserId: created.ownerId, planKey: args.planKey, periodStart: start, periodEnd: start + 30 * 24 * 60 * 60 * 1000 });
-    return { partnerOrganizationId: created.partnerOrganizationId, teamId: created.teamId };
+    const created: { partnerOrganizationId: Id<"whiteLabelPartnerOrganizations">; teamId: Id<"teams"> } = await ctx.runMutation(internal.whiteLabel.portalProvisioning.persistCreatedOrganization, { partnerId: access.partnerId, workosUserId: auth.userId, workosOrgId: organization.id, name: organization.name ?? name, planKey: args.planKey });
+    return created;
   },
 });
 

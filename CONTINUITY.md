@@ -3,7 +3,7 @@
 # Snapshot
 
 - 2026-09-07 [USER] Goal: replace Instagram redirect OAuth with Embedded Signup under the same Meta app, using IG-named frontend configuration variables.
-- 2026-09-07 [CODE] Now: partner Branding brand name, logo preview tile, and sign-in header merged via #101–#102; a sign-in preview link under the logo follows in a third PR. Partner Programme remains unshipped overall.
+- 2026-09-07 [CODE] Now: partner Branding brand name, logo preview tile, sign-in header, and sign-in preview link merged via #101–#103; a fix for the create-organization credit-period race (I003) is in PR. Partner Programme remains unshipped overall.
 - 2026-09-07 [CODE] Next: deploy #100, test ordinary and allowlisted connects for both channels, then verify live message/comment delivery.
 - 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
 - 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
@@ -40,11 +40,12 @@
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
 - 2026-09-06 [CODE] I001 OPEN: Hallucinated booking/email-link copy is replaced after generation; unverified claims now receive a safe retry response rather than silence. Remaining gap: playground can briefly stream model text before the saved message is rewritten.
 - 2026-09-07 [USER] I002 RESOLVED: Meta rejected `comments` on the Facebook Page `subscribed_apps` edge with error #100; use valid Page field `feed`, while configuring Instagram-specific fields on the app’s Instagram webhook object.
+- 2026-09-07 [TOOL] I003 FIX IN PR: Symptoms: Partner page crashed with `getOverview` "Customer organization credit period not found." right after creating an org. Evidence: prod logs 22:05:34 and 22:06:37 fail at `Promise.all` index 0 then 1; prod data shows both orgs gained periods 144 ms and 49 ms after creation. Cause: `createOrganization` committed the org in one mutation and its credit period in a second, so the overview subscription re-ran in the gap. Mitigation: `persistCreatedOrganization` now creates the period in the same transaction via `createPartnerCreditPeriod`; `initializeFirstCreditPeriod` deleted. Side finding: the deleted mutation hardcoded growth 6000 / business 18000 while `PLAN_CATALOG` says 8000 / 20000; the existing prod business org `yh776ydm3q9srgqtpbjw1az3vd8dz69a` was granted 18000. Data correction UNCONFIRMED, pending user decision.
 
 # Done (recent)
 
-- 2026-09-07 [CODE] Partner Branding shows a clickable `Preview: https://{hostname}/sign-in` link under the logo, derived from the existing connected-only `domain.previewUrl`; open in a follow-up PR.
-- 2026-09-07 [CODE] Milestone: partner Branding brand name, green-check connected domain, logo preview tile with hover replace overlay, and centered subtitle-free sign-in header are on `main` (#101–#102).
+- 2026-09-07 [CODE] Partner `createOrganization` now provisions the org and its first credit period atomically, closing the `getOverview` crash window (I003); in PR.
+- 2026-09-07 [CODE] Milestone: partner Branding brand name, green-check connected domain, logo preview tile, centered subtitle-free sign-in header, and sign-in preview link are on `main` (#101–#103).
 - 2026-09-07 [CODE] Implemented Instagram Embedded Signup with Page-linked account persistence and dual routing that preserves existing Instagram Login connections; unshipped.
 - 2026-09-07 [CODE] Messenger Comment-to-Inbox ingestion, deterministic matching, customer-first persistence, private/public sends, outcome counters, and response attribution merged via #98.
 - 2026-09-07 [CODE] Milestone: widget newline preservation and canonical booking confirmation layout shipped on `main` (#96).
@@ -54,10 +55,11 @@
 # Working set
 
 - 2026-09-07 [CODE] `shared/commentToInboxAccess.ts`, `src/components/Connect{Instagram,Messenger}Button*`, `convex/{instagramEmbeddedSignup,messengerConnect,messengerAuth,oauthSessions,commentAutomationMeta,schema}*`
-- 2026-09-07 [CODE] `src/components/partner/PartnerBrandingTab*`, `src/pages/{PartnerPage,SignInPage}.tsx`, `convex/whiteLabel/{portal,partnerAuthGateway}.ts`
+- 2026-09-07 [CODE] `src/components/partner/PartnerBrandingTab*`, `src/pages/{PartnerPage,SignInPage}.tsx`, `convex/whiteLabel/{portal,portalActions,portalProvisioning,portalOverview,creditLedger}.ts`
 
 # Receipts
 
+- 2026-09-07 [TOOL] Atomic partner org provisioning: new `convex-test` regression fails on the old code (`expected null not to be null`) and passes on the fix; Node v22 targeted ESLint, `tsc --noEmit -p convex/tsconfig.json`, Convex codegen, and `git diff --check` pass. Prod verified read-only via `convex data --prod`.
 - 2026-09-07 [TOOL] Partner Branding sign-in preview link passed 29 focused tests, Node v22 targeted ESLint, `tsc --noEmit -p tsconfig.app.json`, and `git diff --check`; browser verification stayed blocked by the unauthenticated local session.
 - 2026-09-07 [TOOL] Feature-gated Instagram and Messenger Page subscriptions passed 31 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, and `git diff --check`.
 - 2026-09-07 [TOOL] Messenger Comment-to-Inbox passed 53 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, file-size limits, and `git diff --check`.
