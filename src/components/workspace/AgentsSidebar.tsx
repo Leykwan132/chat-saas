@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { CreditMeter } from '@/components/CreditMeter';
 import { ExpandedAppSidebarHeader } from '@/components/ExpandedAppSidebarHeader';
+import { HostBrandMark } from '@/components/HostBrandMark';
+import { useHostBrand } from '@/hooks/useHostBranding';
 import { WorkspaceSetupChecklist } from '@/components/setup-checklist/WorkspaceSetupChecklist';
 import { Button } from '@/components/ui/button';
 import {
@@ -54,6 +56,7 @@ export function AgentsSidebar() {
   const partnerPortalState = useEnablePartnerPortal();
   const partnerPortalEnabled = isProductFeatureEnabled(partnerPortalState);
   const partner = useQuery(whiteLabelApi.portal.getCurrentPartner);
+  const hostBrand = useHostBrand();
 
   return (
     <Sidebar collapsible="icon">
@@ -66,11 +69,10 @@ export function AgentsSidebar() {
             className="group/logo-toggle relative size-[1.8rem] text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
             aria-label="Expand sidebar"
           >
-            <img
-              src="/icon.svg"
-              alt=""
+            <HostBrandMark
+              brand={hostBrand}
               className={cn(
-                'size-[1.35rem] dark:invert transition-opacity duration-150',
+                'size-[1.35rem] transition-opacity duration-150',
                 'group-hover/logo-toggle:opacity-0',
               )}
             />
@@ -84,7 +86,7 @@ export function AgentsSidebar() {
           </Button>
         </SidebarHeader>
       ) : (
-        <ExpandedAppSidebarHeader onCollapse={toggleSidebar} />
+        <ExpandedAppSidebarHeader onCollapse={toggleSidebar} brand={hostBrand} />
       )}
 
       <SidebarContent>
