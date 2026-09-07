@@ -13,6 +13,7 @@ import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
 import { inboxPromptContent } from "../shared/inboxAttachments";
 import type { IngestChannelMessageResult } from "./chat/threads";
 import { queueInboundMediaBatch } from "./inboundMediaBatch";
+import { messengerCommentOutboundLog } from "./messengerWebhookCommentLog";
 
 const LOG_PREFIX = "[messenger-webhook]";
 
@@ -83,6 +84,14 @@ export async function receive(
         value: change.value,
         change,
       });
+
+      const commentOutbound = messengerCommentOutboundLog(change);
+      if (commentOutbound) {
+        logMessengerWebhook("receive:comment-no-outbound", {
+          entryId: entry.id,
+          ...commentOutbound,
+        });
+      }
     }
 
     for (const event of messaging) {
@@ -155,7 +164,18 @@ export async function receive(
         isEcho: message.is_echo === true,
         hasText: Boolean(message.text?.trim()),
         attachmentCount: message.attachments?.length ?? 0,
+        text: message.text,
+        event,
       });
+
+      if (message.is_echo === true) {
+        logMessengerWebhook("receive:outgoing-echo", {
+          recipientId,
+          senderId,
+          externalId: message.mid,
+          text: message.text,
+        });
+      }
 
       const webhookAttachments = message.attachments ?? [];
       const imageAttachments = webhookAttachments

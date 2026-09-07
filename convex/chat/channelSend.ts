@@ -985,6 +985,10 @@ async function sendInstagramMedia(
   return result;
 }
 
+function logMessengerSend(step: string, data: Record<string, unknown>) {
+  console.log("[messenger-send]", step, data);
+}
+
 async function sendMessenger(
   conversation: Doc<"conversations">,
   channel: Doc<"channels">,
@@ -992,15 +996,36 @@ async function sendMessenger(
   options?: SendTextToChannelOptions,
 ): Promise<ChannelSendResult> {
   if (channel.status !== "connected" || !channel.pageId) {
+    logMessengerSend("skipped", {
+      reason: "channel-not-connected",
+      conversationId: conversation._id,
+      pageId: channel.pageId,
+      contactAddress: conversation.contactAddress,
+      text: trimmed,
+    });
     return { ok: false, error: "Messenger channel is not connected", policy: "generic" };
   }
   const accessToken = normalizeMetaAccessToken(channel.accessToken);
   if (!accessToken) {
+    logMessengerSend("skipped", {
+      reason: "missing-access-token",
+      conversationId: conversation._id,
+      pageId: channel.pageId,
+      contactAddress: conversation.contactAddress,
+      text: trimmed,
+    });
     return { ok: false, error: "Messenger channel is not connected", policy: "generic" };
   }
 
   const windowState = messagingWindowState(conversation);
   if (windowState === "blocked") {
+    logMessengerSend("skipped", {
+      reason: "messaging-window",
+      conversationId: conversation._id,
+      pageId: channel.pageId,
+      contactAddress: conversation.contactAddress,
+      text: trimmed,
+    });
     return {
       ok: false,
       error: "Outside Messenger messaging window",
@@ -1011,6 +1036,7 @@ async function sendMessenger(
   const useHumanAgent =
     windowState === "human_agent" && options?.allowHumanAgentTag === true;
 
+  const url = `${fbGraphBase()}/me/messages`;
   const payload: Record<string, unknown> = {
     recipient: { id: conversation.contactAddress },
     message: { text: trimmed },
@@ -1022,7 +1048,18 @@ async function sendMessenger(
     payload.messaging_type = "RESPONSE";
   }
 
-  const res = await fetch(`${fbGraphBase()}/me/messages`, {
+  logMessengerSend("request", {
+    url,
+    conversationId: conversation._id,
+    pageId: channel.pageId,
+    contactAddress: conversation.contactAddress,
+    windowState,
+    useHumanAgent,
+    text: trimmed,
+    payload,
+  });
+
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -1032,6 +1069,25 @@ async function sendMessenger(
   });
 
   const parsed = await parseGraphResponse(res);
+  if (parsed.ok) {
+    logMessengerSend("success", {
+      conversationId: conversation._id,
+      pageId: channel.pageId,
+      contactAddress: conversation.contactAddress,
+      text: trimmed,
+      externalId: parsed.externalId,
+    });
+  } else {
+    logMessengerSend("error", {
+      conversationId: conversation._id,
+      pageId: channel.pageId,
+      contactAddress: conversation.contactAddress,
+      text: trimmed,
+      error: parsed.error,
+      errorCode: parsed.errorCode,
+      policy: parsed.policy,
+    });
+  }
   if (
     !parsed.ok &&
     parsed.errorCode === META_ERROR_MESSAGING_WINDOW &&
@@ -1039,6 +1095,12 @@ async function sendMessenger(
     options?.allowHumanAgentTag &&
     !useHumanAgent
   ) {
+    logMessengerSend("retry-human-agent", {
+      conversationId: conversation._id,
+      pageId: channel.pageId,
+      contactAddress: conversation.contactAddress,
+      text: trimmed,
+    });
     return sendMessenger(conversation, channel, trimmed, {
       ...options,
       allowHumanAgentTag: true,

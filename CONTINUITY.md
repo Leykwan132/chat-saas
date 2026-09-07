@@ -3,8 +3,8 @@
 # Snapshot
 
 - 2026-09-07 [USER] Goal: inspect Convex logs for every event that enters `/webhook/messenger`, especially Page post comments.
-- 2026-09-07 [CODE] Now: Messenger webhook dispatch and receive log the raw body, parsed payload, and each `entry.changes` item; comment events are still not ingested.
-- 2026-09-07 [CODE] Next: after a live comment, read Convex logs for `[messenger-webhook]` `dispatch`, `receive:started`, and `receive:change-event`.
+- 2026-09-07 [CODE] Now: Messenger webhook logs comment payloads and records that public replies and private messages are not sent; live Inbox Messenger text sends log request/result as `[messenger-send]`.
+- 2026-09-07 [CODE] Next: after a live comment or Inbox send, read Convex logs for `[messenger-webhook]` `receive:comment-no-outbound` and `[messenger-send]`.
 - 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
 - 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
 - 2026-09-06 [CODE] Milestone: Comment-to-Inbox list/edit/delete/activation and Meta page subscriptions are on `main` (#90–#93); comment webhook ingestion remains unshipped (D781).
@@ -38,7 +38,7 @@
 
 # Done (recent)
 
-- 2026-09-07 [CODE] Logged full Messenger webhook payloads plus `entry.changes` comment events at `/webhook/messenger`; unshipped.
+- 2026-09-07 [CODE] Logged Messenger comment skip-sends and outbound text request/result payloads; unshipped.
 - 2026-09-07 [CODE] Milestone: widget newline preservation and canonical booking confirmation layout shipped on `main` (#96).
 - 2026-09-06 [CODE] Milestone: sessionless availability, live booking-session checks, and confirmation-race fixes shipped on `main` (#94–#96).
 - 2026-09-06 [CODE] Milestone: Comment-to-Inbox delete, activation, and subscription UX shipped on `main` (#90–#93).
@@ -46,11 +46,11 @@
 
 # Working set
 
-- 2026-09-07 [CODE] `convex/{http.ts,messengerWebhook.ts}`
+- 2026-09-07 [CODE] `convex/{http.ts,messengerWebhook.ts,messengerWebhookCommentLog.ts,chat/channelSend.ts}`
 
 # Receipts
 
-- 2026-09-07 [TOOL] Messenger webhook payload logging passed Node v22 ESLint on `convex/http.ts` and `convex/messengerWebhook.ts`, plus `git diff --check`.
+- 2026-09-07 [TOOL] Messenger send/comment skip logs passed the comment log helper test, Node v22 ESLint, and `git diff --check`.
 - 2026-09-07 [TOOL] Booking-confirmation layout and widget newline preservation passed 31 focused tests, targeted ESLint, and `git diff --check`.
 - 2026-09-06 [TOOL] Sessionless availability and direct post-collection booking passed 11 booking regression tests, targeted ESLint, TypeScript build checking, and `git diff --check`.
 - 2026-09-05 [TOOL] Comment-to-Inbox single-form edit modal passed 12 focused UI tests, Node v22 ESLint, and `git diff --check`.
