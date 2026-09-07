@@ -150,6 +150,9 @@ import type * as chat_workflowAutomationMessageMetadata from "../chat/workflowAu
 import type * as chat_workflowMediaFallback from "../chat/workflowMediaFallback.js";
 import type * as chat_workflowPrompt from "../chat/workflowPrompt.js";
 import type * as cloudflare from "../cloudflare.js";
+import type * as commentAutomationDelivery from "../commentAutomationDelivery.js";
+import type * as commentAutomationEvent from "../commentAutomationEvent.js";
+import type * as commentAutomationIngest from "../commentAutomationIngest.js";
 import type * as commentAutomationInput from "../commentAutomationInput.js";
 import type * as commentAutomationMatching from "../commentAutomationMatching.js";
 import type * as commentAutomationMeta from "../commentAutomationMeta.js";
@@ -296,7 +299,6 @@ import type * as messengerConnect from "../messengerConnect.js";
 import type * as messengerSend from "../messengerSend.js";
 import type * as messengerSync from "../messengerSync.js";
 import type * as messengerWebhook from "../messengerWebhook.js";
-import type * as messengerWebhookCommentLog from "../messengerWebhookCommentLog.js";
 import type * as metaWebhookShared from "../metaWebhookShared.js";
 import type * as oauthSessions from "../oauthSessions.js";
 import type * as oauthShared from "../oauthShared.js";
@@ -641,6 +643,9 @@ declare const fullApi: ApiFromModules<{
   "chat/workflowMediaFallback": typeof chat_workflowMediaFallback;
   "chat/workflowPrompt": typeof chat_workflowPrompt;
   cloudflare: typeof cloudflare;
+  commentAutomationDelivery: typeof commentAutomationDelivery;
+  commentAutomationEvent: typeof commentAutomationEvent;
+  commentAutomationIngest: typeof commentAutomationIngest;
   commentAutomationInput: typeof commentAutomationInput;
   commentAutomationMatching: typeof commentAutomationMatching;
   commentAutomationMeta: typeof commentAutomationMeta;
@@ -787,7 +792,6 @@ declare const fullApi: ApiFromModules<{
   messengerSend: typeof messengerSend;
   messengerSync: typeof messengerSync;
   messengerWebhook: typeof messengerWebhook;
-  messengerWebhookCommentLog: typeof messengerWebhookCommentLog;
   metaWebhookShared: typeof metaWebhookShared;
   oauthSessions: typeof oauthSessions;
   oauthShared: typeof oauthShared;
