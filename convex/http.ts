@@ -327,10 +327,12 @@ const messengerDispatch = httpAction(async (ctx, req) => {
   // }
 
   let object: string | undefined;
+  let payload: unknown;
   try {
-    const peek = JSON.parse(rawBody) as { object?: string };
-    object = peek.object;
+    payload = JSON.parse(rawBody) as { object?: string };
+    object = (payload as { object?: string }).object;
   } catch {
+    console.log("[messenger-webhook] dispatch:invalid-json", { rawBody });
     return new Response("invalid json", { status: 400 });
   }
 
@@ -339,10 +341,17 @@ const messengerDispatch = httpAction(async (ctx, req) => {
       route: "/webhook/messenger",
       object,
       bodyBytes: rawBody.length,
+      rawBody,
+      payload,
     });
     return await messengerReceive(ctx, rawBody);
   }
-  console.log("[messenger-webhook] dispatch:ignored", { object });
+  console.log("[messenger-webhook] dispatch:ignored", {
+    object,
+    bodyBytes: rawBody.length,
+    rawBody,
+    payload,
+  });
   return new Response(null, { status: 200 });
 });
 

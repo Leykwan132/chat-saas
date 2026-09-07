@@ -51,7 +51,7 @@ export async function receive(
   try {
     payload = JSON.parse(rawBody) as MessengerWebhookEnvelope;
   } catch {
-    logMessengerWebhook("receive:invalid-json");
+    logMessengerWebhook("receive:invalid-json", { rawBody });
     return new Response("invalid json", { status: 400 });
   }
 
@@ -59,14 +59,31 @@ export async function receive(
   logMessengerWebhook("receive:started", {
     object: payload.object,
     entryCount: entries.length,
+    rawBody,
+    payload,
   });
 
   for (const entry of entries) {
     const messaging = entry.messaging ?? [];
+    const changes = entry.changes ?? [];
     logMessengerWebhook("receive:entry", {
       entryId: entry.id,
+      time: entry.time,
       eventCount: messaging.length,
+      changeCount: changes.length,
+      changeFields: changes.map((change) => change.field),
+      changes,
+      entry,
     });
+
+    for (const change of changes) {
+      logMessengerWebhook("receive:change-event", {
+        entryId: entry.id,
+        field: change.field,
+        value: change.value,
+        change,
+      });
+    }
 
     for (const event of messaging) {
       const recipientId = event.recipient?.id;
@@ -125,6 +142,8 @@ export async function receive(
           senderId,
           hasMessage: Boolean(message),
           messageMid: message?.mid,
+          eventKeys: Object.keys(event),
+          event,
         });
         continue;
       }
@@ -503,6 +522,10 @@ type MessengerWebhookEnvelope = {
   entry?: Array<{
     id?: string;
     time?: number;
+    changes?: Array<{
+      field?: string;
+      value?: unknown;
+    }>;
     messaging?: Array<{
       sender?: { id?: string };
       recipient?: { id?: string };
