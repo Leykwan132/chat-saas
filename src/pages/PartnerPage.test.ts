@@ -72,8 +72,9 @@ describe("Partner Programme", () => {
     expect(customerListSource).toContain("<TableBody>");
   });
 
-  test("shows the six core summary metrics without an Overview table", () => {
+  test("shows the seven core summary metrics without an Overview table", () => {
     for (const label of [
+      "Organizations",
       "Customers",
       "Credits spent",
       "Credits top-up",
@@ -84,7 +85,13 @@ describe("Partner Programme", () => {
       expect(overviewSource).toContain(`label="${label}"`);
     }
 
-    expect(overviewSource.match(/<Metric/g)).toHaveLength(6);
+    expect(overviewSource.match(/<Metric/g)).toHaveLength(7);
+    expect(overviewSource).toContain(
+      '<Metric label="Organizations" value={overview?.activeOrganizations} />',
+    );
+    expect(overviewSource).toContain(
+      '<Metric label="Customers" value={overview?.customers.length} />',
+    );
     expect(overviewSource).not.toContain('label="Credit grants"');
     expect(overviewSource).not.toContain('label="Highest spend"');
     expect(overviewSource).not.toContain('label="Biggest top-up"');
