@@ -439,6 +439,7 @@ import type * as whiteLabel_partnerAuthTypes from "../whiteLabel/partnerAuthType
 import type * as whiteLabel_partnerCreditModel from "../whiteLabel/partnerCreditModel.js";
 import type * as whiteLabel_partnerUsage from "../whiteLabel/partnerUsage.js";
 import type * as whiteLabel_partnerUsageModel from "../whiteLabel/partnerUsageModel.js";
+import type * as whiteLabel_planChange from "../whiteLabel/planChange.js";
 import type * as whiteLabel_planResolver from "../whiteLabel/planResolver.js";
 import type * as whiteLabel_portal from "../whiteLabel/portal.js";
 import type * as whiteLabel_portalActions from "../whiteLabel/portalActions.js";
@@ -934,6 +935,7 @@ declare const fullApi: ApiFromModules<{
   "whiteLabel/partnerCreditModel": typeof whiteLabel_partnerCreditModel;
   "whiteLabel/partnerUsage": typeof whiteLabel_partnerUsage;
   "whiteLabel/partnerUsageModel": typeof whiteLabel_partnerUsageModel;
+  "whiteLabel/planChange": typeof whiteLabel_planChange;
   "whiteLabel/planResolver": typeof whiteLabel_planResolver;
   "whiteLabel/portal": typeof whiteLabel_portal;
   "whiteLabel/portalActions": typeof whiteLabel_portalActions;
