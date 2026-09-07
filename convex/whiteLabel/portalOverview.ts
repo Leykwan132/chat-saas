@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import type { QueryCtx } from "../_generated/server";
-import { PLAN_CATALOG, type PlanKey } from "../planCatalog";
+import { type PlanKey } from "../planCatalog";
 import { orgRoleKeyFromWorkosSlug } from "../../shared/teamRoleCatalog";
 import { assertCurrentPartnerAccess } from "./access";
 import { getPartnerCreditBalance } from "./creditLedger";
@@ -35,6 +35,10 @@ export const partnerOverviewValidator = v.object({
       name: v.string(),
       status: v.literal("active"),
       planKey: planKeyValidator,
+      scheduledPlanChange: v.union(
+        v.object({ planKey: planKeyValidator, effectiveAt: v.number() }),
+        v.null(),
+      ),
       monthlyAllowance: v.number(),
       renewalAt: v.number(),
       customerCount: v.number(),
@@ -155,13 +159,22 @@ export async function getPartnerOverview(ctx: QueryCtx) {
         }),
       ];
       const planKey = plan?.activePlanKey ?? "free";
+      const scheduledPlanChange =
+        plan?.pendingCreditPlanKey !== undefined &&
+        plan.pendingCreditPlanEffectiveAt !== undefined
+          ? {
+              planKey: plan.pendingCreditPlanKey,
+              effectiveAt: plan.pendingCreditPlanEffectiveAt,
+            }
+          : null;
       return {
         organization: {
           partnerOrganizationId: organization._id,
           name: team.name,
           status: "active" as const,
           planKey,
-          monthlyAllowance: PLAN_CATALOG[planKey].monthlyCredits,
+          scheduledPlanChange,
+          monthlyAllowance: balance.period.grantedCredits,
           renewalAt: balance.period.periodEnd,
           customerCount: customers.length,
           addedCredits: balance.balance?.manualGrantedCredits ?? 0,

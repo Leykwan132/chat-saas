@@ -26,7 +26,8 @@
 - 2026-09-03 [CODE] D779 ACTIVE: Avatar background media uses separate agent-scoped R2 keys and a stored image/video type; LiveAvatar background replacement is browser-side chroma-key compositing.
 - 2026-09-02 [USER] D757 ACTIVE: Gemini credentials are externally registered with LiveAvatar. The app reads only opaque `HEYGEN_GEMINI_SECRET_ID` server-side and never persists or exposes the Gemini API key.
 - 2026-08-19 [USER] D734 ACTIVE: white-label state is isolated in dedicated partner tables; existing user, team, Stripe, and admin-session records change only through ID relationships.
-- 2026-08-19 [USER] D735 ACTIVE: shared plan limits take effect immediately; only the new monthly allowance starts at the organization’s next credit cycle.
+- 2026-08-19 [USER] D735 SUPERSEDED by D787: shared plan limits take effect immediately; only the new monthly allowance starts at the organization’s next credit cycle.
+- 2026-09-07 [USER] D787 ACTIVE: partners choose plan-change timing per organization. Immediate rewrites the current credit period to the new catalog allowance (used credits kept, remaining floored at zero); end-of-period keeps current credits and schedules the switch for the period end. Plan limits still change immediately. Overview Monthly reflects the current period’s granted credits, and a scheduled change is shown under the plan.
 - 2026-08-19 [USER] D736 ACTIVE: partner-created workspaces use their organization wallet and manual grants; Stripe payment and top-up paths are blocked.
 - 2026-08-19 [USER] D742 ACTIVE: Partner Programme has Overview, Customers, and Branding in a subtle vertical ghost navigation.
 - 2026-08-19 [USER] D743–D760 ACTIVE: custom hostnames use the configured Cloudflare SaaS zone, CNAME-only subdomains, DCV delegation, explicit DNS confirmations, concise polling, and expandable completed setup steps.

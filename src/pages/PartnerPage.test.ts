@@ -25,6 +25,10 @@ const customerControlsSource = readFileSync(
   new URL("../components/partner/PartnerCustomerControls.tsx", import.meta.url),
   "utf8",
 );
+const planChangeDialogSource = readFileSync(
+  new URL("../components/partner/PartnerPlanChangeDialog.tsx", import.meta.url),
+  "utf8",
+);
 const brandingSource = readFileSync(
   new URL("../components/partner/PartnerBrandingTab.tsx", import.meta.url),
   "utf8",
@@ -212,14 +216,20 @@ describe("Partner Programme", () => {
   });
 
   test("requires confirmation before applying a customer plan change", () => {
-    expect(organizationListSource).toContain('from "@/components/ui/dialog"');
-    expect(organizationListSource).toContain("Confirm plan change");
-    expect(organizationListSource).toContain("formatRenewalDate");
-    expect(organizationListSource).toContain('variant="ghost"');
+    expect(organizationListSource).toContain("PartnerPlanChangeDialog");
     expect(organizationListSource).toContain("setPendingPlanChange({");
-    expect(organizationListSource).toContain(
-      "onPlanChange(pendingPlanChange.organization, pendingPlanChange.planKey);",
-    );
+    expect(organizationListSource).toContain("organization.scheduledPlanChange");
+    expect(planChangeDialogSource).toContain('from "@/components/ui/dialog"');
+    expect(planChangeDialogSource).toContain('from "@/components/ui/radio-group"');
+    expect(planChangeDialogSource).toContain("Confirm plan change");
+    expect(planChangeDialogSource).toContain("formatRenewalDate");
+    expect(planChangeDialogSource).toContain('value="immediate"');
+    expect(planChangeDialogSource).toContain('value="next_period"');
+    expect(planChangeDialogSource).toContain('className="sm:justify-between"');
+    expect(planChangeDialogSource).toContain("onConfirm(timing)");
+    expect(pageSource).toContain("timing,");
+    expect(portalSource).toContain("timing: planChangeTimingValidator");
+    expect(apiSource).toContain("timing: PlanChangeTiming;");
     expect(apiSource).toContain("renewalAt: number;");
     expect(portalOverviewSource).toContain("renewalAt: v.number(),");
     expect(portalOverviewSource).toContain(

@@ -31,7 +31,7 @@ export async function getPartnerCreditBalance(
       )
       .unique(),
   ]);
-  const monthlyCredits = period === null ? 0 : period.grantedCredits - period.usedCredits;
+  const monthlyCredits = period === null ? 0 : Math.max(0, period.grantedCredits - period.usedCredits);
   const manualCredits = balance === null ? 0 : balance.manualGrantedCredits - balance.manualUsedCredits;
   return { period, balance, monthlyCredits, manualCredits, remainingCredits: monthlyCredits + manualCredits };
 }

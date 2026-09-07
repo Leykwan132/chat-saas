@@ -2,6 +2,8 @@ import { makeFunctionReference } from "convex/server";
 
 export type PlanKey = "free" | "starter" | "growth" | "business";
 
+export type PlanChangeTiming = "immediate" | "next_period";
+
 export type PartnerCustomerRemoval =
   | {
       kind: "active";
@@ -62,6 +64,7 @@ export type PartnerOverview = {
     name: string;
     status: "active" | "suspended";
     planKey: PlanKey;
+    scheduledPlanChange: { planKey: PlanKey; effectiveAt: number } | null;
     monthlyAllowance: number;
     renewalAt: number;
     customerCount: number;
@@ -114,7 +117,11 @@ export const whiteLabelApi = {
     >("whiteLabel/portal:deletePartnerOrganization"),
     assignOrganizationPlan: makeFunctionReference<
       "mutation",
-      { partnerOrganizationId: string; planKey: PlanKey },
+      {
+        partnerOrganizationId: string;
+        planKey: PlanKey;
+        timing: PlanChangeTiming;
+      },
       null
     >("whiteLabel/portal:assignOrganizationPlan"),
     generateLogoUploadUrl: makeFunctionReference<

@@ -236,14 +236,17 @@ export default function PartnerPage() {
           />
           <PartnerOrganizationList
             organizations={organizations}
-            onPlanChange={(organization, planKey) =>
+            onPlanChange={(organization, planKey, timing) =>
               void run(
                 () =>
                   assignPlan({
                     partnerOrganizationId: organization.partnerOrganizationId,
                     planKey,
+                    timing,
                   }),
-                "Plan updated. Monthly credits change on the next cycle.",
+                timing === "immediate"
+                  ? "Plan updated. Monthly credits changed now."
+                  : "Plan updated. Monthly credits change at the end of the billing period.",
               )
             }
             onDelete={async (organization) =>

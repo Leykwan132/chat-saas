@@ -2,6 +2,10 @@ import { useState } from "react";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import { PartnerPlanSelect } from "@/components/partner/PartnerCustomerControls";
 import { PartnerPanel } from "@/components/partner/PartnerPanel";
+import {
+  PartnerPlanChangeDialog,
+  type PendingPlanChange,
+} from "@/components/partner/PartnerPlanChangeDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
@@ -35,14 +39,13 @@ import {
 } from "@/components/ui/table";
 import { Spinner } from "@/components/ui/spinner";
 import { formatRenewalDate } from "@/lib/formatRenewalDate";
-import { type PartnerOverview, type PlanKey } from "@/lib/whiteLabelApi";
+import {
+  type PartnerOverview,
+  type PlanChangeTiming,
+  type PlanKey,
+} from "@/lib/whiteLabelApi";
 
 type Organization = PartnerOverview["organizations"][number];
-
-type PendingPlanChange = {
-  organization: Organization;
-  planKey: PlanKey;
-};
 
 export function PartnerOrganizationList({
   organizations,
@@ -50,7 +53,11 @@ export function PartnerOrganizationList({
   onDelete,
 }: {
   organizations: PartnerOverview["organizations"];
-  onPlanChange: (organization: Organization, planKey: PlanKey) => void;
+  onPlanChange: (
+    organization: Organization,
+    planKey: PlanKey,
+    timing: PlanChangeTiming,
+  ) => void;
   onDelete: (organization: Organization) => Promise<boolean>;
 }) {
   const [pendingPlanChange, setPendingPlanChange] =
@@ -59,13 +66,14 @@ export function PartnerOrganizationList({
     null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
-  const pendingPlanRenewalDate = pendingPlanChange
-    ? formatRenewalDate(pendingPlanChange.organization.renewalAt)
-    : null;
 
-  const confirmPlanChange = () => {
+  const confirmPlanChange = (timing: PlanChangeTiming) => {
     if (pendingPlanChange === null) return;
-    onPlanChange(pendingPlanChange.organization, pendingPlanChange.planKey);
+    onPlanChange(
+      pendingPlanChange.organization,
+      pendingPlanChange.planKey,
+      timing,
+    );
     setPendingPlanChange(null);
   };
 
@@ -124,7 +132,7 @@ export function PartnerOrganizationList({
                       {organization.customerCount.toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      <div className="flex justify-center">
+                      <div className="flex flex-col items-center gap-1">
                         <PartnerPlanSelect
                           value={organization.planKey}
                           onValueChange={(planKey) => {
@@ -134,6 +142,15 @@ export function PartnerOrganizationList({
                           }}
                           compact
                         />
+                        {organization.scheduledPlanChange ? (
+                          <p className="text-center text-xs text-muted-foreground">
+                            {organization.scheduledPlanChange.planKey} credits
+                            from{" "}
+                            {formatRenewalDate(
+                              organization.scheduledPlanChange.effectiveAt,
+                            )}
+                          </p>
+                        ) : null}
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
@@ -184,29 +201,11 @@ export function PartnerOrganizationList({
           </CardContent>
         </PartnerPanel>
       )}
-      <Dialog
-        open={pendingPlanChange !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingPlanChange(null);
-        }}
-      >
-        <DialogContent className="rounded-lg border border-border shadow-none ring-0">
-          <DialogHeader>
-            <DialogTitle>Confirm plan change</DialogTitle>
-            <DialogDescription>
-              Change {pendingPlanChange?.organization.name} to the{" "}
-              {pendingPlanChange?.planKey} plan? The monthly credits will
-              reset on {pendingPlanRenewalDate}.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setPendingPlanChange(null)}>
-              Cancel
-            </Button>
-            <Button onClick={confirmPlanChange}>Confirm plan change</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PartnerPlanChangeDialog
+        pendingChange={pendingPlanChange}
+        onCancel={() => setPendingPlanChange(null)}
+        onConfirm={confirmPlanChange}
+      />
       <Dialog
         open={pendingDeletion !== null}
         onOpenChange={(open) => {

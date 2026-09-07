@@ -7,6 +7,10 @@ import {
 } from "./access";
 import { grantPartnerOrganizationCredits } from "./creditLedger";
 import { getPartnerOverview, partnerOverviewValidator } from "./portalOverview";
+import {
+  applyPartnerOrganizationPlanChange,
+  planChangeTimingValidator,
+} from "./planChange";
 import { requestTeamDeletion, teamDeletionRequestResultValidator } from "../teamDeletion/request";
 
 const planKeyValidator = v.union(
@@ -131,7 +135,9 @@ export const assignOrganizationPlan = mutation({
   args: {
     partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
     planKey: planKeyValidator,
+    timing: planChangeTimingValidator,
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const { partner, user } = await assertCurrentPartnerAccess(ctx);
     await assertPartnerOrganizationAccess(
@@ -139,35 +145,13 @@ export const assignOrganizationPlan = mutation({
       partner._id,
       args.partnerOrganizationId,
     );
-    const plan = await ctx.db
-      .query("whiteLabelPartnerOrganizationPlans")
-      .withIndex("by_partnerOrganizationId", (q) =>
-        q.eq("partnerOrganizationId", args.partnerOrganizationId),
-      )
-      .unique();
-    if (plan === null) throw new Error("Customer organization plan not found.");
-    const period = await ctx.db
-      .query("whiteLabelPartnerOrganizationCreditPeriods")
-      .withIndex("by_partnerOrganizationId_and_periodStart", (q) =>
-        q.eq("partnerOrganizationId", args.partnerOrganizationId),
-      )
-      .order("desc")
-      .first();
-    const now = Date.now();
-    await ctx.db.patch(plan._id, {
-      activePlanKey: args.planKey,
-      pendingCreditPlanKey: args.planKey,
-      pendingCreditPlanEffectiveAt: period?.periodEnd ?? now,
-      updatedByUserId: user._id,
-      updatedAt: now,
-    });
-    await ctx.db.insert("whiteLabelPartnerOrganizationPlanAssignments", {
+    await applyPartnerOrganizationPlanChange(ctx, {
       partnerOrganizationId: args.partnerOrganizationId,
       planKey: args.planKey,
-      appliesAt: now,
-      assignedByUserId: user._id,
-      createdAt: now,
+      timing: args.timing,
+      actorUserId: user._id,
     });
+    return null;
   },
 });
 
