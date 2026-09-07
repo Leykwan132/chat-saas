@@ -46,6 +46,9 @@ export function PartnerBrandingTab({
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const trimmedName = name.trim();
   const isDomainConnected = partner.domain?.setupState === "connected";
+  const signInPreviewUrl = partner.domain?.previewUrl
+    ? `${partner.domain.previewUrl}/sign-in`
+    : null;
 
   const handleNameSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -155,6 +158,19 @@ export function PartnerBrandingTab({
               <FieldDescription>
                 Shown above the heading on your customers&apos; sign-in page.
               </FieldDescription>
+              {signInPreviewUrl ? (
+                <FieldDescription>
+                  Preview:{" "}
+                  <a
+                    href={signInPreviewUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline underline-offset-2 hover:text-foreground"
+                  >
+                    {signInPreviewUrl}
+                  </a>
+                </FieldDescription>
+              ) : null}
             </Field>
           </FieldGroup>
           <div className="flex flex-col gap-3">
