@@ -304,6 +304,9 @@ export default function PartnerPage() {
         <TabsContent value="branding">
           <PartnerBrandingTab
             partner={partner}
+            onNameSave={(name) =>
+              run(() => updateBrand({ name }), "Brand name updated.")
+            }
             onLogoChange={uploadLogo}
             onCreateCustomHostname={(hostname) =>
               run(
