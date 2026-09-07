@@ -333,6 +333,7 @@ const messengerDispatch = httpAction(async (ctx, req) => {
     object = (payload as { object?: string }).object;
   } catch {
     console.log("[messenger-webhook] dispatch:invalid-json", { rawBody });
+    console.log("[messenger-webhook] dispatch:invalid-json:raw-meta", rawBody);
     return new Response("invalid json", { status: 400 });
   }
 
@@ -344,6 +345,7 @@ const messengerDispatch = httpAction(async (ctx, req) => {
       rawBody,
       payload,
     });
+    console.log("[messenger-webhook] dispatch:raw-meta", rawBody);
     return await messengerReceive(ctx, rawBody);
   }
   console.log("[messenger-webhook] dispatch:ignored", {
@@ -352,6 +354,7 @@ const messengerDispatch = httpAction(async (ctx, req) => {
     rawBody,
     payload,
   });
+  console.log("[messenger-webhook] dispatch:ignored:raw-meta", rawBody);
   return new Response(null, { status: 200 });
 });
 

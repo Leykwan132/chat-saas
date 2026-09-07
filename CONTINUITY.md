@@ -3,8 +3,8 @@
 # Snapshot
 
 - 2026-09-07 [USER] Goal: inspect Convex logs for every event that enters `/webhook/messenger`, especially Page post comments.
-- 2026-09-07 [CODE] Now: Messenger webhook logs comment payloads and records that public replies and private messages are not sent; live Inbox Messenger text sends log request/result as `[messenger-send]`.
-- 2026-09-07 [CODE] Next: after a live comment or Inbox send, read Convex logs for `[messenger-webhook]` `receive:comment-no-outbound` and `[messenger-send]`.
+- 2026-09-07 [CODE] Now: Messenger webhook logs the raw Meta body/event JSON as `:raw-meta` strings, plus comment skip-sends and `[messenger-send]` request/result.
+- 2026-09-07 [CODE] Next: after a live comment, read `[messenger-webhook] receive:raw-meta` and `receive:change-event:raw-meta` for the exact Meta JSON.
 - 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
 - 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
 - 2026-09-06 [CODE] Milestone: Comment-to-Inbox list/edit/delete/activation and Meta page subscriptions are on `main` (#90–#93); comment webhook ingestion remains unshipped (D781).
@@ -38,7 +38,7 @@
 
 # Done (recent)
 
-- 2026-09-07 [CODE] Logged Messenger comment skip-sends and outbound text request/result payloads; unshipped.
+- 2026-09-07 [CODE] Logged raw Meta webhook JSON beside Messenger comment and send diagnostics; unshipped.
 - 2026-09-07 [CODE] Milestone: widget newline preservation and canonical booking confirmation layout shipped on `main` (#96).
 - 2026-09-06 [CODE] Milestone: sessionless availability, live booking-session checks, and confirmation-race fixes shipped on `main` (#94–#96).
 - 2026-09-06 [CODE] Milestone: Comment-to-Inbox delete, activation, and subscription UX shipped on `main` (#90–#93).
@@ -50,7 +50,7 @@
 
 # Receipts
 
-- 2026-09-07 [TOOL] Messenger send/comment skip logs passed the comment log helper test, Node v22 ESLint, and `git diff --check`.
+- 2026-09-07 [TOOL] Messenger raw-meta event logging passed the comment log helper test, Node v22 ESLint, and `git diff --check`.
 - 2026-09-07 [TOOL] Booking-confirmation layout and widget newline preservation passed 31 focused tests, targeted ESLint, and `git diff --check`.
 - 2026-09-06 [TOOL] Sessionless availability and direct post-collection booking passed 11 booking regression tests, targeted ESLint, TypeScript build checking, and `git diff --check`.
 - 2026-09-05 [TOOL] Comment-to-Inbox single-form edit modal passed 12 focused UI tests, Node v22 ESLint, and `git diff --check`.

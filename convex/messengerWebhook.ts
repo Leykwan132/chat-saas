@@ -20,12 +20,28 @@ const LOG_PREFIX = "[messenger-webhook]";
 function logMessengerWebhook(
   step: string,
   data?: Record<string, unknown>,
+  rawMetaEvent?: unknown,
 ) {
-  if (data === undefined) {
+  const rawMetaEventJson =
+    rawMetaEvent === undefined
+      ? undefined
+      : typeof rawMetaEvent === "string"
+        ? rawMetaEvent
+        : JSON.stringify(rawMetaEvent);
+  if (data === undefined && rawMetaEventJson === undefined) {
     console.log(`${LOG_PREFIX}`, step);
     return;
   }
-  console.log(`${LOG_PREFIX}`, step, data);
+  console.log(
+    `${LOG_PREFIX}`,
+    step,
+    rawMetaEventJson === undefined
+      ? data
+      : { ...data, rawMetaEvent, rawMetaEventJson },
+  );
+  if (rawMetaEventJson !== undefined) {
+    console.log(`${LOG_PREFIX}`, `${step}:raw-meta`, rawMetaEventJson);
+  }
 }
 
 // POST handler for the product-specific /webhook/messenger route.
@@ -52,17 +68,19 @@ export async function receive(
   try {
     payload = JSON.parse(rawBody) as MessengerWebhookEnvelope;
   } catch {
-    logMessengerWebhook("receive:invalid-json", { rawBody });
+    logMessengerWebhook("receive:invalid-json", undefined, rawBody);
     return new Response("invalid json", { status: 400 });
   }
 
   const entries = payload.entry ?? [];
+  logMessengerWebhook("receive:raw-meta", {
+    object: payload.object,
+    entryCount: entries.length,
+  }, rawBody);
   logMessengerWebhook("receive:started", {
     object: payload.object,
     entryCount: entries.length,
-    rawBody,
-    payload,
-  });
+  }, payload);
 
   for (const entry of entries) {
     const messaging = entry.messaging ?? [];
@@ -73,24 +91,20 @@ export async function receive(
       eventCount: messaging.length,
       changeCount: changes.length,
       changeFields: changes.map((change) => change.field),
-      changes,
-      entry,
-    });
+    }, entry);
 
     for (const change of changes) {
       logMessengerWebhook("receive:change-event", {
         entryId: entry.id,
         field: change.field,
-        value: change.value,
-        change,
-      });
+      }, change);
 
       const commentOutbound = messengerCommentOutboundLog(change);
       if (commentOutbound) {
         logMessengerWebhook("receive:comment-no-outbound", {
           entryId: entry.id,
           ...commentOutbound,
-        });
+        }, change);
       }
     }
 
@@ -105,7 +119,7 @@ export async function receive(
           targetExternalId: reaction.mid,
           emoji: reaction.emoji,
           action: reaction.action,
-        });
+        }, event);
 
         try {
           await ctx.runMutation(internal.messengerWebhook.handleReaction, {
@@ -129,7 +143,7 @@ export async function receive(
           watermark: event.read?.watermark,
           watermarkMs: readWatermark,
           timestamp: event.timestamp,
-        });
+        }, event);
 
         try {
           await ctx.runMutation(internal.messengerWebhook.handleReadReceipt, {
@@ -152,8 +166,7 @@ export async function receive(
           hasMessage: Boolean(message),
           messageMid: message?.mid,
           eventKeys: Object.keys(event),
-          event,
-        });
+        }, event);
         continue;
       }
 
@@ -165,8 +178,7 @@ export async function receive(
         hasText: Boolean(message.text?.trim()),
         attachmentCount: message.attachments?.length ?? 0,
         text: message.text,
-        event,
-      });
+      }, event);
 
       if (message.is_echo === true) {
         logMessengerWebhook("receive:outgoing-echo", {
@@ -174,7 +186,7 @@ export async function receive(
           senderId,
           externalId: message.mid,
           text: message.text,
-        });
+        }, event);
       }
 
       const webhookAttachments = message.attachments ?? [];
