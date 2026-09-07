@@ -79,9 +79,9 @@ function PartnerSignIn() {
   return (
     <main className="flex min-h-[100svh] items-center justify-center bg-background px-6 py-10">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
-        <div className="space-y-3">
+        <div className="space-y-3 text-center">
           {branding.logoUrl ? (
-            <img src={branding.logoUrl} alt={branding.partnerName} className="h-9 max-w-48 object-contain object-left" />
+            <img src={branding.logoUrl} alt={branding.partnerName} className="mx-auto h-9 max-w-48 object-contain" />
           ) : null}
           <h1 className="text-xl font-semibold text-foreground">Sign in to {branding.partnerName}</h1>
         </div>
