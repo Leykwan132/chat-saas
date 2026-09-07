@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from "react";
+import { useState } from "react";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { LayoutDashboard, Palette, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -107,10 +107,8 @@ export default function PartnerPage() {
     }
   };
 
-  const uploadLogo = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    void run(async () => {
+  const uploadLogo = (file: File) =>
+    run(async () => {
       if (!file.type.startsWith("image/")) {
         throw new Error("Choose an image file for the logo.");
       }
@@ -124,7 +122,6 @@ export default function PartnerPage() {
       const result = (await response.json()) as { storageId: string };
       await updateBrand({ name: partner.name, logoStorageId: result.storageId });
     }, "Logo updated.");
-  };
 
   const runCustomerAction = async <Result,>(
     action: CustomerAction,
@@ -307,7 +304,7 @@ export default function PartnerPage() {
             onNameSave={(name) =>
               run(() => updateBrand({ name }), "Brand name updated.")
             }
-            onLogoChange={uploadLogo}
+            onLogoUpload={uploadLogo}
             onCreateCustomHostname={(hostname) =>
               run(
                 () => createCustomHostname({ hostname }),
