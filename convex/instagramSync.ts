@@ -17,16 +17,10 @@ import {
   businessAgentName,
 } from "./chat/threads";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
-
-const DEFAULT_GRAPH_VERSION = "v25.0";
-
-function graphVersion() {
-  return process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
-}
-
-function instagramGraphBase() {
-  return `https://graph.instagram.com/${graphVersion()}`;
-}
+import {
+  instagramConversationsUrl,
+  instagramObjectBase,
+} from "./instagramApi";
 
 type GraphErrorBody = { error?: { message?: string } };
 
@@ -105,7 +99,7 @@ export const backfillConversations = internalAction({
     console.log('enqueueing instagram sync messages');
     try {
       console.log('fetching instagram conversations list');
-      const url = new URL(`${instagramGraphBase()}/me/conversations`);
+      const url = new URL(instagramConversationsUrl(channel));
       url.searchParams.set("platform", "instagram");
       url.searchParams.set("limit", String(args.limit));
       url.searchParams.set("access_token", channel.accessToken);
@@ -159,7 +153,7 @@ export const syncMessages = internalAction({
 
     try {
       const url = new URL(
-        `${instagramGraphBase()}/${args.conversationExternalId}`,
+        `${instagramObjectBase(channel)}/${args.conversationExternalId}`,
       );
       url.searchParams.set(
         "fields",
@@ -215,7 +209,7 @@ export const hydrateConversationByParticipant = internalAction({
     }
 
     try {
-      const listUrl = new URL(`${instagramGraphBase()}/me/conversations`);
+      const listUrl = new URL(instagramConversationsUrl(channel));
       listUrl.searchParams.set("platform", "instagram");
       listUrl.searchParams.set("user_id", args.participantUserId);
       listUrl.searchParams.set(

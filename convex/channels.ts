@@ -784,6 +784,7 @@ export const internalUpsertInstagram = internalMutation({
   args: {
     orgId: v.string(),
     igUserId: v.string(),
+    instagramPageId: v.optional(v.string()),
     displayUsername: v.optional(v.string()),
     accessToken: v.string(),
     tokenExpiresAt: v.optional(v.number()),
@@ -798,6 +799,7 @@ export const internalUpsertInstagram = internalMutation({
 
     const patch = {
       igUserId: args.igUserId,
+      instagramPageId: args.instagramPageId,
       displayUsername: args.displayUsername,
       accessToken: args.accessToken,
       tokenExpiresAt: args.tokenExpiresAt,
@@ -869,6 +871,7 @@ export const internalGetExpiringInstagramTokens = internalQuery({
     return rows.filter(
       (r) =>
         r.service === "instagram" &&
+        r.instagramPageId === undefined &&
         r.status === "connected" &&
         typeof r.tokenExpiresAt === "number" &&
         r.tokenExpiresAt < cutoff,

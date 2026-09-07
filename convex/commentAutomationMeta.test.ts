@@ -30,6 +30,26 @@ describe("ensureCommentSubscription", () => {
     );
   });
 
+  it("subscribes an Embedded Signup Instagram page through Facebook Graph", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await ensureCommentSubscription({
+      service: "instagram",
+      status: "connected",
+      instagramPageId: "page-1",
+      igUserId: "ig-1",
+      accessToken: "page-token",
+    });
+
+    expect(fetchMock.mock.calls[0]?.[0]).toContain(
+      "graph.facebook.com/v25.0/page-1/subscribed_apps",
+    );
+    expect(fetchMock.mock.calls[0]?.[0]).toContain(
+      "subscribed_fields=messages%2Ccomments",
+    );
+  });
+
   it("fetches comment text and author details", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       id: "comment-1",

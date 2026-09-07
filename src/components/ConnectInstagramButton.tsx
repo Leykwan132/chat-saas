@@ -6,6 +6,7 @@ import { api } from '../../convex/_generated/api';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { waitForFacebookSdk } from '@/lib/fbSdk';
 
 type ConnectInstagramButtonProps = {
   forceAllowConnect?: boolean;
@@ -19,8 +20,13 @@ export function ConnectInstagramButton({
   children,
 }: ConnectInstagramButtonProps) {
   const channels = useQuery(api.channels.listForCurrentOrg, {});
-  const startInstagramAuth = useAction(api.instagramAuth.start);
+  const completeSignup = useAction(api.instagramEmbeddedSignup.completeSignup);
   const [busy, setBusy] = useState(false);
+  const configId = import.meta.env.VITE_IG_CONFIG_ID as string | undefined;
+  const codeExchangeRedirectUri =
+    (import.meta.env.VITE_MESSENGER_CODE_EXCHANGE_REDIRECT_URI as
+      | string
+      | undefined)?.trim() || undefined;
 
   const instagramChannel = useMemo(
     () => channels?.find((c: Doc<'channels'>) => c.service === 'instagram'),
@@ -28,19 +34,52 @@ export function ConnectInstagramButton({
   );
 
   const launchSignup = useCallback(() => {
+    if (!configId) {
+      toast.error('Instagram is not configured. Set VITE_IG_CONFIG_ID.');
+      return;
+    }
     setBusy(true);
     void (async () => {
       try {
-        const returnPath = `${window.location.pathname}${window.location.search}`;
-        const { authorizeUrl } = await startInstagramAuth({ returnPath });
-        window.location.assign(authorizeUrl);
+        const fb = await waitForFacebookSdk();
+        fb.login(
+          (response) => {
+            void (async () => {
+              try {
+                const code = response.authResponse?.code;
+                if (!code) {
+                  toast.error('Instagram signup cancelled before completion.');
+                  return;
+                }
+                await completeSignup({
+                  code,
+                  ...(codeExchangeRedirectUri
+                    ? { redirectUri: codeExchangeRedirectUri }
+                    : {}),
+                });
+                toast.success('Instagram account connected');
+              } catch (error) {
+                const message =
+                  error instanceof Error ? error.message : String(error);
+                toast.error(`Instagram connect failed: ${message}`);
+              } finally {
+                setBusy(false);
+              }
+            })();
+          },
+          {
+            config_id: configId,
+            response_type: 'code',
+            override_default_response_type: true,
+          },
+        );
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         toast.error(`Instagram connect failed: ${message}`);
         setBusy(false);
       }
     })();
-  }, [startInstagramAuth]);
+  }, [codeExchangeRedirectUri, completeSignup, configId]);
 
   if (!forceAllowConnect && instagramChannel?.status === 'connected') {
     return (

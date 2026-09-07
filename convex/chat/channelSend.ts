@@ -11,6 +11,7 @@ import {
   mediaSendLogContext,
   type MediaSendLogContext,
 } from "./mediaSendLogs";
+import { instagramMessagingUrl } from "../instagramApi";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
 
@@ -24,11 +25,6 @@ export const META_ERROR_MESSAGING_WINDOW = 10;
 function waGraphBase() {
   const version = process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
   return `https://graph.facebook.com/${version}`;
-}
-
-function igGraphBase() {
-  const version = process.env.META_GRAPH_API_VERSION || "v25.0";
-  return `https://graph.instagram.com/${version}`;
 }
 
 function fbGraphBase() {
@@ -585,7 +581,7 @@ async function sendInstagramSenderAction(
     return { ok: false, error: "Instagram channel is not connected" };
   }
   return sendMetaSenderAction(
-    `${fbGraphBase()}/me/messages`,
+    instagramMessagingUrl(channel),
     accessToken,
     conversation.contactAddress,
     senderAction,
@@ -846,7 +842,7 @@ async function sendInstagram(
     body.tag = "HUMAN_AGENT";
   }
 
-  const res = await fetch(`${igGraphBase()}/me/messages`, {
+  const res = await fetch(instagramMessagingUrl(channel), {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -944,7 +940,7 @@ async function sendInstagramMedia(
       body.tag = "HUMAN_AGENT";
     }
 
-    const res = await fetch(`${igGraphBase()}/me/messages`, {
+    const res = await fetch(instagramMessagingUrl(channel), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
