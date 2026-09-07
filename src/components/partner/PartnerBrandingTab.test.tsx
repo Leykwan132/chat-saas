@@ -7,12 +7,13 @@ const noop = vi.fn(async () => null);
 
 function partnerWithDomain(
   setupState: NonNullable<PartnerProfile["domain"]>["setupState"],
+  logoUrl: string | null = null,
 ): PartnerProfile {
   return {
     partnerId: "partner_123",
     name: "Acme Studio",
-    logoStorageId: null,
-    logoUrl: null,
+    logoStorageId: logoUrl === null ? null : "storage_1",
+    logoUrl,
     domain: {
       hostname: "app.partner.test",
       status: "pending",
@@ -34,7 +35,7 @@ function render(partner: PartnerProfile) {
     <PartnerBrandingTab
       partner={partner}
       onNameSave={noop}
-      onLogoChange={() => undefined}
+      onLogoUpload={noop}
       onCreateCustomHostname={noop}
       onConfirmOwnershipDns={noop}
       onConfirmDelegatedDcvDns={noop}
@@ -52,6 +53,26 @@ describe("PartnerBrandingTab", () => {
     expect(markup).toContain("Brand name");
     expect(markup).toContain('value="Acme Studio"');
     expect(markup).toContain("sign-in page");
+  });
+
+  test("previews an uploaded logo behind a click-to-replace overlay", () => {
+    const markup = render(
+      partnerWithDomain("ownership_checking", "https://cdn.test/logo.png"),
+    );
+
+    expect(markup).toContain('src="https://cdn.test/logo.png"');
+    expect(markup).toContain("Replace logo");
+    expect(markup).toContain("group-hover:opacity-100");
+    expect(markup).toContain('for="partner-logo"');
+    expect(markup).toContain("cursor-pointer");
+    expect(markup).not.toContain("Upload logo");
+  });
+
+  test("prompts for a first logo upload when none exists", () => {
+    const markup = render(partnerWithDomain("ownership_checking"));
+
+    expect(markup).toContain("Upload logo");
+    expect(markup).not.toContain("Replace logo");
   });
 
   test("shows a green check next to a connected domain without extra copy", () => {
