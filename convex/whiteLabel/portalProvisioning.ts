@@ -7,7 +7,7 @@ const planKeyValidator = v.union(v.literal("free"), v.literal("starter"), v.lite
 
 export const persistCreatedOrganization = internalMutation({
   args: { partnerId: v.id("whiteLabelPartners"), workosUserId: v.string(), workosOrgId: v.string(), name: v.string(), planKey: planKeyValidator },
-  returns: v.object({ partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"), teamId: v.id("teams"), ownerId: v.id("users") }),
+  returns: v.object({ partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"), teamId: v.id("teams") }),
   handler: async (ctx, args) => {
     const [partner, user] = await Promise.all([ctx.db.get(args.partnerId), getUserByWorkosId(ctx, args.workosUserId)]);
     if (partner === null || user === null) throw new Error("Partner owner not found.");
@@ -17,15 +17,7 @@ export const persistCreatedOrganization = internalMutation({
     const partnerOrganizationId = await ctx.db.insert("whiteLabelPartnerOrganizations", { partnerId: partner._id, teamId, status: "active", createdByUserId: user._id, createdAt: now, updatedAt: now });
     await ctx.db.insert("whiteLabelPartnerOrganizationPlans", { partnerOrganizationId, activePlanKey: args.planKey, creditPlanKey: args.planKey, updatedByUserId: user._id, createdAt: now, updatedAt: now });
     await ctx.db.insert("whiteLabelPartnerOrganizationPlanAssignments", { partnerOrganizationId, planKey: args.planKey, appliesAt: now, assignedByUserId: user._id, createdAt: now });
-    return { partnerOrganizationId, teamId, ownerId: user._id };
-  },
-});
-
-export const initializeFirstCreditPeriod = internalMutation({
-  args: { partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"), actorUserId: v.id("users"), planKey: planKeyValidator, periodStart: v.number(), periodEnd: v.number() },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    await createPartnerCreditPeriod(ctx, args);
-    return null;
+    await createPartnerCreditPeriod(ctx, { partnerOrganizationId, planKey: args.planKey, periodStart: now, periodEnd: now + 30 * 24 * 60 * 60 * 1000, actorUserId: user._id });
+    return { partnerOrganizationId, teamId };
   },
 });
