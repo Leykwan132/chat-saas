@@ -41,6 +41,7 @@ export const internalCreateMessengerPickerHold = internalMutation({
     orgId: v.string(),
     userId: v.string(),
     userAccessToken: v.string(),
+    enableCommentWebhooks: v.boolean(),
     returnPath: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<Id<"oauthSessions">> => {
@@ -54,6 +55,7 @@ export const internalCreateMessengerPickerHold = internalMutation({
       expiresAt: Date.now() + SESSION_TTL_MS,
       consumed: false,
       pendingUserAccessToken: args.userAccessToken,
+      enableCommentWebhooks: args.enableCommentWebhooks,
     });
   },
 });

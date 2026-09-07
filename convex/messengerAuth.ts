@@ -134,6 +134,7 @@ export const finalizePick = action({
         userId,
         pageId: args.pageId,
         userAccessToken: session.pendingUserAccessToken,
+        enableCommentWebhooks: session.enableCommentWebhooks === true,
       },
     );
 

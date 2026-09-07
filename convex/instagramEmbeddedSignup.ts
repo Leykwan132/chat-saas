@@ -1,10 +1,11 @@
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { instagramSyncPool } from "./channelSyncPools";
 import { exchangeCodeForUserToken } from "./messengerConnect";
+import { isCommentToInboxUserAllowed } from "../shared/commentToInboxAccess";
 
 type InstagramAccount = {
   id: string;
@@ -56,9 +57,15 @@ export async function listInstagramAccounts(userAccessToken: string) {
   );
 }
 
-async function subscribeInstagramPage(page: PageWithInstagram & { access_token: string }) {
+export async function subscribeInstagramPage(
+  page: PageWithInstagram & { access_token: string },
+  enableCommentWebhooks: boolean,
+) {
   const url = new URL(`${graphBase()}/${page.id}/subscribed_apps`);
-  url.searchParams.set("subscribed_fields", "messages,comments");
+  url.searchParams.set(
+    "subscribed_fields",
+    enableCommentWebhooks ? "messages,feed" : "messages",
+  );
   await graphFetch(
     url.toString(),
     {
@@ -69,10 +76,18 @@ async function subscribeInstagramPage(page: PageWithInstagram & { access_token: 
   );
 }
 
+export function shouldEnableInstagramCommentWebhooks(
+  requested: boolean,
+  email: string | null | undefined,
+) {
+  return requested && isCommentToInboxUserAllowed(email);
+}
+
 export const completeSignup = action({
   args: {
     code: v.string(),
     redirectUri: v.optional(v.string()),
+    enableCommentWebhooks: v.boolean(),
   },
   handler: async (
     ctx,
@@ -80,6 +95,14 @@ export const completeSignup = action({
   ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
     const { orgId, userId } = await getAuthContext(ctx);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
+    const user: Doc<"users"> | null = await ctx.runQuery(
+      internal.users.internalGetByWorkosUserId,
+      { workosUserId: userId },
+    );
+    const enableCommentWebhooks = shouldEnableInstagramCommentWebhooks(
+      args.enableCommentWebhooks,
+      user?.email,
+    );
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
     if (!appId || !appSecret) {
@@ -126,7 +149,7 @@ export const completeSignup = action({
         progressStep: "subscribing",
         igUserId,
       });
-      await subscribeInstagramPage(page);
+      await subscribeInstagramPage(page, enableCommentWebhooks);
       await ctx.runMutation(internal.channels.internalSetProgress, {
         orgId: channelOrgId,
         service: "instagram",

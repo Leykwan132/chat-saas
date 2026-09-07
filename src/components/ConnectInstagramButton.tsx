@@ -7,6 +7,12 @@ import type { Doc } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { waitForFacebookSdk } from '@/lib/fbSdk';
+import {
+  isCommentToInboxUserAllowed,
+  isProductFeatureEnabled,
+  useEnableCommentToInboxFeature,
+} from '@/lib/posthogFeatureFlags';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 
 type ConnectInstagramButtonProps = {
   forceAllowConnect?: boolean;
@@ -22,6 +28,11 @@ export function ConnectInstagramButton({
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const completeSignup = useAction(api.instagramEmbeddedSignup.completeSignup);
   const [busy, setBusy] = useState(false);
+  const { user } = useAuth();
+  const commentToInboxFeatureState = useEnableCommentToInboxFeature();
+  const enableCommentWebhooks =
+    isProductFeatureEnabled(commentToInboxFeatureState) &&
+    isCommentToInboxUserAllowed(user?.email);
   const configId = import.meta.env.VITE_IG_CONFIG_ID as string | undefined;
   const codeExchangeRedirectUri =
     (import.meta.env.VITE_MESSENGER_CODE_EXCHANGE_REDIRECT_URI as
@@ -53,6 +64,7 @@ export function ConnectInstagramButton({
                 }
                 await completeSignup({
                   code,
+                  enableCommentWebhooks,
                   ...(codeExchangeRedirectUri
                     ? { redirectUri: codeExchangeRedirectUri }
                     : {}),
@@ -79,7 +91,12 @@ export function ConnectInstagramButton({
         setBusy(false);
       }
     })();
-  }, [codeExchangeRedirectUri, completeSignup, configId]);
+  }, [
+    codeExchangeRedirectUri,
+    completeSignup,
+    configId,
+    enableCommentWebhooks,
+  ]);
 
   if (!forceAllowConnect && instagramChannel?.status === 'connected') {
     return (

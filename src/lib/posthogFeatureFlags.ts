@@ -1,4 +1,5 @@
 import { useFeatureFlagEnabled } from '@posthog/react';
+export { isCommentToInboxUserAllowed } from '../../shared/commentToInboxAccess';
 
 export const POSTHOG_FEATURE_FLAGS = {
   showTokenUsage: 'show-token-usage',
@@ -15,10 +16,6 @@ export type ProductFeatureFlagState = boolean | undefined;
 const AVATAR_ALLOWED_EMAIL = 'leykwan132@gmail.com';
 
 export function isAvatarUserAllowed(email: string | null | undefined) {
-  return email?.trim().toLowerCase() === AVATAR_ALLOWED_EMAIL;
-}
-
-export function isCommentToInboxUserAllowed(email: string | null | undefined) {
   return email?.trim().toLowerCase() === AVATAR_ALLOWED_EMAIL;
 }
 

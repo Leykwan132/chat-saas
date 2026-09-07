@@ -16,6 +16,12 @@ import {
   waitForFacebookSdk,
   type FBLoginResponse,
 } from '@/lib/fbSdk';
+import {
+  isCommentToInboxUserAllowed,
+  isProductFeatureEnabled,
+  useEnableCommentToInboxFeature,
+} from '@/lib/posthogFeatureFlags';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 
 export function ConnectMessengerButton({
   onConnected,
@@ -31,6 +37,11 @@ export function ConnectMessengerButton({
   const completeSignup = useAction(api.messengerConnect.completeSignup);
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const [busy, setBusy] = useState(false);
+  const { user } = useAuth();
+  const commentToInboxFeatureState = useEnableCommentToInboxFeature();
+  const enableCommentWebhooks =
+    isProductFeatureEnabled(commentToInboxFeatureState) &&
+    isCommentToInboxUserAllowed(user?.email);
   const [dialogState, setDialogState] =
     useState<MessengerConnectionDialogState>({ kind: 'closed' });
 
@@ -109,6 +120,7 @@ export function ConnectMessengerButton({
               const result = await completeSignup({
                 code,
                 returnPath,
+                enableCommentWebhooks,
                 ...(codeExchangeRedirectUri
                   ? { redirectUri: codeExchangeRedirectUri }
                   : {}),
@@ -144,6 +156,7 @@ export function ConnectMessengerButton({
     completeSignup,
     onConnected,
     codeExchangeRedirectUri,
+    enableCommentWebhooks,
     openPagePicker,
   ]);
 

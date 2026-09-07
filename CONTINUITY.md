@@ -3,8 +3,8 @@
 # Snapshot
 
 - 2026-09-07 [USER] Goal: replace Instagram redirect OAuth with Embedded Signup under the same Meta app, using IG-named frontend configuration variables.
-- 2026-09-07 [TOOL] Now: Instagram Embedded Signup is in review via #99; it uses only `VITE_IG_CONFIG_ID` plus the shared Messenger code-exchange redirect and routes new Page-linked connections through Facebook Graph.
-- 2026-09-07 [CODE] Next: review/merge #99, supply `VITE_IG_CONFIG_ID`, deploy Convex and the frontend, then live-test connect, inbox backfill, inbound webhook, and reply.
+- 2026-09-07 [CODE] Now: follow-up #100 keeps ordinary Instagram and Messenger connects on messaging fields; only browser-flagged and backend-allowlisted Comment-to-Inbox users add `feed`.
+- 2026-09-07 [CODE] Next: deploy #100, test ordinary and allowlisted connects for both channels, then verify live message/comment delivery.
 - 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
 - 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
 - 2026-09-06 [CODE] Milestone: Comment-to-Inbox list/edit/delete/activation and Meta page subscriptions are on `main` (#90–#93); comment webhook ingestion remains unshipped (D781).
@@ -20,6 +20,8 @@
 - 2026-09-04 [USER] D780 ACTIVE: The customer-facing navigation label is “Comment-to-Inbox”; Comment automations use the unshipped `commentAutomations` backend tables and APIs.
 - 2026-09-07 [CODE] D783 ACTIVE: Meta allows one private reply per comment, so overlapping Messenger automations choose one deterministic winner: keyword matches before catch-all matches, then oldest first.
 - 2026-09-07 [USER] D784 ACTIVE: Instagram Embedded Signup uses the existing Meta app, shared `VITE_MESSENGER_CODE_EXCHANGE_REDIRECT_URI`, and only one new env value (`VITE_IG_CONFIG_ID`); the configuration must authorize exactly one Page-linked Instagram professional account.
+- 2026-09-07 [USER] D785 ACTIVE: keep one Instagram config ID; Page subscription fields are `messages` for ordinary accounts and `messages,feed` only when the Comment-to-Inbox PostHog flag and server-side email allowlist both pass.
+- 2026-09-07 [USER] D786 ACTIVE: Messenger follows the same gate: ordinary connects subscribe to `messages,messaging_postbacks`; approved Comment-to-Inbox users also add `feed`, including after Page selection.
 - 2026-09-03 [USER] D778 ACTIVE: Avatar cover images are stored in R2 under agent-scoped keys and served through the configured media CDN URL.
 - 2026-09-03 [CODE] D779 ACTIVE: Avatar background media uses separate agent-scoped R2 keys and a stored image/video type; LiveAvatar background replacement is browser-side chroma-key compositing.
 - 2026-09-02 [USER] D757 ACTIVE: Gemini credentials are externally registered with LiveAvatar. The app reads only opaque `HEYGEN_GEMINI_SECRET_ID` server-side and never persists or exposes the Gemini API key.
@@ -37,6 +39,7 @@
 - 2026-09-03 [USER] D777 ACTIVE: each partner customer remains restricted to one assigned workspace and cannot create additional workspaces.
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
 - 2026-09-06 [CODE] I001 OPEN: Hallucinated booking/email-link copy is replaced after generation; unverified claims now receive a safe retry response rather than silence. Remaining gap: playground can briefly stream model text before the saved message is rewritten.
+- 2026-09-07 [USER] I002 RESOLVED: Meta rejected `comments` on the Facebook Page `subscribed_apps` edge with error #100; use valid Page field `feed`, while configuring Instagram-specific fields on the app’s Instagram webhook object.
 
 # Done (recent)
 
@@ -49,11 +52,11 @@
 
 # Working set
 
-- 2026-09-07 [CODE] `src/components/ConnectInstagramButton.{tsx,test.ts}`, `convex/{instagramEmbeddedSignup,instagramApi}.{ts,test.ts}`, `convex/{instagramSend,instagramSync,channels,schema,commentAutomationMeta}.ts`, `convex/chat/channelSend.ts`
+- 2026-09-07 [CODE] `shared/commentToInboxAccess.ts`, `src/components/Connect{Instagram,Messenger}Button*`, `convex/{instagramEmbeddedSignup,messengerConnect,messengerAuth,oauthSessions,commentAutomationMeta,schema}*`
 
 # Receipts
 
-- 2026-09-07 [TOOL] Instagram Embedded Signup passed 13 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, and `git diff --check`.
+- 2026-09-07 [TOOL] Feature-gated Instagram and Messenger Page subscriptions passed 31 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, and `git diff --check`.
 - 2026-09-07 [TOOL] Messenger Comment-to-Inbox passed 53 focused tests, Node v22 targeted ESLint, TypeScript project checking, Convex code generation, file-size limits, and `git diff --check`.
 - 2026-09-07 [TOOL] Booking-confirmation layout and widget newline preservation passed 31 focused tests, targeted ESLint, and `git diff --check`.
 - 2026-09-06 [TOOL] Sessionless availability and direct post-collection booking passed 11 booking regression tests, targeted ESLint, TypeScript build checking, and `git diff --check`.
