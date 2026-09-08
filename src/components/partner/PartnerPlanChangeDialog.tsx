@@ -11,6 +11,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatRenewalDate } from "@/lib/formatRenewalDate";
+import { PLAN_CATALOG } from "../../../shared/planCatalog";
 import {
   type PartnerOverview,
   type PlanChangeTiming,
@@ -56,8 +57,10 @@ export function PartnerPlanChangeDialog({
           <DialogTitle>Confirm plan change</DialogTitle>
           <DialogDescription>
             Change {pendingChange?.organization.name} to the{" "}
-            {pendingChange?.planKey} plan. Choose when the new monthly credits
-            apply.
+            {pendingChange
+              ? PLAN_CATALOG[pendingChange.planKey].name
+              : null}{" "}
+            plan. Choose when the new monthly credits apply.
           </DialogDescription>
         </DialogHeader>
         <RadioGroup

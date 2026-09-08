@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PLAN_CATALOG } from "../../../shared/planCatalog";
 import { type PartnerOverview, type PlanKey } from "@/lib/whiteLabelApi";
 
 const planOptions: PlanKey[] = ["free", "starter", "growth", "business"];
@@ -64,13 +65,13 @@ export function PartnerPlanSelect({
         id={id}
         className={compact ? "w-28 text-sm" : fullWidthSelectClassName}
       >
-        <SelectValue />
+        <SelectValue>{PLAN_CATALOG[value].name}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
           {planOptions.map((plan) => (
-            <SelectItem key={plan} value={plan} className="capitalize text-sm">
-              {plan}
+            <SelectItem key={plan} value={plan} className="text-sm">
+              {PLAN_CATALOG[plan].name}
             </SelectItem>
           ))}
         </SelectGroup>
