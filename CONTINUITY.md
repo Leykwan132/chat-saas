@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [CODE] Now: partner password reset stays on the current host (`/reset-password` then `/sign-in`). Native Kilobot onboard for partner-created WorkOS logins is implemented (D793 / I009). Next: PR, then verify reset on a partner hostname and onboard on `kilobot.app`.
+- 2026-09-08 [CODE] Now: partner password reset stays on the current host (`/reset-password` then `/sign-in`). Native Kilobot onboard for partner-created WorkOS logins is implemented (D793 / I009). Next: merge #117, then verify reset on a partner hostname and onboard on `kilobot.app`.
 - 2026-09-08 [TOOL] Milestone: unused-import production build fix merged via #116.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
@@ -88,7 +88,7 @@
 
 # Receipts
 
-- 2026-09-08 [TOOL] Same-origin password reset (D794): 7 focused tests pass under Node 22; targeted ESLint and `git diff --check` pass. No changelog (Partner Programme unshipped).
+- 2026-09-08 [TOOL] #117 opened from `cursor/native-kilobot-onboarding` onto `main` with native Kilobot onboard (D793 / I009) and same-origin password reset (D794). 15 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] Native Kilobot onboard (I009): 22 focused auth/plan/onboarding tests pass under Node 22, including new `convex/nativeKilobotOnboarding.test.ts`. OnboardingFlow stays at 299 lines. No changelog (Partner Programme unshipped).
 - 2026-09-08 [TOOL] #116 opened from `cursor/fix-credit-usage-unused-import` onto `main`. `tsc -b` passes under Node 22.
 - 2026-09-08 [TOOL] #113 opened from `cursor/partner-usage-and-settings` onto `main` with the I007 Usage fix plus leftover post-#112 Settings/admin follow-ups. 15 focused tests pass under Node 22.
