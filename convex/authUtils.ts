@@ -17,7 +17,7 @@ import {
 } from "./teamHelpers";
 import type { EnsureUserAccountArgs } from "./teamHelpers";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
-import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
+import { resolveEntitlementScope } from "./entitlementScope";
 
 export const PERSONAL_ORG_FALLBACK = PERSONAL_ORG_ID;
 
@@ -55,6 +55,12 @@ export type AuthContext = {
   role: string | null;
   roles: string[];
   permissions: string[];
+  entitlementScope:
+    | { kind: "native" }
+    | {
+      kind: "partner";
+      partnerOrganizationId: Id<"whiteLabelPartnerOrganizations">;
+    };
   identity: NonNullable<Awaited<ReturnType<QueryCtx["auth"]["getUserIdentity"]>>>;
 };
 
@@ -93,20 +99,18 @@ async function buildAuthContextFromDb(
   }
 
   const overrideOrgId = resolveOrgIdOverride(activeOrgIdOverride);
+  const entitlementScope = await resolveEntitlementScope(ctx, identity);
   let orgId: string;
   let activeTeamId: Id<"teams">;
 
-  if (overrideOrgId !== undefined) {
-    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(
-      ctx,
-      user.workosUserId,
-    );
-    if (
-      assignedWorkspace !== null &&
-      overrideOrgId !== teamToOrgId(assignedWorkspace.team)
-    ) {
-      throw new Error("Partner customers can only access their assigned workspace");
+  if (entitlementScope.kind === "partner") {
+    const partnerOrgId = teamToOrgId(entitlementScope.team);
+    if (overrideOrgId !== undefined && overrideOrgId !== partnerOrgId) {
+      throw new Error("Partner sessions can only access their signed workspace");
     }
+    orgId = partnerOrgId;
+    activeTeamId = entitlementScope.team._id;
+  } else if (overrideOrgId !== undefined) {
     if (!(await canProcessWorkspaceActivity(ctx, overrideOrgId))) {
       throw new Error("Workspace unavailable");
     }
@@ -136,6 +140,12 @@ async function buildAuthContextFromDb(
     role,
     roles,
     permissions,
+    entitlementScope: entitlementScope.kind === "partner"
+      ? {
+        kind: "partner",
+        partnerOrganizationId: entitlementScope.organization._id,
+      }
+      : { kind: "native" },
     identity,
   };
 }
@@ -233,5 +243,6 @@ export async function getAuthContextOrNull(
  * for "does not belong to a team".
  */
 export function resolveChannelOrgId(orgId: string, _userId: string): string {
+  void _userId;
   return !orgId || orgId === "personal" ? "" : orgId;
 }

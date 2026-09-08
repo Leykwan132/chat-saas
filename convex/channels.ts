@@ -11,7 +11,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { instagramSyncPool, messengerSyncPool } from "./channelSyncPools";
-import { checkPlatformSupport, getPlanFromStripe, getChannelLimitForOrg } from "./plans";
+import { checkPlatformSupport, getPlanForWorkspaceResource, getChannelLimitForOrg } from "./plans";
 import { deleteWhatsAppHistoryStagingForChannel } from "./whatsappSync";
 import { assertAgentCanConnectWhatsApp } from "./whatsappChannelGuard";
 import { deleteConversationAgentThread } from "./channelAgentThreadCleanup";
@@ -448,7 +448,11 @@ export const internalStartPending = internalMutation({
       phoneNumberId: args.phoneNumberId,
       requestedAgentId: args.agentId,
     });
-    const stripeInfo = await getPlanFromStripe(ctx, args.connectedByUserId);
+    const stripeInfo = await getPlanForWorkspaceResource(
+      ctx,
+      args.orgId,
+      args.connectedByUserId,
+    );
     if (!checkPlatformSupport(stripeInfo.plan, "whatsapp")) {
       logWhatsAppChannel("internalStartPending", "blocked by plan", {
         plan: stripeInfo.plan,
@@ -716,7 +720,11 @@ export const internalStartInstagramPending = internalMutation({
     igUserId: v.string(),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
-    const stripeInfo = await getPlanFromStripe(ctx, args.connectedByUserId);
+    const stripeInfo = await getPlanForWorkspaceResource(
+      ctx,
+      args.orgId,
+      args.connectedByUserId,
+    );
     if (!checkPlatformSupport(stripeInfo.plan, "instagram")) {
       throw new Error(`Instagram is not supported on the ${stripeInfo.plan} plan.`);
     }
@@ -892,7 +900,11 @@ export const internalStartMessengerPending = internalMutation({
     pageId: v.string(),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
-    const stripeInfo = await getPlanFromStripe(ctx, args.connectedByUserId);
+    const stripeInfo = await getPlanForWorkspaceResource(
+      ctx,
+      args.orgId,
+      args.connectedByUserId,
+    );
     if (!checkPlatformSupport(stripeInfo.plan, "messenger")) {
       throw new Error(`Messenger is not supported on the ${stripeInfo.plan} plan.`);
     }

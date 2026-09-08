@@ -4,15 +4,17 @@ import { getAuthContextOrNull } from "./authUtils";
 import type { Doc } from "./_generated/dataModel";
 import { components } from "./_generated/api";
 import {
-  getActiveTeamForUser,
-  getTeamByWorkosOrgId,
   teamToOrgId,
 } from "./teamHelpers";
 import { getPartnerCreditBalance } from "./whiteLabel/creditLedger";
 import {
   getWhiteLabelPlanForOrganization,
+  isWhiteLabelTeam,
 } from "./whiteLabel/planResolver";
-import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
+import {
+  getEntitlementScope,
+  getPartnerOrganizationForOrgId,
+} from "./entitlementScope";
 import {
   PLAN_CATALOG,
   PLAN_ORDER,
@@ -76,17 +78,6 @@ export async function getPlanFromStripe(
   status?: string;
   currentPeriodEnd?: number;
 }> {
-  const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(ctx, entityId);
-  if (assignedWorkspace !== null) {
-    const whiteLabelPlan = await getWhiteLabelPlanForOrganization(
-      ctx,
-      assignedWorkspace.organization._id,
-    );
-    if (whiteLabelPlan === null) {
-      throw new Error("Customer organization plan not found.");
-    }
-    return { plan: whiteLabelPlan };
-  }
   const subscriptions = await ctx.runQuery(
     components.stripe.public.listSubscriptionsByOrgId,
     { orgId: entityId }
@@ -107,6 +98,44 @@ export async function getPlanFromStripe(
     status: subscription?.status,
     currentPeriodEnd: subscription?.currentPeriodEnd ? subscription.currentPeriodEnd * 1000 : undefined,
   };
+}
+
+export async function getPlanForCurrentSession(
+  ctx: QueryCtx | MutationCtx,
+) {
+  const scope = await getEntitlementScope(ctx);
+  if (scope.kind === "partner") {
+    const plan = await getWhiteLabelPlanForOrganization(
+      ctx,
+      scope.organization._id,
+    );
+    if (plan === null) throw new Error("Customer organization plan not found.");
+    return {
+      plan,
+      status: undefined,
+      currentPeriodEnd: undefined,
+      isPartnerManaged: true as const,
+    };
+  }
+  const { billingUser } = await getBillingEntityForUser(ctx, scope.user);
+  return {
+    ...await getPlanFromStripe(ctx, billingUser.workosUserId),
+    isPartnerManaged: false as const,
+  };
+}
+
+export async function getPlanForWorkspaceResource(
+  ctx: QueryCtx | MutationCtx,
+  orgId: string,
+  workosUserId: string,
+) {
+  const organization = await getPartnerOrganizationForOrgId(ctx, orgId);
+  if (organization !== null) {
+    const plan = await getWhiteLabelPlanForOrganization(ctx, organization._id);
+    if (plan === null) throw new Error("Customer organization plan not found.");
+    return { plan };
+  }
+  return await getTeamStripePlanHelper(ctx, { workosOrgId: orgId, userId: workosUserId });
 }
 
 export function checkModelAccess(planName: string | undefined, modelId: string): boolean {
@@ -164,12 +193,17 @@ export function checkAgentCreationLimit(
 
 export async function getBillingEntityForUser(
   ctx: QueryCtx | MutationCtx,
-  user: Doc<"users">
+  user: Doc<"users">,
+  activeTeamId = user.activeTeamId,
 ): Promise<{ billingUser: Doc<"users">; isTeam: boolean; teamName?: string }> {
-  // This is referring to the user current team. 
-  if (user.activeTeamId) {
-    const team = await ctx.db.get(user.activeTeamId);
-    if (team && team.type === "organizational" && team.ownerId) {
+  if (activeTeamId) {
+    const team = await ctx.db.get(activeTeamId);
+    if (
+      team &&
+      team.type === "organizational" &&
+      team.ownerId &&
+      !(await isWhiteLabelTeam(ctx, team._id))
+    ) {
       const owner = await ctx.db.get(team.ownerId);
       if (owner) {
         return { billingUser: owner, isTeam: true, teamName: team.name };
@@ -184,20 +218,12 @@ export async function getChannelLimitForOrg(
   orgId: string,
   userId?: string,
 ): Promise<number> {
-  const team = await getTeamByWorkosOrgId(ctx, orgId);
-  if (team !== null && userId !== undefined) {
-    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(ctx, userId);
-    const whiteLabelPlan =
-      assignedWorkspace?.team._id === team._id
-        ? await getWhiteLabelPlanForOrganization(
-          ctx,
-          assignedWorkspace.organization._id,
-        )
-        : null;
-    if (whiteLabelPlan !== null) {
-      const limit = PLAN_CATALOG[whiteLabelPlan].maxChannels;
-      return limit === "unlimited" ? 999999 : limit;
-    }
+  const organization = await getPartnerOrganizationForOrgId(ctx, orgId);
+  if (organization !== null) {
+    const whiteLabelPlan = await getWhiteLabelPlanForOrganization(ctx, organization._id);
+    if (whiteLabelPlan === null) throw new Error("Customer organization plan not found.");
+    const limit = PLAN_CATALOG[whiteLabelPlan].maxChannels;
+    return limit === "unlimited" ? 999999 : limit;
   }
   const stripeInfo = await getTeamStripePlanHelper(ctx, { workosOrgId: orgId, userId });
   const planConfig = PLAN_CATALOG[stripeInfo.plan] || PLAN_CATALOG.free;
@@ -218,17 +244,18 @@ export const getPlanAndUsage = query({
       return null;
     }
 
-    const activeTeam = await getActiveTeamForUser(ctx, user);
-    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(ctx, userId);
-    if (assignedWorkspace !== null) {
+    const activeTeam = await ctx.db.get(auth.activeTeamId);
+    if (activeTeam === null) throw new Error("Active team not found.");
+    const scope = await getEntitlementScope(ctx);
+    if (scope.kind === "partner") {
       const plan = await getWhiteLabelPlanForOrganization(
         ctx,
-        assignedWorkspace.organization._id,
+        scope.organization._id,
       );
       if (plan === null) throw new Error("Customer organization plan not found.");
       const balance = await getPartnerCreditBalance(
         ctx,
-        assignedWorkspace.organization._id,
+        scope.organization._id,
       );
       const planConfig = getPlan(plan);
       const channelLimit = planConfig.maxChannels === "unlimited" ? 999999 : planConfig.maxChannels;
@@ -259,7 +286,11 @@ export const getPlanAndUsage = query({
       };
     }
 
-    const { billingUser, isTeam, teamName } = await getBillingEntityForUser(ctx, user);
+    const { billingUser, isTeam, teamName } = await getBillingEntityForUser(
+      ctx,
+      user,
+      auth.activeTeamId,
+    );
 
     const stripeInfo = await getPlanFromStripe(ctx, billingUser.workosUserId);
     const planConfig = getPlan(stripeInfo.plan);
@@ -302,7 +333,11 @@ export const getTeamStripePlan = internalQuery({
     userId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    return await getTeamStripePlanHelper(ctx, args);
+    return await getPlanForWorkspaceResource(
+      ctx,
+      args.workosOrgId,
+      args.userId ?? "",
+    );
   },
 });
 
@@ -311,4 +346,9 @@ export const internalGetPlanFromStripe = internalQuery({
   handler: async (ctx, args) => {
     return await getPlanFromStripe(ctx, args.entityId);
   },
+});
+
+export const internalGetPlanForCurrentSession = internalQuery({
+  args: {},
+  handler: async (ctx) => await getPlanForCurrentSession(ctx),
 });

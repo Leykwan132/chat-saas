@@ -23,6 +23,9 @@ import {
   MODEL_USAGE_OTHERS_COLOR,
   modelUsageChartColor,
 } from "../shared/modelUsageChartColors";
+import { getEntitlementScope } from "./entitlementScope";
+import { getPartnerCreditBalance } from "./whiteLabel/creditLedger";
+import { getWhiteLabelPlanForOrganization } from "./whiteLabel/planResolver";
 
 const MAX_CREDIT_SPEND_PAGE_SIZE = 100;
 const TOP_MODEL_SERIES_LIMIT = 8;
@@ -888,6 +891,36 @@ export const getWorkspaceAndAccountUsage = query({
       .unique();
     if (!user) {
       return null;
+    }
+
+    const entitlementScope = await getEntitlementScope(ctx);
+    if (entitlementScope.kind === "partner") {
+      const [balance, plan] = await Promise.all([
+        getPartnerCreditBalance(ctx, entitlementScope.organization._id),
+        getWhiteLabelPlanForOrganization(ctx, entitlementScope.organization._id),
+      ]);
+      if (plan === null) throw new Error("Customer organization plan not found.");
+      const timeZone = normalizeTimeZone(entitlementScope.team.timeZone);
+      const workspaceId = teamToOrgId(entitlementScope.team);
+      const creditsUsed = balance.period?.usedCredits ?? 0;
+      return {
+        workspaceId,
+        workspaceName: entitlementScope.team.name,
+        workspaceCreditsUsed: creditsUsed,
+        accountCreditsUsed: creditsUsed,
+        monthlyAllowance: balance.period?.grantedCredits ?? getPlan(plan).monthlyCredits,
+        plan,
+        timeZone,
+        periodStartMs: balance.period?.periodStart ?? null,
+        periodEndMs: balance.period?.periodEnd ?? null,
+        breakdown: [{
+          workspaceId,
+          teamId: entitlementScope.team._id,
+          name: entitlementScope.team.name,
+          type: entitlementScope.team.type,
+          creditsUsed,
+        }],
+      };
     }
 
     const { billingUser, isTeam, teamName } = await getBillingEntityForUser(ctx, user);

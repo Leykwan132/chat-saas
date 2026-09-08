@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { getModelProvider } from "./llm/modelPricing";
-import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe, getPlan } from "./plans";
+import { checkModelAccess, checkAgentCreationLimit, getPlanForCurrentSession, getPlan } from "./plans";
 import { provisionOrgMemberSchedulesForAgent } from "./leadRouting/provision";
 import { ensureWorkflowForAgent } from "./workflowCore";
 import { applyAgentBookingOnboarding } from "./agentBookingOnboarding";
@@ -65,7 +65,7 @@ export const canCreate = query({
   args: {},
   handler: async (ctx) => {
     const { userId, orgId } = await getAuthContext(ctx);
-    const stripeInfo = await getPlanFromStripe(ctx, userId);
+    const stripeInfo = await getPlanForCurrentSession(ctx);
     const plan = stripeInfo.plan;
     const planConfig = getPlan(plan);
     const currentAgents = await listAgentsForCreationContext(ctx, userId, orgId);
@@ -116,7 +116,7 @@ export const create = mutation({
 
     assertCanCreateAgent(auth);
 
-    const stripeInfo = await getPlanFromStripe(ctx, userId);
+    const stripeInfo = await getPlanForCurrentSession(ctx);
     const plan = stripeInfo.plan;
 
     const currentAgents = await listAgentsForCreationContext(ctx, userId, orgId);
@@ -222,7 +222,7 @@ export const update = mutation({
       throw new Error("Agent not found");
     }
 
-    const stripeInfo = await getPlanFromStripe(ctx, agent.userId);
+    const stripeInfo = await getPlanForCurrentSession(ctx);
     const plan = stripeInfo.plan;
 
     const name = args.name.trim();

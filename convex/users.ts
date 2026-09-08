@@ -2,7 +2,7 @@ import { internalQuery, mutation, query } from "./_generated/server";
 import { getAuthContext } from "./authUtils";
 import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
-import { getPlanFromStripe } from "./plans";
+import { getPlanForCurrentSession } from "./plans";
 import {
   ensureFirstCreditPeriod,
   getOrCreateCurrentPeriod,
@@ -10,7 +10,6 @@ import {
 import { getBillingEntityForUser } from "./plans";
 import { ensureUserAccount } from "./teamHelpers";
 import { redeemReferralDuringOnboarding } from "./referralRedemption";
-import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
 
 /** Debug / introspection: Convex auth identity (WorkOS JWT claims) for the current socket. */
 export const getAuthUser = query({
@@ -63,15 +62,12 @@ export const currentUser = query({
       .unique();
     if (!user) return null;
 
-    const stripeInfo = await getPlanFromStripe(ctx, identity.subject);
-    const isPartnerManaged =
-      (await getAssignedPartnerCustomerWorkspace(ctx, user.workosUserId)) !==
-      null;
+    const stripeInfo = await getPlanForCurrentSession(ctx);
     return {
       ...user,
       plan: stripeInfo.plan,
       stripeSubscriptionStatus: stripeInfo.status,
-      isPartnerManaged,
+      isPartnerManaged: stripeInfo.isPartnerManaged,
     };
   },
 });
@@ -107,7 +103,7 @@ export const ensureCurrentUser = mutation({
       throw new Error("User not found in database");
     }
 
-    const stripeInfo = await getPlanFromStripe(ctx, identity.subject);
+    const stripeInfo = await getPlanForCurrentSession(ctx);
     return {
       ...user,
       plan: stripeInfo.plan,

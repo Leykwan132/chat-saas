@@ -652,6 +652,7 @@ export const generateAiReplyWorker = internalAction({
     const creditCheck = await ctx.runQuery(internal.credits.internalCheckCredits, {
       workosUserId: agent.userId,
       modelId: agent.model,
+      agentId: agent._id,
     });
     if (!creditCheck.ok) {
       console.error("AI reply skipped: insufficient credits or unavailable model", {

@@ -20,7 +20,7 @@ import {
   replaceMediaUrlsWithKeys,
 } from "./mediaUrlExtractor";
 import { isPlaygroundCreditsEnabled } from "../credits";
-import { checkModelAccess, getPlanFromStripe } from "../plans";
+import { checkModelAccess, getPlanForCurrentSession } from "../plans";
 import { getModelProvider } from "../llm/modelPricing";
 import { logConversationEvent } from "../conversationLogs";
 import { splitAiReplyMessages } from "./aiReplyMessages";
@@ -111,7 +111,7 @@ export const sendMessage = mutation({
       throw new Error("Agent not found");
     }
 
-    const stripeInfo = await getPlanFromStripe(ctx, userId);
+    const stripeInfo = await getPlanForCurrentSession(ctx);
     const plan = stripeInfo.plan;
 
     if (!checkModelAccess(plan, agentDoc.model)) {
@@ -123,6 +123,7 @@ export const sendMessage = mutation({
       const creditCheck = await ctx.runQuery(internal.credits.internalCheckCredits, {
         workosUserId: userId,
         modelId: agentDoc.model,
+        agentId: agentDoc._id,
       });
       if (!creditCheck.ok) {
         if (creditCheck.reason === "insufficient_credits") {

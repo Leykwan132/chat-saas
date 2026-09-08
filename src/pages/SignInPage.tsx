@@ -2,8 +2,19 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useAction, useQuery } from 'convex/react';
 import { useNavigate } from 'react-router';
 import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/components/ui/button';
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { api } from '../../convex/_generated/api';
+import type { Id } from '../../convex/_generated/dataModel';
 
 type PartnerBranding = {
   hostname: string;
@@ -36,9 +47,14 @@ function PartnerSignIn() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [organizations, setOrganizations] = useState<Array<{
+    id: Id<'whiteLabelPartnerOrganizations'>;
+    name: string;
+  }>>([]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const authenticate = async (
+    partnerOrganizationId?: Id<'whiteLabelPartnerOrganizations'>,
+  ) => {
     setIsSubmitting(true);
     setError(null);
 
@@ -47,7 +63,12 @@ function PartnerSignIn() {
         hostname: window.location.hostname,
         email,
         password,
+        partnerOrganizationId,
       });
+      if (session.kind === 'organization_choice') {
+        setOrganizations(session.organizations);
+        return;
+      }
       if (completePartnerSignIn === undefined) {
         throw new Error('Partner authentication is unavailable.');
       }
@@ -58,6 +79,11 @@ function PartnerSignIn() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await authenticate();
   };
 
   if (branding === undefined) {
@@ -78,46 +104,76 @@ function PartnerSignIn() {
 
   return (
     <main className="flex min-h-[100svh] items-center justify-center bg-background px-6 py-10">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
-        <div className="space-y-3 text-center">
+      <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-6">
+        <div className="flex flex-col gap-3 text-center">
           {branding.logoUrl ? (
             <img src={branding.logoUrl} alt={branding.partnerName} className="mx-auto h-9 max-w-48 object-contain" />
           ) : null}
           <h1 className="text-xl font-semibold text-foreground">Sign in to {branding.partnerName}</h1>
         </div>
-        <div className="space-y-4">
-          <label className="grid gap-2 text-sm font-medium text-foreground">
-            Email
-            <input
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-              required
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-medium text-foreground">
-            Password
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-              required
-            />
-          </label>
-        </div>
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        <button
-          type="submit"
-          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground disabled:pointer-events-none disabled:opacity-50"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? <Spinner className="size-4" /> : null}
-          Sign in
-        </button>
+        {organizations.length === 0 ? (
+          <FieldGroup>
+            <Field data-invalid={error !== null}>
+              <FieldLabel htmlFor="partner-email">Email</FieldLabel>
+              <Input
+                id="partner-email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                aria-invalid={error !== null}
+                required
+              />
+            </Field>
+            <Field data-invalid={error !== null}>
+              <FieldLabel htmlFor="partner-password">Password</FieldLabel>
+              <Input
+                id="partner-password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                aria-invalid={error !== null}
+                required
+              />
+            </Field>
+          </FieldGroup>
+        ) : (
+          <FieldSet>
+            <FieldLegend>Choose an organization</FieldLegend>
+            <FieldGroup>
+              {organizations.map((organization) => (
+                <Button
+                  key={organization.id}
+                  type="button"
+                  variant="outline"
+                  onClick={() => void authenticate(organization.id)}
+                  disabled={isSubmitting}
+                >
+                  {organization.name}
+                </Button>
+              ))}
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isSubmitting}
+                onClick={() => {
+                  setOrganizations([]);
+                  setError(null);
+                }}
+              >
+                Back
+              </Button>
+            </FieldGroup>
+          </FieldSet>
+        )}
+        {error ? <FieldError>{error}</FieldError> : null}
+        {organizations.length === 0 ? (
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <Spinner data-icon="inline-start" /> : null}
+            Sign in
+          </Button>
+        ) : null}
       </form>
     </main>
   );

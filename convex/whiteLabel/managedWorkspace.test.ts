@@ -144,10 +144,11 @@ test("currentUser keeps a partner owner on Stripe even when a customer team was 
 
 test("blocks customer members from normal workspace invitations", async () => {
   const t = convexTest(schema, modules);
+  process.env.CONVEX_SITE_URL = "https://test.convex.site";
   const workosUserId = "customer-admin";
   const workosOrgId = "org-managed";
 
-  await t.run(async (ctx) => {
+  const { partnerId, partnerOrganizationId } = await t.run(async (ctx) => {
     const now = Date.now();
     const userId = await ctx.db.insert("users", {
       workosUserId,
@@ -176,6 +177,14 @@ test("blocks customer members from normal workspace invitations", async () => {
       createdAt: now,
       updatedAt: now,
     });
+    await ctx.db.insert("whiteLabelPartnerDomains", {
+      partnerId,
+      hostname: "chat.partner.example",
+      status: "active",
+      setupState: "connected",
+      createdAt: now,
+      updatedAt: now,
+    });
     const partnerOrganizationId = await ctx.db.insert("whiteLabelPartnerOrganizations", {
       partnerId,
       teamId,
@@ -194,13 +203,19 @@ test("blocks customer members from normal workspace invitations", async () => {
       createdAt: now,
       updatedAt: now,
     });
+    return { partnerId, partnerOrganizationId };
   });
 
   const gate = await t
     .withIdentity({
       subject: workosUserId,
+      issuer: "https://test.convex.site/partner-auth",
       email: "customer-admin@example.com",
       orgId: workosOrgId,
+      surface: "partner",
+      hostname: "chat.partner.example",
+      partnerId,
+      partnerOrganizationId,
     })
     .query(api.teams.canInviteMembers, {});
 

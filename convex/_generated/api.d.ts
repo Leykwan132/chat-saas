@@ -183,6 +183,7 @@ import type * as customerSearch from "../customerSearch.js";
 import type * as customerSearchMigration from "../customerSearchMigration.js";
 import type * as customers from "../customers.js";
 import type * as devReset from "../devReset.js";
+import type * as entitlementScope from "../entitlementScope.js";
 import type * as followUpPool from "../followUpPool.js";
 import type * as followUpQueries from "../followUpQueries.js";
 import type * as freeCheckout from "../freeCheckout.js";
@@ -680,6 +681,7 @@ declare const fullApi: ApiFromModules<{
   customerSearchMigration: typeof customerSearchMigration;
   customers: typeof customers;
   devReset: typeof devReset;
+  entitlementScope: typeof entitlementScope;
   followUpPool: typeof followUpPool;
   followUpQueries: typeof followUpQueries;
   freeCheckout: typeof freeCheckout;

@@ -3,13 +3,8 @@ import type { Doc, Id } from "./_generated/dataModel";
 
 import { PLAN_CATALOG, type PlanKey } from "./planCatalog";
 import { ensureReferralCodeForUser } from "./referralCodeRecords";
-import {
-  assertPartnerCustomerTeam,
-  getAssignedPartnerCustomerWorkspace,
-  getPartnerCustomerActiveTeam,
-  markPartnerCustomerOnboarded,
-} from "./whiteLabel/customerWorkspace";
 import { isWhiteLabelTeam } from "./whiteLabel/planResolver";
+import { resolveEntitlementScope } from "./entitlementScope";
 
 export { ensureOrganizationalTeam } from "./organizationalTeamProvisioning";
 
@@ -126,9 +121,6 @@ export async function getActiveTeamForUser(
   ctx: QueryCtx | MutationCtx,
   user: Doc<"users">,
 ): Promise<Doc<"teams">> {
-  const partnerTeam = await getPartnerCustomerActiveTeam(ctx, user);
-  if (partnerTeam !== null) return partnerTeam;
-
   if (user.activeTeamId !== undefined) {
     const team = await ctx.db.get(user.activeTeamId);
     if (team !== null) {
@@ -164,12 +156,15 @@ export async function setActiveTeamForUser(
   user: Doc<"users">,
   teamId: Id<"teams">,
 ): Promise<Doc<"teams">> {
-  await assertPartnerCustomerTeam(ctx, user.workosUserId, teamId);
-  if (
-    (await getAssignedPartnerCustomerWorkspace(ctx, user.workosUserId)) === null &&
-    await isWhiteLabelTeam(ctx, teamId)
-  ) {
-    throw new Error("Partner customer workspaces are only available through the partner domain");
+  const identity = await ctx.auth.getUserIdentity();
+  if (identity !== null) {
+    const scope = await resolveEntitlementScope(ctx, identity);
+    if (scope.kind === "partner" && teamId !== scope.team._id) {
+      throw new Error("Partner sessions can only access their signed workspace");
+    }
+    if (scope.kind === "native" && await isWhiteLabelTeam(ctx, teamId)) {
+      throw new Error("Partner customer workspaces are only available through the partner domain");
+    }
   }
 
   const membership = await ctx.db
@@ -284,11 +279,7 @@ export async function ensureUserAccount(
       await ctx.db.patch(existing._id, patch);
     }
 
-    const isPartnerCustomer = await markPartnerCustomerOnboarded(ctx, {
-      userId: existing._id,
-      workosUserId: args.workosUserId,
-    });
-    if (!isPartnerCustomer && (await getPersonalTeamForUser(ctx, existing._id)) === null) {
+    if ((await getPersonalTeamForUser(ctx, existing._id)) === null) {
       await createPersonalTeamForUser(ctx, existing._id, args.timeZone);
     }
     await ensureReferralCodeForUser(ctx, existing._id);
@@ -305,13 +296,7 @@ export async function ensureUserAccount(
     createdAt: now,
     updatedAt: now,
   });
-  const isPartnerCustomer = await markPartnerCustomerOnboarded(ctx, {
-    userId,
-    workosUserId: args.workosUserId,
-  });
-  if (!isPartnerCustomer) {
-    await createPersonalTeamForUser(ctx, userId, args.timeZone);
-  }
+  await createPersonalTeamForUser(ctx, userId, args.timeZone);
   await ensureReferralCodeForUser(ctx, userId);
   return userId;
 }

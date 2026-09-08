@@ -313,7 +313,17 @@ async function applyMembership(ctx: MutationCtx, data: any) {
     userId,
     role: finalRole,
   });
-  await reconcilePartnerCustomerWorkspace(ctx, workosUserId);
+  const partnerOrganization = await ctx.db
+    .query("whiteLabelPartnerOrganizations")
+    .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
+    .unique();
+  if (partnerOrganization !== null) {
+    await reconcilePartnerCustomerWorkspace(
+      ctx,
+      workosUserId,
+      partnerOrganization._id,
+    );
+  }
 
   if (isNewMember) {
     const user = await ctx.db.get(userId);

@@ -27,7 +27,7 @@ import { checkAiFeature } from "./plans";
 import { getBillingPlanFromStripe } from "./billingScope";
 import { resolveTopicAnalyticsSummary } from "./agentOverviewTopicAnalytics";
 import { emptyCustomerSentimentCounts } from "../shared/customerSentiment";
-import { getActiveTeamForUser, normalizeTimeZone } from "./teamHelpers";
+import { normalizeTimeZone } from "./teamHelpers";
 import { getDateKeysInTimeZoneRange } from "./timeZoneDateKeys";
 
 const MAX_OVERVIEW_ROWS = 5000;
@@ -39,13 +39,14 @@ function excludeTestConversations(conversations: Doc<"conversations">[]) {
 }
 
 async function getBillingPeriod(ctx: QueryCtx) {
-  const { userDbId } = await getAuthContext(ctx);
+  const { userDbId, activeTeamId } = await getAuthContext(ctx);
   const user = await ctx.db.get(userDbId);
   if (user === null) {
     throw new Error("User not found");
   }
 
-  const activeTeam = await getActiveTeamForUser(ctx, user);
+  const activeTeam = await ctx.db.get(activeTeamId);
+  if (activeTeam === null) throw new Error("Active team not found");
   const { billingUser } = await getBillingEntityForUser(ctx, user);
   const timeZone = normalizeTimeZone(activeTeam.timeZone);
   const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(

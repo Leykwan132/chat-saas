@@ -54,30 +54,65 @@ export async function resolvePartnerSurfaceForWorkosUser(
   ctx: QueryCtx,
   workosUserId: string,
   hostname: string,
+  partnerOrganizationId?: Id<"whiteLabelPartnerOrganizations">,
 ): Promise<PartnerAuthSurface | null> {
+  const choices = await resolvePartnerOrganizationChoices(
+    ctx,
+    workosUserId,
+    hostname,
+  );
+  const selected = partnerOrganizationId === undefined
+    ? choices.length === 1 ? choices[0] : null
+    : choices.find((choice) => choice.id === partnerOrganizationId) ?? null;
+  if (selected === null) return null;
+
   const connectedDomain = await getConnectedPartnerDomain(ctx, hostname);
   if (connectedDomain === null) return null;
+  return {
+    kind: "partner",
+    hostname: connectedDomain.domain.hostname,
+    partnerId: connectedDomain.partner._id,
+    partnerOrganizationId: selected.id,
+  };
+}
 
+export async function resolvePartnerOrganizationChoices(
+  ctx: QueryCtx,
+  workosUserId: string,
+  hostname: string,
+) {
+  const connectedDomain = await getConnectedPartnerDomain(ctx, hostname);
+  if (connectedDomain === null) return [];
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
+    .unique();
+  if (user === null) return [];
+  const choices: Array<{
+    id: Id<"whiteLabelPartnerOrganizations">;
+    name: string;
+  }> = [];
   const accounts = ctx.db
     .query("whiteLabelPartnerOrganizationAccounts")
     .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId));
   for await (const account of accounts) {
-    if (account.status !== "active") continue;
+    if (
+      account.status !== "active" ||
+      account.email.trim().toLowerCase() !== user.email.trim().toLowerCase()
+    ) continue;
     const organization = await ctx.db.get(account.partnerOrganizationId);
     if (
       organization !== null &&
       organization.status === "active" &&
       organization.partnerId === connectedDomain.partner._id
     ) {
-      return {
-        kind: "partner",
-        hostname: connectedDomain.domain.hostname,
-        partnerId: connectedDomain.partner._id,
-        partnerOrganizationId: organization._id,
-      };
+      const team = await ctx.db.get(organization.teamId);
+      if (team !== null && team.type === "organizational") {
+        choices.push({ id: organization._id, name: team.name });
+      }
     }
   }
-  return null;
+  return choices.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export const getBrandingForHostname = query({

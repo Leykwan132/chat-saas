@@ -4,6 +4,7 @@ import {
   internalQuery,
   internalMutation,
   type MutationCtx,
+  type QueryCtx,
 } from "./_generated/server";
 import { getAuthContext } from "./authUtils";
 import { getModelPricing } from "./llm/modelPricing";
@@ -32,9 +33,13 @@ import {
   DAY_MS,
   getUsagePeriodStartMs,
 } from "./usageMonthKey";
-import { getActiveTeamForUser, normalizeTimeZone } from "./teamHelpers";
+import { normalizeTimeZone } from "./teamHelpers";
 import { getPartnerCreditBalance, deductPartnerOrganizationCreditBalance, ensureCurrentPartnerCreditPeriod } from "./whiteLabel/creditLedger";
-import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
+import {
+  getEntitlementScope,
+  getPartnerOrganizationForOrgId,
+} from "./entitlementScope";
+import { getWhiteLabelPlanForOrganization } from "./whiteLabel/planResolver";
 
 export function getDefaultUserCredits(): number {
   const raw = process.env.DEFAULT_USER_CREDITS?.trim();
@@ -47,6 +52,38 @@ export function getDefaultUserCredits(): number {
 export function isPlaygroundCreditsEnabled(): boolean {
   const raw = process.env.PLAYGROUND_DEDUCT_CREDITS?.trim().toLowerCase();
   return raw === "true" || raw === "1" || raw === "yes";
+}
+
+async function getCreditScopeForResource(
+  ctx: MutationCtx | QueryCtx,
+  workosUserId: string,
+  agentId?: Id<"agents">,
+  conversationId?: Id<"conversations">,
+) {
+  let orgId: string | undefined;
+  if (agentId !== undefined) {
+    const agent = await ctx.db.get(agentId);
+    if (agent === null) throw new Error("Agent not found");
+    orgId = agent.orgId;
+  } else if (conversationId !== undefined) {
+    const conversation = await ctx.db.get(conversationId);
+    if (conversation === null) throw new Error("Conversation not found");
+    orgId = conversation.orgId;
+  }
+  const organization = orgId
+    ? await getPartnerOrganizationForOrgId(ctx, orgId)
+    : null;
+  if (organization !== null) {
+    if (organization.status !== "active") {
+      throw new Error("Customer organization is unavailable");
+    }
+    return { kind: "partner" as const, organization };
+  }
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
+    .unique();
+  return user === null ? null : { kind: "native" as const, user };
 }
 
 async function applyUsageDeduction(
@@ -110,7 +147,7 @@ export const getBalance = query({
     orgId: v.optional(v.union(v.string(), v.null())),
   },
   handler: async (ctx, args) => {
-    const { userId } = await getAuthContext(ctx, args.orgId);
+    const { userId, activeTeamId } = await getAuthContext(ctx, args.orgId);
     const user = await ctx.db
       .query("users")
       .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
@@ -118,18 +155,19 @@ export const getBalance = query({
     if (user === null) {
       return null;
     }
-    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(
-      ctx,
-      user.workosUserId,
-    );
-    if (assignedWorkspace !== null) {
+    const scope = await getEntitlementScope(ctx);
+    if (scope.kind === "partner") {
       const balance = await getPartnerCreditBalance(
         ctx,
-        assignedWorkspace.organization._id,
+        scope.organization._id,
       );
       return { credits: balance.remainingCredits, monthlyAllowance: balance.period?.grantedCredits ?? 0 };
     }
-    const { billingUser } = await getBillingEntityForUser(ctx, user);
+    const { billingUser } = await getBillingEntityForUser(
+      ctx,
+      user,
+      activeTeamId,
+    );
     const snapshot = await snapshotUserCredit(ctx, billingUser._id);
     return {
       credits: snapshot.totalRemaining,
@@ -142,6 +180,8 @@ export const internalCheckCredits = internalQuery({
   args: {
     workosUserId: v.string(),
     modelId: v.string(),
+    agentId: v.optional(v.id("agents")),
+    conversationId: v.optional(v.id("conversations")),
   },
   handler: async (ctx, args) => {
     const pricing = getModelPricing(args.modelId);
@@ -149,26 +189,24 @@ export const internalCheckCredits = internalQuery({
       return { ok: false as const, reason: "model_disabled" as const };
     }
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.workosUserId))
-      .unique();
-    if (user === null) {
+    const scope = await getCreditScopeForResource(
+      ctx,
+      args.workosUserId,
+      args.agentId,
+      args.conversationId,
+    );
+    if (scope === null) {
       return { ok: false as const, reason: "user_not_found" as const };
     }
-    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(
-      ctx,
-      user.workosUserId,
-    );
-    if (assignedWorkspace !== null) {
+    if (scope.kind === "partner") {
       const balance = await getPartnerCreditBalance(
         ctx,
-        assignedWorkspace.organization._id,
+        scope.organization._id,
       );
       if (balance.remainingCredits < pricing.creditCost) return { ok: false as const, reason: "insufficient_credits" as const, balance: balance.remainingCredits, cost: pricing.creditCost };
       return { ok: true as const, balance: balance.remainingCredits, cost: pricing.creditCost };
     }
-    const { billingUser } = await getBillingEntityForUser(ctx, user);
+    const { billingUser } = await getBillingEntityForUser(ctx, scope.user);
     const snapshot = await snapshotUserCredit(ctx, billingUser._id);
     const balance = snapshot.totalRemaining;
     const cost = pricing.creditCost;
@@ -222,16 +260,18 @@ export const internalDeductCredits = internalMutation({
       throw new Error("User not found");
     }
 
-    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(
+    const scope = await getCreditScopeForResource(
       ctx,
       user.workosUserId,
+      agentId,
+      args.conversationId,
     );
-    if (assignedWorkspace !== null) {
+    if (scope?.kind === "partner") {
       if (!skipDeduction) {
-        await ensureCurrentPartnerCreditPeriod(ctx, { partnerOrganizationId: assignedWorkspace.organization._id, actorUserId: user._id });
-        await deductPartnerOrganizationCreditBalance(ctx, { partnerOrganizationId: assignedWorkspace.organization._id, credits: pricing.creditCost });
+        await ensureCurrentPartnerCreditPeriod(ctx, { partnerOrganizationId: scope.organization._id, actorUserId: user._id });
+        await deductPartnerOrganizationCreditBalance(ctx, { partnerOrganizationId: scope.organization._id, credits: pricing.creditCost });
       }
-      const balance = await getPartnerCreditBalance(ctx, assignedWorkspace.organization._id);
+      const balance = await getPartnerCreditBalance(ctx, scope.organization._id);
       return { llmModel: args.modelId, creditsCharged, balanceAfter: balance.remainingCredits };
     }
 
@@ -338,7 +378,7 @@ export const getUsageDashboard = query({
     agentId: v.optional(v.id("agents")),
   },
   handler: async (ctx, args) => {
-    const { userId, orgId } = await getAuthContext(ctx, args.orgId);
+    const { userId, orgId, activeTeamId } = await getAuthContext(ctx, args.orgId);
     const isPersonal = !orgId || orgId === "personal";
 
     const user = await ctx.db
@@ -349,8 +389,40 @@ export const getUsageDashboard = query({
       return null;
     }
 
-    const activeTeam = await getActiveTeamForUser(ctx, user);
+    const activeTeam = await ctx.db.get(activeTeamId);
+    if (activeTeam === null) throw new Error("Active team not found");
     const timeZone = normalizeTimeZone(activeTeam.timeZone);
+    const entitlementScope = await getEntitlementScope(ctx);
+    if (entitlementScope.kind === "partner") {
+      const balance = await getPartnerCreditBalance(
+        ctx,
+        entitlementScope.organization._id,
+      );
+      const plan = await getWhiteLabelPlanForOrganization(
+        ctx,
+        entitlementScope.organization._id,
+      );
+      if (plan === null) throw new Error("Customer organization plan not found.");
+      const agents = await ctx.db
+        .query("agents")
+        .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
+        .order("desc")
+        .take(50);
+      return {
+        orgName: activeTeam.name,
+        credits: balance.remainingCredits,
+        monthlyAllowance: balance.period?.grantedCredits ?? 0,
+        plan,
+        periodStartMs: balance.period?.periodStart ?? null,
+        periodEndMs: balance.period?.periodEnd ?? null,
+        timeZone,
+        totalUsedThisPeriod: balance.period?.usedCredits ?? 0,
+        agentUsage: [],
+        agents: agents.map((agent) => ({ _id: agent._id, name: agent.name })),
+        dailyUsage: [],
+        chartConfig: [{ key: "total", label: "Total usage", color: "var(--chart-1)" }],
+      };
+    }
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
     const snapshot = await snapshotUserCredit(ctx, userDoc._id);
 
@@ -540,6 +612,21 @@ export const getCreditHistory = query({
       .unique();
     if (!user) {
       return null;
+    }
+
+    const entitlementScope = await getEntitlementScope(ctx);
+    if (entitlementScope.kind === "partner") {
+      const balance = await getPartnerCreditBalance(
+        ctx,
+        entitlementScope.organization._id,
+      );
+      return {
+        credits: balance.remainingCredits,
+        monthlyAllowance: balance.period?.grantedCredits ?? 0,
+        periodStartMs: balance.period?.periodStart ?? null,
+        periodEndMs: balance.period?.periodEnd ?? null,
+        entries: [],
+      };
     }
 
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);

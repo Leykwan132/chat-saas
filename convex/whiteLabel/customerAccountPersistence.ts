@@ -76,5 +76,9 @@ export async function persistPartnerCustomerAccount(
     workosUserId: args.workosUserId,
     email: fields.email,
   });
-  await reconcilePartnerCustomerWorkspace(ctx, args.workosUserId);
+  await reconcilePartnerCustomerWorkspace(
+    ctx,
+    args.workosUserId,
+    args.partnerOrganizationId,
+  );
 }
