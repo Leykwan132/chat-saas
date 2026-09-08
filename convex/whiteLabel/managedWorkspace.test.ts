@@ -2,14 +2,15 @@ import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api } from "../../convex/_generated/api";
 import schema from "../../convex/schema";
+import stripeSchema from "../../node_modules/@convex-dev/stripe/dist/component/schema.js";
 
 const modules = import.meta.glob("/convex/**/*.ts");
 
-test("identifies the current partner customer workspace as managed", async () => {
-  const t = convexTest(schema, modules);
-  const workosUserId = "customer-owner";
-  const workosOrgId = "org-customer";
-
+async function seedOwnerInsideWhiteLabelWorkspace(
+  t: ReturnType<typeof convexTest>,
+  workosUserId: string,
+  workosOrgId: string,
+) {
   await t.run(async (ctx) => {
     const now = Date.now();
     const userId = await ctx.db.insert("users", {
@@ -48,6 +49,13 @@ test("identifies the current partner customer workspace as managed", async () =>
       updatedAt: now,
     });
   });
+}
+
+test("identifies the current partner customer workspace as managed", async () => {
+  const t = convexTest(schema, modules);
+  const workosUserId = "customer-owner";
+  const workosOrgId = "org-customer";
+  await seedOwnerInsideWhiteLabelWorkspace(t, workosUserId, workosOrgId);
 
   const managed = await t
     .withIdentity({
@@ -58,6 +66,29 @@ test("identifies the current partner customer workspace as managed", async () =>
     .query(api.whiteLabel.billing.isPartnerManagedCurrentWorkspace, {});
 
   expect(managed).toBe(true);
+});
+
+test("currentUser treats a partner owner viewing a white-label workspace as partner managed", async () => {
+  const t = convexTest(schema, modules);
+  t.registerComponent("stripe", stripeSchema, {
+    public: () => import("../../node_modules/@convex-dev/stripe/dist/component/public.js"),
+    private: () => import("../../node_modules/@convex-dev/stripe/dist/component/private.js"),
+    "_generated/server": () =>
+      import("../../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
+  });
+  const workosUserId = "partner-owner";
+  const workosOrgId = "org-partner-customer";
+  await seedOwnerInsideWhiteLabelWorkspace(t, workosUserId, workosOrgId);
+
+  const currentUser = await t
+    .withIdentity({
+      subject: workosUserId,
+      email: "customer@example.com",
+      orgId: workosOrgId,
+    })
+    .query(api.users.currentUser, {});
+
+  expect(currentUser?.isPartnerManaged).toBe(true);
 });
 
 test("blocks customer members from normal workspace invitations", async () => {
