@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [USER] Now: `tsc -b` fails after #115 on unused `resolveAnalyticsTimeRange`. Next: PR, merge, redeploy.
+- 2026-09-08 [TOOL] Now: unused-import build fix is in #116. Next: merge and redeploy.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
@@ -83,7 +83,7 @@
 
 # Receipts
 
-- 2026-09-08 [TOOL] Removed unused `resolveAnalyticsTimeRange` import. `tsc -b` passes under Node 22.
+- 2026-09-08 [TOOL] #116 opened from `cursor/fix-credit-usage-unused-import` onto `main`. `tsc -b` passes under Node 22.
 - 2026-09-08 [TOOL] #113 opened from `cursor/partner-usage-and-settings` onto `main` with the I007 Usage fix plus leftover post-#112 Settings/admin follow-ups. 15 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] #112 admin-create + plan-dialog follow-up: 32 focused tests pass; targeted ESLint and app TypeScript check pass under Node 22. Pre-existing `TeamRolesAndPermissionsPanel` `set-state-in-effect` lint remains.
 - 2026-09-08 [TOOL] Dual-role revision committed as `d6fda7e`, pushed, and #112 updated and marked ready for review.
