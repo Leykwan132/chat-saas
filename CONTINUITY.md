@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [CODE] Now: first-signup welcome modal uses the host brand name (`Welcome to {{Brand Name}}` on partner domains). Native Kilobot onboard and same-origin password reset shipped via #117. Next: merge this welcome-title PR, then verify copy on a partner hostname.
+- 2026-09-08 [CODE] Now: first-signup welcome modal uses the host brand name (`Welcome to {{Brand Name}}` on partner domains). Native Kilobot onboard and same-origin password reset shipped via #117. Next: merge #118, then verify copy on a partner hostname.
 - 2026-09-08 [TOOL] Milestone: unused-import production build fix merged via #116.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
@@ -88,7 +88,7 @@
 
 # Receipts
 
-- 2026-09-08 [TOOL] Host-branded first-signup welcome title: 4 focused tests pass under Node 22; targeted ESLint and `git diff --check` pass. Browser first-signup path UNCONFIRMED.
+- 2026-09-08 [TOOL] #118 opened from `cursor/host-branded-welcome` onto `main` with host-branded first-signup welcome title. 4 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] #117 opened from `cursor/native-kilobot-onboarding` onto `main` with native Kilobot onboard (D793 / I009) and same-origin password reset (D794). 15 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] Native Kilobot onboard (I009): 22 focused auth/plan/onboarding tests pass under Node 22, including new `convex/nativeKilobotOnboarding.test.ts`. OnboardingFlow stays at 299 lines. No changelog (Partner Programme unshipped).
 - 2026-09-08 [TOOL] #116 opened from `cursor/fix-credit-usage-unused-import` onto `main`. `tsc -b` passes under Node 22.
