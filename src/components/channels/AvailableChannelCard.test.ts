@@ -6,6 +6,8 @@ import ChannelsPage from '../../pages/ChannelsPage';
 
 let channelFixtures: Array<Record<string, unknown>> = [];
 let queryCall = 0;
+let featureFlags: Record<string, boolean | undefined> = {};
+let currentUserEmail: string | undefined;
 
 vi.mock('convex/react', () => ({
   useAction: () => vi.fn(),
@@ -20,6 +22,13 @@ vi.mock('convex/react', () => ({
 
 vi.mock('@posthog/react', () => ({
   usePostHog: () => undefined,
+  useFeatureFlagEnabled: (key: string) => featureFlags[key],
+}));
+
+vi.mock('@/partnerAuth/AppAuthProvider', () => ({
+  useAuth: () => ({
+    user: currentUserEmail ? { email: currentUserEmail } : undefined,
+  }),
 }));
 
 vi.mock('@/components/upgradeModalContext', () => ({
@@ -43,6 +52,8 @@ vi.mock('./WebWidgetDetailsDialog', () => ({
 beforeEach(() => {
   channelFixtures = [];
   queryCall = 0;
+  featureFlags = {};
+  currentUserEmail = undefined;
 });
 
 function renderChannelsPage() {
@@ -62,7 +73,35 @@ function renderChannelsPage() {
   );
 }
 
-test('channel cards make Messenger and Instagram available for connection', () => {
+test('hides Messenger and Instagram connect cards until each flag and email allow it', () => {
+  const markup = renderChannelsPage();
+
+  expect(markup).not.toContain('data-channel-service="instagram"');
+  expect(markup).not.toContain('data-channel-service="messenger"');
+  expect(markup).toContain('data-channel-service="whatsapp"');
+});
+
+test('shows only Instagram when that flag is on for the allowlisted account', () => {
+  featureFlags = { enable_instagram: true };
+  currentUserEmail = 'leykwan132@gmail.com';
+  const markup = renderChannelsPage();
+
+  expect(markup).toContain('data-channel-service="instagram"');
+  expect(markup).not.toContain('data-channel-service="messenger"');
+});
+
+test('shows only Messenger when that flag is on for the allowlisted account', () => {
+  featureFlags = { enable_messenger: true };
+  currentUserEmail = 'leykwan132@gmail.com';
+  const markup = renderChannelsPage();
+
+  expect(markup).toContain('data-channel-service="messenger"');
+  expect(markup).not.toContain('data-channel-service="instagram"');
+});
+
+test('channel cards make Messenger and Instagram available when both flags are on', () => {
+  featureFlags = { enable_instagram: true, enable_messenger: true };
+  currentUserEmail = 'leykwan132@gmail.com';
   const markup = renderChannelsPage();
 
   expect(markup).toContain('data-channel-service="instagram"');

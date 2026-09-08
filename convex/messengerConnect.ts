@@ -6,6 +6,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { messengerSyncPool } from "./channelSyncPools";
 import { isCommentToInboxUserAllowed } from "../shared/commentToInboxAccess";
+import { assertWorkosUserCanConnectMessenger } from "./messengerConnectAccess";
 
 const DEFAULT_GRAPH_VERSION = "v25.0";
 
@@ -307,6 +308,7 @@ export const completeSignup = action({
       }
   > => {
     const { orgId, userId } = await getAuthContext(ctx);
+    await assertWorkosUserCanConnectMessenger(ctx, userId);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
     const user: Doc<"users"> | null = await ctx.runQuery(
       internal.users.internalGetByWorkosUserId,
@@ -401,6 +403,7 @@ export const internalOAuthCallback = internalAction({
     if (!orgId) {
       throw new Error("Missing channel scope for Messenger connect.");
     }
+    await assertWorkosUserCanConnectMessenger(ctx, userId);
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
     if (!appId || !appSecret) {
@@ -461,6 +464,7 @@ export const internalFinalizeMessengerPagePick = internalAction({
     ctx,
     args,
   ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
+    await assertWorkosUserCanConnectMessenger(ctx, args.userId);
     try {
       const result = await completeMessengerFromUserAccessToken(ctx, {
         orgId: args.orgId,

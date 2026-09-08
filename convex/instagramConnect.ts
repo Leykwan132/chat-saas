@@ -3,6 +3,7 @@ import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { instagramSyncPool } from "./channelSyncPools";
+import { assertWorkosUserCanConnectInstagram } from "./instagramConnectAccess";
 
 const DEFAULT_GRAPH_VERSION = "v25.0";
 
@@ -79,6 +80,7 @@ export const internalCompleteSignup = internalAction({
     if (!orgId) {
       throw new Error("Missing channel scope for Instagram connect.");
     }
+    await assertWorkosUserCanConnectInstagram(ctx, userId);
 
     const appId = process.env.META_IG_APP_ID;
     const appSecret = process.env.META_IG_APP_SECRET;

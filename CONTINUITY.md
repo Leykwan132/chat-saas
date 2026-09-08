@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [CODE] Now: partner Settings → Usage crash (I007) plus leftover Settings/admin follow-ups are in #113. Next: review/merge, deploy, verify Usage on the partner host.
+- 2026-09-08 [TOOL] Now: PostHog flags `enable_instagram` (ID 871040) and `enable_messenger` (ID 871041) are active. App gate is going into a new PR. Next: merge, deploy, verify Channels for the allowlisted account.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
@@ -46,6 +46,7 @@
 - 2026-08-25 [USER] D774–D775 ACTIVE: members without agent-create access see an explanatory empty state; partner-managed workspaces hide Get Free Credits.
 - 2026-08-25 [USER] D776 ACTIVE: partner-created customers authenticate only through their assigned connected partner hostname; native Kilobot sign-in rejects them while native users retain AuthKit.
 - 2026-09-08 [USER] D790 ACTIVE: billing is session-surface scoped, allowing one WorkOS identity to use native Kilobot and one or more Partner Programme organizations. Native AuthKit sessions use Stripe; custom-domain partner JWTs use their exact signed `partnerOrganizationId` plan/credits. `activeTeamId` and mere account existence cannot select billing context. Multiple valid organizations on one partner domain are selected after password verification and revalidated before issuing the scoped JWT.
+- 2026-09-08 [USER] D792 ACTIVE: Instagram and Messenger channel connect are separate early-access flags. PostHog `enable_instagram` (ID 871040) and `enable_messenger` (ID 871041) each require person email `leykwan132@gmail.com` at 100%, plus the app/server allowlist. One flag must not unlock the other. Existing connected channels stay visible. WhatsApp is unchanged.
 - 2026-09-08 [USER] D791 ACTIVE: Partner Programme admins can create agents; plan-change dialog actions keep Cancel immediately beside Confirm.
 - 2026-09-03 [USER] D777 ACTIVE: each partner customer remains restricted to one assigned workspace and cannot create additional workspaces.
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
@@ -59,18 +60,19 @@
 
 # Done (recent)
 
+- 2026-09-08 [CODE] Instagram and Messenger connect cards and signup actions use separate PostHog flags plus `leykwan132@gmail.com` (D792).
 - 2026-09-08 [CODE] Partner Usage tab reads the signed org wallet instead of Stripe/personal team (I007).
 - 2026-09-08 [CODE] Admin role can create agents; Confirm plan change keeps Cancel beside Confirm; dual-role sessions stay surface-scoped (I006, #112).
 - 2026-09-08 [CODE] Partner-host Convex auth no longer loops: stable `fetchAccessToken` via `useCallback` in `src/partnerAuth/usePartnerConvexAuth.ts` (I005, #111).
 - 2026-09-08 [CODE] Sidebar brand mark follows the hostname: partner logo + name (initial if no logo) on custom domains, Kilobot on native hosts; branding lookup shared via `useHostBranding` (#110).
 - 2026-09-08 [CODE] Partner customers can enter `/workspace`, Settings, and Pricing on their domain; direct WorkOS `useAuth` imports replaced with the host-aware hook (I004, #109 on `main`).
-- 2026-09-08 [CODE] Milestone: partner favicon, custom tab title, and Branding sign-in polish on `main` (#101–#108).
-- 2026-09-07 [CODE] Partner `createOrganization` now provisions the org and its first credit period atomically, closing the `getOverview` crash window (I003); in PR.
+- 2026-09-08 [CODE] Milestone: partner favicon, custom tab title, Branding polish, and atomic org credit provisioning on `main` (#101–#108, I003).
 
 # Working set
 
 - 2026-09-07 [CODE] `convex/whiteLabel/{creditLedger,creditRenewal,portalProvisioning}*`, `convex/_generated/api.d.ts`
 - 2026-09-07 [CODE] `src/components/partner/{PartnerCustomerForms,PartnerCustomerList,PartnerCustomerCredentialsDialog,PartnerOrganizationList}*`, `src/pages/PartnerPage*`
+- 2026-09-08 [CODE] `shared/{instagram,messenger}Access.ts`, `src/lib/posthogFeatureFlags.ts`, `src/pages/ChannelsPage.tsx`, `convex/{instagramConnectAccess,messengerConnectAccess,instagramEmbeddedSignup,instagramAuth,instagramConnect,messengerConnect,messengerAuth}*`
 - 2026-09-07 [CODE] `shared/commentToInboxAccess.ts`, `src/components/Connect{Instagram,Messenger}Button*`, `convex/{instagramEmbeddedSignup,messengerConnect,messengerAuth,oauthSessions,commentAutomationMeta,schema}*`
 - 2026-09-08 [CODE] `src/lib/host{Branding,Favicon,DocumentTitle}*`, `src/hooks/useHostBranding.ts`, `src/components/{HostBrandMark,ExpandedAppSidebarHeader,app-sidebar,AppRuntimeEffects}*`, `src/components/workspace/AgentsSidebar*`
 - 2026-09-08 [CODE] `convex/users.ts`, `convex/whiteLabel/{planResolver.ts,managedWorkspace.test.ts}`, `convex/plans.ts`, `src/lib/organizationAccess.ts`
@@ -80,6 +82,7 @@
 
 # Receipts
 
+- 2026-09-08 [TOOL] PostHog MCP created `enable_instagram` (871040) and `enable_messenger` (871041) in project 500079; both active with person email exact match at 100%.
 - 2026-09-08 [TOOL] #113 opened from `cursor/partner-usage-and-settings` onto `main` with the I007 Usage fix plus leftover post-#112 Settings/admin follow-ups. 15 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] #112 admin-create + plan-dialog follow-up: 32 focused tests pass; targeted ESLint and app TypeScript check pass under Node 22. Pre-existing `TeamRolesAndPermissionsPanel` `set-state-in-effect` lint remains.
 - 2026-09-08 [TOOL] Dual-role revision committed as `d6fda7e`, pushed, and #112 updated and marked ready for review.
