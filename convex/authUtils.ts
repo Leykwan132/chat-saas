@@ -19,6 +19,7 @@ import type { EnsureUserAccountArgs } from "./teamHelpers";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
 import { resolveEntitlementScope } from "./entitlementScope";
 import {
+  Permission,
   ROLE_PERMISSIONS,
   resolvePermissionsForRole,
   type PermissionSlug,
@@ -149,7 +150,13 @@ async function buildAuthContextFromDb(
             : entitlementScope.team.memberPermissions ?? ROLE_PERMISSIONS.member
       ) as PermissionSlug[],
     )
-    : claims.permissions ?? [];
+    : [...(claims.permissions ?? [])];
+  if (
+    (role === "admin" || roles.includes("admin")) &&
+    !permissions.includes(Permission.AGENTS_CREATE)
+  ) {
+    permissions.push(Permission.AGENTS_CREATE);
+  }
 
   return {
     userId: identity.subject,

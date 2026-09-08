@@ -86,7 +86,7 @@ export function PartnerPlanChangeDialog({
             </div>
           </div>
         </RadioGroup>
-        <DialogFooter>
+        <DialogFooter className="flex-row justify-end">
           <Button variant="ghost" onClick={() => close(false)}>
             Cancel
           </Button>
