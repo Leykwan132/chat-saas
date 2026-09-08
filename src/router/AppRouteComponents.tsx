@@ -20,6 +20,7 @@ import {
 import { Permission } from '../../shared/permissions';
 import { NativeAppAuthProvider, useAuth } from '@/partnerAuth/AppAuthProvider';
 import { PartnerAuthProvider } from '@/partnerAuth/PartnerAuthProvider';
+import { usePartnerConvexAuth } from '@/partnerAuth/usePartnerConvexAuth';
 
 export function OldAgentRedirect() {
   const { agentId } = useParams();
@@ -161,16 +162,6 @@ export function AppRootLayout({
     </ThemeProvider>
   );
 }
-
-function usePartnerConvexAuth() {
-  const { isLoading, user, getAccessToken } = useAuth();
-  return {
-    isLoading,
-    isAuthenticated: user !== null,
-    fetchAccessToken: async () => await getAccessToken(),
-  };
-}
-
 function AppContent() {
   return (
     <TooltipProvider>

@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-08 [CODE] Now: partner-host `/workspace` infinite loading spinner (I005) fix in #111 on `cursor/partner-host-convex-auth-loop` (base `main` at #110). Next: merge, deploy, verify `chat.morphswiftstudio.com/workspace` renders after sign-in, then add the changelog entry.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
 - 2026-09-07 [CODE] Now: partner organization credit periods schedule an exact-time automatic renewal; no existing-organization backfill is needed. Unshipped on `codex/partner-plan-change-timing`.
@@ -47,11 +48,13 @@
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
 - 2026-09-06 [CODE] I001 OPEN: Hallucinated booking/email-link copy is replaced after generation; unverified claims now receive a safe retry response rather than silence. Remaining gap: playground can briefly stream model text before the saved message is rewritten.
 - 2026-09-07 [USER] I002 RESOLVED: Meta rejected `comments` on the Facebook Page `subscribed_apps` edge with error #100; use valid Page field `feed`, while configuring Instagram-specific fields on the app’s Instagram webhook object.
+- 2026-09-08 [USER] I005 FIX IN PR (#111): Symptoms: `chat.morphswiftstudio.com/workspace` spins forever after partner sign-in; Kilobot host unaffected. Cause: `usePartnerConvexAuth` returned a new `fetchAccessToken` arrow every render; `ConvexProviderWithAuth` keys its `setAuth` effect on that function, so each successful auth re-render cleared auth and re-ran it (loading never settled). Mitigation: hook moved to `src/partnerAuth/usePartnerConvexAuth.ts` with `useCallback`; `usePartnerConvexAuth.test.tsx` fails if the callback identity changes across renders. Side finding: pre-existing `react-refresh/only-export-components` lint error in `AppAuthProvider.tsx` (line 26) untouched.
 - 2026-09-08 [USER] I004 RESOLVED (#109): Symptoms: `chat.morphswiftstudio.com/workspace` threw “useAuth must be used within an AuthKitProvider” after partner sign-in. Cause: `RequireOrganization`, `SettingsPage`, and `PricingPage` imported `useAuth` from `@workos-inc/authkit-react`, which has no provider on partner hosts. Mitigation: all three use the host-aware `useAuth` from `@/partnerAuth/AppAuthProvider`; `src/partnerAuth/appAuthUsage.test.ts` fails if any file outside the two auth providers imports the WorkOS hook again.
 - 2026-09-07 [TOOL] I003 FIX IN PR: Symptoms: Partner page crashed with `getOverview` "Customer organization credit period not found." right after creating an org. Evidence: prod logs 22:05:34 and 22:06:37 fail at `Promise.all` index 0 then 1; prod data shows both orgs gained periods 144 ms and 49 ms after creation. Cause: `createOrganization` committed the org in one mutation and its credit period in a second, so the overview subscription re-ran in the gap. Mitigation: `persistCreatedOrganization` now creates the period in the same transaction via `createPartnerCreditPeriod`; `initializeFirstCreditPeriod` deleted. Side finding: the deleted mutation hardcoded growth 6000 / business 18000 while `PLAN_CATALOG` says 8000 / 20000; the existing prod business org `yh776ydm3q9srgqtpbjw1az3vd8dz69a` was granted 18000. Data correction UNCONFIRMED, pending user decision.
 
 # Done (recent)
 
+- 2026-09-08 [CODE] Partner-host Convex auth no longer loops: stable `fetchAccessToken` via `useCallback` in `src/partnerAuth/usePartnerConvexAuth.ts` (I005); in #111.
 - 2026-09-08 [CODE] Sidebar brand mark follows the hostname: partner logo + name (initial if no logo) on custom domains, Kilobot on native hosts; branding lookup shared via `useHostBranding` (#110).
 - 2026-09-08 [CODE] Partner customers can enter `/workspace`, Settings, and Pricing on their domain; direct WorkOS `useAuth` imports replaced with the host-aware hook (I004, #109 on `main`).
 - 2026-09-08 [CODE] Milestone: partner favicon from uploaded logo and customizable browser tab title on `main` (#107, #108).
@@ -59,7 +62,6 @@
 - 2026-09-07 [CODE] Milestone: partner Branding brand name, green-check connected domain, logo preview tile, centered subtitle-free sign-in header, and sign-in preview link are on `main` (#101–#103).
 - 2026-09-07 [CODE] Implemented Instagram Embedded Signup with Page-linked account persistence and dual routing that preserves existing Instagram Login connections; unshipped.
 - 2026-09-07 [CODE] Messenger Comment-to-Inbox ingestion, deterministic matching, customer-first persistence, private/public sends, outcome counters, and response attribution merged via #98.
-- 2026-09-07 [CODE] Milestone: widget newline preservation and canonical booking confirmation layout shipped on `main` (#96).
 
 # Working set
 
@@ -67,11 +69,12 @@
 - 2026-09-07 [CODE] `src/components/partner/{PartnerCustomerForms,PartnerCustomerList,PartnerCustomerCredentialsDialog,PartnerOrganizationList}*`, `src/pages/PartnerPage*`
 - 2026-09-07 [CODE] `shared/commentToInboxAccess.ts`, `src/components/Connect{Instagram,Messenger}Button*`, `convex/{instagramEmbeddedSignup,messengerConnect,messengerAuth,oauthSessions,commentAutomationMeta,schema}*`
 - 2026-09-08 [CODE] `src/lib/host{Branding,Favicon,DocumentTitle}*`, `src/hooks/useHostBranding.ts`, `src/components/{HostBrandMark,ExpandedAppSidebarHeader,app-sidebar,AppRuntimeEffects}*`, `src/components/workspace/AgentsSidebar*`
-- 2026-09-08 [CODE] `src/partnerAuth/{AppAuthProvider.tsx,appAuthUsage.test.ts}`, `src/components/RequireOrganization.tsx`, `src/pages/{SettingsPage,PricingPage}.tsx`, `src/router/AppRouteComponents.tsx`
+- 2026-09-08 [CODE] `src/partnerAuth/{AppAuthProvider.tsx,appAuthUsage.test.ts,usePartnerConvexAuth.ts,usePartnerConvexAuth.test.tsx}`, `src/components/RequireOrganization.tsx`, `src/pages/{SettingsPage,PricingPage}.tsx`, `src/router/AppRouteComponents.tsx`
 - 2026-09-07 [CODE] `src/components/partner/PartnerBrandingTab*`, `src/pages/{PartnerPage,SignInPage}.tsx`, `convex/whiteLabel/{portal,portalActions,portalProvisioning,portalOverview,creditLedger}.ts`
 
 # Receipts
 
+- 2026-09-08 [TOOL] Partner-host auth loop fix: new identity test fails on the old inline arrow (`expected 3 to be 1`) and passes on the fix; Node v22 targeted ESLint, `tsc --noEmit -p tsconfig.app.json`, and `git diff --check` pass.
 - 2026-09-08 [TOOL] Hostname sidebar brand passed 23 focused tests (header lockup, loading, no-logo initial, both sidebars, favicon/title), Node v22 targeted ESLint, `tsc --noEmit -p tsconfig.app.json`, and `git diff --check`.
 - 2026-09-08 [TOOL] Partner-host `useAuth` fix: new guard test fails on the old `RequireOrganization` import and passes on the fix; Node v22 targeted ESLint, `tsc --noEmit -p tsconfig.app.json`, and `git diff --check` pass.
 - 2026-09-08 [TOOL] Partner browser tab title passed 39 focused tests, targeted ESLint, and `git diff --check`.
