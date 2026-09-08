@@ -15,6 +15,18 @@ function instagramGraphBase() {
   return `https://graph.instagram.com/${graphVersion()}`;
 }
 
+const INSTAGRAM_LOGIN_WEBHOOK_FIELDS = [
+  "comments",
+  "live_comments",
+  "messages",
+  "message_echoes",
+  "message_reactions",
+  "messaging_handover",
+  "messaging_optins",
+  "messaging_postbacks",
+  "messaging_referral",
+].join(",");
+
 type GraphErrorBody = {
   error?: {
     message?: string;
@@ -46,6 +58,24 @@ async function graphFetch<T>(
   return body as T;
 }
 
+export async function subscribeInstagramLoginWebhooks(
+  igUserId: string,
+  accessToken: string,
+) {
+  const url = new URL(
+    `${instagramGraphBase()}/${igUserId}/subscribed_apps`,
+  );
+  url.searchParams.set("subscribed_fields", INSTAGRAM_LOGIN_WEBHOOK_FIELDS);
+  await graphFetch(
+    url.toString(),
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+    "Instagram webhook subscription",
+  );
+}
+
 // Internal action invoked from the static HTTP callback at
 // /auth/instagram/callback. The callback decodes `state`, looks up the
 // matching oauthSessions row (which carries the authenticated orgId/userId
@@ -71,26 +101,30 @@ export const internalCompleteSignup = internalAction({
     redirectUri: v.string(),
     orgId: v.string(),
     userId: v.string(),
+    agentId: v.id("agents"),
   },
   handler: async (
     ctx,
     args,
   ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
     const { orgId, userId } = args;
-    if (!orgId) {
-      throw new Error("Missing channel scope for Instagram connect.");
-    }
     await assertWorkosUserCanConnectInstagram(ctx, userId);
+    await ctx.runQuery(internal.instagramChannelAssignment.assertOAuthConnectContext, {
+      agentId: args.agentId,
+      orgId,
+      userId,
+    });
 
     const appId = process.env.META_IG_APP_ID;
     const appSecret = process.env.META_IG_APP_SECRET;
     if (!appId || !appSecret) {
       throw new Error(
-        "INSTAGRAM_APP_ID / INSTAGRAM_APP_SECRET are not configured on the Convex deployment.",
+        "META_IG_APP_ID / META_IG_APP_SECRET are not configured on the Convex deployment.",
       );
     }
 
     let igUserId: string | undefined;
+    let pendingChannelId: Id<"channels"> | undefined;
     try {
       // 1. Short-lived token. The Instagram Graph endpoint expects
       //    application/x-www-form-urlencoded; the docs show form fields.
@@ -131,10 +165,11 @@ export const internalCompleteSignup = internalAction({
         );
       }
 
-      await ctx.runMutation(internal.channels.internalStartInstagramPending, {
+      pendingChannelId = await ctx.runMutation(internal.channels.internalStartInstagramPending, {
         orgId,
         connectedByUserId: userId,
         igUserId,
+        agentId: args.agentId,
       });
 
       await ctx.runMutation(internal.channels.internalSetProgress, {
@@ -160,6 +195,8 @@ export const internalCompleteSignup = internalAction({
         ? Date.now() + longRes.expires_in * 1000
         : undefined;
 
+      await subscribeInstagramLoginWebhooks(igUserId, longToken);
+
       // 3. Profile metadata for the UI. Best-effort; failure here should not
       //    block the connection.
       let displayUsername: string | undefined;
@@ -181,6 +218,12 @@ export const internalCompleteSignup = internalAction({
         igUserId,
       });
 
+      await ctx.runQuery(internal.instagramChannelAssignment.assertOAuthConnectContext, {
+        agentId: args.agentId,
+        orgId,
+        userId,
+      });
+
       // 4. Persist as connected.
       const channelId: Id<"channels"> = await ctx.runMutation(
         internal.channels.internalUpsertInstagram,
@@ -191,6 +234,7 @@ export const internalCompleteSignup = internalAction({
           accessToken: longToken,
           tokenExpiresAt,
           connectedByUserId: userId,
+          agentId: args.agentId,
         },
       );
 
@@ -205,13 +249,13 @@ export const internalCompleteSignup = internalAction({
       return { channelId, displayUsername };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      await ctx.runMutation(internal.channels.internalRecordError, {
-        orgId,
-        service: "instagram",
-        error: message,
-        connectedByUserId: userId,
-        igUserId,
-      });
+      if (pendingChannelId !== undefined) {
+        await ctx.runMutation(internal.channels.internalRecordInstagramPendingError, {
+          channelId: pendingChannelId,
+          agentId: args.agentId,
+          error: message,
+        });
+      }
       throw err;
     }
   },

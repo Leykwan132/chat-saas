@@ -718,6 +718,7 @@ export const internalStartInstagramPending = internalMutation({
     orgId: v.string(),
     connectedByUserId: v.string(),
     igUserId: v.string(),
+    agentId: v.optional(v.id("agents")),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
     const stripeInfo = await getPlanForWorkspaceResource(
@@ -750,7 +751,7 @@ export const internalStartInstagramPending = internalMutation({
     }
 
     if (existing === null) {
-      const defaultAgentId = await resolveDefaultAgentIdForChannel(ctx, {
+      const defaultAgentId = args.agentId ?? await resolveDefaultAgentIdForChannel(ctx, {
         channelOrgId: args.orgId,
         connectedByUserId: args.connectedByUserId,
       });
@@ -767,12 +768,12 @@ export const internalStartInstagramPending = internalMutation({
       });
     }
     const backfillAgentId =
-      existing.defaultAgentId === undefined
+      args.agentId ?? (existing.defaultAgentId === undefined
         ? await resolveDefaultAgentIdForChannel(ctx, {
             channelOrgId: args.orgId,
             connectedByUserId: args.connectedByUserId,
           })
-        : undefined;
+        : undefined);
     await ctx.db.patch(existing._id, {
       orgId: args.orgId,
       status: "pending",
@@ -797,6 +798,7 @@ export const internalUpsertInstagram = internalMutation({
     accessToken: v.string(),
     tokenExpiresAt: v.optional(v.number()),
     connectedByUserId: v.string(),
+    agentId: v.optional(v.id("agents")),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
     const now = Date.now();
@@ -817,8 +819,16 @@ export const internalUpsertInstagram = internalMutation({
       updatedAt: now,
     };
 
+    if (
+      existing !== null &&
+      args.agentId !== undefined &&
+      existing.defaultAgentId !== args.agentId
+    ) {
+      throw new Error("Instagram connection changed. Start the connection again.");
+    }
+
     if (existing === null) {
-      const defaultAgentId = await resolveDefaultAgentIdForChannel(ctx, {
+      const defaultAgentId = args.agentId ?? await resolveDefaultAgentIdForChannel(ctx, {
         channelOrgId: args.orgId,
         connectedByUserId: args.connectedByUserId,
       });
@@ -832,12 +842,12 @@ export const internalUpsertInstagram = internalMutation({
       });
     }
     const backfillAgentId =
-      existing.defaultAgentId === undefined
+      args.agentId ?? (existing.defaultAgentId === undefined
         ? await resolveDefaultAgentIdForChannel(ctx, {
             channelOrgId: args.orgId,
             connectedByUserId: args.connectedByUserId,
           })
-        : undefined;
+        : undefined);
     await ctx.db.patch(existing._id, {
       ...patch,
       orgId: args.orgId,
@@ -845,6 +855,27 @@ export const internalUpsertInstagram = internalMutation({
       ...(backfillAgentId !== undefined ? { defaultAgentId: backfillAgentId } : {}),
     });
     return existing._id;
+  },
+});
+
+export const internalRecordInstagramPendingError = internalMutation({
+  args: {
+    channelId: v.id("channels"),
+    agentId: v.id("agents"),
+    error: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const channel = await ctx.db.get(args.channelId);
+    if (
+      channel?.service !== "instagram" ||
+      channel.status !== "pending" ||
+      channel.defaultAgentId !== args.agentId
+    ) return;
+    await ctx.db.patch(args.channelId, {
+      status: "error",
+      lastError: args.error,
+      updatedAt: Date.now(),
+    });
   },
 });
 

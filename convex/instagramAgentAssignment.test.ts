@@ -18,18 +18,16 @@ vi.mock("./channelSyncPools", () => ({
 const modules = import.meta.glob("./**/*.ts");
 
 beforeEach(() => {
-  vi.stubEnv("META_APP_ID", "test-app");
-  vi.stubEnv("META_APP_SECRET", "test-secret");
+  vi.stubEnv("META_IG_APP_ID", "test-app");
+  vi.stubEnv("META_IG_APP_SECRET", "test-secret");
   vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
     const url = new URL(String(input));
     const body = url.pathname.endsWith("/oauth/access_token")
-      ? { access_token: "user-token" }
-      : url.pathname.endsWith("/me/accounts")
-        ? { data: [{
-            id: "page-1",
-            access_token: "page-token",
-            instagram_business_account: { id: "ig-1", username: "store" },
-          }] }
+      ? { access_token: "short-token", user_id: "ig-1" }
+      : url.pathname.endsWith("/access_token")
+        ? { access_token: "long-token", expires_in: 5_184_000 }
+        : url.pathname.endsWith("/me")
+          ? { id: "ig-1", username: "store" }
         : url.pathname.endsWith("/subscribed_apps")
           ? { success: true }
           : url.pathname.endsWith("/conversations")
@@ -76,10 +74,10 @@ async function setup() {
   return { t, owner, ...ids };
 }
 
-test("signup saves the selected agent and remains visible after empty backfill", async () => {
+test("Instagram Login saves the selected agent and remains visible after empty backfill", async () => {
   const { t, owner, selectedAgentId, newestAgentId } = await setup();
-  const { channelId } = await owner.action(api.instagramEmbeddedSignup.completeSignup, {
-    agentId: selectedAgentId, code: "code", enableCommentWebhooks: false,
+  const { channelId } = await t.action(internal.instagramConnect.internalCompleteSignup, {
+    agentId: selectedAgentId, code: "code", redirectUri: "https://example.com/callback", orgId: "", userId: "owner",
   });
   await t.action(internal.instagramSync.backfillConversations, { channelId, limit: 10 });
   const visible = await owner.query(api.channels.listForCurrentOrg, { agentId: selectedAgentId });
@@ -90,14 +88,14 @@ test("signup saves the selected agent and remains visible after empty backfill",
   expect(await owner.query(api.channels.listForCurrentOrg, { agentId: newestAgentId })).toEqual([]);
 });
 
-test("reconnect replaces a disconnected account's old agent assignment", async () => {
-  const { t, owner, selectedAgentId, newestAgentId } = await setup();
+test("Instagram Login reconnect replaces a disconnected account's old agent assignment", async () => {
+  const { t, selectedAgentId, newestAgentId } = await setup();
   const existingId = await t.run(async (ctx) => ctx.db.insert("channels", {
     service: "instagram", igUserId: "ig-1", orgId: "", connectedByUserId: "owner",
     defaultAgentId: newestAgentId, status: "disconnected", createdAt: 1, updatedAt: 1,
   }));
-  const { channelId } = await owner.action(api.instagramEmbeddedSignup.completeSignup, {
-    agentId: selectedAgentId, code: "code", enableCommentWebhooks: false,
+  const { channelId } = await t.action(internal.instagramConnect.internalCompleteSignup, {
+    agentId: selectedAgentId, code: "code", redirectUri: "https://example.com/callback", orgId: "", userId: "owner",
   });
   expect(channelId).toBe(existingId);
   expect(await t.run(async (ctx) => ctx.db.get(channelId))).toMatchObject({
@@ -105,31 +103,23 @@ test("reconnect replaces a disconnected account's old agent assignment", async (
   });
 });
 
-test("rejects another user's personal agent without creating a channel", async () => {
-  const { t, owner, foreignAgentId } = await setup();
-  await expect(owner.action(api.instagramEmbeddedSignup.completeSignup, {
-    agentId: foreignAgentId, code: "code", enableCommentWebhooks: false,
-  })).rejects.toThrow("Agent not found");
-  expect(await t.run(async (ctx) => ctx.db.query("channels").collect())).toEqual([]);
-});
-
-test("a rejected duplicate connect preserves the working connection", async () => {
-  const { t, owner, selectedAgentId, newestAgentId } = await setup();
+test("a rejected duplicate Instagram Login connect preserves the working connection", async () => {
+  const { t, selectedAgentId, newestAgentId } = await setup();
   const channelId = await t.run(async (ctx) => ctx.db.insert("channels", {
     service: "instagram", igUserId: "ig-1", orgId: "", connectedByUserId: "owner",
     defaultAgentId: newestAgentId, status: "connected", accessToken: "existing-token",
     createdAt: 1, updatedAt: 1,
   }));
-  await expect(owner.action(api.instagramEmbeddedSignup.completeSignup, {
-    agentId: selectedAgentId, code: "code", enableCommentWebhooks: false,
+  await expect(t.action(internal.instagramConnect.internalCompleteSignup, {
+    agentId: selectedAgentId, code: "code", redirectUri: "https://example.com/callback", orgId: "", userId: "owner",
   })).rejects.toThrow("already connected");
   expect(await t.run(async (ctx) => ctx.db.get(channelId))).toMatchObject({
     defaultAgentId: newestAgentId, status: "connected", accessToken: "existing-token",
   });
 });
 
-test("does not connect an account reassigned while Meta subscription is running", async () => {
-  const { t, owner, selectedAgentId, newestAgentId } = await setup();
+test("does not connect an account reassigned while Instagram subscription is running", async () => {
+  const { t, selectedAgentId, newestAgentId } = await setup();
   const graphFetch = globalThis.fetch;
   vi.stubGlobal("fetch", vi.fn(async (...args: Parameters<typeof fetch>) => {
     if (String(args[0]).includes("/subscribed_apps")) {
@@ -141,16 +131,36 @@ test("does not connect an account reassigned while Meta subscription is running"
     }
     return graphFetch(...args);
   }));
-  await expect(owner.action(api.instagramEmbeddedSignup.completeSignup, {
-    agentId: selectedAgentId, code: "code", enableCommentWebhooks: false,
+  await expect(t.action(internal.instagramConnect.internalCompleteSignup, {
+    agentId: selectedAgentId, code: "code", redirectUri: "https://example.com/callback", orgId: "", userId: "owner",
   })).rejects.toThrow("Instagram connection changed");
   const channel = await t.run(async (ctx) => ctx.db.query("channels").unique());
   expect(channel?.status).toBe("pending");
   expect(channel?.accessToken).toBeUndefined();
 });
 
-test("subscription failure stays on the selected agent as an error", async () => {
-  const { t, owner, selectedAgentId } = await setup();
+test("does not connect when the selected agent is removed during Instagram subscription", async () => {
+  const { t, selectedAgentId } = await setup();
+  const graphFetch = globalThis.fetch;
+  vi.stubGlobal("fetch", vi.fn(async (...args: Parameters<typeof fetch>) => {
+    if (String(args[0]).includes("/subscribed_apps")) {
+      await t.run(async (ctx) => {
+        await ctx.db.delete(selectedAgentId);
+      });
+    }
+    return graphFetch(...args);
+  }));
+
+  await expect(t.action(internal.instagramConnect.internalCompleteSignup, {
+    agentId: selectedAgentId, code: "code", redirectUri: "https://example.com/callback", orgId: "", userId: "owner",
+  })).rejects.toThrow("Instagram connection changed");
+  expect(await t.run(async (ctx) => ctx.db.query("channels").unique())).toMatchObject({
+    status: "error", defaultAgentId: selectedAgentId,
+  });
+});
+
+test("Instagram Login subscription failure stays on the selected agent as an error", async () => {
+  const { t, selectedAgentId } = await setup();
   const graphFetch = globalThis.fetch;
   vi.stubGlobal("fetch", vi.fn(async (...args: Parameters<typeof fetch>) => {
     if (String(args[0]).includes("/subscribed_apps")) {
@@ -158,8 +168,8 @@ test("subscription failure stays on the selected agent as an error", async () =>
     }
     return graphFetch(...args);
   }));
-  await expect(owner.action(api.instagramEmbeddedSignup.completeSignup, {
-    agentId: selectedAgentId, code: "code", enableCommentWebhooks: false,
+  await expect(t.action(internal.instagramConnect.internalCompleteSignup, {
+    agentId: selectedAgentId, code: "code", redirectUri: "https://example.com/callback", orgId: "", userId: "owner",
   })).rejects.toThrow("Subscription rejected");
   expect(await t.run(async (ctx) => ctx.db.query("channels").unique())).toMatchObject({
     status: "error", defaultAgentId: selectedAgentId,

@@ -287,7 +287,7 @@ const instagramDispatch = httpAction(async (ctx, req) => {
   // const sig = await verifyMetaSignature(
   //   req,
   //   rawBody,
-  //   process.env.INSTAGRAM_APP_SECRET
+  //   process.env.META_IG_APP_SECRET
   // );
   // if (!sig.ok) {
   //   return new Response(sig.message, { status: sig.status as number });
@@ -711,6 +711,7 @@ const instagramCallback = httpAction(async (ctx, req) => {
   if (
     session === null ||
     session.service !== "instagram" ||
+    session.agentId === undefined ||
     session.consumed ||
     session.expiresAt < Date.now()
   ) {
@@ -738,6 +739,7 @@ const instagramCallback = httpAction(async (ctx, req) => {
       redirectUri,
       orgId: session.orgId,
       userId: session.userId,
+      agentId: session.agentId,
     });
     await ctx.runMutation(internal.oauthSessions.internalMarkConsumed, {
       csrf,
@@ -909,7 +911,7 @@ type Service = "instagram" | "messenger";
 
 function appSecretFor(service: Service): string | null {
   return service === "instagram"
-    ? (process.env.INSTAGRAM_APP_SECRET ?? null)
+    ? (process.env.META_IG_APP_SECRET ?? null)
     : (process.env.META_APP_SECRET ?? null);
 }
 

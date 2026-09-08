@@ -5,7 +5,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { ConnectInstagramButton } from './ConnectInstagramButton';
 
 const mocks = vi.hoisted(() => ({
-  completeSignup: vi.fn(async () => ({})),
+  startInstagramLogin: vi.fn(async () => ({ authorizeUrl: 'https://www.instagram.com/oauth/authorize' })),
   buttonProps: {} as ComponentProps<'button'>,
 }));
 vi.mock('@/components/ui/button', () => ({
@@ -16,22 +16,7 @@ vi.mock('@/components/ui/button', () => ({
 }));
 vi.mock('convex/react', () => ({
   useQuery: () => [],
-  useAction: () => mocks.completeSignup,
-}));
-vi.mock('@/partnerAuth/AppAuthProvider', () => ({
-  useAuth: () => ({ user: { email: 'owner@example.com' } }),
-}));
-vi.mock('@/lib/posthogFeatureFlags', () => ({
-  useEnableCommentToInboxFeature: () => false,
-  isProductFeatureEnabled: () => false,
-  isCommentToInboxUserAllowed: () => false,
-}));
-vi.mock('@/lib/fbSdk', () => ({
-  waitForFacebookSdk: async () => ({
-    login: (callback: (response: { authResponse: { code: string } }) => void) => {
-      callback({ authResponse: { code: 'signup-code' } });
-    },
-  }),
+  useAction: () => mocks.startInstagramLogin,
 }));
 
 afterEach(() => {
@@ -39,8 +24,9 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-test('submits the viewed agent with Instagram authorization', async () => {
-  vi.stubEnv('VITE_IG_CONFIG_ID', 'ig-config');
+test('starts Instagram Login for the viewed agent', async () => {
+  const assign = vi.fn();
+  vi.stubGlobal('window', { location: { assign, pathname: '/agents/selected-agent/channels', search: '' } });
   renderToStaticMarkup(
     <MemoryRouter initialEntries={['/agents/selected-agent/channels']}>
       <Routes>
@@ -49,9 +35,11 @@ test('submits the viewed agent with Instagram authorization', async () => {
     </MemoryRouter>,
   );
   (mocks.buttonProps.onClick as () => void)();
-  await vi.waitFor(() => expect(mocks.completeSignup).toHaveBeenCalledWith(
-    expect.objectContaining({ agentId: 'selected-agent', code: 'signup-code' }),
-  ));
+  await vi.waitFor(() => expect(mocks.startInstagramLogin).toHaveBeenCalledWith({
+    agentId: 'selected-agent',
+    returnPath: '/agents/selected-agent/channels',
+  }));
+  await vi.waitFor(() => expect(assign).toHaveBeenCalledWith('https://www.instagram.com/oauth/authorize'));
 });
 
 test('does not offer signup without an agent context', () => {
