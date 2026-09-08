@@ -114,6 +114,7 @@ export const processBatch = internalAction({
       {
         workosUserId: claimed.agent.userId,
         modelId: claimed.agent.model,
+        agentId: claimed.agent._id,
       },
     );
     if (!creditCheck.ok) {

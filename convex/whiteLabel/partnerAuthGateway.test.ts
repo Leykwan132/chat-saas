@@ -50,6 +50,12 @@ test("resolves connected hostname branding and the matching customer surface", a
         updatedAt: now,
       });
       const workosUserId = "acme-customer";
+      await ctx.db.insert("users", {
+        workosUserId,
+        email: "customer@example.com",
+        createdAt: now,
+        updatedAt: now,
+      });
       await ctx.db.insert("whiteLabelPartnerOrganizationAccounts", {
         partnerOrganizationId,
         workosUserId,
@@ -151,6 +157,12 @@ test("does not authorize a customer for another partner hostname", async () => {
       updatedAt: now,
     });
     const workosUserId = "customer";
+    await ctx.db.insert("users", {
+      workosUserId,
+      email: "customer@example.com",
+      createdAt: now,
+      updatedAt: now,
+    });
     await ctx.db.insert("whiteLabelPartnerOrganizationAccounts", {
       partnerOrganizationId: customerOrganizationId,
       workosUserId,

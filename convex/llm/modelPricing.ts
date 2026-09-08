@@ -141,8 +141,8 @@ export function listEnabledModels() {
     }));
 }
 
-import { getBillingWorkosUserId } from "../billingScope";
-import { checkModelAccess, getPlanFromStripe } from "../plans";
+import { getBillingPlanFromStripe } from "../billingScope";
+import { checkModelAccess } from "../plans";
 
 export const listEnabled = query({
   args: {},
@@ -151,8 +151,7 @@ export const listEnabled = query({
     let activePlan: string | undefined = undefined;
 
     try {
-      const userId = await getBillingWorkosUserId(ctx);
-      const stripeInfo = await getPlanFromStripe(ctx, userId);
+      const stripeInfo = await getBillingPlanFromStripe(ctx);
       activePlan = stripeInfo.plan;
     } catch {
       // Ignore auth/db errors for anonymous access or fallback

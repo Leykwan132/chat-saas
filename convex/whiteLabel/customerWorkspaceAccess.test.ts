@@ -9,7 +9,8 @@ const modules = import.meta.glob("/convex/**/*.ts");
 test("provisions a partner customer directly into its assigned workspace", async () => {
   const t = convexTest(schema, modules);
   const workosUserId = "partner-customer";
-  const { partnerOrganizationId, assignedTeamId, otherTeamId } = await t.run(
+  process.env.CONVEX_SITE_URL = "https://test.convex.site";
+  const { partnerId, partnerOrganizationId, assignedTeamId, otherTeamId } = await t.run(
     async (ctx) => {
       const now = Date.now();
       const managerId = await ctx.db.insert("users", {
@@ -38,6 +39,14 @@ test("provisions a partner customer directly into its assigned workspace", async
         createdAt: now,
         updatedAt: now,
       });
+      await ctx.db.insert("whiteLabelPartnerDomains", {
+        partnerId,
+        hostname: "chat.partner.example",
+        status: "active",
+        setupState: "connected",
+        createdAt: now,
+        updatedAt: now,
+      });
       const partnerOrganizationId = await ctx.db.insert(
         "whiteLabelPartnerOrganizations",
         {
@@ -57,7 +66,26 @@ test("provisions a partner customer directly into its assigned workspace", async
         createdAt: now,
         updatedAt: now,
       });
-      return { partnerOrganizationId, assignedTeamId, otherTeamId };
+      const otherPartnerOrganizationId = await ctx.db.insert(
+        "whiteLabelPartnerOrganizations",
+        {
+          partnerId,
+          teamId: otherTeamId,
+          status: "active",
+          createdByUserId: managerId,
+          createdAt: now,
+          updatedAt: now,
+        },
+      );
+      await ctx.db.insert("whiteLabelPartnerOrganizationPlans", {
+        partnerOrganizationId: otherPartnerOrganizationId,
+        activePlanKey: "growth",
+        creditPlanKey: "growth",
+        updatedByUserId: managerId,
+        createdAt: now,
+        updatedAt: now,
+      });
+      return { partnerId, partnerOrganizationId, assignedTeamId, otherTeamId };
     },
   );
 
@@ -91,7 +119,7 @@ test("provisions a partner customer directly into its assigned workspace", async
       .unique();
     expect(customer).not.toBeNull();
     expect(customer?.onboarded).toBe(true);
-    expect(customer?.activeTeamId).toBe(assignedTeamId);
+    expect(customer?.activeTeamId).not.toBe(assignedTeamId);
 
     const personalTeam = await ctx.db
       .query("teams")
@@ -99,7 +127,7 @@ test("provisions a partner customer directly into its assigned workspace", async
         q.eq("ownerId", customer!._id).eq("type", "personal"),
       )
       .first();
-    expect(personalTeam).toBeNull();
+    expect(personalTeam).not.toBeNull();
 
     const assignedMembership = await ctx.db
       .query("teamMemberships")
@@ -125,12 +153,21 @@ test("provisions a partner customer directly into its assigned workspace", async
       role: "member",
       createdAt: Date.now(),
     });
+    await ctx.db.patch(customer!._id, {
+      activeTeamId: otherTeamId,
+      updatedAt: Date.now(),
+    });
   });
 
   const customer = t.withIdentity({
     subject: workosUserId,
+    issuer: "https://test.convex.site/partner-auth",
     email: "customer@example.com",
     orgId: "customer-org",
+    surface: "partner",
+    hostname: "chat.partner.example",
+    partnerId,
+    partnerOrganizationId,
   });
   const currentUser = await customer.query(api.users.currentUser, {});
   expect(currentUser?.onboarded).toBe(true);
@@ -150,9 +187,9 @@ test("provisions a partner customer directly into its assigned workspace", async
 
   await expect(
     customer.run(async (ctx) => await getAuthContext(ctx, "other-org")),
-  ).rejects.toThrow("Partner customers can only access their assigned workspace");
+  ).rejects.toThrow("Partner sessions can only access their signed workspace");
 
   await expect(
     customer.mutation(api.teams.switchActiveTeam, { teamId: otherTeamId }),
-  ).rejects.toThrow("Partner customers can only access their assigned workspace");
+  ).rejects.toThrow("Partner sessions can only access their signed workspace");
 });

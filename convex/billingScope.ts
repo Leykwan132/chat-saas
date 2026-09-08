@@ -2,12 +2,12 @@ import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { getAuthContext } from "./authUtils";
-import { getPlanFromStripe } from "./plans";
+import { getPlanForCurrentSession, getPlanFromStripe } from "./plans";
 import { getUserByWorkosId } from "./teamHelpers";
+import type { PlanKey } from "./planCatalog";
 
 type DbCtx = QueryCtx | MutationCtx;
 
-/** Stripe subscriptions and credit balances always belong to the user, not the active team. */
 export async function getBillingWorkosUserId(
   ctx: DbCtx | ActionCtx,
 ): Promise<string> {
@@ -29,8 +29,18 @@ export async function getBillingUser(
 export async function getBillingPlanFromStripe(
   ctx: DbCtx | ActionCtx,
   workosUserId?: string,
-) {
+): Promise<{
+  plan: PlanKey;
+  status?: string;
+  currentPeriodEnd?: number;
+}> {
   const billingUserId = workosUserId ?? (await getBillingWorkosUserId(ctx));
+  if (workosUserId === undefined) {
+    if ("runQuery" in ctx) {
+      return await ctx.runQuery(internal.plans.internalGetPlanForCurrentSession, {});
+    }
+    return await getPlanForCurrentSession(ctx);
+  }
   if ("runQuery" in ctx) {
     return await ctx.runQuery(internal.plans.internalGetPlanFromStripe, {
       entityId: billingUserId,

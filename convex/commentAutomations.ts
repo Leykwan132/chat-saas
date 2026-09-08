@@ -6,7 +6,7 @@ import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { getOwnedAgentForAuth } from "./agentAccess";
 import { normalizeCommentAutomationInput } from "./commentAutomationInput";
 import { getAutomationToggleResult } from "./commentAutomationStatus";
-import { getPlanFromStripe } from "./plans";
+import { getPlanForCurrentSession } from "./plans";
 import type { Id } from "./_generated/dataModel";
 
 const allowedEmail = "leykwan132@gmail.com";
@@ -124,7 +124,7 @@ export const create = mutation({
       .query("commentAutomations")
       .withIndex("by_orgId", (q) => q.eq("orgId", channelOrgId))
       .take(2);
-    const plan = await getPlanFromStripe(ctx, userId);
+    const plan = await getPlanForCurrentSession(ctx);
     if (plan.plan === "free" && existing.length >= 1) {
       throw new Error("Free workspaces can create one Comment automation");
     }

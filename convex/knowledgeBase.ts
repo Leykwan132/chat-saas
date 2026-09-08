@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { internal, api } from "./_generated/api";
 import { getAuthContext } from "./authUtils";
-import { getPlan, getPlanFromStripe } from "./plans";
+import { getPlan, getPlanForCurrentSession } from "./plans";
 import type { Id } from "./_generated/dataModel";
 import { assertAgentAccess } from "./agentUsage";
 import { excludeConvertedWebLinks, hasParentWebUrl } from "../shared/webEntryUrl";
@@ -12,15 +12,15 @@ import { getPublicMediaUrl } from "./media/r2";
 type KnowledgeEntryTable = "textEntries" | "fileEntries" | "webEntries" | "qaEntries";
 
 async function getKnowledgeBaseLimitForCurrentUser(
-  ctx: Parameters<typeof getPlanFromStripe>[0],
+  ctx: Parameters<typeof getPlanForCurrentSession>[0],
 ) {
-  const { userId } = await getAuthContext(ctx);
-  const stripeInfo = await getPlanFromStripe(ctx, userId);
+  await getAuthContext(ctx);
+  const stripeInfo = await getPlanForCurrentSession(ctx);
   return getPlan(stripeInfo.plan).knowledgeBaseBytesPerAgent;
 }
 
 async function getKnowledgeBaseBytesForAgent(
-  ctx: Parameters<typeof getPlanFromStripe>[0],
+  ctx: Parameters<typeof getPlanForCurrentSession>[0],
   agentId: Id<"agents">,
   exclude?: { table: KnowledgeEntryTable; id: Id<KnowledgeEntryTable> },
 ) {
@@ -72,7 +72,7 @@ async function getKnowledgeBaseBytesForAgent(
 }
 
 async function assertKnowledgeBaseLimit(
-  ctx: Parameters<typeof getPlanFromStripe>[0],
+  ctx: Parameters<typeof getPlanForCurrentSession>[0],
   agentId: Id<"agents">,
   incomingBytes: number,
   exclude?: { table: KnowledgeEntryTable; id: Id<KnowledgeEntryTable> },

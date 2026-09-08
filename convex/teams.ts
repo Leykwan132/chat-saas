@@ -6,7 +6,6 @@ import { getPlan, getPlanFromStripe } from "./plans";
 import { PLAN_CATALOG, type PlanKey } from "./planCatalog";
 import {
   countTeamMembers,
-  getActiveTeamForUser,
   getMemberLimitForPlan,
   getPersonalTeamForUser,
   getUserByWorkosId,
@@ -15,7 +14,6 @@ import {
   teamToOrgId,
 } from "./teamHelpers";
 import { getWhiteLabelPlanForTeam, isWhiteLabelTeam } from "./whiteLabel/planResolver";
-import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
 
 export type TeamListItem = {
   _id: string;
@@ -97,13 +95,14 @@ function buildTeamListItem(args: {
 }
 
 async function listTeamsForCurrentUser(ctx: QueryCtx) {
-  const { userId } = await getAuthContext(ctx);
+  const auth = await getAuthContext(ctx);
+  const { userId } = auth;
   const userRow = await getUserByWorkosId(ctx, userId);
   if (userRow === null) return [];
 
-  const activeTeam = await getActiveTeamForUser(ctx, userRow);
-  const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(ctx, userId);
-  const memberships = assignedWorkspace === null
+  const activeTeam = await ctx.db.get(auth.activeTeamId);
+  if (activeTeam === null) throw new Error("Active team not found");
+  const memberships = auth.entitlementScope.kind === "native"
     ? await ctx.db
       .query("teamMemberships")
       .withIndex("by_userId", (q) => q.eq("userId", userRow._id))
@@ -111,14 +110,24 @@ async function listTeamsForCurrentUser(ctx: QueryCtx) {
     : await ctx.db
       .query("teamMemberships")
       .withIndex("by_userId_and_teamId", (q) =>
-        q.eq("userId", userRow._id).eq("teamId", assignedWorkspace.team._id),
+        q.eq("userId", userRow._id).eq("teamId", activeTeam._id),
       )
       .unique()
       .then((membership) => membership === null ? [] : [membership]);
 
-  const teams = (
+  const membershipTeams = (
     await Promise.all(memberships.map((membership) => ctx.db.get(membership.teamId)))
   ).filter((team): team is NonNullable<typeof team> => team !== null);
+  const teams = auth.entitlementScope.kind === "native"
+    ? (
+      await Promise.all(
+        membershipTeams.map(async (team) => ({
+          team,
+          isWhiteLabel: await isWhiteLabelTeam(ctx, team._id),
+        })),
+      )
+    ).filter(({ isWhiteLabel }) => !isWhiteLabel).map(({ team }) => team)
+    : membershipTeams;
 
   const items = await Promise.all(
     teams.map(async (team) => {
@@ -177,13 +186,12 @@ export const getTeamDetail = query({
 export const getActiveTeam = query({
   args: {},
   handler: async (ctx) => {
-    const { userId } = await getAuthContext(ctx);
+    const { userId, activeTeamId } = await getAuthContext(ctx);
     const userRow = await getUserByWorkosId(ctx, userId);
     if (userRow === null) return null;
 
-    const activeTeam = await getActiveTeamForUser(ctx, userRow);
     const teams = await listTeamsForCurrentUser(ctx);
-    return teams.find((team) => team._id === activeTeam._id) ?? null;
+    return teams.find((team) => team._id === activeTeamId) ?? null;
   },
 });
 
@@ -214,13 +222,14 @@ export const updateActiveTeamTimeZone = mutation({
     timeZone: v.string(),
   },
   handler: async (ctx, args) => {
-    const { userId } = await getAuthContext(ctx);
+    const { userId, activeTeamId } = await getAuthContext(ctx);
     const userRow = await getUserByWorkosId(ctx, userId);
     if (userRow === null) {
       throw new Error("User not found");
     }
 
-    const activeTeam = await getActiveTeamForUser(ctx, userRow);
+    const activeTeam = await ctx.db.get(activeTeamId);
+    if (activeTeam === null) throw new Error("Active team not found");
     const timeZone = normalizeTimeZone(args.timeZone);
     await ctx.db.patch(activeTeam._id, {
       timeZone,
@@ -369,13 +378,14 @@ export const addCustomFields = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const { userId } = await getAuthContext(ctx);
+    const { userId, activeTeamId } = await getAuthContext(ctx);
     const userRow = await getUserByWorkosId(ctx, userId);
     if (userRow === null) {
       throw new Error("User not found");
     }
 
-    const activeTeam = await getActiveTeamForUser(ctx, userRow);
+    const activeTeam = await ctx.db.get(activeTeamId);
+    if (activeTeam === null) throw new Error("Active team not found");
     const currentFields = activeTeam.customFields ?? [];
 
     const merged = [...currentFields];
