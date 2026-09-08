@@ -233,9 +233,11 @@ describe("Partner Programme", () => {
     expect(organizationListSource).toContain(
       "PLAN_CATALOG[organization.scheduledPlanChange.planKey].name",
     );
-    expect(planChangeDialogSource).toContain(
-      "PLAN_CATALOG[pendingChange.planKey].name",
-    );
+    expect(planChangeDialogSource).toContain("getPlanLimitChanges");
+    expect(planChangeDialogSource).toContain("className=\"sr-only\"");
+    expect(planChangeDialogSource).toContain('{" -> "}');
+    expect(planChangeDialogSource).toContain("text-emerald-600");
+    expect(planChangeDialogSource).toContain("text-destructive");
     expect(planChangeDialogSource).toContain('from "@/components/ui/dialog"');
     expect(planChangeDialogSource).toContain('from "@/components/ui/radio-group"');
     expect(planChangeDialogSource).toContain("Confirm plan change");
@@ -245,7 +247,9 @@ describe("Partner Programme", () => {
     expect(planChangeDialogSource).toContain(
       '<DialogFooter className="flex-row justify-end">',
     );
-    expect(planChangeDialogSource).not.toContain("justify-between");
+    expect(planChangeDialogSource).not.toContain(
+      'DialogFooter className="sm:justify-between"',
+    );
     expect(planChangeDialogSource).toContain("onConfirm(timing)");
     expect(pageSource).toContain("timing,");
     expect(portalSource).toContain("timing: planChangeTimingValidator");
