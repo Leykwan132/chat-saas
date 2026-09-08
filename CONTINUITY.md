@@ -2,7 +2,10 @@
 
 # Snapshot
 
+- 2026-09-08 [TOOL] Instagram assignment fix is in PR #119 (`codex/instagram-agent-assignment` → `main`), unshipped. [CODE] Route agentId is required and authorized, pending/reconnected rows atomically use it, completion revalidates assignment, and errors only affect that attempt's pending row. [USER] User will reconnect manually; no production data repair requested.
+- 2026-09-08 [TOOL] Prod `kilobot.app` was verified `connected`, assigned to `Adwav Newswav` (`jh76x3zjkn4a5b171t163664dx8d42c4`); supersedes earlier disconnected status. [CODE] Agent-filtered Channels UI hid it because signup retained old/latest-agent assignment. Empty backfill does not disconnect.
 - 2026-09-08 [CODE] Now: first-signup welcome modal uses the host brand name (`Welcome to {{Brand Name}}` on partner domains). Native Kilobot onboard and same-origin password reset shipped via #117. Next: merge #118, then verify copy on a partner hostname.
+- 2026-09-08 [TOOL] Prod Instagram `kilobot.app` channel `k9760yy2qkn3ee51etb974q0f18dzwra` set to `disconnected` via `internalDisconnectByIgUserId` so Embedded Signup can run again.
 - 2026-09-08 [TOOL] Milestone: unused-import production build fix merged via #116.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
@@ -75,6 +78,7 @@
 
 # Working set
 
+- 2026-09-08 [CODE] `convex/instagram{ChannelAssignment,AgentAssignment.test,EmbeddedSignup}.ts`, `src/components/ConnectInstagramButton{,.test}.tsx`, `convex/_generated/api.d.ts`
 - 2026-09-08 [CODE] `src/components/setup-checklist/WorkspaceSetupChecklistIntroDialog*`
 - 2026-09-08 [CODE] `convex/{authUtils,users,teamHelpers,nativeKilobotOnboarding.test.ts}*`, `src/lib/organizationAccess.ts`, `src/components/{RequireOrganization,OnboardingFlow}*`
 - 2026-09-07 [CODE] `convex/whiteLabel/{creditLedger,creditRenewal,portalProvisioning}*`, `convex/_generated/api.d.ts`
@@ -88,6 +92,8 @@
 
 # Receipts
 
+- 2026-09-08 [TOOL] PR #119 opened: https://github.com/Leykwan132/chat-saas/pull/119 (fix commit `c371fd1`). 12 tests revalidated under Node 22; targeted ESLint + diff check pass; review found no actionable issues. Convex API bindings regenerated; no production deploy/changelog (unshipped).
+- 2026-09-08 [TOOL] Prod Instagram reconnect unblock: `npx convex run --prod internal.channels.internalDisconnectByIgUserId` for IG user `17841415503021124` (`kilobot.app`); row `k9760yy2qkn3ee51etb974q0f18dzwra` was `error` after a failed re-connect. No conversations in the last 500.
 - 2026-09-08 [TOOL] #118 opened from `cursor/host-branded-welcome` onto `main` with host-branded first-signup welcome title. 4 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] #117 opened from `cursor/native-kilobot-onboarding` onto `main` with native Kilobot onboard (D793 / I009) and same-origin password reset (D794). 15 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] Native Kilobot onboard (I009): 22 focused auth/plan/onboarding tests pass under Node 22, including new `convex/nativeKilobotOnboarding.test.ts`. OnboardingFlow stays at 299 lines. No changelog (Partner Programme unshipped).
@@ -104,7 +110,4 @@
 - 2026-09-08 [TOOL] Partner browser tab title passed 39 focused tests, targeted ESLint, and `git diff --check`.
 - 2026-09-07 [TOOL] Separate Partner Overview Organizations and Users metrics passed 22 focused UI tests, targeted ESLint, and `git diff --check`.
 - 2026-09-07 [TOOL] `origin/main` merged into `codex/partner-plan-change-timing` at `f14bdd4`; atomic provisioning, scheduled renewal, and plan-change integration passed 7 focused tests.
-- 2026-09-07 [TOOL] Automatic partner credit renewal passed 8 focused credit, plan-change, and workspace-access tests, targeted ESLint, Convex code generation/TypeScript validation, and `git diff --check`.
-- 2026-09-07 [TOOL] Partner customer-to-user terminology passed 26 focused UI tests, targeted ESLint, and `git diff --check`.
-- 2026-09-07 [TOOL] Atomic partner org provisioning: new `convex-test` regression fails on the old code (`expected null not to be null`) and passes on the fix; Node v22 targeted ESLint, `tsc --noEmit -p convex/tsconfig.json`, Convex codegen, and `git diff --check` pass. Prod verified read-only via `convex data --prod`.
 - 2026-09-07 [TOOL] Older branding preview, Comment-to-Inbox, Instagram/Messenger, Avatar, partner, and booking receipts compressed; see #89–#96, #100–#104, and prior CONTINUITY history.

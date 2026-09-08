@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { instagramSyncPool } from "./channelSyncPools";
 import { exchangeCodeForUserToken } from "./messengerConnect";
 import { isCommentToInboxUserAllowed } from "../shared/commentToInboxAccess";
@@ -86,6 +85,7 @@ export function shouldEnableInstagramCommentWebhooks(
 
 export const completeSignup = action({
   args: {
+    agentId: v.id("agents"),
     code: v.string(),
     redirectUri: v.optional(v.string()),
     enableCommentWebhooks: v.boolean(),
@@ -94,9 +94,11 @@ export const completeSignup = action({
     ctx,
     args,
   ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
-    const { orgId, userId } = await getAuthContext(ctx);
+    const { orgId: channelOrgId, userId } = await ctx.runQuery(
+      internal.instagramChannelAssignment.getConnectContext,
+      { agentId: args.agentId },
+    );
     await assertWorkosUserCanConnectInstagram(ctx, userId);
-    const channelOrgId = resolveChannelOrgId(orgId, userId);
     const user: Doc<"users"> | null = await ctx.runQuery(
       internal.users.internalGetByWorkosUserId,
       { workosUserId: userId },
@@ -113,8 +115,7 @@ export const completeSignup = action({
       );
     }
 
-    let igUserId: string | undefined;
-    let instagramPageId: string | undefined;
+    let pendingChannelId: Id<"channels"> | undefined;
     try {
       const userAccessToken = await exchangeCodeForUserToken(
         args.code,
@@ -135,14 +136,13 @@ export const completeSignup = action({
       }
 
       const page = accounts[0];
-      igUserId = page.instagram_business_account.id;
-      instagramPageId = page.id;
+      const igUserId = page.instagram_business_account.id;
+      const instagramPageId = page.id;
       const displayUsername =
         page.instagram_business_account.username ?? page.name;
 
-      await ctx.runMutation(internal.channels.internalStartInstagramPending, {
-        orgId: channelOrgId,
-        connectedByUserId: userId,
+      pendingChannelId = await ctx.runMutation(internal.instagramChannelAssignment.startPending, {
+        agentId: args.agentId,
         igUserId,
       });
       await ctx.runMutation(internal.channels.internalSetProgress, {
@@ -160,14 +160,13 @@ export const completeSignup = action({
       });
 
       const channelId: Id<"channels"> = await ctx.runMutation(
-        internal.channels.internalUpsertInstagram,
+        internal.instagramChannelAssignment.completePending,
         {
-          orgId: channelOrgId,
-          igUserId,
+          channelId: pendingChannelId,
+          agentId: args.agentId,
           instagramPageId,
           displayUsername,
           accessToken: page.access_token,
-          connectedByUserId: userId,
         },
       );
       await instagramSyncPool.enqueueAction(
@@ -177,13 +176,13 @@ export const completeSignup = action({
       );
       return { channelId, displayUsername };
     } catch (error) {
-      await ctx.runMutation(internal.channels.internalRecordError, {
-        orgId: channelOrgId,
-        service: "instagram",
-        error: error instanceof Error ? error.message : String(error),
-        connectedByUserId: userId,
-        igUserId,
-      });
+      if (pendingChannelId) {
+        await ctx.runMutation(internal.instagramChannelAssignment.recordPendingError, {
+          channelId: pendingChannelId,
+          agentId: args.agentId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
       throw error;
     }
   },
