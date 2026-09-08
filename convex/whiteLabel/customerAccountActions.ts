@@ -100,26 +100,6 @@ export const createCustomerAccount = action({
   },
 });
 
-export const startCurrentUserPasswordReset = action({
-  args: {},
-  returns: v.object({ passwordResetUrl: v.string() }),
-  handler: async (ctx) => {
-    const auth = await getAuthContext(ctx);
-    const account: { email: string } | null = await ctx.runQuery(
-      internal.whiteLabel.customerAccounts.getPasswordAccountForWorkosUser,
-      { workosUserId: auth.userId },
-    );
-    if (account === null) {
-      throw new Error("Password reset is unavailable for this account.");
-    }
-    const workos = createWorkOSClient();
-    const passwordReset = await workos.userManagement.createPasswordReset({
-      email: account.email,
-    });
-    return { passwordResetUrl: passwordReset.passwordResetUrl };
-  },
-});
-
 export const getCustomerInitialCredentials = action({
   args: {
     partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),

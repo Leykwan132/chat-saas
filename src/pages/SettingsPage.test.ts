@@ -19,4 +19,6 @@ test("only exposes password reset to active password accounts", () => {
   expect(settingsSource).toContain("Reset password");
   expect(settingsSource).toContain("window.location.assign");
   expect(settingsSource).toContain("passwordResetUrl");
+  expect(settingsSource).toContain("window.location.origin");
+  expect(settingsSource).toContain("returnPath: '/sign-in'");
 });

@@ -8,7 +8,7 @@ import {
   getOrCreateCurrentPeriod,
 } from "./creditPeriodPool";
 import { getBillingEntityForUser } from "./plans";
-import { ensureUserAccount } from "./teamHelpers";
+import { ensureUserAccount, getPersonalTeamForUser } from "./teamHelpers";
 import { redeemReferralDuringOnboarding } from "./referralRedemption";
 
 /** Debug / introspection: Convex auth identity (WorkOS JWT claims) for the current socket. */
@@ -63,11 +63,15 @@ export const currentUser = query({
     if (!user) return null;
 
     const stripeInfo = await getPlanForCurrentSession(ctx);
+    const personalTeam = stripeInfo.isPartnerManaged
+      ? true
+      : (await getPersonalTeamForUser(ctx, user._id)) !== null;
     return {
       ...user,
       plan: stripeInfo.plan,
       stripeSubscriptionStatus: stripeInfo.status,
       isPartnerManaged: stripeInfo.isPartnerManaged,
+      needsPersonalWorkspace: !stripeInfo.isPartnerManaged && !personalTeam,
     };
   },
 });
@@ -150,17 +154,15 @@ export const completeOnboarding = mutation({
       args.referralCode,
     );
 
-    if (!user.onboarded) {
-      await ctx.db.patch(user._id, {
-        onboarded: true,
-        onboardingAnswers: {
-          role: args.role,
-          useCase: args.useCase,
-          channels: args.channels,
-        },
-        updatedAt: Date.now(),
-      });
-    }
+    await ctx.db.patch(user._id, {
+      onboarded: true,
+      onboardingAnswers: {
+        role: args.role,
+        useCase: args.useCase,
+        channels: args.channels,
+      },
+      updatedAt: Date.now(),
+    });
 
     return { success: true, referralRewardCredits };
   },

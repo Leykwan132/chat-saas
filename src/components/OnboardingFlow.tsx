@@ -5,10 +5,7 @@ import { usePostHog } from '@posthog/react';
 import { AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
-import type {
-  BillingInterval,
-  PlanKey,
-} from '../../shared/planCatalog';
+import type { BillingInterval, PlanKey } from '../../shared/planCatalog';
 import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -25,6 +22,7 @@ import {
   isProductFeatureEnabled,
   useEnableReferralProgram,
 } from '@/lib/posthogFeatureFlags';
+import { useEnsureNativePersonalWorkspace } from '@/components/onboarding/useEnsureNativePersonalWorkspace';
 import { cn } from '@/lib/utils';
 
 export function OnboardingFlow() {
@@ -56,6 +54,7 @@ export function OnboardingFlow() {
     setSelectedPlan((currentUser.plan as PlanKey) || null);
     setStep(5);
   }, [currentUser]);
+  useEnsureNativePersonalWorkspace(currentUser?.needsPersonalWorkspace);
 
   useEffect(() => {
     if (referralProgramState === false && step === 4) {
@@ -98,7 +97,7 @@ export function OnboardingFlow() {
     useCases,
   ]);
 
-  if (currentUser === undefined || referralProgramState === undefined) {
+  if (currentUser === undefined || referralProgramState === undefined || currentUser?.needsPersonalWorkspace === true) {
     return (
       <div className="flex min-h-[100svh] items-center justify-center bg-background">
         <Spinner className="size-8 text-muted-foreground" />

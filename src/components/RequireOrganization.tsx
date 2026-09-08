@@ -17,6 +17,8 @@ export function RequireOrganization({ children }: RequireOrganizationProps) {
   const currentUser = useQuery(api.users.currentUser);
   const ensureCurrentUser = useMutation(api.users.ensureCurrentUser);
   const provisioningRef = useRef(false);
+  const needsEnsure =
+    currentUser === null || currentUser?.needsPersonalWorkspace === true;
 
   useEffect(() => {
     if (
@@ -24,7 +26,7 @@ export function RequireOrganization({ children }: RequireOrganizationProps) {
       isConvexAuthLoading ||
       !isAuthenticated ||
       authUser === null ||
-      currentUser !== null
+      !needsEnsure
     ) {
       return;
     }
@@ -37,11 +39,11 @@ export function RequireOrganization({ children }: RequireOrganizationProps) {
     });
   }, [
     authUser,
-    currentUser,
     ensureCurrentUser,
     isAuthLoading,
     isAuthenticated,
     isConvexAuthLoading,
+    needsEnsure,
   ]);
 
   if (isAuthLoading || isConvexAuthLoading || currentUser === undefined) {
@@ -56,7 +58,7 @@ export function RequireOrganization({ children }: RequireOrganizationProps) {
     return <Navigate to="/" replace />;
   }
 
-  if (currentUser === null) {
+  if (currentUser === null || currentUser.needsPersonalWorkspace) {
     return (
       <div className="flex min-h-[100svh] flex-col items-center justify-center gap-4 bg-background">
         <Spinner className="size-8 text-muted-foreground" />

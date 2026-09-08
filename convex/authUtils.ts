@@ -102,6 +102,12 @@ async function buildAuthContextFromDb(
     } else {
       throw new Error("User not found");
     }
+  } else if ("insert" in ctx.db) {
+    await ensureUserAccount(ctx as MutationCtx, extractIdentityFields(identity));
+    const refreshed = await ctx.db.get(user._id);
+    if (refreshed !== null) {
+      user = refreshed;
+    }
   }
 
   const overrideOrgId = resolveOrgIdOverride(activeOrgIdOverride);
@@ -240,9 +246,8 @@ export async function getAuthContext(
 
 /**
  * Like getAuthContext but returns null instead of throwing when the user
- * doesn't exist in the DB yet (webhook delay) or is not authenticated.
- * Use this in queries that should gracefully return null during the brief
- * window between authentication and user-row creation.
+ * doesn't exist in the DB yet (webhook delay), is not authenticated, or is
+ * missing a native personal team.
  */
 export async function getAuthContextOrNull(
   ctx: DbCtx | ActionCtx,
@@ -254,7 +259,8 @@ export async function getAuthContextOrNull(
     if (
       e instanceof Error &&
       (e.message.includes("User not found") ||
-        e.message.includes("Not authenticated"))
+        e.message.includes("Not authenticated") ||
+        e.message.includes("Personal team not found"))
     ) {
       return null;
     }
