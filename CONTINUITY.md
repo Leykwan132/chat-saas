@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [CODE] Dual-role entitlement revision implemented locally for draft #112: native AuthKit sessions are Stripe/native-only; partner JWTs bind to one validated signed organization; multi-org partner sign-in shows an organization picker and revalidates credentials before token issuance. Next: commit/push and mark ready.
+- 2026-09-08 [CODE] Dual-role entitlement revision is pushed in ready-for-review #112: native AuthKit sessions are Stripe/native-only; partner JWTs bind to one validated signed organization; multi-org partner sign-in shows an organization picker and revalidates credentials before token issuance. Next: review/merge, deploy, verify both hosts, then changelog.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
@@ -78,6 +78,7 @@
 
 # Receipts
 
+- 2026-09-08 [TOOL] Dual-role revision committed as `d6fda7e`, pushed, and #112 updated and marked ready for review.
 - 2026-09-08 [TOOL] Dual-role entitlement revision: 25 focused plan/credit/auth/workspace tests pass; Convex codegen, app/Convex TypeScript checks, targeted ESLint, full TypeScript/Vite production build, and `git diff --check` pass under Node 22. Full Vitest exposes only `convex/backfillEvents.test.ts`, independently reproduced without the changed analytics file; its fixed July/August 2026 billing period is stale against the current September clock.
 - 2026-09-08 [TOOL] Revised I006 fix: 20 plan, credit, provisioning, and workspace tests pass; three new assertions fail on old active-team logic (wrong org plan and owner marked managed twice). Node v22 targeted ESLint, Convex TypeScript check, and `git diff --check` pass.
 - 2026-09-08 [TOOL] Partner-owner workspace access: new `currentUser` test fails on old code (`expected false to be true`) and passes on the fix; Node v22 targeted ESLint, `tsc --noEmit -p convex/tsconfig.json`, and `git diff --check` pass. Prod inspected read-only via `convex data --prod`.
