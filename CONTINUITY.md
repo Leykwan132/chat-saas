@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [TOOL] Now: PostHog flags `enable_instagram` (ID 871040) and `enable_messenger` (ID 871041) are active. App gate is going into a new PR. Next: merge, deploy, verify Channels for the allowlisted account.
+- 2026-09-08 [TOOL] Now: Instagram/Messenger app gate is in #114. PostHog flags `enable_instagram` (871040) and `enable_messenger` (871041) are already active. Next: merge, deploy, verify Channels.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
@@ -82,7 +82,7 @@
 
 # Receipts
 
-- 2026-09-08 [TOOL] PostHog MCP created `enable_instagram` (871040) and `enable_messenger` (871041) in project 500079; both active with person email exact match at 100%.
+- 2026-09-08 [TOOL] #114 opened from `cursor/instagram-messenger-feature-flags` onto `main`. PostHog flags 871040 and 871041 already active. 40 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] #113 opened from `cursor/partner-usage-and-settings` onto `main` with the I007 Usage fix plus leftover post-#112 Settings/admin follow-ups. 15 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] #112 admin-create + plan-dialog follow-up: 32 focused tests pass; targeted ESLint and app TypeScript check pass under Node 22. Pre-existing `TeamRolesAndPermissionsPanel` `set-state-in-effect` lint remains.
 - 2026-09-08 [TOOL] Dual-role revision committed as `d6fda7e`, pushed, and #112 updated and marked ready for review.
