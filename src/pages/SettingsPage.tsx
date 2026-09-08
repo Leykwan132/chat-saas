@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { TeamDetailSection } from '@/components/teams/TeamDetailSection';
 import { TeamsTableSection } from '@/components/teams/TeamsTableSection';
 import type { Id } from '../../convex/_generated/dataModel';
+import { usePartnerManagedWorkspace } from '@/hooks/usePartnerManagedWorkspace';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import { api } from '../../convex/_generated/api';
@@ -166,6 +167,9 @@ export default function SettingsPage() {
   const settingsBasePath = location.pathname;
   const teamId = searchParams.get('teamId');
   const { can, isLoading } = usePermissions();
+  const isPartnerManagedWorkspace = usePartnerManagedWorkspace();
+  const canViewPlan =
+    isPartnerManagedWorkspace === false && can(Permission.BILLING_READ);
 
   const rawSection = searchParams.get('section');
   let section: AccountSection =
@@ -177,7 +181,7 @@ export default function SettingsPage() {
       ? 'plan'
       : 'profile';
 
-  if (section === 'plan' && !isLoading && !can(Permission.BILLING_READ)) {
+  if (section === 'plan' && !isLoading && !canViewPlan) {
     section = 'profile';
   }
 
@@ -201,7 +205,7 @@ export default function SettingsPage() {
 
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (item.key === 'plan') {
-      return can(Permission.BILLING_READ);
+      return canViewPlan;
     }
     return true;
   });

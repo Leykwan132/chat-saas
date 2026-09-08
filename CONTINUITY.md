@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [CODE] #112 plan-change confirm now lists limit diffs (green up, red down) instead of description copy. Next: review/merge, deploy, verify both hosts, then changelog.
+- 2026-09-08 [CODE] #112 hides Settings → Plan for partner-managed users. Next: review/merge, deploy, verify both hosts, then changelog.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
