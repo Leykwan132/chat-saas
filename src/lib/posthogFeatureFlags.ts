@@ -1,5 +1,7 @@
 import { useFeatureFlagEnabled } from '@posthog/react';
 export { isCommentToInboxUserAllowed } from '../../shared/commentToInboxAccess';
+export { isInstagramUserAllowed } from '../../shared/instagramAccess';
+export { isMessengerUserAllowed } from '../../shared/messengerAccess';
 
 export const POSTHOG_FEATURE_FLAGS = {
   showTokenUsage: 'show-token-usage',
@@ -9,6 +11,8 @@ export const POSTHOG_FEATURE_FLAGS = {
   enableReferralProgram: 'enable_referral_program',
   enableGoogleCalendarConnect: 'enable_google_calendar_connect',
   enablePartnerPortal: 'enable_partner_portal',
+  enableInstagram: 'enable_instagram',
+  enableMessenger: 'enable_messenger',
 } as const;
 
 export type ProductFeatureFlagState = boolean | undefined;
@@ -51,4 +55,12 @@ export function useEnableGoogleCalendarConnect(): ProductFeatureFlagState {
 
 export function useEnablePartnerPortal(): ProductFeatureFlagState {
   return useFeatureFlagEnabled(POSTHOG_FEATURE_FLAGS.enablePartnerPortal);
+}
+
+export function useEnableInstagram(): ProductFeatureFlagState {
+  return useFeatureFlagEnabled(POSTHOG_FEATURE_FLAGS.enableInstagram);
+}
+
+export function useEnableMessenger(): ProductFeatureFlagState {
+  return useFeatureFlagEnabled(POSTHOG_FEATURE_FLAGS.enableMessenger);
 }

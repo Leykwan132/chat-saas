@@ -6,6 +6,7 @@ import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { instagramSyncPool } from "./channelSyncPools";
 import { exchangeCodeForUserToken } from "./messengerConnect";
 import { isCommentToInboxUserAllowed } from "../shared/commentToInboxAccess";
+import { assertWorkosUserCanConnectInstagram } from "./instagramConnectAccess";
 
 type InstagramAccount = {
   id: string;
@@ -94,6 +95,7 @@ export const completeSignup = action({
     args,
   ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
     const { orgId, userId } = await getAuthContext(ctx);
+    await assertWorkosUserCanConnectInstagram(ctx, userId);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
     const user: Doc<"users"> | null = await ctx.runQuery(
       internal.users.internalGetByWorkosUserId,

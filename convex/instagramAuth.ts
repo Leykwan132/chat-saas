@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
+import { assertWorkosUserCanConnectInstagram } from "./instagramConnectAccess";
 import {
   encodeOAuthState,
   generateCsrfToken,
@@ -39,6 +40,7 @@ export const start = action({
   },
   handler: async (ctx, args): Promise<{ authorizeUrl: string }> => {
     const { orgId, userId } = await getAuthContext(ctx);
+    await assertWorkosUserCanConnectInstagram(ctx, userId);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
 
     const appId = process.env.META_IG_APP_ID;
