@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [CODE] #112 hides Settings → Plan for partner-managed users. Next: review/merge, deploy, verify both hosts, then changelog.
+- 2026-09-08 [CODE] Now: partner Settings → Usage crashed on `getAccountCreditUsage` (I007). #112 is merged; leftover Settings/admin follow-ups plus this Usage fix go in a new PR. Next: open PR, deploy, verify Usage on the partner host.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
@@ -51,6 +51,7 @@
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
 - 2026-09-06 [CODE] I001 OPEN: Hallucinated booking/email-link copy is replaced after generation; unverified claims now receive a safe retry response rather than silence. Remaining gap: playground can briefly stream model text before the saved message is rewritten.
 - 2026-09-07 [USER] I002 RESOLVED: Meta rejected `comments` on the Facebook Page `subscribed_apps` edge with error #100; use valid Page field `feed`, while configuring Instagram-specific fields on the app’s Instagram webhook object.
+- 2026-09-08 [USER] I007 FIX IN DRAFT: Symptoms: partner user on Settings → Usage got Convex `getAccountCreditUsage` Server Error. Cause: that query (and sibling spend/workspace usage queries) still called `getActiveTeamForUser` + Stripe, which skips the signed white-label team and can throw `Personal team not found` or resolve the wrong wallet. Mitigation: `resolveCreditUsageSession` uses the signed partner org plan/period/timezone; native path unchanged. Deploy/verify on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [USER] I006 FIX REVISED IN DRAFT #112: `kilobot.app` bounced `leykwan132@gmail.com` to onboarding because plan resolution followed a persisted customer-workspace `activeTeamId` and masked the active Stripe subscription. Mitigation: signed auth surface selects entitlement scope; native sessions ignore customer teams and use Stripe, while partner sessions validate exact domain/partner/org/account/team claims and use that organization wallet. Side finding: the user may have started a real personal Stripe subscription during the loop; refund/cancel decision UNCONFIRMED.
 - 2026-09-08 [USER] I005 RESOLVED (#111): Symptoms: `chat.morphswiftstudio.com/workspace` spins forever after partner sign-in; Kilobot host unaffected. Cause: `usePartnerConvexAuth` returned a new `fetchAccessToken` arrow every render; `ConvexProviderWithAuth` keys its `setAuth` effect on that function, so each successful auth re-render cleared auth and re-ran it (loading never settled). Mitigation: hook moved to `src/partnerAuth/usePartnerConvexAuth.ts` with `useCallback`; `usePartnerConvexAuth.test.tsx` fails if the callback identity changes across renders. Side finding: pre-existing `react-refresh/only-export-components` lint error in `AppAuthProvider.tsx` (line 26) untouched.
 - 2026-09-08 [USER] I004 RESOLVED (#109): Symptoms: `chat.morphswiftstudio.com/workspace` threw “useAuth must be used within an AuthKitProvider” after partner sign-in. Cause: `RequireOrganization`, `SettingsPage`, and `PricingPage` imported `useAuth` from `@workos-inc/authkit-react`, which has no provider on partner hosts. Mitigation: all three use the host-aware `useAuth` from `@/partnerAuth/AppAuthProvider`; `src/partnerAuth/appAuthUsage.test.ts` fails if any file outside the two auth providers imports the WorkOS hook again.
@@ -58,13 +59,13 @@
 
 # Done (recent)
 
+- 2026-09-08 [CODE] Partner Usage tab reads the signed org wallet instead of Stripe/personal team (I007).
 - 2026-09-08 [CODE] Admin role can create agents; Confirm plan change keeps Cancel beside Confirm; dual-role sessions stay surface-scoped (I006, #112).
 - 2026-09-08 [CODE] Partner-host Convex auth no longer loops: stable `fetchAccessToken` via `useCallback` in `src/partnerAuth/usePartnerConvexAuth.ts` (I005, #111).
 - 2026-09-08 [CODE] Sidebar brand mark follows the hostname: partner logo + name (initial if no logo) on custom domains, Kilobot on native hosts; branding lookup shared via `useHostBranding` (#110).
 - 2026-09-08 [CODE] Partner customers can enter `/workspace`, Settings, and Pricing on their domain; direct WorkOS `useAuth` imports replaced with the host-aware hook (I004, #109 on `main`).
-- 2026-09-08 [CODE] Milestone: partner favicon from uploaded logo and customizable browser tab title on `main` (#107, #108).
+- 2026-09-08 [CODE] Milestone: partner favicon, custom tab title, and Branding sign-in polish on `main` (#101–#108).
 - 2026-09-07 [CODE] Partner `createOrganization` now provisions the org and its first credit period atomically, closing the `getOverview` crash window (I003); in PR.
-- 2026-09-07 [CODE] Milestone: partner Branding brand name, green-check connected domain, logo preview tile, centered subtitle-free sign-in header, and sign-in preview link are on `main` (#101–#103).
 
 # Working set
 
@@ -73,12 +74,13 @@
 - 2026-09-07 [CODE] `shared/commentToInboxAccess.ts`, `src/components/Connect{Instagram,Messenger}Button*`, `convex/{instagramEmbeddedSignup,messengerConnect,messengerAuth,oauthSessions,commentAutomationMeta,schema}*`
 - 2026-09-08 [CODE] `src/lib/host{Branding,Favicon,DocumentTitle}*`, `src/hooks/useHostBranding.ts`, `src/components/{HostBrandMark,ExpandedAppSidebarHeader,app-sidebar,AppRuntimeEffects}*`, `src/components/workspace/AgentsSidebar*`
 - 2026-09-08 [CODE] `convex/users.ts`, `convex/whiteLabel/{planResolver.ts,managedWorkspace.test.ts}`, `convex/plans.ts`, `src/lib/organizationAccess.ts`
-- 2026-09-08 [CODE] `convex/{entitlementScope,authUtils,plans,credits,creditUsageAnalytics,teams,teamHelpers}*`, `convex/whiteLabel/{partnerAuth*,customerWorkspace*,sessionEntitlementScope.test.ts}`, `src/pages/SignInPage.tsx`
+- 2026-09-08 [CODE] `convex/{entitlementScope,authUtils,plans,credits,creditUsageAnalytics,creditUsageSession,teams,teamHelpers}*`, `convex/whiteLabel/{partnerAuth*,customerWorkspace*,sessionEntitlementScope.test.ts}`, `src/pages/SignInPage.tsx`
 - 2026-09-08 [CODE] `src/partnerAuth/{AppAuthProvider.tsx,appAuthUsage.test.ts,usePartnerConvexAuth.ts,usePartnerConvexAuth.test.tsx}`, `src/components/RequireOrganization.tsx`, `src/pages/{SettingsPage,PricingPage}.tsx`, `src/router/AppRouteComponents.tsx`
 - 2026-09-07 [CODE] `src/components/partner/PartnerBrandingTab*`, `src/pages/{PartnerPage,SignInPage}.tsx`, `convex/whiteLabel/{portal,portalActions,portalProvisioning,portalOverview,creditLedger}.ts`
 
 # Receipts
 
+- 2026-09-08 [TOOL] I007 partner Usage query: 2 new partner analytics tests pass with session entitlement tests; targeted ESLint and `git diff --check` pass under Node 22. #112 already merged; leftover follow-ups plus this fix go in a new PR.
 - 2026-09-08 [TOOL] #112 admin-create + plan-dialog follow-up: 32 focused tests pass; targeted ESLint and app TypeScript check pass under Node 22. Pre-existing `TeamRolesAndPermissionsPanel` `set-state-in-effect` lint remains.
 - 2026-09-08 [TOOL] Dual-role revision committed as `d6fda7e`, pushed, and #112 updated and marked ready for review.
 - 2026-09-08 [TOOL] Dual-role entitlement revision: 25 focused plan/credit/auth/workspace tests pass; Convex codegen, app/Convex TypeScript checks, targeted ESLint, full TypeScript/Vite production build, and `git diff --check` pass under Node 22. Full Vitest exposes only `convex/backfillEvents.test.ts`, independently reproduced without the changed analytics file; its fixed July/August 2026 billing period is stale against the current September clock.

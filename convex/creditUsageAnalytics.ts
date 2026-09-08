@@ -24,6 +24,10 @@ import {
   modelUsageChartColor,
 } from "../shared/modelUsageChartColors";
 import { getEntitlementScope } from "./entitlementScope";
+import {
+  listAccountUsageWorkspaces,
+  resolveCreditUsageSession,
+} from "./creditUsageSession";
 import { getPartnerCreditBalance } from "./whiteLabel/creditLedger";
 import { getWhiteLabelPlanForOrganization } from "./whiteLabel/planResolver";
 
@@ -417,6 +421,28 @@ async function listUserCreditUsageEventsInRange(
     .withIndex("by_userId_and_createdAt", (q) =>
       q
         .eq("userId", args.billingUserId)
+        .gte("createdAt", args.rangeStartMs)
+        .lte("createdAt", args.rangeEndMs),
+    )) {
+    events.push(event);
+  }
+  return events;
+}
+
+async function listOrgCreditUsageEventsInRange(
+  ctx: QueryCtx,
+  args: {
+    orgId: string;
+    rangeStartMs: number;
+    rangeEndMs: number;
+  },
+) {
+  const events: Doc<"creditUsageEvents">[] = [];
+  for await (const event of ctx.db
+    .query("creditUsageEvents")
+    .withIndex("by_orgId_and_createdAt", (q) =>
+      q
+        .eq("orgId", args.orgId)
         .gte("createdAt", args.rangeStartMs)
         .lte("createdAt", args.rangeEndMs),
     )) {
@@ -1027,51 +1053,26 @@ export const getAccountCreditUsage = query({
     timeRange: creditTimeRangeValidator,
   },
   handler: async (ctx, args) => {
-    const { userId } = await getAuthContext(ctx);
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
-      .unique();
-    if (!user) {
-      return null;
-    }
-
-    const activeTeam = await getActiveTeamForUser(ctx, user);
-    const timeZone = normalizeTimeZone(activeTeam.timeZone);
-    const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
-    const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
-    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
-      userDoc.stripeSubscriptionCurrentPeriodEnd,
-      timeZone,
-    );
     const timeRange = args.timeRange ?? "period";
-    const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
-      timeRange,
-      periodStartMs,
-      periodEndMs,
-    );
+    const session = await resolveCreditUsageSession(ctx, timeRange);
+    const { timeZone, rangeStartMs, rangeEndMs } = session;
     const dateKeys = getDateKeysInTimeZoneRange(rangeStartMs, rangeEndMs, timeZone);
-
-    const memberships = await ctx.db
-      .query("teamMemberships")
-      .withIndex("by_userId", (q) => q.eq("userId", userDoc._id))
-      .collect();
-
-    const workspacesMap = new Map<string, string>();
-    for (const membership of memberships) {
-      const team = await ctx.db.get(membership.teamId);
-      if (team) {
-        workspacesMap.set(teamToOrgId(team), team.type === "personal" ? "Personal Workspace" : team.name);
-      }
-    }
+    const workspacesMap = await listAccountUsageWorkspaces(ctx, session);
     const workspaceIds = Array.from(workspacesMap.keys());
 
     let dailyRows: Record<string, string | number>[] = dateKeys.map((date) => ({ date, total: 0 }));
-    const events = await listUserCreditUsageEventsInRange(ctx, {
-      billingUserId: userDoc._id,
-      rangeStartMs,
-      rangeEndMs,
-    });
+    const events =
+      session.kind === "partner"
+        ? await listOrgCreditUsageEventsInRange(ctx, {
+            orgId: session.orgId,
+            rangeStartMs,
+            rangeEndMs,
+          })
+        : await listUserCreditUsageEventsInRange(ctx, {
+            billingUserId: session.billingUserId,
+            rangeStartMs,
+            rangeEndMs,
+          });
 
     if (events.length > 0 && workspaceIds.length > 0) {
       dailyRows = buildDailyUsageRows(
@@ -1081,8 +1082,13 @@ export const getAccountCreditUsage = query({
         timeZone,
         (event) => event.orgId ?? "",
       );
-    } else if (workspaceIds.length > 0) {
-      const logs = await listUsageLogsForPeriod(ctx, userDoc._id, rangeStartMs, rangeEndMs);
+    } else if (workspaceIds.length > 0 && session.kind === "native") {
+      const logs = await listUsageLogsForPeriod(
+        ctx,
+        session.billingUserId,
+        rangeStartMs,
+        rangeEndMs,
+      );
       dailyRows = buildDailyUsageRows(
         logs.map((log) => ({
           orgId: log.orgId ?? "",
@@ -1168,7 +1174,7 @@ export const getAccountCreditUsage = query({
     });
 
     return {
-      plan: stripeInfo.plan,
+      plan: session.plan,
       timeZone,
       periodStartMs: rangeStartMs,
       periodEndMs: rangeEndMs,
@@ -1185,44 +1191,26 @@ export const getAccountCreditSpendHistory = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    const { userId } = await getAuthContext(ctx);
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
-      .unique();
-    if (!user) {
-      return {
-        periodStartMs: 0,
-        periodEndMs: 0,
-        page: [],
-        isDone: true,
-        continueCursor: "",
-      };
-    }
-
-    const activeTeam = await getActiveTeamForUser(ctx, user);
-    const timeZone = normalizeTimeZone(activeTeam.timeZone);
-    const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
-    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
-      userDoc.stripeSubscriptionCurrentPeriodEnd,
-      timeZone,
-    );
-    const timeRange = args.timeRange ?? "period";
-    const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
-      timeRange,
-      periodStartMs,
-      periodEndMs,
-    );
-
+    const session = await resolveCreditUsageSession(ctx, args.timeRange ?? "period");
+    const { rangeStartMs, rangeEndMs } = session;
     const paginationOpts = normalizeCreditSpendPaginationOpts(args.paginationOpts);
 
-    const eventsResult = await ctx.db
-      .query("creditUsageEvents")
-      .withIndex("by_userId_and_createdAt", (q) =>
-        q.eq("userId", userDoc._id).gte("createdAt", rangeStartMs)
-      )
-      .order("desc")
-      .paginate(paginationOpts);
+    const eventsResult =
+      session.kind === "partner"
+        ? await ctx.db
+            .query("creditUsageEvents")
+            .withIndex("by_orgId_and_createdAt", (q) =>
+              q.eq("orgId", session.orgId).gte("createdAt", rangeStartMs),
+            )
+            .order("desc")
+            .paginate(paginationOpts)
+        : await ctx.db
+            .query("creditUsageEvents")
+            .withIndex("by_userId_and_createdAt", (q) =>
+              q.eq("userId", session.billingUserId).gte("createdAt", rangeStartMs),
+            )
+            .order("desc")
+            .paginate(paginationOpts);
 
     const scopedEvents = eventsResult.page.filter(
       (event) => event.createdAt <= rangeEndMs,
@@ -1252,30 +1240,15 @@ export const getWorkspaceCreditUsage = query({
     timeRange: creditTimeRangeValidator,
   },
   handler: async (ctx, args) => {
-    const { userId } = await getAuthContext(ctx);
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
-      .unique();
-    if (!user) {
-      return null;
+    const session = await resolveCreditUsageSession(ctx, args.timeRange ?? "period");
+    if (session.kind === "partner") {
+      if (args.workspaceId !== session.orgId) {
+        throw new Error("Unauthorized access to workspace credit usage");
+      }
+    } else {
+      await assertWorkspaceAccess(ctx, session.user._id, args.workspaceId);
     }
-
-    const workspaceTeam = await assertWorkspaceAccess(ctx, user._id, args.workspaceId);
-    const timeZone = normalizeTimeZone(workspaceTeam.timeZone);
-
-    const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
-    const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
-    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
-      userDoc.stripeSubscriptionCurrentPeriodEnd,
-      timeZone,
-    );
-    const timeRange = args.timeRange ?? "period";
-    const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
-      timeRange,
-      periodStartMs,
-      periodEndMs,
-    );
+    const { timeZone, rangeStartMs, rangeEndMs } = session;
     const dateKeys = getDateKeysInTimeZoneRange(rangeStartMs, rangeEndMs, timeZone);
 
     const agents = await ctx.db
@@ -1290,11 +1263,20 @@ export const getWorkspaceCreditUsage = query({
     const agentKeys = Array.from(agentsMap.keys());
 
     let dailyRows: Record<string, string | number>[] = dateKeys.map((date) => ({ date, total: 0 }));
-    const events = (await listUserCreditUsageEventsInRange(ctx, {
-      billingUserId: userDoc._id,
-      rangeStartMs,
-      rangeEndMs,
-    })).filter((event) => (event.orgId ?? "") === args.workspaceId);
+    const events =
+      session.kind === "partner"
+        ? await listOrgCreditUsageEventsInRange(ctx, {
+            orgId: args.workspaceId,
+            rangeStartMs,
+            rangeEndMs,
+          })
+        : (
+            await listUserCreditUsageEventsInRange(ctx, {
+              billingUserId: session.billingUserId,
+              rangeStartMs,
+              rangeEndMs,
+            })
+          ).filter((event) => (event.orgId ?? "") === args.workspaceId);
 
     if (events.length > 0 && agentKeys.length > 0) {
       dailyRows = buildDailyUsageRows(
@@ -1304,8 +1286,13 @@ export const getWorkspaceCreditUsage = query({
         timeZone,
         (event) => event.agentId ?? "unassigned",
       );
-    } else if (agentKeys.length > 0) {
-      const logs = await listUsageLogsForPeriod(ctx, userDoc._id, rangeStartMs, rangeEndMs);
+    } else if (agentKeys.length > 0 && session.kind === "native") {
+      const logs = await listUsageLogsForPeriod(
+        ctx,
+        session.billingUserId,
+        rangeStartMs,
+        rangeEndMs,
+      );
       const workspaceLogs = logs.filter((log) => (log.orgId ?? "") === args.workspaceId);
       dailyRows = await buildDailyUsageFromLogs(
         ctx,
@@ -1388,7 +1375,7 @@ export const getWorkspaceCreditUsage = query({
     });
 
     return {
-      plan: stripeInfo.plan,
+      plan: session.plan,
       timeZone,
       periodStartMs: rangeStartMs,
       periodEndMs: rangeEndMs,
@@ -1406,39 +1393,15 @@ export const getWorkspaceCreditSpendHistory = query({
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    const { userId } = await getAuthContext(ctx);
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
-      .unique();
-    if (!user) {
-      return {
-        periodStartMs: 0,
-        periodEndMs: 0,
-        page: [],
-        isDone: true,
-        continueCursor: "",
-      };
+    const session = await resolveCreditUsageSession(ctx, args.timeRange ?? "period");
+    if (session.kind === "partner") {
+      if (args.workspaceId !== session.orgId) {
+        throw new Error("Unauthorized access to workspace credit usage");
+      }
+    } else {
+      await assertWorkspaceAccess(ctx, session.user._id, args.workspaceId);
     }
-
-    const workspaceTeam = await assertWorkspaceAccess(
-      ctx,
-      user._id,
-      args.workspaceId,
-    );
-    const timeZone = normalizeTimeZone(workspaceTeam.timeZone);
-
-    const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
-    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
-      userDoc.stripeSubscriptionCurrentPeriodEnd,
-      timeZone,
-    );
-    const timeRange = args.timeRange ?? "period";
-    const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
-      timeRange,
-      periodStartMs,
-      periodEndMs,
-    );
+    const { rangeStartMs, rangeEndMs } = session;
 
     const paginationOpts = normalizeCreditSpendPaginationOpts(args.paginationOpts);
 
