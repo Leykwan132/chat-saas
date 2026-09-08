@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [TOOL] Now: I008 agent-usage fix is in #115. Next: merge, deploy, verify agent overview on `chat.morphswiftstudio.com`.
+- 2026-09-08 [TOOL] Now: unused-import build fix is in #116. Next: merge and redeploy.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
@@ -76,14 +76,14 @@
 - 2026-09-08 [CODE] `shared/{instagram,messenger}Access.ts`, `src/lib/posthogFeatureFlags.ts`, `src/pages/ChannelsPage.tsx`, `convex/{instagramConnectAccess,messengerConnectAccess,instagramEmbeddedSignup,instagramAuth,instagramConnect,messengerConnect,messengerAuth}*`
 - 2026-09-07 [CODE] `shared/commentToInboxAccess.ts`, `src/components/Connect{Instagram,Messenger}Button*`, `convex/{instagramEmbeddedSignup,messengerConnect,messengerAuth,oauthSessions,commentAutomationMeta,schema}*`
 - 2026-09-08 [CODE] `src/lib/host{Branding,Favicon,DocumentTitle}*`, `src/hooks/useHostBranding.ts`, `src/components/{HostBrandMark,ExpandedAppSidebarHeader,app-sidebar,AppRuntimeEffects}*`, `src/components/workspace/AgentsSidebar*`
-- 2026-09-08 [CODE] `convex/creditUsageAnalytics.ts`, `convex/creditUsageAnalytics.partner.test.ts`, `convex/creditUsageSession.ts`
+- 2026-09-08 [CODE] `convex/creditUsageAnalytics.ts`
 - 2026-09-08 [CODE] `convex/{entitlementScope,authUtils,plans,credits,creditUsageAnalytics,creditUsageSession,teams,teamHelpers}*`, `convex/whiteLabel/{partnerAuth*,customerWorkspace*,sessionEntitlementScope.test.ts}`, `src/pages/SignInPage.tsx`
 - 2026-09-08 [CODE] `src/partnerAuth/{AppAuthProvider.tsx,appAuthUsage.test.ts,usePartnerConvexAuth.ts,usePartnerConvexAuth.test.tsx}`, `src/components/RequireOrganization.tsx`, `src/pages/{SettingsPage,PricingPage}.tsx`, `src/router/AppRouteComponents.tsx`
 - 2026-09-07 [CODE] `src/components/partner/PartnerBrandingTab*`, `src/pages/{PartnerPage,SignInPage}.tsx`, `convex/whiteLabel/{portal,portalActions,portalProvisioning,portalOverview,creditLedger}.ts`
 
 # Receipts
 
-- 2026-09-08 [TOOL] #115 opened from `cursor/partner-agent-credit-usage` onto `main`. 3 partner usage tests pass under Node 22.
+- 2026-09-08 [TOOL] #116 opened from `cursor/fix-credit-usage-unused-import` onto `main`. `tsc -b` passes under Node 22.
 - 2026-09-08 [TOOL] #113 opened from `cursor/partner-usage-and-settings` onto `main` with the I007 Usage fix plus leftover post-#112 Settings/admin follow-ups. 15 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] #112 admin-create + plan-dialog follow-up: 32 focused tests pass; targeted ESLint and app TypeScript check pass under Node 22. Pre-existing `TeamRolesAndPermissionsPanel` `set-state-in-effect` lint remains.
 - 2026-09-08 [TOOL] Dual-role revision committed as `d6fda7e`, pushed, and #112 updated and marked ready for review.
