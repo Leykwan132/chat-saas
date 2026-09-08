@@ -37,6 +37,7 @@ export async function getPersonalTeamForUser(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
 ) {
+  console.log("getPersonalTeamForUser", userId);
   return await ctx.db
     .query("teams")
     .withIndex("by_ownerId_and_type", (q) =>
