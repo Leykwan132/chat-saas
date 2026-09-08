@@ -34,7 +34,7 @@ import {
 } from "./usageMonthKey";
 import { getActiveTeamForUser, normalizeTimeZone } from "./teamHelpers";
 import { getPartnerCreditBalance, deductPartnerOrganizationCreditBalance, ensureCurrentPartnerCreditPeriod } from "./whiteLabel/creditLedger";
-import { getWhiteLabelPartnerOrganizationForTeam } from "./whiteLabel/planResolver";
+import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
 
 export function getDefaultUserCredits(): number {
   const raw = process.env.DEFAULT_USER_CREDITS?.trim();
@@ -118,13 +118,16 @@ export const getBalance = query({
     if (user === null) {
       return null;
     }
-    if (user.activeTeamId) {
-      const partnerOrganization = await getWhiteLabelPartnerOrganizationForTeam(ctx, user.activeTeamId);
-      if (partnerOrganization !== null) {
-        if (partnerOrganization.status !== "active") throw new Error("Workspace is suspended.");
-        const balance = await getPartnerCreditBalance(ctx, partnerOrganization._id);
-        return { credits: balance.remainingCredits, monthlyAllowance: balance.period?.grantedCredits ?? 0 };
-      }
+    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(
+      ctx,
+      user.workosUserId,
+    );
+    if (assignedWorkspace !== null) {
+      const balance = await getPartnerCreditBalance(
+        ctx,
+        assignedWorkspace.organization._id,
+      );
+      return { credits: balance.remainingCredits, monthlyAllowance: balance.period?.grantedCredits ?? 0 };
     }
     const { billingUser } = await getBillingEntityForUser(ctx, user);
     const snapshot = await snapshotUserCredit(ctx, billingUser._id);
@@ -153,14 +156,17 @@ export const internalCheckCredits = internalQuery({
     if (user === null) {
       return { ok: false as const, reason: "user_not_found" as const };
     }
-    if (user.activeTeamId) {
-      const partnerOrganization = await getWhiteLabelPartnerOrganizationForTeam(ctx, user.activeTeamId);
-      if (partnerOrganization !== null) {
-        if (partnerOrganization.status !== "active") return { ok: false as const, reason: "workspace_suspended" as const };
-        const balance = await getPartnerCreditBalance(ctx, partnerOrganization._id);
-        if (balance.remainingCredits < pricing.creditCost) return { ok: false as const, reason: "insufficient_credits" as const, balance: balance.remainingCredits, cost: pricing.creditCost };
-        return { ok: true as const, balance: balance.remainingCredits, cost: pricing.creditCost };
-      }
+    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(
+      ctx,
+      user.workosUserId,
+    );
+    if (assignedWorkspace !== null) {
+      const balance = await getPartnerCreditBalance(
+        ctx,
+        assignedWorkspace.organization._id,
+      );
+      if (balance.remainingCredits < pricing.creditCost) return { ok: false as const, reason: "insufficient_credits" as const, balance: balance.remainingCredits, cost: pricing.creditCost };
+      return { ok: true as const, balance: balance.remainingCredits, cost: pricing.creditCost };
     }
     const { billingUser } = await getBillingEntityForUser(ctx, user);
     const snapshot = await snapshotUserCredit(ctx, billingUser._id);
@@ -216,14 +222,16 @@ export const internalDeductCredits = internalMutation({
       throw new Error("User not found");
     }
 
-    const partnerOrganization = user.activeTeamId ? await getWhiteLabelPartnerOrganizationForTeam(ctx, user.activeTeamId) : null;
-    if (partnerOrganization !== null) {
-      if (partnerOrganization.status !== "active") throw new Error("Workspace is suspended.");
+    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(
+      ctx,
+      user.workosUserId,
+    );
+    if (assignedWorkspace !== null) {
       if (!skipDeduction) {
-        await ensureCurrentPartnerCreditPeriod(ctx, { partnerOrganizationId: partnerOrganization._id, actorUserId: user._id });
-        await deductPartnerOrganizationCreditBalance(ctx, { partnerOrganizationId: partnerOrganization._id, credits: pricing.creditCost });
+        await ensureCurrentPartnerCreditPeriod(ctx, { partnerOrganizationId: assignedWorkspace.organization._id, actorUserId: user._id });
+        await deductPartnerOrganizationCreditBalance(ctx, { partnerOrganizationId: assignedWorkspace.organization._id, credits: pricing.creditCost });
       }
-      const balance = await getPartnerCreditBalance(ctx, partnerOrganization._id);
+      const balance = await getPartnerCreditBalance(ctx, assignedWorkspace.organization._id);
       return { llmModel: args.modelId, creditsCharged, balanceAfter: balance.remainingCredits };
     }
 

@@ -10,7 +10,7 @@ export async function getAssignedPartnerCustomerWorkspace(
   const account = await ctx.db
     .query("whiteLabelPartnerOrganizationAccounts")
     .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
-    .first();
+    .unique();
   if (account === null) return null;
 
   const organization = await ctx.db.get(account.partnerOrganizationId);
@@ -19,7 +19,7 @@ export async function getAssignedPartnerCustomerWorkspace(
   const team = await ctx.db.get(organization.teamId);
   if (team === null || team.type !== "organizational") return null;
 
-  return { account, team };
+  return { account, organization, team };
 }
 
 export async function getPartnerCustomerActiveTeam(

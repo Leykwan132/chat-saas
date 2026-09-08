@@ -12,11 +12,20 @@ export async function getWhiteLabelPlanForTeam(
     .query("whiteLabelPartnerOrganizations")
     .withIndex("by_teamId", (q) => q.eq("teamId", teamId))
     .unique();
+  if (partnerOrganization === null) return null;
+  return await getWhiteLabelPlanForOrganization(ctx, partnerOrganization._id);
+}
+
+export async function getWhiteLabelPlanForOrganization(
+  ctx: DbCtx,
+  partnerOrganizationId: Id<"whiteLabelPartnerOrganizations">,
+): Promise<PlanKey | null> {
+  const partnerOrganization = await ctx.db.get(partnerOrganizationId);
   if (partnerOrganization === null || partnerOrganization.status !== "active") return null;
   const plan = await ctx.db
     .query("whiteLabelPartnerOrganizationPlans")
     .withIndex("by_partnerOrganizationId", (q) =>
-      q.eq("partnerOrganizationId", partnerOrganization._id),
+      q.eq("partnerOrganizationId", partnerOrganizationId),
     )
     .unique();
   return plan?.activePlanKey ?? null;

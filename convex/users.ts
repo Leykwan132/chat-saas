@@ -11,7 +11,6 @@ import { getBillingEntityForUser } from "./plans";
 import { ensureUserAccount } from "./teamHelpers";
 import { redeemReferralDuringOnboarding } from "./referralRedemption";
 import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
-import { isWhiteLabelTeam } from "./whiteLabel/planResolver";
 
 /** Debug / introspection: Convex auth identity (WorkOS JWT claims) for the current socket. */
 export const getAuthUser = query({
@@ -67,9 +66,7 @@ export const currentUser = query({
     const stripeInfo = await getPlanFromStripe(ctx, identity.subject);
     const isPartnerManaged =
       (await getAssignedPartnerCustomerWorkspace(ctx, user.workosUserId)) !==
-        null ||
-      (user.activeTeamId !== undefined &&
-        (await isWhiteLabelTeam(ctx, user.activeTeamId)));
+      null;
     return {
       ...user,
       plan: stripeInfo.plan,

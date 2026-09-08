@@ -9,7 +9,10 @@ import {
   teamToOrgId,
 } from "./teamHelpers";
 import { getPartnerCreditBalance } from "./whiteLabel/creditLedger";
-import { getWhiteLabelPartnerOrganizationForTeam, getWhiteLabelPlanForTeam } from "./whiteLabel/planResolver";
+import {
+  getWhiteLabelPlanForOrganization,
+} from "./whiteLabel/planResolver";
+import { getAssignedPartnerCustomerWorkspace } from "./whiteLabel/customerWorkspace";
 import {
   PLAN_CATALOG,
   PLAN_ORDER,
@@ -73,13 +76,16 @@ export async function getPlanFromStripe(
   status?: string;
   currentPeriodEnd?: number;
 }> {
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_workosUserId", (q) => q.eq("workosUserId", entityId))
-    .unique();
-  if (user?.activeTeamId) {
-    const whiteLabelPlan = await getWhiteLabelPlanForTeam(ctx, user.activeTeamId);
-    if (whiteLabelPlan !== null) return { plan: whiteLabelPlan };
+  const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(ctx, entityId);
+  if (assignedWorkspace !== null) {
+    const whiteLabelPlan = await getWhiteLabelPlanForOrganization(
+      ctx,
+      assignedWorkspace.organization._id,
+    );
+    if (whiteLabelPlan === null) {
+      throw new Error("Customer organization plan not found.");
+    }
+    return { plan: whiteLabelPlan };
   }
   const subscriptions = await ctx.runQuery(
     components.stripe.public.listSubscriptionsByOrgId,
@@ -179,8 +185,15 @@ export async function getChannelLimitForOrg(
   userId?: string,
 ): Promise<number> {
   const team = await getTeamByWorkosOrgId(ctx, orgId);
-  if (team !== null) {
-    const whiteLabelPlan = await getWhiteLabelPlanForTeam(ctx, team._id);
+  if (team !== null && userId !== undefined) {
+    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(ctx, userId);
+    const whiteLabelPlan =
+      assignedWorkspace?.team._id === team._id
+        ? await getWhiteLabelPlanForOrganization(
+          ctx,
+          assignedWorkspace.organization._id,
+        )
+        : null;
     if (whiteLabelPlan !== null) {
       const limit = PLAN_CATALOG[whiteLabelPlan].maxChannels;
       return limit === "unlimited" ? 999999 : limit;
@@ -206,11 +219,17 @@ export const getPlanAndUsage = query({
     }
 
     const activeTeam = await getActiveTeamForUser(ctx, user);
-    const partnerOrganization = await getWhiteLabelPartnerOrganizationForTeam(ctx, activeTeam._id);
-    if (partnerOrganization !== null) {
-      const plan = await getWhiteLabelPlanForTeam(ctx, activeTeam._id);
+    const assignedWorkspace = await getAssignedPartnerCustomerWorkspace(ctx, userId);
+    if (assignedWorkspace !== null) {
+      const plan = await getWhiteLabelPlanForOrganization(
+        ctx,
+        assignedWorkspace.organization._id,
+      );
       if (plan === null) throw new Error("Customer organization plan not found.");
-      const balance = await getPartnerCreditBalance(ctx, partnerOrganization._id);
+      const balance = await getPartnerCreditBalance(
+        ctx,
+        assignedWorkspace.organization._id,
+      );
       const planConfig = getPlan(plan);
       const channelLimit = planConfig.maxChannels === "unlimited" ? 999999 : planConfig.maxChannels;
       return {

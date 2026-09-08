@@ -5,9 +5,11 @@ import { PLAN_CATALOG, type PlanKey } from "./planCatalog";
 import { ensureReferralCodeForUser } from "./referralCodeRecords";
 import {
   assertPartnerCustomerTeam,
+  getAssignedPartnerCustomerWorkspace,
   getPartnerCustomerActiveTeam,
   markPartnerCustomerOnboarded,
 } from "./whiteLabel/customerWorkspace";
+import { isWhiteLabelTeam } from "./whiteLabel/planResolver";
 
 export { ensureOrganizationalTeam } from "./organizationalTeamProvisioning";
 
@@ -136,7 +138,7 @@ export async function getActiveTeamForUser(
           q.eq("userId", user._id).eq("teamId", team._id),
         )
         .unique();
-      if (membership !== null) {
+      if (membership !== null && !(await isWhiteLabelTeam(ctx, team._id))) {
         return team;
       }
     }
@@ -163,6 +165,12 @@ export async function setActiveTeamForUser(
   teamId: Id<"teams">,
 ): Promise<Doc<"teams">> {
   await assertPartnerCustomerTeam(ctx, user.workosUserId, teamId);
+  if (
+    (await getAssignedPartnerCustomerWorkspace(ctx, user.workosUserId)) === null &&
+    await isWhiteLabelTeam(ctx, teamId)
+  ) {
+    throw new Error("Partner customer workspaces are only available through the partner domain");
+  }
 
   const membership = await ctx.db
     .query("teamMemberships")

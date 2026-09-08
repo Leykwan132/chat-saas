@@ -116,9 +116,19 @@ async function listTeamsForCurrentUser(ctx: QueryCtx) {
       .unique()
       .then((membership) => membership === null ? [] : [membership]);
 
-  const teams = (
+  const membershipTeams = (
     await Promise.all(memberships.map((membership) => ctx.db.get(membership.teamId)))
   ).filter((team): team is NonNullable<typeof team> => team !== null);
+  const teams = assignedWorkspace === null
+    ? (
+      await Promise.all(
+        membershipTeams.map(async (team) => ({
+          team,
+          isWhiteLabel: await isWhiteLabelTeam(ctx, team._id),
+        })),
+      )
+    ).filter(({ isWhiteLabel }) => !isWhiteLabel).map(({ team }) => team)
+    : membershipTeams;
 
   const items = await Promise.all(
     teams.map(async (team) => {

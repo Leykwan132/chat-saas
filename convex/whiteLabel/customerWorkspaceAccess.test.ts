@@ -57,6 +57,25 @@ test("provisions a partner customer directly into its assigned workspace", async
         createdAt: now,
         updatedAt: now,
       });
+      const otherPartnerOrganizationId = await ctx.db.insert(
+        "whiteLabelPartnerOrganizations",
+        {
+          partnerId,
+          teamId: otherTeamId,
+          status: "active",
+          createdByUserId: managerId,
+          createdAt: now,
+          updatedAt: now,
+        },
+      );
+      await ctx.db.insert("whiteLabelPartnerOrganizationPlans", {
+        partnerOrganizationId: otherPartnerOrganizationId,
+        activePlanKey: "growth",
+        creditPlanKey: "growth",
+        updatedByUserId: managerId,
+        createdAt: now,
+        updatedAt: now,
+      });
       return { partnerOrganizationId, assignedTeamId, otherTeamId };
     },
   );
@@ -124,6 +143,10 @@ test("provisions a partner customer directly into its assigned workspace", async
       userId: customer!._id,
       role: "member",
       createdAt: Date.now(),
+    });
+    await ctx.db.patch(customer!._id, {
+      activeTeamId: otherTeamId,
+      updatedAt: Date.now(),
     });
   });
 
