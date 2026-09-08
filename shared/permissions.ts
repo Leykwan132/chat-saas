@@ -328,6 +328,7 @@ export const ROLE_PERMISSIONS: Record<'owner' | 'admin' | 'member', readonly Per
     Permission.BROADCAST_MANAGE,
     Permission.TEAM_READ,
     Permission.TEAM_MANAGE,
+    Permission.AGENTS_CREATE,
     Permission.AGENTS_MANAGE,
     Permission.BILLING_READ,
   ],

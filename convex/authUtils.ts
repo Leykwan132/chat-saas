@@ -18,6 +18,11 @@ import {
 import type { EnsureUserAccountArgs } from "./teamHelpers";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
 import { resolveEntitlementScope } from "./entitlementScope";
+import {
+  ROLE_PERMISSIONS,
+  resolvePermissionsForRole,
+  type PermissionSlug,
+} from "../shared/permissions";
 
 export const PERSONAL_ORG_FALLBACK = PERSONAL_ORG_ID;
 
@@ -127,9 +132,24 @@ async function buildAuthContextFromDb(
   }
 
   const claims = identity as unknown as WorkOSClaims;
-  const role = claims.role ?? null;
-  const roles = claims.roles ?? (role ? [role] : []);
-  const permissions = claims.permissions ?? [];
+  const role = entitlementScope.kind === "partner"
+    ? entitlementScope.account.role
+    : claims.role ?? null;
+  const roles = entitlementScope.kind === "partner"
+    ? [entitlementScope.account.role]
+    : claims.roles ?? (role ? [role] : []);
+  const permissions = entitlementScope.kind === "partner"
+    ? resolvePermissionsForRole(
+      entitlementScope.account.role,
+      (
+        entitlementScope.account.role === "owner"
+          ? entitlementScope.team.ownerPermissions ?? ROLE_PERMISSIONS.owner
+          : entitlementScope.account.role === "admin"
+            ? entitlementScope.team.adminPermissions ?? ROLE_PERMISSIONS.admin
+            : entitlementScope.team.memberPermissions ?? ROLE_PERMISSIONS.member
+      ) as PermissionSlug[],
+    )
+    : claims.permissions ?? [];
 
   return {
     userId: identity.subject,

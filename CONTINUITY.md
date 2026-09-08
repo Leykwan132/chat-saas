@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [CODE] Dual-role entitlement revision is pushed in ready-for-review #112: native AuthKit sessions are Stripe/native-only; partner JWTs bind to one validated signed organization; multi-org partner sign-in shows an organization picker and revalidates credentials before token issuance. Next: review/merge, deploy, verify both hosts, then changelog.
+- 2026-09-08 [CODE] #112 now also gives Partner Programme admins effective agent-create permission and groups Cancel beside Confirm in the plan-change dialog. Next: push the revision, review/merge, deploy, verify both hosts, then changelog.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
@@ -46,6 +46,7 @@
 - 2026-08-25 [USER] D774–D775 ACTIVE: members without agent-create access see an explanatory empty state; partner-managed workspaces hide Get Free Credits.
 - 2026-08-25 [USER] D776 ACTIVE: partner-created customers authenticate only through their assigned connected partner hostname; native Kilobot sign-in rejects them while native users retain AuthKit.
 - 2026-09-08 [USER] D790 ACTIVE: billing is session-surface scoped, allowing one WorkOS identity to use native Kilobot and one or more Partner Programme organizations. Native AuthKit sessions use Stripe; custom-domain partner JWTs use their exact signed `partnerOrganizationId` plan/credits. `activeTeamId` and mere account existence cannot select billing context. Multiple valid organizations on one partner domain are selected after password verification and revalidated before issuing the scoped JWT.
+- 2026-09-08 [USER] D791 ACTIVE: Partner Programme admins can create agents; plan-change dialog actions keep Cancel immediately beside Confirm.
 - 2026-09-03 [USER] D777 ACTIVE: each partner customer remains restricted to one assigned workspace and cannot create additional workspaces.
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
 - 2026-09-06 [CODE] I001 OPEN: Hallucinated booking/email-link copy is replaced after generation; unverified claims now receive a safe retry response rather than silence. Remaining gap: playground can briefly stream model text before the saved message is rewritten.
@@ -78,6 +79,7 @@
 
 # Receipts
 
+- 2026-09-08 [TOOL] #112 admin/dialog follow-up: 26 focused tests pass; targeted ESLint, app/Convex TypeScript checks, and `git diff --check` pass under Node 22.
 - 2026-09-08 [TOOL] Dual-role revision committed as `d6fda7e`, pushed, and #112 updated and marked ready for review.
 - 2026-09-08 [TOOL] Dual-role entitlement revision: 25 focused plan/credit/auth/workspace tests pass; Convex codegen, app/Convex TypeScript checks, targeted ESLint, full TypeScript/Vite production build, and `git diff --check` pass under Node 22. Full Vitest exposes only `convex/backfillEvents.test.ts`, independently reproduced without the changed analytics file; its fixed July/August 2026 billing period is stale against the current September clock.
 - 2026-09-08 [TOOL] Revised I006 fix: 20 plan, credit, provisioning, and workspace tests pass; three new assertions fail on old active-team logic (wrong org plan and owner marked managed twice). Node v22 targeted ESLint, Convex TypeScript check, and `git diff --check` pass.

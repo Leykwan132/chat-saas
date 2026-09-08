@@ -86,7 +86,7 @@ export function PartnerPlanChangeDialog({
             </div>
           </div>
         </RadioGroup>
-        <DialogFooter className="sm:justify-between">
+        <DialogFooter>
           <Button variant="ghost" onClick={() => close(false)}>
             Cancel
           </Button>
