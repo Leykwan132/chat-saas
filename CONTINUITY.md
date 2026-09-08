@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [CODE] #112 now grants Admin `agents:create` and groups Cancel beside Confirm in the plan-change dialog. Next: review/merge, deploy, verify both hosts, then changelog.
+- 2026-09-08 [CODE] #112 now shows catalog plan names (Business, not business) in organization plan controls. Next: review/merge, deploy, verify both hosts, then changelog.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).

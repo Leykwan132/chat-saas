@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/table";
 import { Spinner } from "@/components/ui/spinner";
 import { formatRenewalDate } from "@/lib/formatRenewalDate";
+import { PLAN_CATALOG } from "../../../shared/planCatalog";
 import {
   type PartnerOverview,
   type PlanChangeTiming,
@@ -144,7 +145,7 @@ export function PartnerOrganizationList({
                         />
                         {organization.scheduledPlanChange ? (
                           <p className="text-center text-xs text-muted-foreground">
-                            {organization.scheduledPlanChange.planKey} credits
+                            {PLAN_CATALOG[organization.scheduledPlanChange.planKey].name} credits
                             from{" "}
                             {formatRenewalDate(
                               organization.scheduledPlanChange.effectiveAt,
