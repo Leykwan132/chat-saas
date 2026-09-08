@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [CODE] Now: partner password reset stays on the current host (`/reset-password` then `/sign-in`). Native Kilobot onboard for partner-created WorkOS logins is implemented (D793 / I009). Next: merge #117, then verify reset on a partner hostname and onboard on `kilobot.app`.
+- 2026-09-08 [CODE] Now: first-signup welcome modal uses the host brand name (`Welcome to {{Brand Name}}` on partner domains). Native Kilobot onboard and same-origin password reset shipped via #117. Next: merge this welcome-title PR, then verify copy on a partner hostname.
 - 2026-09-08 [TOOL] Milestone: unused-import production build fix merged via #116.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
@@ -55,7 +55,7 @@
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
 - 2026-09-06 [CODE] I001 OPEN: Hallucinated booking/email-link copy is replaced after generation; unverified claims now receive a safe retry response rather than silence. Remaining gap: playground can briefly stream model text before the saved message is rewritten.
 - 2026-09-07 [USER] I002 RESOLVED: Meta rejected `comments` on the Facebook Page `subscribed_apps` edge with error #100; use valid Page field `feed`, while configuring Instagram-specific fields on the app’s Instagram webhook object.
-- 2026-09-08 [USER] I009 FIX IN DRAFT: Symptoms: signing into `kilobot.app` with a partner-dashboard WorkOS account crashed `plans.getPlanAndUsage` with `Personal team not found`. Cause: D776 was never implemented as a reject, partner provisioning can leave `activeTeamId` on the white-label org, native `getActiveTeamForUser` skips that team and requires a personal team, and `getAuthContextOrNull` only swallowed missing-user errors while `RequireOrganization` skipped `ensureCurrentUser` when a `users` row already existed. Mitigation: native sessions create the missing personal team; Kilobot access requires `onboardingAnswers`; `getAuthContextOrNull` returns null for `Personal team not found`. Partner hostname unchanged (D771). Deploy/verify UNCONFIRMED.
+- 2026-09-08 [USER] I009 FIX IN #117: Symptoms: signing into `kilobot.app` with a partner-dashboard WorkOS account crashed `plans.getPlanAndUsage` with `Personal team not found`. Cause: D776 was never implemented as a reject, partner provisioning can leave `activeTeamId` on the white-label org, native `getActiveTeamForUser` skips that team and requires a personal team, and `getAuthContextOrNull` only swallowed missing-user errors while `RequireOrganization` skipped `ensureCurrentUser` when a `users` row already existed. Mitigation: native sessions create the missing personal team; Kilobot access requires `onboardingAnswers`; `getAuthContextOrNull` returns null for `Personal team not found`. Partner hostname unchanged (D771). Deploy/verify UNCONFIRMED.
 - 2026-09-08 [USER] I008 FIX IN #115: Symptoms: partner user on agent overview got Convex `getAgentCreditUsage` Server Error; Convex log is `Personal team not found` from `getActiveTeamForUser`. Cause: #113 moved account/workspace usage onto `resolveCreditUsageSession`, but `getAgentCreditUsage` and `getAgentCreditSpendHistory` still resolved Stripe/personal team. Mitigation: both queries use the signed partner org plan/period and org-scoped agent events. Native path unchanged. Deploy/verify UNCONFIRMED.
 - 2026-09-08 [USER] I007 FIX IN #113: Symptoms: partner user on Settings → Usage got Convex `getAccountCreditUsage` Server Error. Cause: that query (and sibling spend/workspace usage queries) still called `getActiveTeamForUser` + Stripe, which skips the signed white-label team and can throw `Personal team not found` or resolve the wrong wallet. Mitigation: `resolveCreditUsageSession` uses the signed partner org plan/period/timezone; native path unchanged. Deploy/verify on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [USER] I006 FIX REVISED IN DRAFT #112: `kilobot.app` bounced `leykwan132@gmail.com` to onboarding because plan resolution followed a persisted customer-workspace `activeTeamId` and masked the active Stripe subscription. Mitigation: signed auth surface selects entitlement scope; native sessions ignore customer teams and use Stripe, while partner sessions validate exact domain/partner/org/account/team claims and use that organization wallet. Side finding: the user may have started a real personal Stripe subscription during the loop; refund/cancel decision UNCONFIRMED.
@@ -65,17 +65,17 @@
 
 # Done (recent)
 
+- 2026-09-08 [CODE] First-signup welcome modal uses the current host brand name instead of a hardcoded Kilobot title.
 - 2026-09-08 [CODE] Partner password reset completes on the current hostname and returns to `/sign-in` instead of kilobot.app (D794).
 - 2026-09-08 [CODE] Partner-created WorkOS logins on `kilobot.app` provision a personal team and complete Kilobot onboarding instead of crashing or inheriting partner `onboarded` (D793 / I009).
 - 2026-09-08 [CODE] Partner agent credit usage/spend history read the signed org wallet instead of Stripe/personal team (I008).
 - 2026-09-08 [CODE] Instagram and Messenger connect cards and signup actions use separate PostHog flags plus `leykwan132@gmail.com` (D792).
 - 2026-09-08 [CODE] Partner Usage tab reads the signed org wallet instead of Stripe/personal team (I007).
 - 2026-09-08 [CODE] Admin role can create agents; Confirm plan change keeps Cancel beside Confirm; dual-role sessions stay surface-scoped (I006, #112).
-- 2026-09-08 [CODE] Partner-host Convex auth no longer loops: stable `fetchAccessToken` via `useCallback` in `src/partnerAuth/usePartnerConvexAuth.ts` (I005, #111).
 
 # Working set
 
-- 2026-09-08 [CODE] `convex/whiteLabel/customerPasswordResetActions.ts`, `shared/passwordResetReturn.ts`, `src/pages/{ResetPasswordPage,SettingsPage}*`, `src/main.tsx`
+- 2026-09-08 [CODE] `src/components/setup-checklist/WorkspaceSetupChecklistIntroDialog*`
 - 2026-09-08 [CODE] `convex/{authUtils,users,teamHelpers,nativeKilobotOnboarding.test.ts}*`, `src/lib/organizationAccess.ts`, `src/components/{RequireOrganization,OnboardingFlow}*`
 - 2026-09-07 [CODE] `convex/whiteLabel/{creditLedger,creditRenewal,portalProvisioning}*`, `convex/_generated/api.d.ts`
 - 2026-09-08 [CODE] `shared/{instagram,messenger}Access.ts`, `src/lib/posthogFeatureFlags.ts`, `src/pages/ChannelsPage.tsx`, `convex/{instagramConnectAccess,messengerConnectAccess,instagramEmbeddedSignup,instagramAuth,instagramConnect,messengerConnect,messengerAuth}*`
@@ -88,6 +88,7 @@
 
 # Receipts
 
+- 2026-09-08 [TOOL] Host-branded first-signup welcome title: 4 focused tests pass under Node 22; targeted ESLint and `git diff --check` pass. Browser first-signup path UNCONFIRMED.
 - 2026-09-08 [TOOL] #117 opened from `cursor/native-kilobot-onboarding` onto `main` with native Kilobot onboard (D793 / I009) and same-origin password reset (D794). 15 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] Native Kilobot onboard (I009): 22 focused auth/plan/onboarding tests pass under Node 22, including new `convex/nativeKilobotOnboarding.test.ts`. OnboardingFlow stays at 299 lines. No changelog (Partner Programme unshipped).
 - 2026-09-08 [TOOL] #116 opened from `cursor/fix-credit-usage-unused-import` onto `main`. `tsc -b` passes under Node 22.
