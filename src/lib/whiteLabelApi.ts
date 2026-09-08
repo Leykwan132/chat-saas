@@ -202,9 +202,9 @@ export const whiteLabelApi = {
     >("whiteLabel/customerAccountActions:createCustomerAccount"),
     startCurrentUserPasswordReset: makeFunctionReference<
       "action",
-      Record<string, never>,
+      { origin: string; returnPath?: string },
       { passwordResetUrl: string }
-    >("whiteLabel/customerAccountActions:startCurrentUserPasswordReset"),
+    >("whiteLabel/customerPasswordResetActions:startCurrentUserPasswordReset"),
     getCustomerInitialCredentials: makeFunctionReference<
       "action",
       { partnerOrganizationId: string; workosUserId: string },

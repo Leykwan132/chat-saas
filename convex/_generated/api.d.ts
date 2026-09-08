@@ -431,6 +431,7 @@ import type * as whiteLabel_customerAccountPassword from "../whiteLabel/customer
 import type * as whiteLabel_customerAccountPersistence from "../whiteLabel/customerAccountPersistence.js";
 import type * as whiteLabel_customerAccounts from "../whiteLabel/customerAccounts.js";
 import type * as whiteLabel_customerCredentialEncryption from "../whiteLabel/customerCredentialEncryption.js";
+import type * as whiteLabel_customerPasswordResetActions from "../whiteLabel/customerPasswordResetActions.js";
 import type * as whiteLabel_customerRoleRecords from "../whiteLabel/customerRoleRecords.js";
 import type * as whiteLabel_customerWorkspace from "../whiteLabel/customerWorkspace.js";
 import type * as whiteLabel_partnerAuth from "../whiteLabel/partnerAuth.js";
@@ -929,6 +930,7 @@ declare const fullApi: ApiFromModules<{
   "whiteLabel/customerAccountPersistence": typeof whiteLabel_customerAccountPersistence;
   "whiteLabel/customerAccounts": typeof whiteLabel_customerAccounts;
   "whiteLabel/customerCredentialEncryption": typeof whiteLabel_customerCredentialEncryption;
+  "whiteLabel/customerPasswordResetActions": typeof whiteLabel_customerPasswordResetActions;
   "whiteLabel/customerRoleRecords": typeof whiteLabel_customerRoleRecords;
   "whiteLabel/customerWorkspace": typeof whiteLabel_customerWorkspace;
   "whiteLabel/partnerAuth": typeof whiteLabel_partnerAuth;

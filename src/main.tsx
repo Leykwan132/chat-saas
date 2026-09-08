@@ -11,6 +11,7 @@ import './styles/workos-widgets-overrides.css'
 import './index.css'
 import HomePage from './pages/HomePage.tsx'
 import SignInPage from './pages/SignInPage.tsx'
+import ResetPasswordPage from './pages/ResetPasswordPage.tsx'
 import DashboardLayout from './layouts/DashboardLayout.tsx'
 import ChatsPage from './pages/ChatsPage.tsx'
 import KnowledgeBasePage from './pages/KnowledgeBasePage.tsx'
@@ -108,6 +109,7 @@ const router = createBrowserRouter(
       <Route path="/callback" element={<CallbackRoute />} />
       <Route path="/" element={<HomePage />} />
       <Route path="/sign-in" element={<SignInPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/early-adopter-program" element={<EarlyAdopterProgramPage />} />

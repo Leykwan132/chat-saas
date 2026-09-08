@@ -65,7 +65,7 @@ function ProfileContent() {
     user ? {} : 'skip',
   );
   const startPasswordReset = useAction(
-    api.whiteLabel.customerAccountActions.startCurrentUserPasswordReset,
+    api.whiteLabel.customerPasswordResetActions.startCurrentUserPasswordReset,
   );
   const [isStartingPasswordReset, setIsStartingPasswordReset] =
     useState(false);
@@ -80,7 +80,10 @@ function ProfileContent() {
   const handlePasswordReset = async () => {
     setIsStartingPasswordReset(true);
     try {
-      const result = await startPasswordReset({});
+      const result = await startPasswordReset({
+        origin: window.location.origin,
+        returnPath: '/sign-in',
+      });
       window.location.assign(result.passwordResetUrl);
     } catch (error) {
       toast.error(
