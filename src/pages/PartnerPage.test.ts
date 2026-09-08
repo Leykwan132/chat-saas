@@ -233,7 +233,8 @@ describe("Partner Programme", () => {
     expect(planChangeDialogSource).toContain("formatRenewalDate");
     expect(planChangeDialogSource).toContain('value="immediate"');
     expect(planChangeDialogSource).toContain('value="next_period"');
-    expect(planChangeDialogSource).toContain('className="sm:justify-between"');
+    expect(planChangeDialogSource).toContain("<DialogFooter>");
+    expect(planChangeDialogSource).not.toContain('className="sm:justify-between"');
     expect(planChangeDialogSource).toContain("onConfirm(timing)");
     expect(pageSource).toContain("timing,");
     expect(portalSource).toContain("timing: planChangeTimingValidator");

@@ -141,7 +141,7 @@ export const getCurrentUserAccess = query({
     teamId: v.optional(v.id("teams")),
   },
   handler: async (ctx, args) => {
-    const { userId } = await getAuthContext(ctx);
+    const { userId, activeTeamId } = await getAuthContext(ctx);
     const userRow = await getUserByWorkosId(ctx, userId);
     if (userRow === null) {
       return null;
@@ -149,10 +149,7 @@ export const getCurrentUserAccess = query({
 
     let teamId = args.teamId;
     if (teamId === undefined) {
-      teamId = userRow.activeTeamId;
-    }
-    if (teamId === undefined) {
-      return null;
+      teamId = activeTeamId;
     }
 
     const access = await getTeamMembershipForCurrentUser(ctx, teamId);
