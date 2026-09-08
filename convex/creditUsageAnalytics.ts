@@ -4,10 +4,7 @@ import type { PaginationOptions } from "convex/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { internalMutation, query } from "./_generated/server";
-import {
-  resolveAnalyticsTimeRange,
-  resolveLatestBillingPeriod,
-} from "./analyticsTimeRange";
+import { resolveLatestBillingPeriod } from "./analyticsTimeRange";
 import { assertAgentAccess } from "./agentUsage";
 import { getAuthContext } from "./authUtils";
 import { formatCreditLogEventType } from "./creditLogs";
