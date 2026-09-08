@@ -118,11 +118,11 @@ test("a rejected duplicate Instagram Login connect preserves the working connect
   });
 });
 
-test("does not connect an account reassigned while Instagram subscription is running", async () => {
+test("does not connect an account reassigned while Instagram profile loading is running", async () => {
   const { t, selectedAgentId, newestAgentId } = await setup();
   const graphFetch = globalThis.fetch;
   vi.stubGlobal("fetch", vi.fn(async (...args: Parameters<typeof fetch>) => {
-    if (String(args[0]).includes("/subscribed_apps")) {
+    if (String(args[0]).includes("/me?")) {
       await t.run(async (ctx) => {
         const channel = await ctx.db.query("channels").unique();
         if (!channel) throw new Error("Pending channel missing");
@@ -139,11 +139,11 @@ test("does not connect an account reassigned while Instagram subscription is run
   expect(channel?.accessToken).toBeUndefined();
 });
 
-test("does not connect when the selected agent is removed during Instagram subscription", async () => {
+test("does not connect when the selected agent is removed during Instagram profile loading", async () => {
   const { t, selectedAgentId } = await setup();
   const graphFetch = globalThis.fetch;
   vi.stubGlobal("fetch", vi.fn(async (...args: Parameters<typeof fetch>) => {
-    if (String(args[0]).includes("/subscribed_apps")) {
+    if (String(args[0]).includes("/me?")) {
       await t.run(async (ctx) => {
         await ctx.db.delete(selectedAgentId);
       });
@@ -156,23 +156,5 @@ test("does not connect when the selected agent is removed during Instagram subsc
   })).rejects.toThrow("Instagram connection changed");
   expect(await t.run(async (ctx) => ctx.db.query("channels").unique())).toMatchObject({
     status: "error", defaultAgentId: selectedAgentId,
-  });
-});
-
-test("Instagram Login subscription failure stays on the selected agent as an error", async () => {
-  const { t, selectedAgentId } = await setup();
-  const graphFetch = globalThis.fetch;
-  vi.stubGlobal("fetch", vi.fn(async (...args: Parameters<typeof fetch>) => {
-    if (String(args[0]).includes("/subscribed_apps")) {
-      return new Response(JSON.stringify({ error: { message: "Subscription rejected" } }), { status: 400 });
-    }
-    return graphFetch(...args);
-  }));
-  await expect(t.action(internal.instagramConnect.internalCompleteSignup, {
-    agentId: selectedAgentId, code: "code", redirectUri: "https://example.com/callback", orgId: "", userId: "owner",
-  })).rejects.toThrow("Subscription rejected");
-  expect(await t.run(async (ctx) => ctx.db.query("channels").unique())).toMatchObject({
-    status: "error", defaultAgentId: selectedAgentId,
-    lastError: "Instagram webhook subscription failed: Subscription rejected",
   });
 });

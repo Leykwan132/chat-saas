@@ -52,6 +52,9 @@ function getSubscriptionTarget(channel: CommentSubscriptionChannel) {
 
 export async function ensureCommentSubscription(channel: CommentSubscriptionChannel) {
   const target = getSubscriptionTarget(channel);
+  if (channel.service === "instagram" && channel.instagramPageId === undefined) {
+    return;
+  }
   const url = new URL(`${target.baseUrl}/${graphVersion()}/${target.resourceId}/subscribed_apps`);
   url.searchParams.set("subscribed_fields", target.subscribedFields);
   const response = await fetch(url.toString(), {

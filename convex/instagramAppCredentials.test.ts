@@ -8,4 +8,5 @@ test("verifies Instagram signed requests with the Instagram Login app secret", (
   expect(source).not.toContain("process.env.INSTAGRAM_APP_SECRET");
   const authSource = readFileSync(new URL("./instagramAuth.ts", import.meta.url), "utf8");
   expect(authSource).toContain("META_IG_APP_ID is not configured");
+  expect(authSource).not.toContain("instagram_business_content_publish");
 });
