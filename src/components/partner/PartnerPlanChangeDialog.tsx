@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getPlanLimitChanges } from "@/components/partner/partnerPlanChangeDiff";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +12,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatRenewalDate } from "@/lib/formatRenewalDate";
+import { cn } from "@/lib/utils";
+import { PLAN_CATALOG } from "../../../shared/planCatalog";
 import {
   type PartnerOverview,
   type PlanChangeTiming,
@@ -37,6 +40,9 @@ export function PartnerPlanChangeDialog({
   const renewalDate = pendingChange
     ? formatRenewalDate(pendingChange.organization.renewalAt)
     : null;
+  const limitChanges = pendingChange
+    ? getPlanLimitChanges(pendingChange.organization.planKey, pendingChange.planKey)
+    : [];
 
   const close = (confirm: boolean) => {
     if (confirm) onConfirm(timing);
@@ -54,12 +60,31 @@ export function PartnerPlanChangeDialog({
       <DialogContent className="rounded-lg border border-border shadow-none ring-0">
         <DialogHeader>
           <DialogTitle>Confirm plan change</DialogTitle>
-          <DialogDescription>
-            Change {pendingChange?.organization.name} to the{" "}
-            {pendingChange?.planKey} plan. Choose when the new monthly credits
-            apply.
+          <DialogDescription className="sr-only">
+            Review the {pendingChange ? PLAN_CATALOG[pendingChange.planKey].name : ""}{" "}
+            plan changes, then choose when monthly credits apply.
           </DialogDescription>
         </DialogHeader>
+        <ul className="flex flex-col gap-2 text-sm">
+          {limitChanges.map((change) => (
+            <li key={change.label} className="flex items-center justify-between gap-4">
+              <span>{change.label}</span>
+              <span className="tabular-nums text-muted-foreground">
+                {change.from}
+                {" -> "}
+                <span
+                  className={cn(
+                    change.direction === "up"
+                      ? "text-emerald-600"
+                      : "text-destructive",
+                  )}
+                >
+                  {change.to}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
         <RadioGroup
           value={timing}
           onValueChange={(value) => setTiming(value as PlanChangeTiming)}
@@ -86,7 +111,7 @@ export function PartnerPlanChangeDialog({
             </div>
           </div>
         </RadioGroup>
-        <DialogFooter className="sm:justify-between">
+        <DialogFooter className="flex-row justify-end">
           <Button variant="ghost" onClick={() => close(false)}>
             Cancel
           </Button>

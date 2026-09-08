@@ -2,7 +2,9 @@ import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api, internal } from "../_generated/api";
 import { getAuthContext } from "../authUtils";
+import { assertCanCreateAgent } from "../agentAccess";
 import schema from "../schema";
+import { Permission } from "../../shared/permissions";
 
 const modules = import.meta.glob("/convex/**/*.ts");
 
@@ -173,6 +175,12 @@ test("provisions a partner customer directly into its assigned workspace", async
   expect(currentUser?.onboarded).toBe(true);
   expect(currentUser?.plan).toBe("starter");
   expect(currentUser?.isPartnerManaged).toBe(true);
+
+  const access = await customer.query(api.teamAccess.getCurrentUserAccess, {});
+  expect(access?.role).toBe("admin");
+  expect(access?.permissions).toContain(Permission.AGENTS_CREATE);
+  const auth = await customer.run(async (ctx) => await getAuthContext(ctx));
+  expect(() => assertCanCreateAgent(auth)).not.toThrow();
 
   const teams = await customer.query(api.teams.listForCurrentUser, {});
   expect(teams).toHaveLength(1);

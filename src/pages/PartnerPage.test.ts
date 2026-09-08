@@ -159,9 +159,12 @@ describe("Partner Programme", () => {
     expect(customerControlsSource).toContain(
       'compact ? "w-28 text-sm" : fullWidthSelectClassName',
     );
-    expect(customerControlsSource).toContain('className="capitalize text-sm"');
+    expect(customerControlsSource).toContain("{PLAN_CATALOG[plan].name}");
+    expect(customerControlsSource).toContain(
+      "<SelectValue>{PLAN_CATALOG[value].name}</SelectValue>",
+    );
     expect(customerControlsSource.match(/className="text-sm"/g)).toHaveLength(
-      4,
+      5,
     );
   });
 
@@ -227,13 +230,26 @@ describe("Partner Programme", () => {
     expect(organizationListSource).toContain("PartnerPlanChangeDialog");
     expect(organizationListSource).toContain("setPendingPlanChange({");
     expect(organizationListSource).toContain("organization.scheduledPlanChange");
+    expect(organizationListSource).toContain(
+      "PLAN_CATALOG[organization.scheduledPlanChange.planKey].name",
+    );
+    expect(planChangeDialogSource).toContain("getPlanLimitChanges");
+    expect(planChangeDialogSource).toContain("className=\"sr-only\"");
+    expect(planChangeDialogSource).toContain('{" -> "}');
+    expect(planChangeDialogSource).toContain("text-emerald-600");
+    expect(planChangeDialogSource).toContain("text-destructive");
     expect(planChangeDialogSource).toContain('from "@/components/ui/dialog"');
     expect(planChangeDialogSource).toContain('from "@/components/ui/radio-group"');
     expect(planChangeDialogSource).toContain("Confirm plan change");
     expect(planChangeDialogSource).toContain("formatRenewalDate");
     expect(planChangeDialogSource).toContain('value="immediate"');
     expect(planChangeDialogSource).toContain('value="next_period"');
-    expect(planChangeDialogSource).toContain('className="sm:justify-between"');
+    expect(planChangeDialogSource).toContain(
+      '<DialogFooter className="flex-row justify-end">',
+    );
+    expect(planChangeDialogSource).not.toContain(
+      'DialogFooter className="sm:justify-between"',
+    );
     expect(planChangeDialogSource).toContain("onConfirm(timing)");
     expect(pageSource).toContain("timing,");
     expect(portalSource).toContain("timing: planChangeTimingValidator");

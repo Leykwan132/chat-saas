@@ -6,6 +6,13 @@ const settingsSource = readFileSync(
   "utf8",
 );
 
+test("hides the plan section for partner-managed workspaces", () => {
+  expect(settingsSource).toContain("usePartnerManagedWorkspace");
+  expect(settingsSource).toContain(
+    "isPartnerManagedWorkspace === false && can(Permission.BILLING_READ)",
+  );
+});
+
 test("only exposes password reset to active password accounts", () => {
   expect(settingsSource).toContain("hasCurrentPasswordAccount");
   expect(settingsSource).toContain("startCurrentUserPasswordReset");
