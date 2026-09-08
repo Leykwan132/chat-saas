@@ -269,6 +269,7 @@ import type * as inboundMediaUnderstanding from "../inboundMediaUnderstanding.js
 import type * as inboxPools from "../inboxPools.js";
 import type * as instagramApi from "../instagramApi.js";
 import type * as instagramAuth from "../instagramAuth.js";
+import type * as instagramChannelAssignment from "../instagramChannelAssignment.js";
 import type * as instagramConnect from "../instagramConnect.js";
 import type * as instagramEmbeddedSignup from "../instagramEmbeddedSignup.js";
 import type * as instagramSend from "../instagramSend.js";
@@ -768,6 +769,7 @@ declare const fullApi: ApiFromModules<{
   inboxPools: typeof inboxPools;
   instagramApi: typeof instagramApi;
   instagramAuth: typeof instagramAuth;
+  instagramChannelAssignment: typeof instagramChannelAssignment;
   instagramConnect: typeof instagramConnect;
   instagramEmbeddedSignup: typeof instagramEmbeddedSignup;
   instagramSend: typeof instagramSend;

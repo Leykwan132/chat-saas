@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useAction, useQuery } from 'convex/react';
+import { useParams } from 'react-router';
 import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
-import type { Doc } from '../../convex/_generated/dataModel';
+import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { waitForFacebookSdk } from '@/lib/fbSdk';
@@ -25,7 +26,11 @@ export function ConnectInstagramButton({
   disabled,
   children,
 }: ConnectInstagramButtonProps) {
-  const channels = useQuery(api.channels.listForCurrentOrg, {});
+  const { agentId } = useParams();
+  const channels = useQuery(
+    api.channels.listForCurrentOrg,
+    agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
+  );
   const completeSignup = useAction(api.instagramEmbeddedSignup.completeSignup);
   const [busy, setBusy] = useState(false);
   const { user } = useAuth();
@@ -45,6 +50,10 @@ export function ConnectInstagramButton({
   );
 
   const launchSignup = useCallback(() => {
+    if (!agentId) {
+      toast.error('Open an agent’s Channels page to connect Instagram.');
+      return;
+    }
     if (!configId) {
       toast.error('Instagram is not configured. Set VITE_IG_CONFIG_ID.');
       return;
@@ -63,6 +72,7 @@ export function ConnectInstagramButton({
                   return;
                 }
                 await completeSignup({
+                  agentId: agentId as Id<'agents'>,
                   code,
                   enableCommentWebhooks,
                   ...(codeExchangeRedirectUri
@@ -92,6 +102,7 @@ export function ConnectInstagramButton({
       }
     })();
   }, [
+    agentId,
     codeExchangeRedirectUri,
     completeSignup,
     configId,
@@ -112,7 +123,7 @@ export function ConnectInstagramButton({
       <button
         type="button"
         onClick={launchSignup}
-        disabled={busy || disabled}
+        disabled={busy || disabled || !agentId}
         className={`group relative size-36 flex flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-3 text-center transition-all shadow-sm focus:outline-none ${
           busy
             ? 'cursor-wait'
@@ -136,7 +147,7 @@ export function ConnectInstagramButton({
       variant="outline"
       size="sm"
       onClick={launchSignup}
-      disabled={busy}
+      disabled={busy || disabled || !agentId}
     >
       {busy ? <Spinner className="size-3" /> : 'Connect'}
     </Button>
