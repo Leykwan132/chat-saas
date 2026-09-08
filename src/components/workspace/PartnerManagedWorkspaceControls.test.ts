@@ -25,6 +25,10 @@ const teamDetailSource = readFileSync(
   new URL('../teams/TeamDetailSection.tsx', import.meta.url),
   'utf8',
 );
+const settingsSource = readFileSync(
+  new URL('../../pages/SettingsPage.tsx', import.meta.url),
+  'utf8',
+);
 
 describe('partner-managed workspace controls', () => {
   test('reads the managed-workspace state from Convex', () => {
@@ -38,6 +42,7 @@ describe('partner-managed workspace controls', () => {
       accountMenuSource,
       teamsTableSource,
       teamDetailSource,
+      settingsSource,
     ]) {
       expect(source).toContain('usePartnerManagedWorkspace');
     }
