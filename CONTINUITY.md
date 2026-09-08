@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-09 [CODE] Now: Instagram connect uses direct Instagram Login (`META_IG_APP_ID` / `META_IG_APP_SECRET`) instead of Facebook Business Login. OAuth preserves the selected agent; `graph.instagram.com/{ig-user-id}/subscribed_apps` enables comment and messaging webhook fields. Unshipped; PR pending.
+- 2026-09-09 [CODE] Now: Instagram connect uses direct Instagram Login (`META_IG_APP_ID` / `META_IG_APP_SECRET`) instead of Facebook Business Login. OAuth preserves the selected agent; `graph.instagram.com/{ig-user-id}/subscribed_apps` enables comment and messaging webhook fields. PR #120 is open; production availability UNCONFIRMED.
 - 2026-09-08 [TOOL] Instagram assignment fix is in PR #119 (`codex/instagram-agent-assignment` → `main`), unshipped. [CODE] Route agentId is required and authorized, pending/reconnected rows atomically use it, completion revalidates assignment, and errors only affect that attempt's pending row. [USER] User will reconnect manually; no production data repair requested.
 - 2026-09-08 [TOOL] Prod `kilobot.app` was verified `connected`, assigned to `Adwav Newswav` (`jh76x3zjkn4a5b171t163664dx8d42c4`); supersedes earlier disconnected status. [CODE] Agent-filtered Channels UI hid it because signup retained old/latest-agent assignment. Empty backfill does not disconnect.
 - 2026-09-08 [CODE] Now: first-signup welcome modal uses the host brand name (`Welcome to {{Brand Name}}` on partner domains). Native Kilobot onboard and same-origin password reset shipped via #117. Next: merge #118, then verify copy on a partner hostname.
@@ -93,7 +93,7 @@
 
 # Receipts
 
-- 2026-09-09 [TOOL] Direct Instagram Login: 14 focused Instagram/UI tests, Convex TypeScript check, regenerated bindings, and diff check pass under Node 22. Convex codegen uploaded the configured deployment; no production availability or changelog confirmation. PR pending.
+- 2026-09-09 [TOOL] PR #120 opened: https://github.com/Leykwan132/chat-saas/pull/120 (`codex/instagram-agent-assignment` → `main`). Direct Instagram Login: 15 focused Instagram/UI tests, Convex TypeScript check, regenerated bindings, and diff check pass under Node 22. Reviewer found no critical/important issues; one minor env-name diagnostic was fixed. Convex codegen uploaded the configured deployment; production availability UNCONFIRMED.
 - 2026-09-08 [TOOL] PR #119 opened: https://github.com/Leykwan132/chat-saas/pull/119 (fix commit `c371fd1`). 12 tests revalidated under Node 22; targeted ESLint + diff check pass; review found no actionable issues. Convex API bindings regenerated; no production deploy/changelog (unshipped).
 - 2026-09-08 [TOOL] Prod Instagram reconnect unblock: `npx convex run --prod internal.channels.internalDisconnectByIgUserId` for IG user `17841415503021124` (`kilobot.app`); row `k9760yy2qkn3ee51etb974q0f18dzwra` was `error` after a failed re-connect. No conversations in the last 500.
 - 2026-09-08 [TOOL] #118 opened from `cursor/host-branded-welcome` onto `main` with host-branded first-signup welcome title. 4 focused tests pass under Node 22.
