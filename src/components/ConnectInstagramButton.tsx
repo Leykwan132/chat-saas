@@ -7,13 +7,6 @@ import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { waitForFacebookSdk } from '@/lib/fbSdk';
-import {
-  isCommentToInboxUserAllowed,
-  isProductFeatureEnabled,
-  useEnableCommentToInboxFeature,
-} from '@/lib/posthogFeatureFlags';
-import { useAuth } from '@/partnerAuth/AppAuthProvider';
 
 type ConnectInstagramButtonProps = {
   forceAllowConnect?: boolean;
@@ -31,83 +24,32 @@ export function ConnectInstagramButton({
     api.channels.listForCurrentOrg,
     agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
   );
-  const completeSignup = useAction(api.instagramEmbeddedSignup.completeSignup);
+  const startInstagramLogin = useAction(api.instagramAuth.start);
   const [busy, setBusy] = useState(false);
-  const { user } = useAuth();
-  const commentToInboxFeatureState = useEnableCommentToInboxFeature();
-  const enableCommentWebhooks =
-    isProductFeatureEnabled(commentToInboxFeatureState) &&
-    isCommentToInboxUserAllowed(user?.email);
-  const configId = import.meta.env.VITE_IG_CONFIG_ID as string | undefined;
-  const codeExchangeRedirectUri =
-    (import.meta.env.VITE_MESSENGER_CODE_EXCHANGE_REDIRECT_URI as
-      | string
-      | undefined)?.trim() || undefined;
 
   const instagramChannel = useMemo(
     () => channels?.find((c: Doc<'channels'>) => c.service === 'instagram'),
     [channels],
   );
 
-  const launchSignup = useCallback(() => {
+  const launchSignup = useCallback(async () => {
     if (!agentId) {
       toast.error('Open an agent’s Channels page to connect Instagram.');
       return;
     }
-    if (!configId) {
-      toast.error('Instagram is not configured. Set VITE_IG_CONFIG_ID.');
-      return;
-    }
     setBusy(true);
-    void (async () => {
-      try {
-        const fb = await waitForFacebookSdk();
-        fb.login(
-          (response) => {
-            void (async () => {
-              try {
-                const code = response.authResponse?.code;
-                if (!code) {
-                  toast.error('Instagram signup cancelled before completion.');
-                  return;
-                }
-                await completeSignup({
-                  agentId: agentId as Id<'agents'>,
-                  code,
-                  enableCommentWebhooks,
-                  ...(codeExchangeRedirectUri
-                    ? { redirectUri: codeExchangeRedirectUri }
-                    : {}),
-                });
-                toast.success('Instagram account connected');
-              } catch (error) {
-                const message =
-                  error instanceof Error ? error.message : String(error);
-                toast.error(`Instagram connect failed: ${message}`);
-              } finally {
-                setBusy(false);
-              }
-            })();
-          },
-          {
-            config_id: configId,
-            response_type: 'code',
-            override_default_response_type: true,
-          },
-        );
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        toast.error(`Instagram connect failed: ${message}`);
-        setBusy(false);
-      }
-    })();
-  }, [
-    agentId,
-    codeExchangeRedirectUri,
-    completeSignup,
-    configId,
-    enableCommentWebhooks,
-  ]);
+    try {
+      const { authorizeUrl } = await startInstagramLogin({
+        agentId: agentId as Id<'agents'>,
+        returnPath: `${window.location.pathname}${window.location.search}`,
+      });
+      window.location.assign(authorizeUrl);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Instagram connect failed: ${message}`);
+      setBusy(false);
+    }
+  }, [agentId, startInstagramLogin]);
 
   if (!forceAllowConnect && instagramChannel?.status === 'connected') {
     return (

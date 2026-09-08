@@ -17,6 +17,22 @@ export const getConnectContext = internalQuery({
   },
 });
 
+export const assertOAuthConnectContext = internalQuery({
+  args: {
+    agentId: v.id("agents"),
+    orgId: v.string(),
+    userId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const agent = await ctx.db.get(args.agentId);
+    if (agent?.userId !== args.userId || agent.orgId !== args.orgId) {
+      throw new Error("Instagram connection changed. Start the connection again.");
+    }
+    return null;
+  },
+});
+
 export const startPending = internalMutation({
   args: { agentId: v.id("agents"), igUserId: v.string() },
   returns: v.id("channels"),

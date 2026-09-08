@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-09 [CODE] Now: Instagram connect uses direct Instagram Login (`META_IG_APP_ID` / `META_IG_APP_SECRET`) instead of Facebook Business Login. OAuth preserves the selected agent; `graph.instagram.com/{ig-user-id}/subscribed_apps` enables comment and messaging webhook fields. PR #120 includes `origin/main` through `174c67b`; production availability UNCONFIRMED.
 - 2026-09-08 [TOOL] Instagram assignment fix is in PR #119 (`codex/instagram-agent-assignment` → `main`), unshipped. [CODE] Route agentId is required and authorized, pending/reconnected rows atomically use it, completion revalidates assignment, and errors only affect that attempt's pending row. [USER] User will reconnect manually; no production data repair requested.
 - 2026-09-08 [TOOL] Prod `kilobot.app` was verified `connected`, assigned to `Adwav Newswav` (`jh76x3zjkn4a5b171t163664dx8d42c4`); supersedes earlier disconnected status. [CODE] Agent-filtered Channels UI hid it because signup retained old/latest-agent assignment. Empty backfill does not disconnect.
 - 2026-09-08 [CODE] Now: first-signup welcome modal uses the host brand name (`Welcome to {{Brand Name}}` on partner domains). Native Kilobot onboard and same-origin password reset shipped via #117. Next: merge #118, then verify copy on a partner hostname.
@@ -12,7 +13,7 @@
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
 - 2026-09-07 [CODE] Now: partner organization credit periods schedule an exact-time automatic renewal; no existing-organization backfill is needed. Unshipped on `codex/partner-plan-change-timing`.
 - 2026-09-07 [CODE] Now: the Partner Programme Customers tab presents organizations and their users; account UI uses “user” terminology and Overview separates organization and user totals. Unshipped.
-- 2026-09-07 [USER] Goal: replace Instagram redirect OAuth with Embedded Signup under the same Meta app, using IG-named frontend configuration variables.
+- 2026-09-07 [USER] Goal: replace Instagram redirect OAuth with Embedded Signup under the same Meta app, using IG-named frontend configuration variables. SUPERSEDED by D795.
 - 2026-09-07 [CODE] Now: partner Branding brand name, logo preview tile, sign-in header, sign-in preview link, and atomic organization credit provisioning merged via #101–#104. Partner Programme remains unshipped overall.
 - 2026-09-07 [CODE] Next: deploy #100, test ordinary and allowlisted connects for both channels, then verify live message/comment delivery.
 - 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
@@ -54,6 +55,7 @@
 - 2026-09-08 [USER] D790 ACTIVE: billing is session-surface scoped, allowing one WorkOS identity to use native Kilobot and one or more Partner Programme organizations. Native AuthKit sessions use Stripe; custom-domain partner JWTs use their exact signed `partnerOrganizationId` plan/credits. `activeTeamId` and mere account existence cannot select billing context. Multiple valid organizations on one partner domain are selected after password verification and revalidated before issuing the scoped JWT.
 - 2026-09-08 [USER] D792 ACTIVE: Instagram and Messenger channel connect are separate early-access flags. PostHog `enable_instagram` (ID 871040) and `enable_messenger` (ID 871041) each require person email `leykwan132@gmail.com` at 100%, plus the app/server allowlist. One flag must not unlock the other. Existing connected channels stay visible. WhatsApp is unchanged.
 - 2026-09-08 [USER] D791 ACTIVE: Partner Programme admins can create agents; plan-change dialog actions keep Cancel immediately beside Confirm.
+- 2026-09-09 [USER] D795 ACTIVE: Instagram uses Instagram Login, its dedicated App ID and App Secret, and direct `graph.instagram.com` account subscriptions; Facebook Business Login remains Messenger-only.
 - 2026-09-03 [USER] D777 ACTIVE: each partner customer remains restricted to one assigned workspace and cannot create additional workspaces.
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
 - 2026-09-06 [CODE] I001 OPEN: Hallucinated booking/email-link copy is replaced after generation; unverified claims now receive a safe retry response rather than silence. Remaining gap: playground can briefly stream model text before the saved message is rewritten.
@@ -82,8 +84,7 @@
 - 2026-09-08 [CODE] `src/components/setup-checklist/WorkspaceSetupChecklistIntroDialog*`
 - 2026-09-08 [CODE] `convex/{authUtils,users,teamHelpers,nativeKilobotOnboarding.test.ts}*`, `src/lib/organizationAccess.ts`, `src/components/{RequireOrganization,OnboardingFlow}*`
 - 2026-09-07 [CODE] `convex/whiteLabel/{creditLedger,creditRenewal,portalProvisioning}*`, `convex/_generated/api.d.ts`
-- 2026-09-08 [CODE] `shared/{instagram,messenger}Access.ts`, `src/lib/posthogFeatureFlags.ts`, `src/pages/ChannelsPage.tsx`, `convex/{instagramConnectAccess,messengerConnectAccess,instagramEmbeddedSignup,instagramAuth,instagramConnect,messengerConnect,messengerAuth}*`
-- 2026-09-07 [CODE] `shared/commentToInboxAccess.ts`, `src/components/Connect{Instagram,Messenger}Button*`, `convex/{instagramEmbeddedSignup,messengerConnect,messengerAuth,oauthSessions,commentAutomationMeta,schema}*`
+- 2026-09-09 [CODE] `src/components/ConnectInstagramButton*`, `convex/{instagramAuth,instagramConnect,instagramChannelAssignment,oauthSessions,channels,http,schema}*`
 - 2026-09-08 [CODE] `src/lib/host{Branding,Favicon,DocumentTitle}*`, `src/hooks/useHostBranding.ts`, `src/components/{HostBrandMark,ExpandedAppSidebarHeader,app-sidebar,AppRuntimeEffects}*`, `src/components/workspace/AgentsSidebar*`
 - 2026-09-08 [CODE] `convex/creditUsageAnalytics.ts`
 - 2026-09-08 [CODE] `convex/{entitlementScope,authUtils,plans,credits,creditUsageAnalytics,creditUsageSession,teams,teamHelpers}*`, `convex/whiteLabel/{partnerAuth*,customerWorkspace*,sessionEntitlementScope.test.ts}`, `src/pages/SignInPage.tsx`
@@ -92,6 +93,8 @@
 
 # Receipts
 
+- 2026-09-09 [TOOL] PR #120 opened: https://github.com/Leykwan132/chat-saas/pull/120 (`codex/instagram-agent-assignment` → `main`). Direct Instagram Login: 15 focused Instagram/UI tests, Convex TypeScript check, regenerated bindings, and diff check pass under Node 22. Reviewer found no critical/important issues; one minor env-name diagnostic was fixed. Convex codegen uploaded the configured deployment; production availability UNCONFIRMED.
+- 2026-09-09 [TOOL] PR #120 merge conflict resolved by merging `origin/main` at `98d040f` (including #119) into the branch; 15 focused tests and the Convex TypeScript check passed before merge commit `174c67b` was pushed.
 - 2026-09-08 [TOOL] PR #119 opened: https://github.com/Leykwan132/chat-saas/pull/119 (fix commit `c371fd1`). 12 tests revalidated under Node 22; targeted ESLint + diff check pass; review found no actionable issues. Convex API bindings regenerated; no production deploy/changelog (unshipped).
 - 2026-09-08 [TOOL] Prod Instagram reconnect unblock: `npx convex run --prod internal.channels.internalDisconnectByIgUserId` for IG user `17841415503021124` (`kilobot.app`); row `k9760yy2qkn3ee51etb974q0f18dzwra` was `error` after a failed re-connect. No conversations in the last 500.
 - 2026-09-08 [TOOL] #118 opened from `cursor/host-branded-welcome` onto `main` with host-branded first-signup welcome title. 4 focused tests pass under Node 22.

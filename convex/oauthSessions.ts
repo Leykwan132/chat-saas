@@ -17,6 +17,7 @@ export const internalCreate = internalMutation({
     orgId: v.string(),
     userId: v.string(),
     returnPath: v.string(),
+    agentId: v.optional(v.id("agents")),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("oauthSessions", {
@@ -25,6 +26,7 @@ export const internalCreate = internalMutation({
       orgId: args.orgId,
       userId: args.userId,
       returnPath: args.returnPath,
+      agentId: args.agentId,
       expiresAt: Date.now() + SESSION_TTL_MS,
       consumed: false,
     });

@@ -1545,6 +1545,7 @@ export default defineSchema({
     // Page picker (authorization codes are single-use).
     pendingUserAccessToken: v.optional(v.string()),
     enableCommentWebhooks: v.optional(v.boolean()),
+    agentId: v.optional(v.id("agents")),
   })
     .index("by_csrf", ["csrf"])
     .index("by_orgId", ["orgId"]),

@@ -9,8 +9,8 @@
 // authenticate forged payloads.
 //
 // Used by:
-//   - /auth/instagram/deauthorize    (signed with INSTAGRAM_APP_SECRET)
-//   - /auth/instagram/data-deletion  (signed with INSTAGRAM_APP_SECRET)
+//   - /auth/instagram/deauthorize    (signed with META_IG_APP_SECRET)
+//   - /auth/instagram/data-deletion  (signed with META_IG_APP_SECRET)
 //   - /auth/messenger/deauthorize    (signed with META_APP_SECRET)
 //   - /auth/messenger/data-deletion  (signed with META_APP_SECRET)
 

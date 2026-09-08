@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { assertWorkosUserCanConnectInstagram } from "./instagramConnectAccess";
 import {
   encodeOAuthState,
@@ -36,17 +35,20 @@ const INSTAGRAM_SCOPES = [
 // per-flow destination travels inside `state.returnPath`.
 export const start = action({
   args: {
+    agentId: v.id("agents"),
     returnPath: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ authorizeUrl: string }> => {
-    const { orgId, userId } = await getAuthContext(ctx);
+    const { orgId: channelOrgId, userId } = await ctx.runQuery(
+      internal.instagramChannelAssignment.getConnectContext,
+      { agentId: args.agentId },
+    );
     await assertWorkosUserCanConnectInstagram(ctx, userId);
-    const channelOrgId = resolveChannelOrgId(orgId, userId);
 
     const appId = process.env.META_IG_APP_ID;
     if (!appId) {
       throw new Error(
-        "INSTAGRAM_APP_ID is not configured on the Convex deployment.",
+        "META_IG_APP_ID is not configured on the Convex deployment.",
       );
     }
 
@@ -65,6 +67,7 @@ export const start = action({
       orgId: channelOrgId,
       userId,
       returnPath,
+      agentId: args.agentId,
     });
 
     const state = encodeOAuthState({ csrf, returnPath });
