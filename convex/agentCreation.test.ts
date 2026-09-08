@@ -188,4 +188,62 @@ describe("goal-based agent creation", () => {
       { workosUserId: ownerWorkosUserId, enabled: true },
     ]);
   });
+
+  test("lets an organizational admin create an agent without an explicit create claim", async () => {
+    const testInstance = initTest();
+    const adminWorkosUserId = "org-admin-creator";
+    await testInstance.run(async (ctx) => {
+      const now = Date.now();
+      const ownerId = await ctx.db.insert("users", {
+        workosUserId: "org-admin-owner",
+        email: "owner@example.com",
+        createdAt: now,
+        updatedAt: now,
+      });
+      const adminId = await ctx.db.insert("users", {
+        workosUserId: adminWorkosUserId,
+        email: "admin@example.com",
+        createdAt: now,
+        updatedAt: now,
+      });
+      const teamId = await ctx.db.insert("teams", {
+        type: "organizational",
+        name: "Admin Create",
+        ownerId,
+        workosOrgId: "org-admin-create",
+        adminPermissions: [Permission.AGENTS_MANAGE],
+        createdAt: now,
+        updatedAt: now,
+      });
+      await ctx.db.insert("teamMemberships", {
+        teamId,
+        userId: ownerId,
+        role: "owner",
+        createdAt: now,
+      });
+      await ctx.db.insert("teamMemberships", {
+        teamId,
+        userId: adminId,
+        role: "admin",
+        createdAt: now,
+      });
+      await ctx.db.patch(adminId, { activeTeamId: teamId, updatedAt: now });
+    });
+
+    const agentId = await testInstance
+      .withIdentity({
+        subject: adminWorkosUserId,
+        org_id: "org-admin-create",
+        role: "admin",
+        permissions: [Permission.AGENTS_MANAGE],
+      })
+      .mutation(api.agents.create, {
+        name: "Admin Agent",
+        businessName: "Admin Business",
+        businessDescription: "Created by an admin",
+        goal: "support",
+      });
+
+    expect(agentId).toBeTruthy();
+  });
 });

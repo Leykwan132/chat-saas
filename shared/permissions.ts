@@ -184,12 +184,12 @@ export type TeamFeatureAccess = Record<TeamFeatureKey, FeatureAccessLevel>;
 
 const ADMIN_AND_OWNER_ONLY_PERMISSIONS: PermissionSlug[] = [
   Permission.ANALYTICS_READ,
+  Permission.AGENTS_CREATE,
 ];
 
 const OWNER_ONLY_PERMISSIONS: PermissionSlug[] = [
   Permission.FULL_CONTROL,
   Permission.PERMISSIONS_MANAGE,
-  Permission.AGENTS_CREATE,
   Permission.WIDGETS_DSYNC_MANAGE,
   Permission.WIDGETS_USERS_TABLE_MANAGE,
 ];
@@ -407,6 +407,9 @@ export function resolvePermissionsForRole(
     }
     if (!permissions.includes(Permission.BROADCAST_MANAGE)) {
       permissions.push(Permission.BROADCAST_MANAGE);
+    }
+    if (!permissions.includes(Permission.AGENTS_CREATE)) {
+      permissions.push(Permission.AGENTS_CREATE);
     }
     return permissions;
   }

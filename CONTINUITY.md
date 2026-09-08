@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [CODE] #112 now also gives Partner Programme admins effective agent-create permission and groups Cancel beside Confirm in the plan-change dialog. Next: push the revision, review/merge, deploy, verify both hosts, then changelog.
+- 2026-09-08 [CODE] #112 now grants Admin `agents:create` and groups Cancel beside Confirm in the plan-change dialog. Next: review/merge, deploy, verify both hosts, then changelog.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
@@ -58,7 +58,7 @@
 
 # Done (recent)
 
-- 2026-09-08 [CODE] Dual-role users keep native Stripe and exact partner-organization entitlements in separate signed sessions; multi-org partner login includes an organization picker (I006, draft #112).
+- 2026-09-08 [CODE] Admin role can create agents; Confirm plan change keeps Cancel beside Confirm; dual-role sessions stay surface-scoped (I006, #112).
 - 2026-09-08 [CODE] Partner-host Convex auth no longer loops: stable `fetchAccessToken` via `useCallback` in `src/partnerAuth/usePartnerConvexAuth.ts` (I005, #111).
 - 2026-09-08 [CODE] Sidebar brand mark follows the hostname: partner logo + name (initial if no logo) on custom domains, Kilobot on native hosts; branding lookup shared via `useHostBranding` (#110).
 - 2026-09-08 [CODE] Partner customers can enter `/workspace`, Settings, and Pricing on their domain; direct WorkOS `useAuth` imports replaced with the host-aware hook (I004, #109 on `main`).
@@ -79,7 +79,7 @@
 
 # Receipts
 
-- 2026-09-08 [TOOL] #112 admin/dialog follow-up: 26 focused tests pass; targeted ESLint, app/Convex TypeScript checks, and `git diff --check` pass under Node 22.
+- 2026-09-08 [TOOL] #112 admin-create + plan-dialog follow-up: 32 focused tests pass; targeted ESLint and app TypeScript check pass under Node 22. Pre-existing `TeamRolesAndPermissionsPanel` `set-state-in-effect` lint remains.
 - 2026-09-08 [TOOL] Dual-role revision committed as `d6fda7e`, pushed, and #112 updated and marked ready for review.
 - 2026-09-08 [TOOL] Dual-role entitlement revision: 25 focused plan/credit/auth/workspace tests pass; Convex codegen, app/Convex TypeScript checks, targeted ESLint, full TypeScript/Vite production build, and `git diff --check` pass under Node 22. Full Vitest exposes only `convex/backfillEvents.test.ts`, independently reproduced without the changed analytics file; its fixed July/August 2026 billing period is stale against the current September clock.
 - 2026-09-08 [TOOL] Revised I006 fix: 20 plan, credit, provisioning, and workspace tests pass; three new assertions fail on old active-team logic (wrong org plan and owner marked managed twice). Node v22 targeted ESLint, Convex TypeScript check, and `git diff --check` pass.

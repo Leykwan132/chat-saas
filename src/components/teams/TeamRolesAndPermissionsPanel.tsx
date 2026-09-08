@@ -266,7 +266,6 @@ function getUpdatedPermissions(
   key: UiPermissionKey,
   value: 'edit' | 'view' | 'none',
   currentPermissions: string[],
-  role: OrgRoleKey,
 ): string[] {
   const mapping = ITEM_PERMISSIONS[key];
   if (!mapping) return currentPermissions;
@@ -275,13 +274,7 @@ function getUpdatedPermissions(
   let updated = currentPermissions.filter(p => !(allItemSlugs as string[]).includes(p));
 
   if (value === 'edit') {
-    const manageToAssign = mapping.manage.filter((p) => {
-      if (p === Permission.AGENTS_CREATE && role !== 'owner') {
-        return false;
-      }
-      return true;
-    });
-    updated = [...updated, ...mapping.read, ...manageToAssign];
+    updated = [...updated, ...mapping.read, ...mapping.manage];
   } else if (value === 'view') {
     updated = [...updated, ...mapping.read];
   }
@@ -466,7 +459,7 @@ export function TeamRolesAndPermissionsPanel({
 
   const handlePermissionChange = (key: UiPermissionKey, value: 'edit' | 'view' | 'none') => {
     if (!canEditManagedRole || !draftPermissions || !managedRole) return;
-    const updated = getUpdatedPermissions(key, value, draftPermissions, managedRole);
+    const updated = getUpdatedPermissions(key, value, draftPermissions);
     setDraftPermissions(updated);
   };
 
