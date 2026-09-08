@@ -118,8 +118,22 @@ async function seedPartnerCustomer(
       updatedAt: now,
     });
     await ctx.db.patch(userId, { activeTeamId: teamId });
+    const agentId = await ctx.db.insert("agents", {
+      name: "Partner Agent",
+      provider: "openrouter",
+      model: "deepseek/deepseek-v4-flash",
+      systemPrompt: "Test",
+      templateKey: "blank",
+      fileSize: 0,
+      userId: workosUserId,
+      orgId: "partner-org-customer",
+      createdAt: now,
+      updatedAt: now,
+    });
     return {
       workosUserId,
+      userId,
+      agentId,
       partnerId,
       partnerOrganizationId,
       orgId: "partner-org-customer",
@@ -171,6 +185,57 @@ test("partner sessions load account credit usage from the signed organization", 
     paginationOpts: { numItems: 10, cursor: null },
   });
   expect(history.page).toEqual([]);
+});
+
+test("partner sessions load agent credit usage from the signed organization", async () => {
+  const t = initTest();
+  const seeded = await seedPartnerCustomer(t);
+  await t.run(async (ctx) => {
+    const createdAt = seeded.periodStart + 1_000;
+    const creditLogId = await ctx.db.insert("creditLogs", {
+      orgId: seeded.orgId,
+      userId: seeded.userId,
+      amount: -40,
+      type: "deduction",
+      eventType: "usage",
+      balanceBefore: 8000,
+      balanceAfter: 7960,
+      creditCost: 40,
+      modelId: "deepseek/deepseek-v4-flash",
+      agentId: seeded.agentId,
+      createdAt,
+    });
+    await ctx.db.insert("creditUsageEvents", {
+      userId: seeded.userId,
+      orgId: seeded.orgId,
+      agentId: seeded.agentId,
+      modelId: "deepseek/deepseek-v4-flash",
+      credits: 40,
+      creditLogId,
+      createdAt,
+    });
+  });
+  const partner = t.withIdentity(
+    partnerIdentity(seeded.workosUserId, seeded.partnerId, seeded.partnerOrganizationId),
+  );
+
+  const usage = await partner.query(api.creditUsageAnalytics.getAgentCreditUsage, {
+    agentId: seeded.agentId,
+    timeRange: "period",
+  });
+  expect(usage?.plan).toBe("growth");
+  expect(usage?.periodStartMs).toBe(seeded.periodStart);
+  expect(usage?.periodEndMs).toBe(seeded.periodEnd);
+  expect(usage?.totalCreditsUsed).toBe(40);
+
+  const history = await partner.query(api.creditUsageAnalytics.getAgentCreditSpendHistory, {
+    agentId: seeded.agentId,
+    timeRange: "period",
+    paginationOpts: { numItems: 10, cursor: null },
+  });
+  expect(history.periodStartMs).toBe(seeded.periodStart);
+  expect(history.page).toHaveLength(1);
+  expect(history.page[0]?.credits).toBe(40);
 });
 
 test("partner account usage keeps the organization plan when a personal Stripe team exists", async () => {

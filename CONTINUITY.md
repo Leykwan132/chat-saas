@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-08 [TOOL] Now: Instagram/Messenger app gate is in #114. PostHog flags `enable_instagram` (871040) and `enable_messenger` (871041) are already active. Next: merge, deploy, verify Channels.
+- 2026-09-08 [USER] Now: partner agent overview crashes on `getAgentCreditUsage` (`Personal team not found`). Same I007 leftover: agent usage still used `getActiveTeamForUser`. Next: PR, merge, deploy, verify on `chat.morphswiftstudio.com`.
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
 - 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
@@ -52,6 +52,7 @@
 - 2026-08-31 [USER] D756 ACTIVE: valid WhatsApp BSUID-change system events move the customer recipient ID and linked WhatsApp conversation address without creating an inbox, analytics, or AI event.
 - 2026-09-06 [CODE] I001 OPEN: Hallucinated booking/email-link copy is replaced after generation; unverified claims now receive a safe retry response rather than silence. Remaining gap: playground can briefly stream model text before the saved message is rewritten.
 - 2026-09-07 [USER] I002 RESOLVED: Meta rejected `comments` on the Facebook Page `subscribed_apps` edge with error #100; use valid Page field `feed`, while configuring Instagram-specific fields on the app’s Instagram webhook object.
+- 2026-09-08 [USER] I008 FIX IN DRAFT: Symptoms: partner user on agent overview got Convex `getAgentCreditUsage` Server Error; Convex log is `Personal team not found` from `getActiveTeamForUser`. Cause: #113 moved account/workspace usage onto `resolveCreditUsageSession`, but `getAgentCreditUsage` and `getAgentCreditSpendHistory` still resolved Stripe/personal team. Mitigation: both queries use the signed partner org plan/period and org-scoped agent events. Native path unchanged. Deploy/verify UNCONFIRMED.
 - 2026-09-08 [USER] I007 FIX IN #113: Symptoms: partner user on Settings → Usage got Convex `getAccountCreditUsage` Server Error. Cause: that query (and sibling spend/workspace usage queries) still called `getActiveTeamForUser` + Stripe, which skips the signed white-label team and can throw `Personal team not found` or resolve the wrong wallet. Mitigation: `resolveCreditUsageSession` uses the signed partner org plan/period/timezone; native path unchanged. Deploy/verify on `chat.morphswiftstudio.com` UNCONFIRMED.
 - 2026-09-08 [USER] I006 FIX REVISED IN DRAFT #112: `kilobot.app` bounced `leykwan132@gmail.com` to onboarding because plan resolution followed a persisted customer-workspace `activeTeamId` and masked the active Stripe subscription. Mitigation: signed auth surface selects entitlement scope; native sessions ignore customer teams and use Stripe, while partner sessions validate exact domain/partner/org/account/team claims and use that organization wallet. Side finding: the user may have started a real personal Stripe subscription during the loop; refund/cancel decision UNCONFIRMED.
 - 2026-09-08 [USER] I005 RESOLVED (#111): Symptoms: `chat.morphswiftstudio.com/workspace` spins forever after partner sign-in; Kilobot host unaffected. Cause: `usePartnerConvexAuth` returned a new `fetchAccessToken` arrow every render; `ConvexProviderWithAuth` keys its `setAuth` effect on that function, so each successful auth re-render cleared auth and re-ran it (loading never settled). Mitigation: hook moved to `src/partnerAuth/usePartnerConvexAuth.ts` with `useCallback`; `usePartnerConvexAuth.test.tsx` fails if the callback identity changes across renders. Side finding: pre-existing `react-refresh/only-export-components` lint error in `AppAuthProvider.tsx` (line 26) untouched.
@@ -60,13 +61,13 @@
 
 # Done (recent)
 
+- 2026-09-08 [CODE] Partner agent credit usage/spend history read the signed org wallet instead of Stripe/personal team (I008).
 - 2026-09-08 [CODE] Instagram and Messenger connect cards and signup actions use separate PostHog flags plus `leykwan132@gmail.com` (D792).
 - 2026-09-08 [CODE] Partner Usage tab reads the signed org wallet instead of Stripe/personal team (I007).
 - 2026-09-08 [CODE] Admin role can create agents; Confirm plan change keeps Cancel beside Confirm; dual-role sessions stay surface-scoped (I006, #112).
 - 2026-09-08 [CODE] Partner-host Convex auth no longer loops: stable `fetchAccessToken` via `useCallback` in `src/partnerAuth/usePartnerConvexAuth.ts` (I005, #111).
 - 2026-09-08 [CODE] Sidebar brand mark follows the hostname: partner logo + name (initial if no logo) on custom domains, Kilobot on native hosts; branding lookup shared via `useHostBranding` (#110).
 - 2026-09-08 [CODE] Partner customers can enter `/workspace`, Settings, and Pricing on their domain; direct WorkOS `useAuth` imports replaced with the host-aware hook (I004, #109 on `main`).
-- 2026-09-08 [CODE] Milestone: partner favicon, custom tab title, Branding polish, and atomic org credit provisioning on `main` (#101–#108, I003).
 
 # Working set
 
@@ -75,14 +76,14 @@
 - 2026-09-08 [CODE] `shared/{instagram,messenger}Access.ts`, `src/lib/posthogFeatureFlags.ts`, `src/pages/ChannelsPage.tsx`, `convex/{instagramConnectAccess,messengerConnectAccess,instagramEmbeddedSignup,instagramAuth,instagramConnect,messengerConnect,messengerAuth}*`
 - 2026-09-07 [CODE] `shared/commentToInboxAccess.ts`, `src/components/Connect{Instagram,Messenger}Button*`, `convex/{instagramEmbeddedSignup,messengerConnect,messengerAuth,oauthSessions,commentAutomationMeta,schema}*`
 - 2026-09-08 [CODE] `src/lib/host{Branding,Favicon,DocumentTitle}*`, `src/hooks/useHostBranding.ts`, `src/components/{HostBrandMark,ExpandedAppSidebarHeader,app-sidebar,AppRuntimeEffects}*`, `src/components/workspace/AgentsSidebar*`
-- 2026-09-08 [CODE] `convex/users.ts`, `convex/whiteLabel/{planResolver.ts,managedWorkspace.test.ts}`, `convex/plans.ts`, `src/lib/organizationAccess.ts`
+- 2026-09-08 [CODE] `convex/creditUsageAnalytics.ts`, `convex/creditUsageAnalytics.partner.test.ts`, `convex/creditUsageSession.ts`
 - 2026-09-08 [CODE] `convex/{entitlementScope,authUtils,plans,credits,creditUsageAnalytics,creditUsageSession,teams,teamHelpers}*`, `convex/whiteLabel/{partnerAuth*,customerWorkspace*,sessionEntitlementScope.test.ts}`, `src/pages/SignInPage.tsx`
 - 2026-09-08 [CODE] `src/partnerAuth/{AppAuthProvider.tsx,appAuthUsage.test.ts,usePartnerConvexAuth.ts,usePartnerConvexAuth.test.tsx}`, `src/components/RequireOrganization.tsx`, `src/pages/{SettingsPage,PricingPage}.tsx`, `src/router/AppRouteComponents.tsx`
 - 2026-09-07 [CODE] `src/components/partner/PartnerBrandingTab*`, `src/pages/{PartnerPage,SignInPage}.tsx`, `convex/whiteLabel/{portal,portalActions,portalProvisioning,portalOverview,creditLedger}.ts`
 
 # Receipts
 
-- 2026-09-08 [TOOL] #114 opened from `cursor/instagram-messenger-feature-flags` onto `main`. PostHog flags 871040 and 871041 already active. 40 focused tests pass under Node 22.
+- 2026-09-08 [TOOL] Partner agent-usage tests: 3 pass under Node 22, including the I008 crash path. Native `creditUsageAnalytics.test.ts` 2 pass. `backfillEvents.test.ts` still fails on its stale July/August 2026 billing period (independent of this change).
 - 2026-09-08 [TOOL] #113 opened from `cursor/partner-usage-and-settings` onto `main` with the I007 Usage fix plus leftover post-#112 Settings/admin follow-ups. 15 focused tests pass under Node 22.
 - 2026-09-08 [TOOL] #112 admin-create + plan-dialog follow-up: 32 focused tests pass; targeted ESLint and app TypeScript check pass under Node 22. Pre-existing `TeamRolesAndPermissionsPanel` `set-state-in-effect` lint remains.
 - 2026-09-08 [TOOL] Dual-role revision committed as `d6fda7e`, pushed, and #112 updated and marked ready for review.
