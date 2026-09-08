@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useHostBrand } from '@/hooks/useHostBranding';
+import { hostBrandName } from '@/lib/hostBranding';
 
 type WorkspaceSetupChecklistIntroDialogProps = {
   open: boolean;
@@ -75,8 +77,9 @@ export function WorkspaceSetupChecklistIntroDialog({
   onCheckOut,
   onSkip,
 }: WorkspaceSetupChecklistIntroDialogProps) {
+  const brandName = hostBrandName(useHostBrand());
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open && brandName !== ''} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
         className="overflow-hidden rounded-lg p-0 sm:max-w-[46.25rem]"
@@ -85,7 +88,7 @@ export function WorkspaceSetupChecklistIntroDialog({
           <div className="flex flex-col justify-between gap-6 p-6 sm:min-h-[27.25rem] sm:p-7">
             <div className="flex flex-col gap-7">
               <DialogHeader>
-                <DialogTitle className="text-xl">Welcome to Kilobot</DialogTitle>
+                <DialogTitle className="text-xl">Welcome to {brandName}</DialogTitle>
                 <DialogDescription>
                   Set up your first AI agent in minutes.
                 </DialogDescription>
