@@ -15,18 +15,6 @@ function instagramGraphBase() {
   return `https://graph.instagram.com/${graphVersion()}`;
 }
 
-const INSTAGRAM_LOGIN_WEBHOOK_FIELDS = [
-  "comments",
-  "live_comments",
-  "messages",
-  "message_echoes",
-  "message_reactions",
-  "messaging_handover",
-  "messaging_optins",
-  "messaging_postbacks",
-  "messaging_referral",
-].join(",");
-
 type GraphErrorBody = {
   error?: {
     message?: string;
@@ -56,24 +44,6 @@ async function graphFetch<T>(
     throw new Error(`${context} failed: ${msg}`);
   }
   return body as T;
-}
-
-export async function subscribeInstagramLoginWebhooks(
-  igUserId: string,
-  accessToken: string,
-) {
-  const url = new URL(
-    `${instagramGraphBase()}/${igUserId}/subscribed_apps`,
-  );
-  url.searchParams.set("subscribed_fields", INSTAGRAM_LOGIN_WEBHOOK_FIELDS);
-  await graphFetch(
-    url.toString(),
-    {
-      method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}` },
-    },
-    "Instagram webhook subscription",
-  );
 }
 
 // Internal action invoked from the static HTTP callback at
@@ -194,8 +164,6 @@ export const internalCompleteSignup = internalAction({
       const tokenExpiresAt = longRes.expires_in
         ? Date.now() + longRes.expires_in * 1000
         : undefined;
-
-      await subscribeInstagramLoginWebhooks(igUserId, longToken);
 
       // 3. Profile metadata for the UI. Best-effort; failure here should not
       //    block the connection.
