@@ -43,8 +43,11 @@ export async function receive(
   try {
     payload = JSON.parse(rawBody) as InstagramWebhookEnvelope;
   } catch {
+    console.log("[instagram-webhook] receive:invalid-json:raw-meta", rawBody);
     return new Response("invalid json", { status: 400 });
   }
+
+  console.log("[instagram-webhook] receive:raw-meta", rawBody);
 
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
