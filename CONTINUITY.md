@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-09 [CODE] Now: deleted or invalid Partner Programme entitlement records return `ACCOUNT_UNAVAILABLE`; the app root shows a centered recovery modal and replaces every protected route with `/` when the user chooses Back to home. Unshipped.
 - 2026-09-09 [USER] Goal: Avatar create should persist preset opening text and representative instructions so visitors can chat immediately. Opening: `Hello, how can I help you.` Instructions fill `{{business_name}}` / `{{business_description}}` from the agent. Unshipped in PR https://github.com/Leykwan132/chat-saas/pull/133
 - 2026-09-09 [CODE] Now: `avatarEmbed.configure` writes that default LiveAvatar context when none exists; existing custom context is left alone.
 - 2026-09-09 [CODE] Now: Edit is a dropdown with Edit Avatar and Delete Avatar; delete clears the live avatar and returns the empty create state.
@@ -99,6 +100,7 @@
 
 # Receipts
 
+- 2026-09-09 [TOOL] PR #135 opened: https://github.com/Leykwan132/chat-saas/pull/135. Nine focused auth/recovery tests plus app and Convex TypeScript checks pass under Node 22; production availability UNCONFIRMED.
 - 2026-09-09 [TOOL] Avatar delete from Edit dropdown: pushed to https://github.com/Leykwan132/chat-saas/pull/133
 - 2026-09-09 [TOOL] Avatar create defaults: 18 focused default-prompt, configure, and editor tests pass under Node 22.
 - 2026-09-09 [TOOL] Instagram Comment-to-Inbox: 9 focused webhook, Meta request, ingestion, and delivery tests pass; Convex TypeScript check and `git diff --check` pass under Node 22. Convex codegen did not refresh the checked-in API declaration, so the new internal module was added to `convex/_generated/api.d.ts` with the corresponding generator shape.

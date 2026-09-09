@@ -21,6 +21,7 @@ import { Permission } from '../../shared/permissions';
 import { NativeAppAuthProvider, useAuth } from '@/partnerAuth/AppAuthProvider';
 import { PartnerAuthProvider } from '@/partnerAuth/PartnerAuthProvider';
 import { usePartnerConvexAuth } from '@/partnerAuth/usePartnerConvexAuth';
+import { AccountUnavailableBoundary } from '@/components/AccountUnavailableBoundary';
 
 export function OldAgentRedirect() {
   const { agentId } = useParams();
@@ -164,16 +165,18 @@ export function AppRootLayout({
 }
 function AppContent() {
   return (
-    <TooltipProvider>
-      <AdjustPlanProvider>
-        <UpgradeModalProvider>
-          <HostFavicon />
-          <PostHogIdentifier />
-          <ScrollToTop />
-          <Outlet />
-          <Toaster />
-        </UpgradeModalProvider>
-      </AdjustPlanProvider>
-    </TooltipProvider>
+    <AccountUnavailableBoundary>
+      <TooltipProvider>
+        <AdjustPlanProvider>
+          <UpgradeModalProvider>
+            <HostFavicon />
+            <PostHogIdentifier />
+            <ScrollToTop />
+            <Outlet />
+            <Toaster />
+          </UpgradeModalProvider>
+        </AdjustPlanProvider>
+      </TooltipProvider>
+    </AccountUnavailableBoundary>
   );
 }
