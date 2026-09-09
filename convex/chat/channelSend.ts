@@ -185,6 +185,8 @@ export async function sendMetaReaction(
   switch (conversation.service) {
     case "whatsapp":
       return sendWhatsAppReaction(channel, options);
+    case "instagram":
+      return sendInstagramReaction(conversation, channel, options);
     case "messenger":
       return sendMessengerReaction(conversation, channel, options);
     default:
@@ -203,6 +205,8 @@ export async function removeMetaReaction(
         targetExternalId: options.targetExternalId,
         emoji: "",
       });
+    case "instagram":
+      return sendInstagramUnreact(conversation, channel, options);
     case "messenger":
       return sendMessengerUnreact(conversation, channel, options);
     default:
@@ -1115,6 +1119,63 @@ async function sendMessengerReaction(
     targetExternalId: options.targetExternalId,
     emoji: options.emoji,
   });
+}
+
+async function sendInstagramReaction(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: MetaReactionOptions,
+): Promise<ChannelSendResult> {
+  return sendInstagramReactionAction(conversation, channel, {
+    senderAction: "react",
+    targetExternalId: options.targetExternalId,
+    emoji: options.emoji,
+  });
+}
+
+async function sendInstagramUnreact(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: Omit<MetaReactionOptions, "emoji">,
+): Promise<ChannelSendResult> {
+  return sendInstagramReactionAction(conversation, channel, {
+    senderAction: "unreact",
+    targetExternalId: options.targetExternalId,
+  });
+}
+
+async function sendInstagramReactionAction(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: {
+    senderAction: "react" | "unreact";
+    targetExternalId: string;
+    emoji?: string;
+  },
+): Promise<ChannelSendResult> {
+  if (channel.status !== "connected" || !channel.igUserId) {
+    return { ok: false, error: "Instagram channel is not connected", policy: "generic" };
+  }
+  const accessToken = normalizeMetaAccessToken(channel.accessToken);
+  if (!accessToken) {
+    return { ok: false, error: "Instagram channel is not connected", policy: "generic" };
+  }
+  const res = await fetch(instagramMessagingUrl(channel), {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      recipient: { id: conversation.contactAddress },
+      sender_action: options.senderAction,
+      payload: {
+        message_id: options.targetExternalId,
+        ...(options.senderAction === "react" ? { reaction: options.emoji } : {}),
+      },
+    }),
+  });
+  return parseGraphResponse(res);
 }
 
 async function sendMessengerUnreact(

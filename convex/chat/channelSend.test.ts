@@ -40,6 +40,21 @@ function messengerChannel() {
   } as unknown as Doc<"channels">;
 }
 
+function instagramConversation() {
+  return {
+    service: "instagram",
+    contactAddress: "ig-scoped-user",
+  } as unknown as Doc<"conversations">;
+}
+
+function instagramChannel() {
+  return {
+    status: "connected",
+    igUserId: "ig-account-id",
+    accessToken: "instagram-token",
+  } as unknown as Doc<"channels">;
+}
+
 function parseBody(init: RequestInit | undefined) {
   return JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
 }
@@ -154,6 +169,31 @@ test("sends WhatsApp media, text, and reactions to a username recipient", async 
     expect(body).toMatchObject({ recipient: "US.13491208655302741918" });
     expect(body).not.toHaveProperty("to");
   }
+});
+
+test("sends Instagram reactions through Facebook's me messages endpoint", async () => {
+  const requests: Array<{ url: string; body: Record<string, unknown> }> = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      requests.push({ url: String(url), body: parseBody(init) });
+      return new Response(JSON.stringify({ recipient_id: "ig-scoped-user" }), { status: 200 });
+    }),
+  );
+
+  await expect(sendMetaReaction(instagramConversation(), instagramChannel(), {
+    targetExternalId: "ig-message-id",
+    emoji: "❤️",
+  })).resolves.toMatchObject({ ok: true });
+
+  expect(requests).toEqual([{
+    url: "https://graph.facebook.com/v25.0/me/messages",
+    body: {
+      recipient: { id: "ig-scoped-user" },
+      sender_action: "react",
+      payload: { message_id: "ig-message-id", reaction: "❤️" },
+    },
+  }]);
 });
 
 test("does not send WhatsApp text when image delivery fails first", async () => {

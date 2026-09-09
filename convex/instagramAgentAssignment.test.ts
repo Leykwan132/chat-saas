@@ -76,7 +76,6 @@ async function setup() {
 
 test("Instagram Login saves the selected agent and remains visible after empty backfill", async () => {
   const { t, owner, selectedAgentId, newestAgentId } = await setup();
-  const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
   const { channelId } = await t.action(internal.instagramConnect.internalCompleteSignup, {
     agentId: selectedAgentId, code: "code", redirectUri: "https://example.com/callback", orgId: "", userId: "owner",
   });
@@ -87,16 +86,17 @@ test("Instagram Login saves the selected agent and remains visible after empty b
     orgId: "", connectedByUserId: "owner", conversationCount: 0,
   }]);
   expect(await owner.query(api.channels.listForCurrentOrg, { agentId: newestAgentId })).toEqual([]);
-  expect(vi.mocked(globalThis.fetch).mock.calls.some(
-    ([input]) => String(input).includes("/subscribed_apps"),
-  )).toBe(false);
-  expect(logSpy).toHaveBeenCalledWith("[instagram-connect] token response", {
-    access_token: "[redacted]",
-    user_id: "ig-1",
-  });
-  expect(logSpy).toHaveBeenCalledWith("[instagram-connect] profile response", {
-    id: "ig-1",
-    username: "store",
+  const subscriptionRequest = vi.mocked(globalThis.fetch).mock.calls.find(
+    ([input]) => new URL(String(input)).pathname === "/v25.0/me/subscribed_apps",
+  );
+  expect(subscriptionRequest).toBeDefined();
+  const [input, init] = subscriptionRequest!;
+  expect(new URL(String(input)).searchParams.get("subscribed_fields")).toBe(
+    "comments,messages,message_reactions,messaging_seen,live_comments,message_echoes",
+  );
+  expect(init).toMatchObject({
+    method: "POST",
+    headers: { Authorization: "Bearer long-token" },
   });
 });
 
