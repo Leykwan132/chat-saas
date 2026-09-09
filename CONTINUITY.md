@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-09 [USER] Goal: Avatar dashboard preview must always use a sandbox session; public live links must always use a non-sandbox session. Unshipped.
 - 2026-09-09 [USER] Goal: Avatar create should persist preset opening text and representative instructions so visitors can chat immediately. Opening: `Hello, how can I help you.` Instructions fill `{{business_name}}` / `{{business_description}}` from the agent. Unshipped in PR https://github.com/Leykwan132/chat-saas/pull/133
 - 2026-09-09 [CODE] Now: `avatarEmbed.configure` writes that default LiveAvatar context when none exists; existing custom context is left alone.
 - 2026-09-09 [CODE] Now: Edit is a dropdown with Edit Avatar and Delete Avatar; delete clears the live avatar and returns the empty create state.
@@ -75,16 +76,17 @@
 
 # Done (recent)
 
+- 2026-09-09 [CODE] Avatar dashboard previews now create sandbox sessions while public shared links create non-sandbox sessions, independent of environment configuration.
 - 2026-09-09 [CODE] Creating an Avatar now saves default opening text and representative instructions to LiveAvatar so chat can start without a separate context save.
 - 2026-09-09 [CODE] Avatar Edit is a dropdown with Edit Avatar and Delete Avatar.
 - 2026-09-08 [CODE] First-signup welcome modal uses the current host brand name instead of a hardcoded Kilobot title.
 - 2026-09-08 [CODE] Partner password reset completes on the current hostname and returns to `/sign-in` instead of kilobot.app (D794).
 - 2026-09-08 [CODE] Partner-created WorkOS logins on `kilobot.app` provision a personal team and complete Kilobot onboarding instead of crashing or inheriting partner `onboarded` (D793 / I009).
 - 2026-09-08 [CODE] Partner agent credit usage/spend history read the signed org wallet instead of Stripe/personal team (I008).
-- 2026-09-08 [CODE] Instagram and Messenger connect cards and signup actions use separate PostHog flags plus `leykwan132@gmail.com` (D792).
 
 # Working set
 
+- 2026-09-09 [CODE] `convex/avatar{Provider,Session}.ts`, `src/components/avatar/{AvatarVideoStage,useAvatarSession}.ts`, `src/pages/AvatarPage.tsx`
 - 2026-09-09 [CODE] `shared/avatarContextDefaults.ts`, `convex/{avatarContext,avatarEmbed,avatar,avatarRemove}.ts`, `src/pages/AvatarPage.tsx`
 - 2026-09-08 [CODE] `convex/instagram{ChannelAssignment,AgentAssignment.test,EmbeddedSignup}.ts`, `src/components/ConnectInstagramButton{,.test}.tsx`, `convex/_generated/api.d.ts`
 - 2026-09-08 [CODE] `src/components/setup-checklist/WorkspaceSetupChecklistIntroDialog*`
@@ -99,6 +101,7 @@
 
 # Receipts
 
+- 2026-09-09 [TOOL] Avatar session surfaces: 41 focused provider/session/embed/stage tests pass under Node 22, and `git diff --check` passes. Full suite has three pre-existing unrelated failures: two Google Calendar projection fixtures report `Calendar event not found`, and `SiteFooter` lacks `AppAuthProvider`.
 - 2026-09-09 [TOOL] Avatar delete from Edit dropdown: pushed to https://github.com/Leykwan132/chat-saas/pull/133
 - 2026-09-09 [TOOL] Avatar create defaults: 18 focused default-prompt, configure, and editor tests pass under Node 22.
 - 2026-09-09 [TOOL] Instagram Comment-to-Inbox: 9 focused webhook, Meta request, ingestion, and delivery tests pass; Convex TypeScript check and `git diff --check` pass under Node 22. Convex codegen did not refresh the checked-in API declaration, so the new internal module was added to `convex/_generated/api.d.ts` with the corresponding generator shape.

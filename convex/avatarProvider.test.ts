@@ -82,19 +82,26 @@ describe('LiveAvatar provider configuration', () => {
     expect(avatarProvider.GEMINI_LIVE_VOICES).toContain('Zubenelgenubi');
   });
 
-  it('keeps production sessions at ten minutes', () => {
+  it('caps production sessions at two minutes', () => {
     expect(buildLiveAvatarTokenRequest({
       sandbox: false,
       avatarId: 'production-avatar',
       voiceId: 'voice-id',
       language: 'en',
-    }).max_session_duration).toBe(600);
+    }).max_session_duration).toBe(120);
     expect(avatarProvider.buildLiveAvatarEmbedRequest({
       sandbox: false,
       avatarId: 'production-avatar',
       voiceId: 'voice-id',
       language: 'en',
-    }).max_session_duration).toBe(600);
+    }).max_session_duration).toBe(120);
+    expect(buildGeminiLiveTokenRequest({
+      sandbox: false,
+      avatarId: 'production-avatar',
+      contextId: 'context-id',
+      secretId: 'secret-id',
+      voice: 'Aoede',
+    }).max_session_duration).toBe(120);
   });
 
   it('maps only usable public avatars and friendly voice details', () => {

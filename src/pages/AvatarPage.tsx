@@ -135,6 +135,7 @@ export default function AvatarPage() {
                   coverImageType={configuration.coverImageType}
                   backgroundUrl={configuration.backgroundUrl}
                   backgroundType={configuration.backgroundType}
+                  sessionMode="preview"
                 />
               </div>
             </section>
