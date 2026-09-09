@@ -10,3 +10,13 @@ test('issues LITE Gemini tokens only after a provider context is saved', () => {
   expect(source).toContain("Save an Avatar context before starting a session");
   expect(source).not.toContain('buildLiveAvatarTokenRequest({');
 });
+
+test('uses fixed sandbox and live session actions without an environment mode', () => {
+  const source = readFileSync(new URL('./avatarSession.ts', import.meta.url), 'utf8');
+  expect(source).toContain('export const beginPreview = action');
+  expect(source).toContain('export const beginLive = action');
+  expect(source).toContain('beginAvatarSession(ctx, args, true)');
+  expect(source).toContain('beginAvatarSession(ctx, args, false)');
+  expect(source).not.toContain('HEYGEN_SANDBOX_MODE');
+  expect(source).not.toContain('parseSandboxMode');
+});

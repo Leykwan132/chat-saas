@@ -6,9 +6,11 @@ import { AvatarSessionRuntime } from './avatarSessionRuntime';
 import type { AvatarSessionServices } from './avatarSessionRuntime';
 import { createLiveAvatarSessionClient } from './liveAvatarSessionClient';
 
-export function useAvatarSession(publicKey: string) {
-  const beginSession = useAction(api.avatarSession.begin);
+export function useAvatarSession(publicKey: string, sessionMode: 'preview' | 'live') {
+  const beginPreviewSession = useAction(api.avatarSession.beginPreview);
+  const beginLiveSession = useAction(api.avatarSession.beginLive);
   const recordEvent = useMutation(api.avatarConversation.recordEvent);
+  const beginSession = sessionMode === 'preview' ? beginPreviewSession : beginLiveSession;
   const services = useMemo<AvatarSessionServices>(() => ({
     begin: async () => {
       const visitorId = getAvatarVisitorId(

@@ -20,6 +20,7 @@ export function AvatarVideoStage({
   backgroundUrl,
   backgroundType,
   fullScreen = false,
+  sessionMode = 'live',
 }: {
   publicKey: string;
   previewUrl?: string;
@@ -28,6 +29,7 @@ export function AvatarVideoStage({
   backgroundUrl?: string;
   backgroundType?: 'image' | 'video';
   fullScreen?: boolean;
+  sessionMode?: 'preview' | 'live';
 }) {
   const {
     phase,
@@ -36,7 +38,7 @@ export function AvatarVideoStage({
     videoRef,
     start,
     stop,
-  } = useAvatarSession(publicKey);
+  } = useAvatarSession(publicKey, sessionMode);
   const active = phase === 'active' || phase === 'stopping';
   const starting = phase === 'starting';
   const sourceVideoRef = useRef<HTMLVideoElement>(null);
