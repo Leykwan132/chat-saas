@@ -1,7 +1,7 @@
 import { v } from 'convex/values';
-import { action } from './_generated/server';
+import { action, type ActionCtx } from './_generated/server';
 import { internal } from './_generated/api';
-import { buildGeminiLiveTokenRequest, parseSandboxMode } from './avatarProvider';
+import { buildGeminiLiveTokenRequest } from './avatarProvider';
 import { DEFAULT_GEMINI_LIVE_VOICE } from '../shared/geminiLiveVoices';
 
 type TokenResponse = {
@@ -12,18 +12,36 @@ type TokenResponse = {
   message?: string;
 };
 
-export const begin = action({
+type AvatarSessionArgs = {
+  publicKey: string;
+  visitorId: string;
+};
+
+type AvatarSessionAccess = {
+  sessionId: string;
+  sessionToken: string;
+};
+
+export const beginPreview = action({
   args: { publicKey: v.string(), visitorId: v.string() },
-  handler: async (ctx, args): Promise<{
-    sessionId: string;
-    sessionToken: string;
-  }> => {
+  handler: async (ctx, args) => await beginAvatarSession(ctx, args, true),
+});
+
+export const beginLive = action({
+  args: { publicKey: v.string(), visitorId: v.string() },
+  handler: async (ctx, args) => await beginAvatarSession(ctx, args, false),
+});
+
+async function beginAvatarSession(
+  ctx: ActionCtx,
+  args: AvatarSessionArgs,
+  sandbox: boolean,
+): Promise<AvatarSessionAccess> {
     const configuration = await ctx.runQuery(internal.avatar.internalGetConfiguration, {
       publicKey: args.publicKey,
     });
     const apiKey = process.env.LIVEAVATAR_API_KEY?.trim();
     if (!apiKey) throw new Error('LIVEAVATAR_API_KEY is required');
-    const sandbox = parseSandboxMode(process.env.HEYGEN_SANDBOX_MODE);
     await ctx.runQuery(internal.avatar.assertSessionCapacity, {
       publicKey: args.publicKey,
     });
@@ -58,5 +76,4 @@ export const begin = action({
       isSandbox: sandbox,
     });
     return { sessionId, sessionToken };
-  },
-});
+}

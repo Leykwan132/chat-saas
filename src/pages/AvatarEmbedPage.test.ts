@@ -77,6 +77,11 @@ describe('Avatar embed runtime', () => {
     expect(source).not.toContain('.message(');
   });
 
+  it('uses sandbox only for the dashboard preview and live sessions for shared links', () => {
+    expect(source).not.toContain('sessionMode="preview"');
+    expect(settingsSource).toContain('sessionMode="preview"');
+  });
+
   it('keeps connector session lifecycle events', () => {
     expect(runtimeSource).toContain('startVoiceChat');
     expect(runtimeSource).toContain('recordEvent');

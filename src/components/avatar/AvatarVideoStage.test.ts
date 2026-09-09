@@ -11,6 +11,11 @@ describe('Avatar video stage', () => {
     expect(source).not.toContain('max-w-4xl');
   });
 
+  it('uses sandbox sessions only for the dashboard preview', () => {
+    expect(source).toContain("sessionMode = 'live'");
+    expect(source).toContain('useAvatarSession(publicKey, sessionMode)');
+  });
+
   it('uses the approved neutral bottom-centered Start Chat control', () => {
     expect(source).toContain('Start Chat');
     expect(source).toContain('variant="secondary"');
