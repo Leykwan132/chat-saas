@@ -108,6 +108,18 @@ test("chooses the keyword match once and persists the customer first", async () 
   };
   await t.mutation(internal.commentAutomationIngest.ingestComment, input);
   await t.mutation(internal.commentAutomationIngest.ingestComment, input);
+  const deliveryId = await t.run(async (ctx) =>
+    (await ctx.db.query("commentAutomationDeliveries").unique())?._id
+  );
+  if (deliveryId === undefined) throw new Error("Comment delivery was not created");
+  expect(await t.mutation(
+    internal.commentAutomationDelivery.claimDelivery,
+    { deliveryId },
+  )).not.toBeNull();
+  expect(await t.mutation(
+    internal.commentAutomationDelivery.completePrivateDelivery,
+    { deliveryId, success: true, externalId: "private-reply-1" },
+  )).toBe(true);
 
   const result = await t.run(async (ctx) => {
     const deliveries = await ctx.db.query("commentAutomationDeliveries").collect();
@@ -116,13 +128,21 @@ test("chooses the keyword match once and persists the customer first", async () 
       : null;
     const customers = await ctx.db.query("customers").collect();
     const conversations = await ctx.db.query("conversations").collect();
-    return { deliveries, automation, customers, conversations };
+    const messages = await ctx.db.query("messages").collect();
+    return { deliveries, automation, customers, conversations, messages };
   });
   expect(result.deliveries).toHaveLength(1);
   expect(result.automation?.trigger).toBe("keywords");
   expect(result.customers).toHaveLength(1);
   expect(result.customers[0]?.name).toBe("Alex");
   expect(result.conversations).toHaveLength(1);
+  expect(result.messages).toHaveLength(2);
+  expect(result.messages).toContainEqual(expect.objectContaining({
+    externalId: "private-reply-1",
+    direction: "outgoing",
+    content: "Sent privately",
+    workflowAutomationSource: "commentAutomation",
+  }));
   expect(result.deliveries.every((row) =>
     row.customerId === result.customers[0]?._id &&
     row.conversationId === result.conversations[0]?._id

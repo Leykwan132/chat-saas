@@ -3,6 +3,7 @@ type WorkflowOutboundSource =
   | 'human'
   | 'workflowReminder'
   | 'workflowFollowUp'
+  | 'commentAutomation'
   | 'broadcast';
 
 export function isEligibleWorkflowFollowUpOutbound({

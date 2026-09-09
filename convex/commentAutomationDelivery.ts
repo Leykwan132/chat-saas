@@ -7,6 +7,7 @@ import {
   sendMessengerCommentPrivateReply,
   sendMessengerCommentPublicReply,
 } from "./commentAutomationMeta";
+import { ingestChannelMessage } from "./chat/threads";
 
 export const claimDelivery = internalMutation({
   args: { deliveryId: v.id("commentAutomationDeliveries") },
@@ -63,6 +64,7 @@ export const completePrivateDelivery = internalMutation({
     deliveryId: v.id("commentAutomationDeliveries"),
     success: v.boolean(),
     error: v.optional(v.string()),
+    externalId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const delivery = await ctx.db.get(args.deliveryId);
@@ -78,15 +80,27 @@ export const completePrivateDelivery = internalMutation({
     }
     const automation = await ctx.db.get(delivery.automationId);
     if (automation === null) return false;
+    const sentAt = Date.now();
+    await ingestChannelMessage(ctx, {
+      channelId: delivery.channelId,
+      externalId: args.externalId ?? `comment-automation:${delivery._id}`,
+      contactAddress: delivery.contactAddress,
+      direction: "outgoing",
+      content: automation.privateMessage,
+      contentType: "text",
+      workflowAutomationSource: "commentAutomation",
+      timestampMs: sentAt,
+      outboundStatus: "sent",
+    });
     await ctx.db.patch(delivery._id, {
       privateStatus: "sent",
       privateError: undefined,
-      sentAt: now,
-      updatedAt: now,
+      sentAt,
+      updatedAt: sentAt,
     });
     await ctx.db.patch(automation._id, {
       sentCount: automation.sentCount + 1,
-      updatedAt: now,
+      updatedAt: sentAt,
     });
     return true;
   },
@@ -143,6 +157,7 @@ export const sendDelivery = internalAction({
         deliveryId: args.deliveryId,
         success: privateResult.ok,
         error: privateResult.ok ? undefined : privateResult.error,
+        externalId: privateResult.ok ? privateResult.externalId : undefined,
       },
     );
     console.log("[comment-to-inbox] private:result", {

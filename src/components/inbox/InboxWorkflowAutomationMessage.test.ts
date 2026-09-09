@@ -5,7 +5,7 @@ function source(path: string) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('renders a subtle labeled card for Reminder and Follow-up messages', () => {
+test('renders a subtle labeled card for automated messages', () => {
   const component = source('./InboxWorkflowAutomationMessage.tsx');
   expect(component).toContain('border-primary/20');
   expect(component).toContain('bg-primary/5');
@@ -13,6 +13,7 @@ test('renders a subtle labeled card for Reminder and Follow-up messages', () => 
   expect(component).toContain('Clock3');
   expect(component).toContain("'Reminder'");
   expect(component).toContain("'Follow-up'");
+  expect(component).toContain("'Automation message sent'");
 });
 
 test('routes workflow messages through the dedicated card', () => {

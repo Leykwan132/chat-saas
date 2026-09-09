@@ -1024,6 +1024,7 @@ export const ingestChannelMessageArgs = {
   workflowAutomationSource: v.optional(v.union(
     v.literal("workflowReminder"),
     v.literal("workflowFollowUp"),
+    v.literal("commentAutomation"),
   )),
   timestampMs: v.number(),
   isHistorical: v.optional(v.boolean()),
@@ -1071,7 +1072,10 @@ export type IngestChannelMessageArgs = {
   contentType?: Doc<"messages">["contentType"];
   messageKind?: BroadcastMessageKind;
   broadcastPresentation?: BroadcastPresentation;
-  workflowAutomationSource?: "workflowReminder" | "workflowFollowUp";
+  workflowAutomationSource?:
+    | "workflowReminder"
+    | "workflowFollowUp"
+    | "commentAutomation";
   timestampMs: number;
   isHistorical?: boolean;
   outboundStatus?: "sent" | "delivered" | "read" | "failed";

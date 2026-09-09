@@ -1316,6 +1316,7 @@ export default defineSchema({
     workflowAutomationSource: v.optional(v.union(
       v.literal("workflowReminder"),
       v.literal("workflowFollowUp"),
+      v.literal("commentAutomation"),
     )),
     status: v.optional(
       v.union(

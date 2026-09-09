@@ -17,7 +17,10 @@ type WorkflowFollowUpWakeRun = Pick<
 >;
 
 function messageSource(message: {
-  workflowAutomationSource?: 'workflowReminder' | 'workflowFollowUp';
+  workflowAutomationSource?:
+    | 'workflowReminder'
+    | 'workflowFollowUp'
+    | 'commentAutomation';
   messageKind?: string;
   agentId?: Id<'agents'>;
 }) {
