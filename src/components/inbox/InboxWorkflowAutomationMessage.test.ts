@@ -13,6 +13,7 @@ test('renders a subtle labeled card for automated messages', () => {
   expect(component).toContain('Clock3');
   expect(component).toContain("'Reminder'");
   expect(component).toContain("'Follow-up'");
+  expect(component).toContain("'Automation message sent'");
 });
 
 test('keeps comment automation messages in the regular bubble and labels their sender row', () => {
