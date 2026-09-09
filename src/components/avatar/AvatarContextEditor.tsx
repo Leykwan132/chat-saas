@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { DEFAULT_AVATAR_OPENING_TEXT } from '../../../shared/avatarContextDefaults';
 
 type ContextDraft = {
   prompt: string;
@@ -65,7 +66,7 @@ export function AvatarContextEditor({
     }
   };
 
-  const openingField = <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-opening" className="text-base">Opening text</Label><Input id="avatar-context-opening" value={openingText} onChange={(event) => updateOpeningText(event.target.value)} placeholder="Hello, how can I help?" />{openingChanged ? <div className="flex justify-end"><Button onClick={() => void save()} disabled={!canSave}>{saving ? 'Saving…' : 'Save opening text'}</Button></div> : null}</div>;
+  const openingField = <div className="flex flex-col gap-2"><Label htmlFor="avatar-context-opening" className="text-base">Opening text</Label><Input id="avatar-context-opening" value={openingText} onChange={(event) => updateOpeningText(event.target.value)} placeholder={DEFAULT_AVATAR_OPENING_TEXT} />{openingChanged ? <div className="flex justify-end"><Button onClick={() => void save()} disabled={!canSave}>{saving ? 'Saving…' : 'Save opening text'}</Button></div> : null}</div>;
 
   return (
     <section className="flex flex-col gap-4">

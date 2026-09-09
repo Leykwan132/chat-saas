@@ -204,6 +204,36 @@ test('validated Avatar metadata configures the Web SDK runtime without an embed'
   });
 });
 
+test('deleting an Avatar returns the workspace to the empty setup state', async () => {
+  const t = convexTest(schema, modules);
+  const agentId = await createAgent(t, 'delete_owner');
+  const authed = t.withIdentity({ subject: 'delete_owner' });
+  const initial = await authed.mutation(api.avatar.ensureForAgent, { agentId });
+  const configurationId = await t.run(async (ctx) => {
+    const configuration = await ctx.db
+      .query('avatarConfigurations')
+      .withIndex('by_publicKey', (q) => q.eq('publicKey', initial.publicKey))
+      .unique();
+    if (!configuration) throw new Error('Avatar configuration not found');
+    return configuration._id;
+  });
+  await t.mutation(internal.avatar.saveConfiguration, {
+    configurationId,
+    avatarId: 'avatar-id',
+    avatarName: 'Wayne',
+    avatarPreviewUrl: 'https://example.com/avatar.png',
+  });
+
+  await authed.mutation(api.avatarRemove.remove, { agentId });
+
+  expect(await authed.query(api.avatar.getForAgent, { agentId })).toMatchObject({
+    configured: false,
+    enabled: false,
+    publicKey: initial.publicKey,
+  });
+  expect(await t.query(api.avatar.publicGetConfig, { publicKey: initial.publicKey })).toBeNull();
+});
+
 test('Avatar setup is unique per workspace', async () => {
   const t = convexTest(schema, modules);
   const firstAgentId = await createAgent(t, 'workspace_owner');

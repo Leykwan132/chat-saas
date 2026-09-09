@@ -25,10 +25,14 @@ describe('Avatar configured overview', () => {
     expect(pageSource).toContain('sm:flex-row sm:items-start sm:justify-between');
     expect(pageSource).toContain('Edit');
     expect(pageSource).toContain("import { AvatarSetupEditor } from '@/components/avatar/AvatarSetupEditor';");
-    expect(pageSource).toContain("import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';");
+    expect(pageSource).toContain("import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';");
+    expect(pageSource).toContain("import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';");
     expect(pageSource).toContain('<Dialog open={editOpen} onOpenChange={setEditOpen}>');
     expect(pageSource).toContain('className="max-h-[90vh] sm:max-w-5xl overflow-y-auto"');
     expect(pageSource).toContain('<AvatarSetupEditor agentId={typedAgentId} onSaved={() => setEditOpen(false)} />');
+    expect(pageSource).toContain('Edit Avatar');
+    expect(pageSource).toContain('Delete Avatar');
+    expect(pageSource).toContain('api.avatarRemove.remove');
     expect(pageSource).not.toContain('<Button variant="ghost" size="sm" asChild>\n              <Link to={`/dashboard/${typedAgentId}/avatar/create`}>');
     expect(pageSource).not.toContain('Edit avatar');
     expect(pageSource).toContain('<AvatarShareDialog publicKey={configuration.publicKey} />');

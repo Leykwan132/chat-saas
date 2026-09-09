@@ -27,6 +27,8 @@ test('provides a manager context editor with explicit save states', () => {
   expect(source.indexOf('avatar-context-prompt')).toBeGreaterThan(source.indexOf('mediaSlot'));
   expect(source).toContain('Save context');
   expect(source).toContain('api.avatarContext.save');
+  expect(source).toContain('DEFAULT_AVATAR_OPENING_TEXT');
+  expect(source).not.toContain('placeholder="Hello, how can I help?"');
   expect(source).not.toContain('rounded-xl border p-5');
   expect(source).not.toContain('useEffect');
 });

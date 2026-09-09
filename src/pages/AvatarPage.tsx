@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { ExternalLink, Pencil, ScanFace } from 'lucide-react';
+import { ChevronDown, ExternalLink, Pencil, ScanFace } from 'lucide-react';
 import { Link, useParams } from 'react-router';
+import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { AvatarContextEditor } from '@/components/avatar/AvatarContextEditor';
@@ -12,7 +13,8 @@ import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/usePermissions';
 import { buildAvatarLiveUrl } from '@/lib/avatarEmbed';
@@ -26,7 +28,10 @@ export default function AvatarPage() {
   const canManage = !permissionsLoading && can(Permission.CHANNELS_MANAGE);
   const configuration = useQuery(api.avatar.getForAgent, canRead ? { agentId: typedAgentId } : 'skip');
   const ensureConfiguration = useMutation(api.avatar.ensureForAgent);
+  const removeAvatar = useMutation(api.avatarRemove.remove);
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (configuration === null && canManage) void ensureConfiguration({ agentId: typedAgentId });
@@ -46,13 +51,21 @@ export default function AvatarPage() {
         {configuration.configured ? (
           <div className="flex items-center gap-2">
             {canManage ? (
-            <Dialog open={editOpen} onOpenChange={setEditOpen}>
-              <DialogTrigger asChild>
+            <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" type="button">
                   <Pencil data-icon="inline-start" />
                   Edit
+                  <ChevronDown data-icon="inline-end" />
                 </Button>
-              </DialogTrigger>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setEditOpen(true)}>Edit Avatar</DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>Delete Avatar</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Dialog open={editOpen} onOpenChange={setEditOpen}>
               <DialogContent className="max-h-[90vh] sm:max-w-5xl overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Edit Avatar</DialogTitle>
@@ -61,6 +74,34 @@ export default function AvatarPage() {
                 <AvatarSetupEditor agentId={typedAgentId} onSaved={() => setEditOpen(false)} />
               </DialogContent>
             </Dialog>
+            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Avatar?</DialogTitle>
+                  <DialogDescription>This removes the avatar from live conversations. You can create a new one later.</DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button type="button" variant="outline" disabled={deleting} onClick={() => setDeleteOpen(false)}>Cancel</Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    disabled={deleting}
+                    onClick={() => {
+                      setDeleting(true);
+                      void removeAvatar({ agentId: typedAgentId }).then(() => {
+                        setDeleteOpen(false);
+                        toast.success('Avatar deleted');
+                      }).catch((error: unknown) => {
+                        toast.error(error instanceof Error ? error.message : 'Could not delete Avatar');
+                      }).finally(() => setDeleting(false));
+                    }}
+                  >
+                    {deleting ? 'Deleting…' : 'Delete Avatar'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            </>
             ) : null}
             <AvatarShareDialog publicKey={configuration.publicKey} />
           </div>
