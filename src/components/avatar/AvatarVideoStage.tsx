@@ -60,7 +60,9 @@ export function AvatarVideoStage({
     : 'absolute inset-0 z-10';
   const foregroundMediaClassName = backgroundUrl && !fullScreen
     ? 'pointer-events-none absolute inset-0 size-full object-contain'
-    : 'pointer-events-none absolute inset-0 size-full object-cover';
+    : fullScreen
+      ? 'pointer-events-none absolute inset-0 size-full object-cover md:object-contain'
+      : 'pointer-events-none absolute inset-0 size-full object-cover';
 
   useEffect(() => {
     if (error) toast.error(error);
