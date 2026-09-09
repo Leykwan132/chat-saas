@@ -116,7 +116,6 @@ export const internalCompleteSignup = internalAction({
       );
     }
 
-    let igUserId: string | undefined;
     let pendingChannelId: Id<"channels"> | undefined;
     try {
       // 1. Short-lived token. The Instagram Graph endpoint expects
@@ -151,26 +150,7 @@ export const internalCompleteSignup = internalAction({
       );
       const shortPick = shortRaw.data?.[0] ?? shortRaw;
       const shortToken = shortPick.access_token;
-      igUserId = shortPick.user_id !== undefined ? String(shortPick.user_id) : undefined;
-      if (!shortToken || !igUserId) {
-        throw new Error(
-          "Instagram code exchange returned no access_token or user_id",
-        );
-      }
-
-      pendingChannelId = await ctx.runMutation(internal.channels.internalStartInstagramPending, {
-        orgId,
-        connectedByUserId: userId,
-        igUserId,
-        agentId: args.agentId,
-      });
-
-      await ctx.runMutation(internal.channels.internalSetProgress, {
-        orgId,
-        service: "instagram",
-        progressStep: "subscribing",
-        igUserId,
-      });
+      if (!shortToken) throw new Error("Instagram code exchange returned no access_token");
 
       // 2. Long-lived token (60 days). NOTE: long-lived exchange does NOT use
       //    a graph version segment in the path on graph.instagram.com.
@@ -188,21 +168,34 @@ export const internalCompleteSignup = internalAction({
         ? Date.now() + longRes.expires_in * 1000
         : undefined;
 
-      await subscribeInstagramLoginWebhooks(longToken);
+      const me = await graphFetch<{
+        user_id?: string | number;
+        username?: string;
+        account_type?: string;
+      }>(
+        `${instagramGraphBase()}/me?fields=user_id,username,account_type&access_token=${encodeURIComponent(longToken)}`,
+        { method: "GET" },
+        "Instagram profile fetch",
+      );
+      const igUserId = me.user_id === undefined ? undefined : String(me.user_id);
+      if (!igUserId) throw new Error("Instagram profile fetch returned no user_id");
+      const displayUsername = me.username;
 
-      // 3. Profile metadata for the UI. Best-effort; failure here should not
-      //    block the connection.
-      let displayUsername: string | undefined;
-      try {
-        const me = await graphFetch<{ id?: string; username?: string }>(
-          `${instagramGraphBase()}/me?fields=id,username&access_token=${encodeURIComponent(longToken)}`,
-          { method: "GET" },
-          "Instagram profile fetch",
-        );
-        displayUsername = me.username;
-      } catch (err) {
-        console.warn("Failed to fetch Instagram profile", err);
-      }
+      pendingChannelId = await ctx.runMutation(internal.channels.internalStartInstagramPending, {
+        orgId,
+        connectedByUserId: userId,
+        igUserId,
+        agentId: args.agentId,
+      });
+
+      await ctx.runMutation(internal.channels.internalSetProgress, {
+        orgId,
+        service: "instagram",
+        progressStep: "subscribing",
+        igUserId,
+      });
+
+      await subscribeInstagramLoginWebhooks(longToken);
 
       await ctx.runMutation(internal.channels.internalSetProgress, {
         orgId,
