@@ -81,10 +81,11 @@ export const completePrivateDelivery = internalMutation({
     const automation = await ctx.db.get(delivery.automationId);
     if (automation === null) return false;
     const sentAt = Date.now();
-    await ingestChannelMessage(ctx, {
+    const ingestResult = await ingestChannelMessage(ctx, {
       channelId: delivery.channelId,
       externalId: args.externalId ?? `comment-automation:${delivery._id}`,
       contactAddress: delivery.contactAddress,
+      contactName: delivery.contactName,
       direction: "outgoing",
       content: automation.privateMessage,
       contentType: "text",
@@ -92,11 +93,17 @@ export const completePrivateDelivery = internalMutation({
       timestampMs: sentAt,
       outboundStatus: "sent",
     });
+    const conversation = await ctx.db.get(ingestResult.conversationId);
+    if (conversation?.customerId === undefined) {
+      throw new Error("Automation customer was not persisted");
+    }
     await ctx.db.patch(delivery._id, {
       privateStatus: "sent",
       privateError: undefined,
       sentAt,
       updatedAt: sentAt,
+      conversationId: conversation._id,
+      customerId: conversation.customerId,
     });
     await ctx.db.patch(automation._id, {
       sentCount: automation.sentCount + 1,

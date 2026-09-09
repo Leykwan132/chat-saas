@@ -3,7 +3,6 @@ import { internalAction, internalMutation, internalQuery } from "./_generated/se
 import { internal } from "./_generated/api";
 import { getMessengerComment } from "./commentAutomationMeta";
 import { matchesCommentAutomation } from "./commentAutomationMatching";
-import { ingestChannelMessage } from "./chat/threads";
 import type { Doc } from "./_generated/dataModel";
 
 export const internalGetMessengerCommentContext = internalQuery({
@@ -156,32 +155,15 @@ export const ingestComment = internalMutation({
       return;
     }
 
-    const ingestResult = await ingestChannelMessage(ctx, {
-      channelId: channel._id,
-      externalId: `comment:${args.externalCommentId}`,
-      contactAddress: args.authorAddress,
-      contactName: args.authorName,
-      direction: "incoming",
-      content: args.text,
-      contentType: "text",
-      timestampMs: args.timestampMs,
-      isHistorical: true,
-    });
-    const conversation = await ctx.db.get(ingestResult.conversationId);
-    if (conversation?.customerId === undefined) {
-      throw new Error("Comment customer was not persisted");
-    }
-
     const now = Date.now();
     const deliveryId = await ctx.db.insert("commentAutomationDeliveries", {
       automationId: automation._id,
       channelId: channel._id,
       externalCommentId: args.externalCommentId,
       contactAddress: args.authorAddress,
+      contactName: args.authorName,
       commentText: args.text,
       commentCreatedAt: args.timestampMs,
-      conversationId: conversation._id,
-      customerId: conversation.customerId,
       privateStatus: "pending",
       createdAt: now,
       updatedAt: now,

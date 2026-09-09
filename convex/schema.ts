@@ -861,6 +861,7 @@ export default defineSchema({
     channelId: v.id("channels"),
     externalCommentId: v.string(),
     contactAddress: v.string(),
+    contactName: v.optional(v.string()),
     commentText: v.string(),
     commentCreatedAt: v.number(),
     conversationId: v.optional(v.id("conversations")),

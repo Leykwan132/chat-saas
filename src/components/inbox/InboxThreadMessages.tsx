@@ -1,4 +1,4 @@
-import { AlertCircle, Check, CheckCheck, Loader2, SmilePlus } from 'lucide-react';
+import { AlertCircle, Check, CheckCheck, Loader2, Send, SmilePlus } from 'lucide-react';
 import { isFileUIPart } from 'ai';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -166,8 +166,9 @@ function OutgoingLabel({ message }: { message: InboxUIMessage }) {
     <span className="flex items-center justify-end gap-1 pr-0.5 text-xs text-muted-foreground">
       <span>{message.agentName ?? 'Unknown agent'}</span>
       {isCommentAutomation ? (
-        <span className="rounded border border-primary/20 bg-primary/5 px-1 py-px text-xs font-medium text-muted-foreground">
-          Automation message sent
+        <span className="inline-flex items-center gap-1 rounded border border-primary/20 bg-primary/5 px-1 py-px text-xs font-medium text-muted-foreground">
+          <Send className="size-3" />
+          Comment-to-inbox message
         </span>
       ) : null}
       {message.sentByAi ? (
