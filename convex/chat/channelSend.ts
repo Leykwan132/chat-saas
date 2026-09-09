@@ -585,7 +585,7 @@ async function sendInstagramSenderAction(
     return { ok: false, error: "Instagram channel is not connected" };
   }
   return sendMetaSenderAction(
-    instagramSenderActionUrl(),
+    instagramMessagingUrl(channel),
     accessToken,
     conversation.contactAddress,
     senderAction,
