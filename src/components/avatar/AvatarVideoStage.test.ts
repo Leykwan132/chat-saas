@@ -88,7 +88,7 @@ describe('Avatar video stage', () => {
     expect(source).toContain('muted');
   });
 
-  it('keeps the keyed portrait in a centered frame over the full-stage background', () => {
+  it('fills the dashboard preview with the keyed avatar layer', () => {
     const markup = renderToStaticMarkup(createElement(
       TooltipProvider,
       null,
@@ -98,9 +98,7 @@ describe('Avatar video stage', () => {
       }),
     ));
 
-    expect(markup).toContain('flex items-center justify-center');
-    expect(markup).toContain('h-full max-w-full aspect-[3/4]');
-    expect(markup).toContain('object-contain');
+    expect(markup).toMatch(/<canvas[^>]+object-cover/);
   });
 
   it('fills mobile screens while fitting the portrait to desktop height', () => {

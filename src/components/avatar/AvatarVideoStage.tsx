@@ -53,14 +53,9 @@ export function AvatarVideoStage({
     fullScreen
       ? 'relative size-full overflow-hidden bg-zinc-950 text-white'
       : 'relative aspect-video w-full overflow-hidden rounded-2xl bg-zinc-950 text-white',
-    backgroundUrl && !fullScreen ? 'flex items-center justify-center' : null,
   );
-  const foregroundFrameClassName = backgroundUrl && !fullScreen
-    ? 'relative z-10 h-full max-w-full aspect-[3/4]'
-    : 'absolute inset-0 z-10';
-  const foregroundMediaClassName = backgroundUrl && !fullScreen
-    ? 'pointer-events-none absolute inset-0 size-full object-contain'
-    : fullScreen
+  const foregroundFrameClassName = 'absolute inset-0 z-10';
+  const foregroundMediaClassName = fullScreen
       ? 'pointer-events-none absolute inset-0 size-full object-cover md:object-contain'
       : 'pointer-events-none absolute inset-0 size-full object-cover';
 
