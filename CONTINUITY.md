@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-09 [CODE] Now: deleted or invalid Partner Programme entitlement records return `ACCOUNT_UNAVAILABLE`; the app root shows a centered recovery modal and replaces every protected route with `/` when the user chooses Back to home. Unshipped.
 - 2026-09-09 [USER] Goal: Avatar dashboard preview must always use a sandbox session; public live links must always use a non-sandbox session. Unshipped.
 - 2026-09-09 [USER] Goal: Avatar create should persist preset opening text and representative instructions so visitors can chat immediately. Opening: `Hello, how can I help you.` Instructions fill `{{business_name}}` / `{{business_description}}` from the agent. Unshipped in PR https://github.com/Leykwan132/chat-saas/pull/133
 - 2026-09-09 [CODE] Now: `avatarEmbed.configure` writes that default LiveAvatar context when none exists; existing custom context is left alone.
@@ -101,6 +102,7 @@
 
 # Receipts
 
+- 2026-09-09 [TOOL] PR #135 opened: https://github.com/Leykwan132/chat-saas/pull/135. Nine focused auth/recovery tests plus app and Convex TypeScript checks pass under Node 22; production availability UNCONFIRMED.
 - 2026-09-09 [TOOL] PR #134 opened: https://github.com/Leykwan132/chat-saas/pull/134 (`codex/avatar-session-duration-cap` → `main`).
 - 2026-09-09 [TOOL] Avatar session surfaces: 41 focused provider/session/embed/stage tests pass under Node 22, and `git diff --check` passes. Full suite remains blocked by unrelated Google Calendar projection, SiteFooter provider, and component-package fixture failures.
 - 2026-09-09 [TOOL] Avatar delete from Edit dropdown: pushed to https://github.com/Leykwan132/chat-saas/pull/133

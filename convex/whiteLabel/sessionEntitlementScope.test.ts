@@ -188,7 +188,7 @@ test("rejects mismatched partner JWT organization claims", async () => {
         email: "dual@example.com",
       })
       .query(api.users.currentUser, {}),
-  ).rejects.toThrow("Partner authentication surface is invalid");
+  ).rejects.toThrow("ACCOUNT_UNAVAILABLE");
   const otherPartnerId = await t.run(async (ctx) => await ctx.db.insert(
     "whiteLabelPartners",
     {
@@ -204,7 +204,7 @@ test("rejects mismatched partner JWT organization claims", async () => {
     seeded.organizationIds[0]!,
   ));
   await expect(invalid.query(api.users.currentUser, {})).rejects.toThrow(
-    "Partner authentication surface is no longer valid",
+    "ACCOUNT_UNAVAILABLE",
   );
 
   const validIdentity = partnerIdentity(
@@ -221,7 +221,7 @@ test("rejects mismatched partner JWT organization claims", async () => {
   await t.run(async (ctx) => await ctx.db.patch(domainId, { status: "suspended" }));
   await expect(
     t.withIdentity(validIdentity).query(api.users.currentUser, {}),
-  ).rejects.toThrow("Partner authentication surface is no longer valid");
+  ).rejects.toThrow("ACCOUNT_UNAVAILABLE");
 
   await t.run(async (ctx) => {
     await ctx.db.patch(domainId, { status: "active" });
@@ -237,7 +237,7 @@ test("rejects mismatched partner JWT organization claims", async () => {
   });
   await expect(
     t.withIdentity(validIdentity).query(api.users.currentUser, {}),
-  ).rejects.toThrow("Partner authentication surface is no longer valid");
+  ).rejects.toThrow("ACCOUNT_UNAVAILABLE");
 });
 
 test("returns every active organization choice on the partner domain", async () => {

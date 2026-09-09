@@ -1,6 +1,8 @@
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { ConvexError } from "convex/values";
 import { getPartnerAuthIssuer } from "./partnerAuthConfig";
+import { ACCOUNT_UNAVAILABLE_ERROR_CODE } from "../shared/accountAvailability";
 
 type DbCtx = QueryCtx | MutationCtx;
 type Identity = NonNullable<Awaited<ReturnType<QueryCtx["auth"]["getUserIdentity"]>>>;
@@ -20,6 +22,10 @@ export type EntitlementScope =
     team: Doc<"teams">;
   };
 
+function accountUnavailable(): never {
+  throw new ConvexError({ code: ACCOUNT_UNAVAILABLE_ERROR_CODE });
+}
+
 function partnerClaims(identity: Identity) {
   if (
     identity.surface !== "partner" ||
@@ -27,7 +33,7 @@ function partnerClaims(identity: Identity) {
     typeof identity.partnerId !== "string" ||
     typeof identity.partnerOrganizationId !== "string"
   ) {
-    throw new Error("Partner authentication surface is invalid.");
+    accountUnavailable();
   }
   return {
     hostname: identity.hostname.trim().toLowerCase(),
@@ -41,13 +47,17 @@ export async function resolveEntitlementScope(
   ctx: DbCtx,
   identity: Identity,
 ): Promise<EntitlementScope> {
+  const isPartnerSurface = identity.issuer === getPartnerAuthIssuer(process.env);
   const user = await ctx.db
     .query("users")
     .withIndex("by_workosUserId", (q) => q.eq("workosUserId", identity.subject))
     .unique();
-  if (user === null) throw new Error("User not found");
+  if (user === null) {
+    if (isPartnerSurface) accountUnavailable();
+    throw new Error("User not found");
+  }
 
-  if (identity.issuer !== getPartnerAuthIssuer(process.env)) {
+  if (!isPartnerSurface) {
     return { kind: "native", user };
   }
 
@@ -84,12 +94,12 @@ export async function resolveEntitlementScope(
     domain.status !== "active" ||
     domain.setupState !== "connected"
   ) {
-    throw new Error("Partner authentication surface is no longer valid.");
+    accountUnavailable();
   }
 
   const team = await ctx.db.get(organization.teamId);
   if (team === null || team.type !== "organizational" || !team.workosOrgId) {
-    throw new Error("Partner workspace is unavailable.");
+    accountUnavailable();
   }
   const membership = await ctx.db
     .query("teamMemberships")
@@ -97,7 +107,7 @@ export async function resolveEntitlementScope(
       q.eq("userId", user._id).eq("teamId", team._id),
     )
     .unique();
-  if (membership === null) throw new Error("Partner workspace is unavailable.");
+  if (membership === null) accountUnavailable();
   return { kind: "partner", user, account, organization, partner, domain, team };
 }
 
