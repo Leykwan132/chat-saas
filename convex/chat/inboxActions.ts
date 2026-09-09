@@ -364,9 +364,10 @@ export const reactToMessage = action({
     }
     if (
       ctxData.conversation.service !== "whatsapp" &&
+      ctxData.conversation.service !== "instagram" &&
       ctxData.conversation.service !== "messenger"
     ) {
-      throw new Error("Reactions are only supported for WhatsApp and Messenger");
+      throw new Error("Reactions are only supported for WhatsApp, Instagram, and Messenger");
     }
     const target = await ctx.runQuery(
       internal.chat.reactions.internalResolveReactionTarget,
