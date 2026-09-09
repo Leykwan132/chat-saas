@@ -101,7 +101,8 @@
 
 # Receipts
 
-- 2026-09-09 [TOOL] Avatar session surfaces: 41 focused provider/session/embed/stage tests pass under Node 22, and `git diff --check` passes. Full suite has three pre-existing unrelated failures: two Google Calendar projection fixtures report `Calendar event not found`, and `SiteFooter` lacks `AppAuthProvider`.
+- 2026-09-09 [TOOL] PR #134 opened: https://github.com/Leykwan132/chat-saas/pull/134 (`codex/avatar-session-duration-cap` → `main`).
+- 2026-09-09 [TOOL] Avatar session surfaces: 41 focused provider/session/embed/stage tests pass under Node 22, and `git diff --check` passes. Full suite remains blocked by unrelated Google Calendar projection, SiteFooter provider, and component-package fixture failures.
 - 2026-09-09 [TOOL] Avatar delete from Edit dropdown: pushed to https://github.com/Leykwan132/chat-saas/pull/133
 - 2026-09-09 [TOOL] Avatar create defaults: 18 focused default-prompt, configure, and editor tests pass under Node 22.
 - 2026-09-09 [TOOL] Instagram Comment-to-Inbox: 9 focused webhook, Meta request, ingestion, and delivery tests pass; Convex TypeScript check and `git diff --check` pass under Node 22. Convex codegen did not refresh the checked-in API declaration, so the new internal module was added to `convex/_generated/api.d.ts` with the corresponding generator shape.
