@@ -81,6 +81,7 @@ describe('Avatar embed runtime', () => {
     expect(source).toContain("searchParams.get('isSandbox') === 'true'");
     expect(source).toContain("? 'preview' : 'live'");
     expect(source).toContain('sessionMode={sessionMode}');
+    expect(source).toContain("showBackground={sessionMode === 'live'}");
     expect(settingsSource).toContain('sessionMode="preview"');
   });
 

@@ -21,6 +21,7 @@ export function AvatarVideoStage({
   backgroundUrl,
   backgroundType,
   fullScreen = false,
+  showBackground = true,
   sessionMode = 'live',
 }: {
   publicKey: string;
@@ -30,6 +31,7 @@ export function AvatarVideoStage({
   backgroundUrl?: string;
   backgroundType?: 'image' | 'video';
   fullScreen?: boolean;
+  showBackground?: boolean;
   sessionMode?: 'preview' | 'live';
 }) {
   const {
@@ -42,13 +44,14 @@ export function AvatarVideoStage({
   } = useAvatarSession(publicKey, sessionMode);
   const active = phase === 'active' || phase === 'stopping';
   const starting = phase === 'starting';
+  const compositingBackground = active && showBackground && Boolean(backgroundUrl);
   const sourceVideoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const attachVideo = useCallback((element: HTMLMediaElement | null) => {
     sourceVideoRef.current = element instanceof HTMLVideoElement ? element : null;
     videoRef(element);
   }, [videoRef]);
-  useAvatarBackgroundCompositor(sourceVideoRef, canvasRef, active && Boolean(backgroundUrl));
+  useAvatarBackgroundCompositor(sourceVideoRef, canvasRef, compositingBackground);
   const stageClassName = cn(
     fullScreen
       ? 'relative size-full overflow-hidden bg-zinc-950 text-white'
@@ -65,7 +68,7 @@ export function AvatarVideoStage({
 
   return (
     <section className={stageClassName}>
-      {backgroundUrl ? (
+      {showBackground && backgroundUrl ? (
         backgroundType === 'video' ? (
           <video
             src={backgroundUrl}
@@ -90,9 +93,9 @@ export function AvatarVideoStage({
           ref={attachVideo}
           autoPlay
           playsInline
-          className={cn(foregroundMediaClassName, active && backgroundUrl ? 'opacity-0' : null)}
+          className={cn(foregroundMediaClassName, compositingBackground ? 'opacity-0' : null)}
         />
-        {active && backgroundUrl ? (
+        {compositingBackground ? (
           <canvas
             ref={canvasRef}
             aria-hidden="true"

@@ -115,6 +115,21 @@ describe('Avatar video stage', () => {
     expect(markup).toMatch(/<canvas[^>]+object-cover md:object-contain/);
   });
 
+  it('can render the active avatar stream without a configured background', () => {
+    const markup = renderToStaticMarkup(createElement(
+      TooltipProvider,
+      null,
+      createElement(AvatarVideoStage, {
+        publicKey: 'public-key',
+        backgroundUrl: 'https://cdn.example.test/background.png',
+        showBackground: false,
+      }),
+    ));
+
+    expect(markup).not.toContain('background.png');
+    expect(markup).not.toContain('<canvas');
+  });
+
   it('keeps media layers from intercepting the idle Start Chat target', () => {
     expect(source).toContain('pointer-events-none');
     expect(source).toContain('z-30');

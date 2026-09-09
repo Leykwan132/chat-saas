@@ -31,6 +31,7 @@ export default function AvatarEmbedPage() {
         backgroundUrl={config.backgroundUrl}
         backgroundType={config.backgroundType}
         sessionMode={sessionMode}
+        showBackground={sessionMode === 'live'}
         fullScreen
       />
     </main>
