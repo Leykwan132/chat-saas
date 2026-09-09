@@ -2,8 +2,9 @@
 
 # Snapshot
 
-- 2026-09-09 [USER] Goal: Avatar create should persist preset opening text and representative instructions so visitors can chat immediately. Opening: `Hello, how can I help you.` Instructions fill `{{business_name}}` / `{{business_description}}` from the agent. Unshipped.
+- 2026-09-09 [USER] Goal: Avatar create should persist preset opening text and representative instructions so visitors can chat immediately. Opening: `Hello, how can I help you.` Instructions fill `{{business_name}}` / `{{business_description}}` from the agent. Unshipped in PR https://github.com/Leykwan132/chat-saas/pull/133
 - 2026-09-09 [CODE] Now: `avatarEmbed.configure` writes that default LiveAvatar context when none exists; existing custom context is left alone.
+- 2026-09-09 [CODE] Now: Edit is a dropdown with Edit Avatar and Delete Avatar; delete clears the live avatar and returns the empty create state.
 - 2026-09-09 [CODE] Now: Instagram connect uses direct Instagram Login (`META_IG_APP_ID` / `META_IG_APP_SECRET`), resolves and persists webhook-facing `user_id` from `graph.instagram.com/{version}/me?fields=user_id,username,account_type` (never profile `id`), then subscribes through `me/subscribed_apps`. Direct messages and media use `graph.instagram.com/{version}/me/messages`; only typing and seen indicators use that IG endpoint. Reactions retain `graph.facebook.com/{version}/me/messages`; `reactToMessage` admits Instagram. The user manually verified `typing_on`; correction is in PR #128, awaiting review.
 - 2026-09-09 [CODE] Now: Instagram Comment-to-Inbox routes `comments` webhook entries into the matcher using `entry.id` as `igUserId`; trigger comments never create Inbox data. Only a successful private reply creates the customer, conversation, and outgoing message, labeled “Comment-to-inbox message”. Unshipped in PR #132. Supersedes #130/#131 on main, which persisted the trigger comment as an incoming thread message.
 - 2026-09-08 [TOOL] Instagram assignment fix is in PR #119 (`codex/instagram-agent-assignment` → `main`), unshipped. [CODE] Route agentId is required and authorized, pending/reconnected rows atomically use it, completion revalidates assignment, and errors only affect that attempt's pending row. [USER] User will reconnect manually; no production data repair requested.
@@ -75,17 +76,16 @@
 # Done (recent)
 
 - 2026-09-09 [CODE] Creating an Avatar now saves default opening text and representative instructions to LiveAvatar so chat can start without a separate context save.
+- 2026-09-09 [CODE] Avatar Edit is a dropdown with Edit Avatar and Delete Avatar.
 - 2026-09-08 [CODE] First-signup welcome modal uses the current host brand name instead of a hardcoded Kilobot title.
 - 2026-09-08 [CODE] Partner password reset completes on the current hostname and returns to `/sign-in` instead of kilobot.app (D794).
 - 2026-09-08 [CODE] Partner-created WorkOS logins on `kilobot.app` provision a personal team and complete Kilobot onboarding instead of crashing or inheriting partner `onboarded` (D793 / I009).
 - 2026-09-08 [CODE] Partner agent credit usage/spend history read the signed org wallet instead of Stripe/personal team (I008).
 - 2026-09-08 [CODE] Instagram and Messenger connect cards and signup actions use separate PostHog flags plus `leykwan132@gmail.com` (D792).
-- 2026-09-08 [CODE] Partner Usage tab reads the signed org wallet instead of Stripe/personal team (I007).
-- 2026-09-08 [CODE] Admin role can create agents; Confirm plan change keeps Cancel beside Confirm; dual-role sessions stay surface-scoped (I006, #112).
 
 # Working set
 
-- 2026-09-09 [CODE] `shared/avatarContextDefaults.ts`, `convex/{avatarContext,avatarEmbed,avatar}.ts`, `src/components/avatar/AvatarContextEditor.tsx`
+- 2026-09-09 [CODE] `shared/avatarContextDefaults.ts`, `convex/{avatarContext,avatarEmbed,avatar,avatarRemove}.ts`, `src/pages/AvatarPage.tsx`
 - 2026-09-08 [CODE] `convex/instagram{ChannelAssignment,AgentAssignment.test,EmbeddedSignup}.ts`, `src/components/ConnectInstagramButton{,.test}.tsx`, `convex/_generated/api.d.ts`
 - 2026-09-08 [CODE] `src/components/setup-checklist/WorkspaceSetupChecklistIntroDialog*`
 - 2026-09-08 [CODE] `convex/{authUtils,users,teamHelpers,nativeKilobotOnboarding.test.ts}*`, `src/lib/organizationAccess.ts`, `src/components/{RequireOrganization,OnboardingFlow}*`
@@ -99,6 +99,7 @@
 
 # Receipts
 
+- 2026-09-09 [TOOL] Avatar delete from Edit dropdown: pushed to https://github.com/Leykwan132/chat-saas/pull/133
 - 2026-09-09 [TOOL] Avatar create defaults: 18 focused default-prompt, configure, and editor tests pass under Node 22.
 - 2026-09-09 [TOOL] Instagram Comment-to-Inbox: 9 focused webhook, Meta request, ingestion, and delivery tests pass; Convex TypeScript check and `git diff --check` pass under Node 22. Convex codegen did not refresh the checked-in API declaration, so the new internal module was added to `convex/_generated/api.d.ts` with the corresponding generator shape.
 - 2026-09-09 [TOOL] Comment-to-Inbox outbound persistence: 13 focused webhook, delivery, metadata, and Inbox-card tests pass under Node 22; Convex and app TypeScript checks produced no errors and `git diff --check` passed.

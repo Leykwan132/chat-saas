@@ -98,6 +98,7 @@ import type * as avatarCover from "../avatarCover.js";
 import type * as avatarEmbed from "../avatarEmbed.js";
 import type * as avatarLifecycle from "../avatarLifecycle.js";
 import type * as avatarProvider from "../avatarProvider.js";
+import type * as avatarRemove from "../avatarRemove.js";
 import type * as avatarSession from "../avatarSession.js";
 import type * as avatarSessionCapacity from "../avatarSessionCapacity.js";
 import type * as backfillEvents from "../backfillEvents.js";
@@ -601,6 +602,7 @@ declare const fullApi: ApiFromModules<{
   avatarEmbed: typeof avatarEmbed;
   avatarLifecycle: typeof avatarLifecycle;
   avatarProvider: typeof avatarProvider;
+  avatarRemove: typeof avatarRemove;
   avatarSession: typeof avatarSession;
   avatarSessionCapacity: typeof avatarSessionCapacity;
   backfillEvents: typeof backfillEvents;
