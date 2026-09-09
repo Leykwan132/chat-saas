@@ -6,6 +6,14 @@ import { instagramSyncPool } from "./channelSyncPools";
 import { assertWorkosUserCanConnectInstagram } from "./instagramConnectAccess";
 
 const DEFAULT_GRAPH_VERSION = "v25.0";
+const INSTAGRAM_LOGIN_SUBSCRIBED_FIELDS = [
+  "comments",
+  "messages",
+  "message_reactions",
+  "messaging_seen",
+  "live_comments",
+  "message_echoes",
+].join(",");
 
 function graphVersion() {
   return process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
@@ -24,27 +32,6 @@ type GraphErrorBody = {
     fbtrace_id?: string;
   };
 };
-
-function redactInstagramTokens(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(redactInstagramTokens);
-  }
-  if (value === null || typeof value !== "object") {
-    return value;
-  }
-  return Object.fromEntries(
-    Object.entries(value).map(([key, nestedValue]) => [
-      key,
-      key.toLowerCase().includes("token")
-        ? "[redacted]"
-        : redactInstagramTokens(nestedValue),
-    ]),
-  );
-}
-
-function logInstagramResponse(label: string, response: unknown) {
-  console.log(`[instagram-connect] ${label}`, redactInstagramTokens(response));
-}
 
 async function graphFetch<T>(
   url: string,
@@ -65,6 +52,22 @@ async function graphFetch<T>(
     throw new Error(`${context} failed: ${msg}`);
   }
   return body as T;
+}
+
+async function subscribeInstagramLoginWebhooks(accessToken: string) {
+  const subscriptionUrl = new URL(`${instagramGraphBase()}/me/subscribed_apps`);
+  subscriptionUrl.searchParams.set(
+    "subscribed_fields",
+    INSTAGRAM_LOGIN_SUBSCRIBED_FIELDS,
+  );
+  await graphFetch(
+    subscriptionUrl.toString(),
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+    "Instagram webhook subscription",
+  );
 }
 
 // Internal action invoked from the static HTTP callback at
@@ -155,7 +158,6 @@ export const internalCompleteSignup = internalAction({
           "Instagram code exchange returned no access_token or user_id",
         );
       }
-      logInstagramResponse("token response", shortRaw);
 
       pendingChannelId = await ctx.runMutation(internal.channels.internalStartInstagramPending, {
         orgId,
@@ -187,6 +189,8 @@ export const internalCompleteSignup = internalAction({
         ? Date.now() + longRes.expires_in * 1000
         : undefined;
 
+      await subscribeInstagramLoginWebhooks(longToken);
+
       // 3. Profile metadata for the UI. Best-effort; failure here should not
       //    block the connection.
       let displayUsername: string | undefined;
@@ -196,7 +200,6 @@ export const internalCompleteSignup = internalAction({
           { method: "GET" },
           "Instagram profile fetch",
         );
-        logInstagramResponse("profile response", me);
         displayUsername = me.username;
       } catch (err) {
         console.warn("Failed to fetch Instagram profile", err);
