@@ -92,7 +92,7 @@ test("Instagram Login saves the selected agent and remains visible after empty b
   expect(subscriptionRequest).toBeDefined();
   const [input, init] = subscriptionRequest!;
   expect(new URL(String(input)).searchParams.get("subscribed_fields")).toBe(
-    "comments,messages,message_reactions,messaging_seen,live_comments,message_echoes",
+    "comments,messages,message_reactions,messaging_seen,live_comments",
   );
   expect(init).toMatchObject({
     method: "POST",

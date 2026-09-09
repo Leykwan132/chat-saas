@@ -12,7 +12,6 @@ const INSTAGRAM_LOGIN_SUBSCRIBED_FIELDS = [
   "message_reactions",
   "messaging_seen",
   "live_comments",
-  "message_echoes",
 ].join(",");
 
 function graphVersion() {
