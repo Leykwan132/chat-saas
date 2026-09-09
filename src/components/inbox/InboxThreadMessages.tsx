@@ -166,7 +166,7 @@ function OutgoingLabel({ message }: { message: InboxUIMessage }) {
     <span className="flex items-center justify-end gap-1 pr-0.5 text-xs text-muted-foreground">
       <span>{message.agentName ?? 'Unknown agent'}</span>
       {isCommentAutomation ? (
-        <span className="rounded bg-muted px-1 py-px text-[11px] font-medium text-muted-foreground">
+        <span className="rounded border border-primary/20 bg-primary/5 px-1 py-px text-xs font-medium text-muted-foreground">
           Automation message sent
         </span>
       ) : null}

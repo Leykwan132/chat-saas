@@ -20,5 +20,6 @@ test('keeps comment automation messages in the regular bubble and labels their s
   const thread = source('./InboxThreadMessages.tsx');
   expect(thread).toContain("message.workflowAutomationSource === 'commentAutomation'");
   expect(thread).toContain('Automation message sent');
+  expect(thread).toContain('border border-primary/20 bg-primary/5 px-1 py-px text-xs');
   expect(thread).toContain('<InboxWorkflowAutomationMessage');
 });
