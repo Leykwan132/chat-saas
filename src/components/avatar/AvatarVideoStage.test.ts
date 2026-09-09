@@ -103,7 +103,7 @@ describe('Avatar video stage', () => {
     expect(markup).toContain('object-contain');
   });
 
-  it('bounds a full-screen portrait frame by both viewport dimensions', () => {
+  it('fills the full screen with the keyed portrait layer', () => {
     const markup = renderToStaticMarkup(createElement(
       TooltipProvider,
       null,
@@ -114,8 +114,7 @@ describe('Avatar video stage', () => {
       }),
     ));
 
-    expect(markup).toContain('h-[min(100%,133.333dvw)]');
-    expect(markup).toContain('w-[min(100%,75dvh)]');
+    expect(markup).toMatch(/<canvas[^>]+object-cover/);
   });
 
   it('keeps media layers from intercepting the idle Start Chat target', () => {
