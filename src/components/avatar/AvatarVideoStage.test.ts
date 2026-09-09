@@ -98,8 +98,24 @@ describe('Avatar video stage', () => {
       }),
     ));
 
-    expect(markup).toContain('mx-auto h-full max-w-full aspect-[3/4]');
+    expect(markup).toContain('flex items-center justify-center');
+    expect(markup).toContain('h-full max-w-full aspect-[3/4]');
     expect(markup).toContain('object-contain');
+  });
+
+  it('bounds a full-screen portrait frame by both viewport dimensions', () => {
+    const markup = renderToStaticMarkup(createElement(
+      TooltipProvider,
+      null,
+      createElement(AvatarVideoStage, {
+        publicKey: 'public-key',
+        backgroundUrl: 'https://cdn.example.test/background.png',
+        fullScreen: true,
+      }),
+    ));
+
+    expect(markup).toContain('h-[min(100%,133.333dvw)]');
+    expect(markup).toContain('w-[min(100%,75dvh)]');
   });
 
   it('keeps media layers from intercepting the idle Start Chat target', () => {
