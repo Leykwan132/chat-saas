@@ -353,7 +353,7 @@ describe('AvatarSessionRuntime', () => {
     expect(harness.client.stopCalls).toBe(1);
     expect(harness.runtime.getSnapshot()).toMatchObject({
       phase: 'error',
-      error: 'Microphone denied',
+      error: 'Unexpected error. Please contact support.',
     });
   });
 
@@ -365,7 +365,20 @@ describe('AvatarSessionRuntime', () => {
     expect(harness.client.stopCalls).toBe(1);
     expect(harness.runtime.getSnapshot()).toMatchObject({
       phase: 'error',
-      error: 'Provider unavailable',
+      error: 'Unexpected error. Please contact support.',
+    });
+  });
+
+  it('does not expose a provider failure message to the session UI', async () => {
+    const harness = createRuntimeHarness({
+      startError: new Error('[CONVEX A(avatarSession:begin)] Server Error'),
+    });
+
+    await harness.runtime.start();
+
+    expect(harness.runtime.getSnapshot()).toMatchObject({
+      phase: 'error',
+      error: 'Unexpected error. Please contact support.',
     });
   });
 
@@ -375,7 +388,7 @@ describe('AvatarSessionRuntime', () => {
     expect(harness.client.stopCalls).toBe(1);
     expect(harness.runtime.getSnapshot()).toMatchObject({
       phase: 'error',
-      error: 'Server initiated disconnect',
+      error: 'Unexpected error. Please contact support.',
     });
   });
 

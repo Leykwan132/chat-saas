@@ -1,5 +1,6 @@
-import { useCallback, useRef, type MouseEventHandler, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, type MouseEventHandler, type ReactNode } from 'react';
 import { PhoneOff } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { AvatarPreviewMedia } from './AvatarPreviewMedia';
 import { useAvatarSession } from './useAvatarSession';
@@ -57,6 +58,10 @@ export function AvatarVideoStage({
   const foregroundMediaClassName = backgroundUrl
     ? 'pointer-events-none absolute inset-0 size-full object-contain'
     : 'pointer-events-none absolute inset-0 size-full object-cover';
+
+  useEffect(() => {
+    if (error) toast.error(error);
+  }, [error]);
 
   return (
     <section className={stageClassName}>
@@ -130,11 +135,6 @@ export function AvatarVideoStage({
           className="absolute left-1/2 top-6 z-10 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-sm font-medium text-white shadow-lg"
         >
           Chat closing in {inactivityCountdown}
-        </p>
-      ) : null}
-      {error ? (
-        <p className="absolute inset-x-6 bottom-20 text-center text-sm text-red-200">
-          {error}
         </p>
       ) : null}
       {active ? (
