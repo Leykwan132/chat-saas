@@ -119,6 +119,7 @@ function outgoingMessage(
 }
 
 function createRuntimeHarness(options?: {
+  beginError?: Error;
   startError?: Error;
   voiceStartError?: Error;
 }) {
@@ -131,6 +132,7 @@ function createRuntimeHarness(options?: {
   const runtime = new AvatarSessionRuntime({
     begin: async () => {
       beginCalls += 1;
+      if (options?.beginError) throw options.beginError;
       return {
         publicKey: 'public-key',
         visitorId: 'visitor-id',
@@ -371,7 +373,7 @@ describe('AvatarSessionRuntime', () => {
 
   it('does not expose a provider failure message to the session UI', async () => {
     const harness = createRuntimeHarness({
-      startError: new Error('[CONVEX A(avatarSession:begin)] Server Error'),
+      beginError: new Error('[CONVEX A(avatarSession:beginLive)] Server Error'),
     });
 
     await harness.runtime.start();
