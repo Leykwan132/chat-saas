@@ -1,5 +1,6 @@
-import { useCallback, useRef, type MouseEventHandler, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, type MouseEventHandler, type ReactNode } from 'react';
 import { PhoneOff } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { AvatarPreviewMedia } from './AvatarPreviewMedia';
 import { useAvatarSession } from './useAvatarSession';
@@ -20,6 +21,7 @@ export function AvatarVideoStage({
   backgroundUrl,
   backgroundType,
   fullScreen = false,
+  showBackground = true,
   sessionMode = 'live',
 }: {
   publicKey: string;
@@ -29,6 +31,7 @@ export function AvatarVideoStage({
   backgroundUrl?: string;
   backgroundType?: 'image' | 'video';
   fullScreen?: boolean;
+  showBackground?: boolean;
   sessionMode?: 'preview' | 'live';
 }) {
   const {
@@ -41,20 +44,31 @@ export function AvatarVideoStage({
   } = useAvatarSession(publicKey, sessionMode);
   const active = phase === 'active' || phase === 'stopping';
   const starting = phase === 'starting';
+  const compositingBackground = active && showBackground && Boolean(backgroundUrl);
   const sourceVideoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const attachVideo = useCallback((element: HTMLMediaElement | null) => {
     sourceVideoRef.current = element instanceof HTMLVideoElement ? element : null;
     videoRef(element);
   }, [videoRef]);
-  useAvatarBackgroundCompositor(sourceVideoRef, canvasRef, active && Boolean(backgroundUrl));
-  const stageClassName = fullScreen
-    ? 'relative size-full overflow-hidden bg-zinc-950 text-white'
-    : 'relative aspect-video w-full overflow-hidden rounded-2xl bg-zinc-950 text-white';
+  useAvatarBackgroundCompositor(sourceVideoRef, canvasRef, compositingBackground);
+  const stageClassName = cn(
+    fullScreen
+      ? 'relative size-full overflow-hidden bg-zinc-950 text-white'
+      : 'relative aspect-video w-full overflow-hidden rounded-2xl bg-zinc-950 text-white',
+  );
+  const foregroundFrameClassName = 'absolute inset-0 z-10';
+  const foregroundMediaClassName = fullScreen
+      ? 'pointer-events-none absolute inset-0 size-full object-cover md:object-contain'
+      : 'pointer-events-none absolute inset-0 size-full object-cover';
+
+  useEffect(() => {
+    if (error) toast.error(error);
+  }, [error]);
 
   return (
     <section className={stageClassName}>
-      {backgroundUrl ? (
+      {showBackground && backgroundUrl ? (
         backgroundType === 'video' ? (
           <video
             src={backgroundUrl}
@@ -74,37 +88,36 @@ export function AvatarVideoStage({
           />
         )
       ) : null}
-      <video
-        ref={attachVideo}
-        autoPlay
-        playsInline
-        className={cn(
-          'pointer-events-none absolute inset-0 z-10 size-full object-cover',
-          active && backgroundUrl ? 'opacity-0' : null,
-        )}
-      />
-      {active && backgroundUrl ? (
-        <canvas
-          ref={canvasRef}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-10 size-full object-cover"
+      <div className={foregroundFrameClassName}>
+        <video
+          ref={attachVideo}
+          autoPlay
+          playsInline
+          className={cn(foregroundMediaClassName, compositingBackground ? 'opacity-0' : null)}
         />
-      ) : null}
-      {!active ? (
-        <>
-          <AvatarPreviewMedia
-            previewUrl={coverImageUrl ?? previewUrl}
-            previewType={coverImageUrl ? coverImageType : 'image'}
-            className={cn(
-              'pointer-events-none absolute inset-0 size-full rounded-none',
-              coverImageUrl ? '[&_img]:object-cover [&_video]:object-cover' : '[&_img]:object-contain [&_video]:object-contain',
-            )}
+        {compositingBackground ? (
+          <canvas
+            ref={canvasRef}
+            aria-hidden="true"
+            className={foregroundMediaClassName}
           />
-          {coverImageUrl || previewUrl ? (
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-zinc-950/40" />
-          ) : null}
-        </>
-      ) : null}
+        ) : null}
+        {!active ? (
+          <>
+            <AvatarPreviewMedia
+              previewUrl={coverImageUrl ?? previewUrl}
+              previewType={coverImageUrl ? coverImageType : 'image'}
+              className={cn(
+                'pointer-events-none absolute inset-0 size-full rounded-none',
+                coverImageUrl ? '[&_img]:object-cover [&_video]:object-cover' : '[&_img]:object-contain [&_video]:object-contain',
+              )}
+            />
+            {coverImageUrl || previewUrl ? (
+              <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-zinc-950/40" />
+            ) : null}
+          </>
+        ) : null}
+      </div>
       {starting ? (
         <div className="absolute inset-0 z-40">
           <div
@@ -125,11 +138,6 @@ export function AvatarVideoStage({
           className="absolute left-1/2 top-6 z-10 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-sm font-medium text-white shadow-lg"
         >
           Chat closing in {inactivityCountdown}
-        </p>
-      ) : null}
-      {error ? (
-        <p className="absolute inset-x-6 bottom-20 text-center text-sm text-red-200">
-          {error}
         </p>
       ) : null}
       {active ? (

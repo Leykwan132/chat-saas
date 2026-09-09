@@ -29,7 +29,9 @@ const initialSnapshot: AvatarSessionSnapshot = {
   error: null,
   identity: null,
 };
-function errorMessage(error: unknown) {
+const USER_FACING_SESSION_ERROR = 'Unexpected error. Please contact support.';
+
+function diagnosticErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Avatar session failed';
 }
 export class AvatarSessionRuntime {
@@ -115,8 +117,8 @@ export class AvatarSessionRuntime {
         inactivityCountdown: null,
         error: null,
       });
-    } catch (error) {
-      this.publish({ ...this.snapshot, phase: 'error', error: errorMessage(error) });
+    } catch {
+      this.publish({ ...this.snapshot, phase: 'error', error: USER_FACING_SESSION_ERROR });
     }
   };
 
@@ -216,7 +218,7 @@ export class AvatarSessionRuntime {
     ]);
     const failure = results.find((result) => result.status === 'rejected');
     if (failure?.status === 'rejected') {
-      this.publish({ ...this.snapshot, phase: 'error', error: errorMessage(failure.reason) });
+      this.publish({ ...this.snapshot, phase: 'error', error: USER_FACING_SESSION_ERROR });
       return;
     }
     this.subtitleSourceEventId = null;
@@ -226,7 +228,7 @@ export class AvatarSessionRuntime {
   private async fail(generation: number, error: unknown) {
     if (generation !== this.generation) return;
     const identity = this.snapshot.identity;
-    const message = errorMessage(error);
+    const diagnosticMessage = diagnosticErrorMessage(error);
     ++this.generation;
     this.subtitleSourceEventId = null;
     await Promise.allSettled([
@@ -236,11 +238,11 @@ export class AvatarSessionRuntime {
           eventId: crypto.randomUUID(),
           sourceEventId: null,
           eventType: 'session.start_failed',
-          endReason: message,
+          endReason: diagnosticMessage,
         })
         : Promise.resolve(),
     ]);
-    this.publish({ ...this.snapshot, phase: 'error', subtitle: null, inactivityCountdown: null, error: message });
+    this.publish({ ...this.snapshot, phase: 'error', subtitle: null, inactivityCountdown: null, error: USER_FACING_SESSION_ERROR });
   }
 
   private recordClientStopped(

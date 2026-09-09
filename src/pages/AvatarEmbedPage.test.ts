@@ -77,8 +77,11 @@ describe('Avatar embed runtime', () => {
     expect(source).not.toContain('.message(');
   });
 
-  it('uses sandbox only for the dashboard preview and live sessions for shared links', () => {
-    expect(source).not.toContain('sessionMode="preview"');
+  it('uses sandbox for explicitly requested shared-link previews and live sessions by default', () => {
+    expect(source).toContain("searchParams.get('isSandbox') === 'true'");
+    expect(source).toContain("? 'preview' : 'live'");
+    expect(source).toContain('sessionMode={sessionMode}');
+    expect(source).toContain("showBackground={sessionMode === 'live'}");
     expect(settingsSource).toContain('sessionMode="preview"');
   });
 
@@ -87,8 +90,7 @@ describe('Avatar embed runtime', () => {
     expect(runtimeSource).toContain('recordEvent');
   });
 
-  it('keeps sandbox mode in the backend without exposing it in the UI or public session result', () => {
-    expect(source).not.toContain('Sandbox');
+  it('keeps sandbox session details out of the UI and public session result', () => {
     expect(source).not.toContain('access.isSandbox');
     expect(embedCardSource).not.toContain('Sandbox');
     expect(embedCardSource).not.toContain('configuration.isSandbox');

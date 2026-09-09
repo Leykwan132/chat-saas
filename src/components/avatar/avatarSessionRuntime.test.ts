@@ -119,6 +119,7 @@ function outgoingMessage(
 }
 
 function createRuntimeHarness(options?: {
+  beginError?: Error;
   startError?: Error;
   voiceStartError?: Error;
 }) {
@@ -131,6 +132,7 @@ function createRuntimeHarness(options?: {
   const runtime = new AvatarSessionRuntime({
     begin: async () => {
       beginCalls += 1;
+      if (options?.beginError) throw options.beginError;
       return {
         publicKey: 'public-key',
         visitorId: 'visitor-id',
@@ -353,7 +355,7 @@ describe('AvatarSessionRuntime', () => {
     expect(harness.client.stopCalls).toBe(1);
     expect(harness.runtime.getSnapshot()).toMatchObject({
       phase: 'error',
-      error: 'Microphone denied',
+      error: 'Unexpected error. Please contact support.',
     });
   });
 
@@ -365,7 +367,20 @@ describe('AvatarSessionRuntime', () => {
     expect(harness.client.stopCalls).toBe(1);
     expect(harness.runtime.getSnapshot()).toMatchObject({
       phase: 'error',
-      error: 'Provider unavailable',
+      error: 'Unexpected error. Please contact support.',
+    });
+  });
+
+  it('does not expose a provider failure message to the session UI', async () => {
+    const harness = createRuntimeHarness({
+      beginError: new Error('[CONVEX A(avatarSession:beginLive)] Server Error'),
+    });
+
+    await harness.runtime.start();
+
+    expect(harness.runtime.getSnapshot()).toMatchObject({
+      phase: 'error',
+      error: 'Unexpected error. Please contact support.',
     });
   });
 
@@ -375,7 +390,7 @@ describe('AvatarSessionRuntime', () => {
     expect(harness.client.stopCalls).toBe(1);
     expect(harness.runtime.getSnapshot()).toMatchObject({
       phase: 'error',
-      error: 'Server initiated disconnect',
+      error: 'Unexpected error. Please contact support.',
     });
   });
 

@@ -1,7 +1,22 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { AvatarVideoStage } from './AvatarVideoStage';
 
 const source = readFileSync(new URL('./AvatarVideoStage.tsx', import.meta.url), 'utf8');
+
+vi.mock('./useAvatarSession', () => ({
+  useAvatarSession: () => ({
+    phase: 'active',
+    error: null,
+    inactivityCountdown: null,
+    videoRef: () => {},
+    start: async () => {},
+    stop: async () => {},
+  }),
+}));
 
 describe('Avatar video stage', () => {
   it('supports a viewport-filling public embed mode', () => {
@@ -71,6 +86,48 @@ describe('Avatar video stage', () => {
     expect(source).toContain('autoPlay');
     expect(source).toContain('loop');
     expect(source).toContain('muted');
+  });
+
+  it('fills the dashboard preview with the keyed avatar layer', () => {
+    const markup = renderToStaticMarkup(createElement(
+      TooltipProvider,
+      null,
+      createElement(AvatarVideoStage, {
+        publicKey: 'public-key',
+        backgroundUrl: 'https://cdn.example.test/background.png',
+      }),
+    ));
+
+    expect(markup).toMatch(/<canvas[^>]+object-cover/);
+  });
+
+  it('fills mobile screens while fitting the portrait to desktop height', () => {
+    const markup = renderToStaticMarkup(createElement(
+      TooltipProvider,
+      null,
+      createElement(AvatarVideoStage, {
+        publicKey: 'public-key',
+        backgroundUrl: 'https://cdn.example.test/background.png',
+        fullScreen: true,
+      }),
+    ));
+
+    expect(markup).toMatch(/<canvas[^>]+object-cover md:object-contain/);
+  });
+
+  it('can render the active avatar stream without a configured background', () => {
+    const markup = renderToStaticMarkup(createElement(
+      TooltipProvider,
+      null,
+      createElement(AvatarVideoStage, {
+        publicKey: 'public-key',
+        backgroundUrl: 'https://cdn.example.test/background.png',
+        showBackground: false,
+      }),
+    ));
+
+    expect(markup).not.toContain('background.png');
+    expect(markup).not.toContain('<canvas');
   });
 
   it('keeps media layers from intercepting the idle Start Chat target', () => {
