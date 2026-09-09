@@ -23,11 +23,16 @@ beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
     const url = new URL(String(input));
     const body = url.pathname.endsWith("/oauth/access_token")
-      ? { access_token: "short-token", user_id: "ig-1" }
+      ? { access_token: "short-token", user_id: "oauth-user-id" }
       : url.pathname.endsWith("/access_token")
         ? { access_token: "long-token", expires_in: 5_184_000 }
         : url.pathname.endsWith("/me")
-          ? { id: "ig-1", username: "store" }
+          ? {
+              id: "profile-id",
+              user_id: "ig-1",
+              username: "store",
+              account_type: "BUSINESS",
+            }
         : url.pathname.endsWith("/subscribed_apps")
           ? { success: true }
           : url.pathname.endsWith("/conversations")
@@ -83,7 +88,7 @@ test("Instagram Login saves the selected agent and remains visible after empty b
   const visible = await owner.query(api.channels.listForCurrentOrg, { agentId: selectedAgentId });
   expect(visible).toMatchObject([{
     _id: channelId, status: "connected", defaultAgentId: selectedAgentId,
-    orgId: "", connectedByUserId: "owner", conversationCount: 0,
+    orgId: "", connectedByUserId: "owner", conversationCount: 0, igUserId: "ig-1",
   }]);
   expect(await owner.query(api.channels.listForCurrentOrg, { agentId: newestAgentId })).toEqual([]);
   const subscriptionRequest = vi.mocked(globalThis.fetch).mock.calls.find(
@@ -92,12 +97,19 @@ test("Instagram Login saves the selected agent and remains visible after empty b
   expect(subscriptionRequest).toBeDefined();
   const [input, init] = subscriptionRequest!;
   expect(new URL(String(input)).searchParams.get("subscribed_fields")).toBe(
-    "comments,messages,message_reactions,messaging_seen,live_comments,message_echoes",
+    "comments,messages,message_reactions,messaging_seen,live_comments",
   );
   expect(init).toMatchObject({
     method: "POST",
     headers: { Authorization: "Bearer long-token" },
   });
+  const profileRequest = vi.mocked(globalThis.fetch).mock.calls.find(
+    ([request]) => new URL(String(request)).pathname === "/v25.0/me",
+  );
+  expect(profileRequest).toBeDefined();
+  expect(new URL(String(profileRequest![0])).searchParams.get("fields")).toBe(
+    "user_id,username,account_type",
+  );
 });
 
 test("Instagram Login reconnect replaces a disconnected account's old agent assignment", async () => {
@@ -130,11 +142,11 @@ test("a rejected duplicate Instagram Login connect preserves the working connect
   });
 });
 
-test("does not connect an account reassigned while Instagram profile loading is running", async () => {
+test("does not connect an account reassigned while Instagram webhook subscription is running", async () => {
   const { t, selectedAgentId, newestAgentId } = await setup();
   const graphFetch = globalThis.fetch;
   vi.stubGlobal("fetch", vi.fn(async (...args: Parameters<typeof fetch>) => {
-    if (String(args[0]).includes("/me?")) {
+    if (String(args[0]).includes("/subscribed_apps")) {
       await t.run(async (ctx) => {
         const channel = await ctx.db.query("channels").unique();
         if (!channel) throw new Error("Pending channel missing");
@@ -151,11 +163,11 @@ test("does not connect an account reassigned while Instagram profile loading is 
   expect(channel?.accessToken).toBeUndefined();
 });
 
-test("does not connect when the selected agent is removed during Instagram profile loading", async () => {
+test("does not connect when the selected agent is removed during Instagram webhook subscription", async () => {
   const { t, selectedAgentId } = await setup();
   const graphFetch = globalThis.fetch;
   vi.stubGlobal("fetch", vi.fn(async (...args: Parameters<typeof fetch>) => {
-    if (String(args[0]).includes("/me?")) {
+    if (String(args[0]).includes("/subscribed_apps")) {
       await t.run(async (ctx) => {
         await ctx.db.delete(selectedAgentId);
       });
