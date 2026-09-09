@@ -108,6 +108,14 @@ test("chooses the keyword match once and persists the customer first", async () 
   };
   await t.mutation(internal.commentAutomationIngest.ingestComment, input);
   await t.mutation(internal.commentAutomationIngest.ingestComment, input);
+  const queuedState = await t.run(async (ctx) => ({
+    customers: await ctx.db.query("customers").collect(),
+    conversations: await ctx.db.query("conversations").collect(),
+    messages: await ctx.db.query("messages").collect(),
+  }));
+  expect(queuedState.customers).toHaveLength(0);
+  expect(queuedState.conversations).toHaveLength(0);
+  expect(queuedState.messages).toHaveLength(0);
   const deliveryId = await t.run(async (ctx) =>
     (await ctx.db.query("commentAutomationDeliveries").unique())?._id
   );
@@ -136,7 +144,7 @@ test("chooses the keyword match once and persists the customer first", async () 
   expect(result.customers).toHaveLength(1);
   expect(result.customers[0]?.name).toBe("Alex");
   expect(result.conversations).toHaveLength(1);
-  expect(result.messages).toHaveLength(2);
+  expect(result.messages).toHaveLength(1);
   expect(result.messages).toContainEqual(expect.objectContaining({
     externalId: "private-reply-1",
     direction: "outgoing",

@@ -16,8 +16,11 @@ test('renders a subtle labeled card for automated messages', () => {
   expect(component).toContain("'Automation message sent'");
 });
 
-test('routes workflow messages through the dedicated card', () => {
+test('keeps comment automation messages in the regular bubble and labels their sender row', () => {
   const thread = source('./InboxThreadMessages.tsx');
-  expect(thread).toContain('message.workflowAutomationSource');
+  expect(thread).toContain("message.workflowAutomationSource === 'commentAutomation'");
+  expect(thread).toContain('Comment-to-inbox message');
+  expect(thread).toContain('<Send className="size-3" />');
+  expect(thread).toContain('border border-primary/20 bg-primary/5 px-1 py-px text-xs');
   expect(thread).toContain('<InboxWorkflowAutomationMessage');
 });
