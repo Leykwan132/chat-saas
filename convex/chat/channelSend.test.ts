@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { Doc } from "../_generated/dataModel";
-import { sendMediaToChannel, sendMetaReaction } from "./channelSend";
+import {
+  sendMediaToChannel,
+  sendMetaMarkSeen,
+  sendMetaReaction,
+  sendMetaTypingOn,
+} from "./channelSend";
 
 function whatsappConversation() {
   return {
@@ -171,7 +176,41 @@ test("sends WhatsApp media, text, and reactions to a username recipient", async 
   }
 });
 
-test("sends Instagram reactions through Facebook's me messages endpoint", async () => {
+test("sends Instagram typing and seen through Instagram's me messages endpoint", async () => {
+  const requests: Array<{ url: string; body: Record<string, unknown> }> = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      requests.push({ url: String(url), body: parseBody(init) });
+      return new Response(JSON.stringify({ recipient_id: "ig-scoped-user" }), { status: 200 });
+    }),
+  );
+
+  await expect(sendMetaTypingOn(instagramConversation(), instagramChannel())).resolves.toEqual({
+    ok: true,
+  });
+  await expect(sendMetaMarkSeen(instagramConversation(), instagramChannel())).resolves.toEqual({
+    ok: true,
+  });
+  expect(requests).toEqual([
+    {
+      url: "https://graph.instagram.com/v25.0/me/messages",
+      body: {
+        recipient: { id: "ig-scoped-user" },
+        sender_action: "typing_on",
+      },
+    },
+    {
+      url: "https://graph.instagram.com/v25.0/me/messages",
+      body: {
+        recipient: { id: "ig-scoped-user" },
+        sender_action: "mark_seen",
+      },
+    },
+  ]);
+});
+
+test("keeps Instagram reactions on Facebook's me messages endpoint", async () => {
   const requests: Array<{ url: string; body: Record<string, unknown> }> = [];
   vi.stubGlobal(
     "fetch",

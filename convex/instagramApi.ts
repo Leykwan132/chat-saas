@@ -21,7 +21,7 @@ export function instagramMessagingUrl(channel: InstagramChannelTarget) {
   return `${instagramObjectBase(channel)}/${instagramAccountId(channel)}/messages`;
 }
 
-export function instagramSenderActionUrl() {
+export function instagramReactionUrl() {
   return `https://graph.facebook.com/${graphVersion()}/me/messages`;
 }
 
