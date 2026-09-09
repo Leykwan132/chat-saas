@@ -76,6 +76,7 @@ async function setup() {
 
 test("Instagram Login saves the selected agent and remains visible after empty backfill", async () => {
   const { t, owner, selectedAgentId, newestAgentId } = await setup();
+  const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
   const { channelId } = await t.action(internal.instagramConnect.internalCompleteSignup, {
     agentId: selectedAgentId, code: "code", redirectUri: "https://example.com/callback", orgId: "", userId: "owner",
   });
@@ -89,6 +90,14 @@ test("Instagram Login saves the selected agent and remains visible after empty b
   expect(vi.mocked(globalThis.fetch).mock.calls.some(
     ([input]) => String(input).includes("/subscribed_apps"),
   )).toBe(false);
+  expect(logSpy).toHaveBeenCalledWith("[instagram-connect] token response", {
+    access_token: "[redacted]",
+    user_id: "ig-1",
+  });
+  expect(logSpy).toHaveBeenCalledWith("[instagram-connect] profile response", {
+    id: "ig-1",
+    username: "store",
+  });
 });
 
 test("Instagram Login reconnect replaces a disconnected account's old agent assignment", async () => {
