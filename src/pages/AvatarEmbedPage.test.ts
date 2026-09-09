@@ -126,6 +126,7 @@ describe('Avatar setup', () => {
     expect(createSource).not.toContain('voiceId: selectedVoiceId');
     expect(createSource).not.toContain('language,');
     expect(configureSource).toContain("args: { agentId: v.id('agents'), avatarId: v.string() }");
+    expect(configureSource).toContain('ensureDefaultAvatarContext');
     expect(configureSource).not.toContain('voiceId: v.string(),\n    language: v.string(),');
     expect(avatarSessionSource).toContain('return { sessionId, sessionToken };');
     expect(avatarSessionSource).not.toContain('return { sessionId, sessionToken, apiKey');

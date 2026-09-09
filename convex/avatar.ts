@@ -12,15 +12,11 @@ import {
   getAvatarConfigurationByPublicKey,
   getWorkspaceAvatarConfiguration,
 } from './avatarCore';
-import {
-  MAX_AVATAR_CONCURRENT_SESSIONS,
-} from './avatarProvider';
-import {
-  DEFAULT_GEMINI_LIVE_VOICE,
-  isGeminiLiveVoice,
-} from '../shared/geminiLiveVoices';
+import { MAX_AVATAR_CONCURRENT_SESSIONS } from './avatarProvider';
+import { DEFAULT_GEMINI_LIVE_VOICE, isGeminiLiveVoice } from '../shared/geminiLiveVoices';
 import { getPublicMediaUrl } from './media/r2';
 import { countActiveAvatarSessions } from './avatarSessionCapacity';
+
 export const getForAgent = query({
   args: { agentId: v.id('agents') },
   handler: async (ctx, args) => {
@@ -126,7 +122,8 @@ export const internalGetSetupContext = internalQuery({
       configurationId: configuration._id,
       contextId: configuration.providerContextId,
       agentName: agent.name,
-      systemPrompt: agent.systemPrompt,
+      businessName: agent.businessName?.trim() || agent.name,
+      businessDescription: agent.businessDescription?.trim() || '',
     };
   },
 });

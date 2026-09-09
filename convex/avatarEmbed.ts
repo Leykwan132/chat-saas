@@ -9,6 +9,7 @@ import {
   parseSandboxMode,
   validateLanguageVoiceSelection,
 } from './avatarProvider';
+import { ensureDefaultAvatarContext } from './avatarContext';
 
 type ProviderResponse<T> = {
   data?: T | null;
@@ -128,6 +129,7 @@ export const configure = action({
     const avatars = await loadAvatars(requireApiKey());
     const avatar = avatars.find((item) => item.id === args.avatarId);
     if (!avatar) throw new Error('Choose an available avatar');
+    await ensureDefaultAvatarContext(ctx, setup);
     await ctx.runMutation(internal.avatar.saveConfiguration, {
       configurationId: setup.configurationId,
       avatarId: avatar.id,
@@ -164,17 +166,8 @@ export const create = action({
       voiceId: args.voiceId,
     });
 
-    const context = setup.contextId
-      ? { id: setup.contextId }
-      : await providerRequest<{ id: string }>(apiKey, '/v1/contexts', {
-        method: 'POST',
-        body: {
-          name: `${setup.agentName} Avatar`,
-          prompt: setup.systemPrompt,
-          opening_text: 'Hi! How can I help you today?',
-        },
-      });
-    if (!context.id) throw new Error('LiveAvatar context creation failed');
+    const contextId = await ensureDefaultAvatarContext(ctx, setup);
+    if (!contextId) throw new Error('LiveAvatar context creation failed');
     const embed = await providerRequest<{
       embed_id: string;
       url: string;
@@ -186,7 +179,7 @@ export const create = action({
         avatarId: avatar.id,
         voiceId: voice.id,
         language,
-        contextId: context.id,
+        contextId,
       }),
     });
     if (!embed.embed_id || !embed.url) throw new Error('LiveAvatar embed creation failed');
@@ -201,7 +194,7 @@ export const create = action({
       voiceLanguage: voice.language,
       voiceGender: voice.gender,
       language,
-      contextId: context.id,
+      contextId,
       embedId: embed.embed_id,
       embedUrl: embed.url,
       ...(embed.script ? { embedScript: embed.script } : {}),
