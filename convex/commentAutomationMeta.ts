@@ -83,6 +83,22 @@ function getMessengerTarget(channel: CommentSubscriptionChannel) {
   };
 }
 
+function getInstagramTarget(channel: CommentSubscriptionChannel) {
+  if (
+    channel.service !== "instagram" ||
+    channel.status !== "connected" ||
+    !channel.igUserId ||
+    !channel.accessToken?.trim()
+  ) {
+    throw new Error("Instagram account is unavailable");
+  }
+  return {
+    igUserId: channel.igUserId,
+    accessToken: channel.accessToken.trim(),
+    baseUrl: `https://graph.instagram.com/${graphVersion()}`,
+  };
+}
+
 async function graphRequest(
   url: string,
   accessToken: string,
@@ -182,6 +198,35 @@ export async function sendMessengerCommentPublicReply(
   const target = getMessengerTarget(channel);
   return await sendCommentRequest(
     `${target.baseUrl}/${commentId}/comments`,
+    target.accessToken,
+    { message: text },
+  );
+}
+
+export async function sendInstagramCommentPrivateReply(
+  channel: CommentSubscriptionChannel,
+  commentId: string,
+  text: string,
+) {
+  const target = getInstagramTarget(channel);
+  return await sendCommentRequest(
+    `${target.baseUrl}/${target.igUserId}/messages`,
+    target.accessToken,
+    {
+      recipient: { comment_id: commentId },
+      message: { text },
+    },
+  );
+}
+
+export async function sendInstagramCommentPublicReply(
+  channel: CommentSubscriptionChannel,
+  commentId: string,
+  text: string,
+) {
+  const target = getInstagramTarget(channel);
+  return await sendCommentRequest(
+    `${target.baseUrl}/${commentId}/replies`,
     target.accessToken,
     { message: text },
   );

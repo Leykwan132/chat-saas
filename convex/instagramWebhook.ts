@@ -13,6 +13,7 @@ import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
 import { inboxPromptContent } from "../shared/inboxAttachments";
 import type { IngestChannelMessageResult } from "./chat/threads";
 import { queueInboundMediaBatch } from "./inboundMediaBatch";
+import { parseInstagramCommentEvent } from "./instagramCommentEvent";
 
 // POST handler for the product-specific /webhook/instagram route.
 // The caller (convex/http.ts) has already read the raw body and checked the
@@ -51,6 +52,14 @@ export async function receive(
 
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
+      const comment = parseInstagramCommentEvent(entry.id, entry.time, change);
+      if (comment !== null) {
+        await ctx.runAction(
+          internal.instagramCommentAutomation.processInstagramComment,
+          comment,
+        );
+        continue;
+      }
       if (change.field !== "messaging_seen") continue;
       const value = change.value;
       const recipientId = value.recipient?.id;
@@ -366,10 +375,13 @@ type InstagramWebhookEnvelope = {
   object?: string;
   entry?: Array<{
     id?: string;
-    time?: number;
+    time?: number | string;
     changes?: Array<{
       field?: string;
       value: {
+        from?: { id?: string; username?: string };
+        id?: string;
+        text?: string;
         sender?: { id?: string };
         recipient?: { id?: string };
         timestamp?: number | string;

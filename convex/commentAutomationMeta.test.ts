@@ -103,4 +103,35 @@ describe("ensureCommentSubscription", () => {
       message: "Check your inbox",
     });
   });
+
+  it("sends an Instagram private reply through the Instagram Graph account edge", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      recipient_id: "customer-1",
+      message_id: "message-1",
+    }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const module = await import("./commentAutomationMeta") as typeof import("./commentAutomationMeta") & {
+      sendInstagramCommentPrivateReply?: (
+        channel: { service: string; status: string; igUserId: string; accessToken: string },
+        commentId: string,
+        text: string,
+      ) => Promise<unknown>;
+    };
+
+    expect(module.sendInstagramCommentPrivateReply).toBeTypeOf("function");
+    await module.sendInstagramCommentPrivateReply?.({
+      service: "instagram",
+      status: "connected",
+      igUserId: "17841415503021124",
+      accessToken: "instagram-token",
+    }, "comment-1", "Sent privately");
+
+    expect(fetchMock.mock.calls[0]?.[0]).toContain(
+      "graph.instagram.com/v25.0/17841415503021124/messages",
+    );
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({
+      recipient: { comment_id: "comment-1" },
+      message: { text: "Sent privately" },
+    });
+  });
 });

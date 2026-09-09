@@ -271,6 +271,7 @@ import type * as inboxPools from "../inboxPools.js";
 import type * as instagramApi from "../instagramApi.js";
 import type * as instagramAuth from "../instagramAuth.js";
 import type * as instagramChannelAssignment from "../instagramChannelAssignment.js";
+import type * as instagramCommentAutomation from "../instagramCommentAutomation.js";
 import type * as instagramConnect from "../instagramConnect.js";
 import type * as instagramConnectAccess from "../instagramConnectAccess.js";
 import type * as instagramSend from "../instagramSend.js";
@@ -773,6 +774,7 @@ declare const fullApi: ApiFromModules<{
   instagramApi: typeof instagramApi;
   instagramAuth: typeof instagramAuth;
   instagramChannelAssignment: typeof instagramChannelAssignment;
+  instagramCommentAutomation: typeof instagramCommentAutomation;
   instagramConnect: typeof instagramConnect;
   instagramConnectAccess: typeof instagramConnectAccess;
   instagramSend: typeof instagramSend;

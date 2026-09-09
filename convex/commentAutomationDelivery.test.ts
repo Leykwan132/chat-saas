@@ -104,4 +104,28 @@ test("counts a successful private reply and one later customer response", async 
   expect(await t.run(async (ctx) =>
     (await ctx.db.get(invalidDeliveryId))?.privateStatus
   )).toBe("failed");
+
+  const instagramDeliveryId = await t.run(async (ctx) => {
+    await ctx.db.patch(fixture.channelId, {
+      service: "instagram",
+      pageId: undefined,
+      igUserId: "17841415503021124",
+      accessToken: "instagram-token",
+    });
+    return await ctx.db.insert("commentAutomationDeliveries", {
+      automationId: fixture.automationId,
+      channelId: fixture.channelId,
+      externalCommentId: "comment-3",
+      contactAddress: "customer-3",
+      commentText: "Hello",
+      commentCreatedAt: responseAt,
+      privateStatus: "pending",
+      createdAt: responseAt,
+      updatedAt: responseAt,
+    });
+  });
+  expect(await t.mutation(
+    internal.commentAutomationDelivery.claimDelivery,
+    { deliveryId: instagramDeliveryId },
+  )).not.toBeNull();
 });

@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import { internalAction, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import {
+  sendInstagramCommentPrivateReply,
+  sendInstagramCommentPublicReply,
   sendMessengerCommentPrivateReply,
   sendMessengerCommentPublicReply,
 } from "./commentAutomationMeta";
@@ -31,14 +33,14 @@ export const claimDelivery = internalMutation({
     }
     if (
       channel === null ||
-      channel.service !== "messenger" ||
+      (channel.service !== "messenger" && channel.service !== "instagram") ||
       channel.status !== "connected" ||
-      !channel.pageId ||
+      (channel.service === "messenger" ? !channel.pageId : !channel.igUserId) ||
       !channel.accessToken?.trim()
     ) {
       await ctx.db.patch(delivery._id, {
         privateStatus: "failed",
-        privateError: "Messenger page is unavailable",
+        privateError: "Comment channel is unavailable",
         updatedAt: Date.now(),
       });
       return null;
@@ -120,15 +122,21 @@ export const sendDelivery = internalAction({
 
     console.log("[comment-to-inbox] private:request", {
       deliveryId: args.deliveryId,
-      pageId: claimed.channel.pageId,
+      accountId: claimed.channel.pageId ?? claimed.channel.igUserId,
       commentId: claimed.delivery.externalCommentId,
       text: claimed.privateMessage,
     });
-    const privateResult = await sendMessengerCommentPrivateReply(
-      claimed.channel,
-      claimed.delivery.externalCommentId,
-      claimed.privateMessage,
-    );
+    const privateResult = claimed.channel.service === "instagram"
+      ? await sendInstagramCommentPrivateReply(
+        claimed.channel,
+        claimed.delivery.externalCommentId,
+        claimed.privateMessage,
+      )
+      : await sendMessengerCommentPrivateReply(
+        claimed.channel,
+        claimed.delivery.externalCommentId,
+        claimed.privateMessage,
+      );
     const privateCompleted = await ctx.runMutation(
       internal.commentAutomationDelivery.completePrivateDelivery,
       {
@@ -148,11 +156,17 @@ export const sendDelivery = internalAction({
       commentId: claimed.delivery.externalCommentId,
       text: claimed.publicReply,
     });
-    const publicResult = await sendMessengerCommentPublicReply(
-      claimed.channel,
-      claimed.delivery.externalCommentId,
-      claimed.publicReply,
-    );
+    const publicResult = claimed.channel.service === "instagram"
+      ? await sendInstagramCommentPublicReply(
+        claimed.channel,
+        claimed.delivery.externalCommentId,
+        claimed.publicReply,
+      )
+      : await sendMessengerCommentPublicReply(
+        claimed.channel,
+        claimed.delivery.externalCommentId,
+        claimed.publicReply,
+      );
     await ctx.runMutation(
       internal.commentAutomationDelivery.completePublicDelivery,
       {
