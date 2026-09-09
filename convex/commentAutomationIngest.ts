@@ -110,7 +110,7 @@ export const ingestComment = internalMutation({
     const channel = await ctx.db.get(args.channelId);
     if (
       channel === null ||
-      channel.service !== "messenger" ||
+      (channel.service !== "messenger" && channel.service !== "instagram") ||
       channel.status !== "connected"
     ) {
       return;
