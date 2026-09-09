@@ -18,7 +18,10 @@ export function instagramAccountId(channel: InstagramChannelTarget) {
 }
 
 export function instagramMessagingUrl(channel: InstagramChannelTarget) {
-  return `${instagramObjectBase(channel)}/${instagramAccountId(channel)}/messages`;
+  const baseUrl = channel.instagramPageId
+    ? instagramObjectBase(channel)
+    : `https://graph.facebook.com/${graphVersion()}`;
+  return `${baseUrl}/${instagramAccountId(channel)}/messages`;
 }
 
 export function instagramConversationsUrl(channel: InstagramChannelTarget) {
