@@ -6,9 +6,9 @@ import {
 } from "./instagramApi";
 
 describe("Instagram API routing", () => {
-  it("routes Instagram Login sender actions through Facebook's me endpoint", () => {
+  it("routes Instagram Login messages through Instagram's me endpoint", () => {
     expect(instagramMessagingUrl({})).toContain(
-      "graph.facebook.com/v25.0/me/messages",
+      "graph.instagram.com/v25.0/me/messages",
     );
     expect(instagramConversationsUrl({})).toContain(
       "graph.instagram.com/v25.0/me/conversations",
