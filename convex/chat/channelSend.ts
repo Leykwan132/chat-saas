@@ -11,7 +11,7 @@ import {
   mediaSendLogContext,
   type MediaSendLogContext,
 } from "./mediaSendLogs";
-import { instagramMessagingUrl, instagramReactionUrl } from "../instagramApi";
+import { instagramMessagingUrl, instagramSenderActionUrl } from "../instagramApi";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
 
@@ -1160,7 +1160,7 @@ async function sendInstagramReactionAction(
   if (!accessToken) {
     return { ok: false, error: "Instagram channel is not connected", policy: "generic" };
   }
-  const res = await fetch(instagramReactionUrl(), {
+  const res = await fetch(instagramSenderActionUrl(), {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
