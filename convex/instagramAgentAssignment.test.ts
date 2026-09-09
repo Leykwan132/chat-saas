@@ -86,6 +86,9 @@ test("Instagram Login saves the selected agent and remains visible after empty b
     orgId: "", connectedByUserId: "owner", conversationCount: 0,
   }]);
   expect(await owner.query(api.channels.listForCurrentOrg, { agentId: newestAgentId })).toEqual([]);
+  expect(vi.mocked(globalThis.fetch).mock.calls.some(
+    ([input]) => String(input).includes("/subscribed_apps"),
+  )).toBe(false);
 });
 
 test("Instagram Login reconnect replaces a disconnected account's old agent assignment", async () => {
