@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-09 [CODE] Now: Instagram connect uses direct Instagram Login (`META_IG_APP_ID` / `META_IG_APP_SECRET`) without runtime `subscribed_apps` requests; dashboard webhook subscriptions are authoritative. Direct Instagram Comment-to-Inbox also skips account-level subscriptions. The deployment is uploaded; isolated PR pending.
+- 2026-09-09 [CODE] Now: Instagram connect uses direct Instagram Login (`META_IG_APP_ID` / `META_IG_APP_SECRET`) without runtime `subscribed_apps` requests; dashboard webhook subscriptions are authoritative. Direct Instagram Comment-to-Inbox also skips account-level subscriptions. The deployment is uploaded; isolated PR #122 is open.
 - 2026-09-08 [TOOL] Instagram assignment fix is in PR #119 (`codex/instagram-agent-assignment` → `main`), unshipped. [CODE] Route agentId is required and authorized, pending/reconnected rows atomically use it, completion revalidates assignment, and errors only affect that attempt's pending row. [USER] User will reconnect manually; no production data repair requested.
 - 2026-09-08 [TOOL] Prod `kilobot.app` was verified `connected`, assigned to `Adwav Newswav` (`jh76x3zjkn4a5b171t163664dx8d42c4`); supersedes earlier disconnected status. [CODE] Agent-filtered Channels UI hid it because signup retained old/latest-agent assignment. Empty backfill does not disconnect.
 - 2026-09-08 [CODE] Now: first-signup welcome modal uses the host brand name (`Welcome to {{Brand Name}}` on partner domains). Native Kilobot onboard and same-origin password reset shipped via #117. Next: merge #118, then verify copy on a partner hostname.
@@ -93,7 +93,7 @@
 
 # Receipts
 
-- 2026-09-09 [TOOL] Isolated direct Instagram subscription fix: 18 focused Instagram/UI tests and Convex TypeScript check pass. A direct-connect regression assertion rejects any `/subscribed_apps` request. Convex codegen uploaded the fix; PR pending.
+- 2026-09-09 [TOOL] PR #122 opened: https://github.com/Leykwan132/chat-saas/pull/122 (`codex/remove-instagram-subscription` → `main`). Isolated direct Instagram subscription fix: 18 focused Instagram/UI tests and Convex TypeScript check pass. A direct-connect regression assertion rejects any `/subscribed_apps` request. Convex codegen uploaded the fix; production verification UNCONFIRMED.
 - 2026-09-09 [TOOL] PR #120 opened: https://github.com/Leykwan132/chat-saas/pull/120 (`codex/instagram-agent-assignment` → `main`). Direct Instagram Login: 15 focused Instagram/UI tests, Convex TypeScript check, regenerated bindings, and diff check pass under Node 22. Reviewer found no critical/important issues; one minor env-name diagnostic was fixed. Convex codegen uploaded the configured deployment; production availability UNCONFIRMED.
 - 2026-09-09 [TOOL] PR #120 merge conflict resolved by merging `origin/main` at `98d040f` (including #119) into the branch; 15 focused tests and the Convex TypeScript check passed before merge commit `174c67b` was pushed.
 - 2026-09-08 [TOOL] PR #119 opened: https://github.com/Leykwan132/chat-saas/pull/119 (fix commit `c371fd1`). 12 tests revalidated under Node 22; targeted ESLint + diff check pass; review found no actionable issues. Convex API bindings regenerated; no production deploy/changelog (unshipped).
