@@ -1,5 +1,5 @@
 import { useQuery } from 'convex/react';
-import { useParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import { AvatarUnavailableState } from '@/components/avatar/AvatarUnavailableState';
 import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
@@ -7,6 +7,8 @@ import { Spinner } from '@/components/ui/spinner';
 
 export default function AvatarEmbedPage() {
   const { publicKey = '' } = useParams();
+  const [searchParams] = useSearchParams();
+  const sessionMode = searchParams.get('isSandbox') === 'true' ? 'preview' : 'live';
   const config = useQuery(api.avatar.publicGetConfig, { publicKey });
 
   if (config === undefined) {
@@ -28,6 +30,7 @@ export default function AvatarEmbedPage() {
         coverImageType={config.coverImageType}
         backgroundUrl={config.backgroundUrl}
         backgroundType={config.backgroundType}
+        sessionMode={sessionMode}
         fullScreen
       />
     </main>
