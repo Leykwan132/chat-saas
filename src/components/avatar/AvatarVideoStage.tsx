@@ -51,6 +51,12 @@ export function AvatarVideoStage({
   const stageClassName = fullScreen
     ? 'relative size-full overflow-hidden bg-zinc-950 text-white'
     : 'relative aspect-video w-full overflow-hidden rounded-2xl bg-zinc-950 text-white';
+  const foregroundFrameClassName = backgroundUrl
+    ? 'relative z-10 mx-auto h-full max-w-full aspect-[3/4]'
+    : 'absolute inset-0 z-10';
+  const foregroundMediaClassName = backgroundUrl
+    ? 'pointer-events-none absolute inset-0 size-full object-contain'
+    : 'pointer-events-none absolute inset-0 size-full object-cover';
 
   return (
     <section className={stageClassName}>
@@ -74,37 +80,36 @@ export function AvatarVideoStage({
           />
         )
       ) : null}
-      <video
-        ref={attachVideo}
-        autoPlay
-        playsInline
-        className={cn(
-          'pointer-events-none absolute inset-0 z-10 size-full object-cover',
-          active && backgroundUrl ? 'opacity-0' : null,
-        )}
-      />
-      {active && backgroundUrl ? (
-        <canvas
-          ref={canvasRef}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-10 size-full object-cover"
+      <div className={foregroundFrameClassName}>
+        <video
+          ref={attachVideo}
+          autoPlay
+          playsInline
+          className={cn(foregroundMediaClassName, active && backgroundUrl ? 'opacity-0' : null)}
         />
-      ) : null}
-      {!active ? (
-        <>
-          <AvatarPreviewMedia
-            previewUrl={coverImageUrl ?? previewUrl}
-            previewType={coverImageUrl ? coverImageType : 'image'}
-            className={cn(
-              'pointer-events-none absolute inset-0 size-full rounded-none',
-              coverImageUrl ? '[&_img]:object-cover [&_video]:object-cover' : '[&_img]:object-contain [&_video]:object-contain',
-            )}
+        {active && backgroundUrl ? (
+          <canvas
+            ref={canvasRef}
+            aria-hidden="true"
+            className={foregroundMediaClassName}
           />
-          {coverImageUrl || previewUrl ? (
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-zinc-950/40" />
-          ) : null}
-        </>
-      ) : null}
+        ) : null}
+        {!active ? (
+          <>
+            <AvatarPreviewMedia
+              previewUrl={coverImageUrl ?? previewUrl}
+              previewType={coverImageUrl ? coverImageType : 'image'}
+              className={cn(
+                'pointer-events-none absolute inset-0 size-full rounded-none',
+                coverImageUrl ? '[&_img]:object-cover [&_video]:object-cover' : '[&_img]:object-contain [&_video]:object-contain',
+              )}
+            />
+            {coverImageUrl || previewUrl ? (
+              <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-zinc-950/40" />
+            ) : null}
+          </>
+        ) : null}
+      </div>
       {starting ? (
         <div className="absolute inset-0 z-40">
           <div

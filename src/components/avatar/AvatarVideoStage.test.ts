@@ -1,7 +1,22 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { AvatarVideoStage } from './AvatarVideoStage';
 
 const source = readFileSync(new URL('./AvatarVideoStage.tsx', import.meta.url), 'utf8');
+
+vi.mock('./useAvatarSession', () => ({
+  useAvatarSession: () => ({
+    phase: 'active',
+    error: null,
+    inactivityCountdown: null,
+    videoRef: () => {},
+    start: async () => {},
+    stop: async () => {},
+  }),
+}));
 
 describe('Avatar video stage', () => {
   it('supports a viewport-filling public embed mode', () => {
@@ -71,6 +86,20 @@ describe('Avatar video stage', () => {
     expect(source).toContain('autoPlay');
     expect(source).toContain('loop');
     expect(source).toContain('muted');
+  });
+
+  it('keeps the keyed portrait in a centered frame over the full-stage background', () => {
+    const markup = renderToStaticMarkup(createElement(
+      TooltipProvider,
+      null,
+      createElement(AvatarVideoStage, {
+        publicKey: 'public-key',
+        backgroundUrl: 'https://cdn.example.test/background.png',
+      }),
+    ));
+
+    expect(markup).toContain('mx-auto h-full max-w-full aspect-[3/4]');
+    expect(markup).toContain('object-contain');
   });
 
   it('keeps media layers from intercepting the idle Start Chat target', () => {
