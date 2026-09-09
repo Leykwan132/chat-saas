@@ -161,9 +161,15 @@ function DayDivider({ label }: { label: string }) {
 }
 
 function OutgoingLabel({ message }: { message: InboxUIMessage }) {
+  const isCommentAutomation = message.workflowAutomationSource === 'commentAutomation';
   return (
     <span className="flex items-center justify-end gap-1 pr-0.5 text-xs text-muted-foreground">
       <span>{message.agentName ?? 'Unknown agent'}</span>
+      {isCommentAutomation ? (
+        <span className="rounded bg-muted px-1 py-px text-[11px] font-medium text-muted-foreground">
+          Automation message sent
+        </span>
+      ) : null}
       {message.sentByAi ? (
         <span className="rounded bg-muted px-1 py-px text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           AI
@@ -363,6 +369,7 @@ function InboxMessageBody({
     .map((asset) => asset.audioTranscript!);
   const isAudioPlaceholder = isInboxAudioPlaceholder(text);
   const isImagePlaceholder = isInboxImagePlaceholder(text);
+  const isCommentAutomation = message.workflowAutomationSource === 'commentAutomation';
   const showText =
     text.length > 0 &&
     !(isAudioPlaceholder && audioFiles.length > 0) &&
@@ -413,7 +420,7 @@ function InboxMessageBody({
         <div
           className={cn(
             'w-fit max-w-full px-3 py-1.5 text-sm leading-snug whitespace-pre-wrap break-words',
-            message.workflowAutomationSource
+            message.workflowAutomationSource && !isCommentAutomation
               ? 'text-foreground'
               : isCustomer
               ? 'rounded-[2px_16px_16px_16px] border border-border bg-card text-foreground'
@@ -428,7 +435,7 @@ function InboxMessageBody({
       ) : null}
     </>
   );
-  if (message.workflowAutomationSource) {
+  if (message.workflowAutomationSource && !isCommentAutomation) {
     return (
       <InboxWorkflowAutomationMessage source={message.workflowAutomationSource}>
         {messageContent}
