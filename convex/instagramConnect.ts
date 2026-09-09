@@ -25,6 +25,27 @@ type GraphErrorBody = {
   };
 };
 
+function redactInstagramTokens(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(redactInstagramTokens);
+  }
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+  return Object.fromEntries(
+    Object.entries(value).map(([key, nestedValue]) => [
+      key,
+      key.toLowerCase().includes("token")
+        ? "[redacted]"
+        : redactInstagramTokens(nestedValue),
+    ]),
+  );
+}
+
+function logInstagramResponse(label: string, response: unknown) {
+  console.log(`[instagram-connect] ${label}`, redactInstagramTokens(response));
+}
+
 async function graphFetch<T>(
   url: string,
   init: RequestInit,
@@ -134,6 +155,7 @@ export const internalCompleteSignup = internalAction({
           "Instagram code exchange returned no access_token or user_id",
         );
       }
+      logInstagramResponse("token response", shortRaw);
 
       pendingChannelId = await ctx.runMutation(internal.channels.internalStartInstagramPending, {
         orgId,
@@ -174,6 +196,7 @@ export const internalCompleteSignup = internalAction({
           { method: "GET" },
           "Instagram profile fetch",
         );
+        logInstagramResponse("profile response", me);
         displayUsername = me.username;
       } catch (err) {
         console.warn("Failed to fetch Instagram profile", err);
