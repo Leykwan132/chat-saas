@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { Navigate, useParams } from 'react-router';
-import { AvatarUnavailableState } from '@/components/avatar/AvatarUnavailableState';
 import { Spinner } from '@/components/ui/spinner';
 import {
   isProductFeatureEnabled,
@@ -49,11 +48,5 @@ export function AvatarCreateFeatureRoute() {
 }
 
 export function AvatarEmbedFeatureRoute() {
-  const avatarFeatureState = useEnableAvatarFeature();
-
-  if (avatarFeatureState === undefined) return <AvatarFlagLoadingState />;
-  if (!isProductFeatureEnabled(avatarFeatureState)) {
-    return <AvatarUnavailableState />;
-  }
   return <AvatarEmbedPage />;
 }

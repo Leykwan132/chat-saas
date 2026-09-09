@@ -22,12 +22,19 @@ describe('Avatar feature routes', () => {
     expect(routeSource).toContain('<AvatarCreatePage />');
   });
 
-  it('renders unavailable instead of redirecting a disabled public embed', () => {
-    expect(routeSource).toContain('<AvatarUnavailableState />');
+  it('renders public embeds without waiting for the Avatar feature flag', () => {
+    const embedRouteSource = routeSource.slice(
+      routeSource.indexOf('export function AvatarEmbedFeatureRoute'),
+    );
+
+    expect(embedRouteSource).not.toContain('useEnableAvatarFeature');
+    expect(embedRouteSource).not.toContain('AvatarUnavailableState');
+    expect(embedRouteSource).not.toContain('useAuth');
+    expect(embedRouteSource).not.toContain('Navigate');
     expect(routeSource).toContain('<AvatarEmbedPage />');
   });
 
-  it('routes every Avatar entry point through the feature gate', () => {
+  it('routes public and dashboard Avatar entry points through their dedicated components', () => {
     expect(mainSource).toContain(
       'path="/avatar/embed/:publicKey" element={<AvatarEmbedFeatureRoute />}',
     );
