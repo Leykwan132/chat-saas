@@ -240,6 +240,86 @@ test("widget identifies human replies by member name", () => {
   );
 });
 
+test("widget renders formatted assistant replies with safe new-tab links", () => {
+  const transcript = renderToStaticMarkup(
+    createElement(
+      WidgetMessageScroller,
+      {
+        messages: [
+          {
+            id: "agent-1",
+            direction: "outgoing",
+            sender: "ai",
+            content: "*Catalogue:* https://example.com/catalogue **today**",
+            createdAt: 1,
+          },
+        ],
+      } as never,
+    ),
+  );
+
+  expect(transcript).toContain("<strong>Catalogue:</strong>");
+  expect(transcript).toContain("<strong>today</strong>");
+  expect(transcript).toContain('href="https://example.com/catalogue"');
+  expect(transcript).toContain('target="_blank"');
+  expect(transcript).toContain('rel="noopener noreferrer"');
+  expect(widgetStyles).toMatch(
+    /\.widget:not\(\.light\) \.message-content\.outgoing a \{[^}]+color: #93c5fd;/,
+  );
+});
+
+test("widget renders Markdown links and keeps visitor text literal", () => {
+  const transcript = renderToStaticMarkup(
+    createElement(
+      WidgetMessageScroller,
+      {
+        messages: [
+          {
+            id: "agent-1",
+            direction: "outgoing",
+            sender: "ai",
+            content: "[Open catalogue](https://example.com/catalogue)",
+            createdAt: 1,
+          },
+          {
+            id: "visitor-1",
+            direction: "incoming",
+            sender: "visitor",
+            content: "*Do not format* https://example.com",
+            createdAt: 2,
+          },
+        ],
+      } as never,
+    ),
+  );
+
+  expect(transcript).toContain(">Open catalogue</a>");
+  expect(transcript).toContain("*Do not format* https://example.com");
+  expect(transcript).not.toContain("<strong>Do not format</strong>");
+});
+
+test("widget escapes raw HTML in assistant replies", () => {
+  const transcript = renderToStaticMarkup(
+    createElement(
+      WidgetMessageScroller,
+      {
+        messages: [
+          {
+            id: "agent-1",
+            direction: "outgoing",
+            sender: "ai",
+            content: "<strong>Unsafe</strong>",
+            createdAt: 1,
+          },
+        ],
+      } as never,
+    ),
+  );
+
+  expect(transcript).toContain("&lt;strong&gt;Unsafe&lt;/strong&gt;");
+  expect(transcript).not.toContain("<strong>Unsafe</strong>");
+});
+
 test("widget shows a timestamp for visitor and agent messages", () => {
   const transcript = renderToStaticMarkup(
     createElement(
@@ -298,12 +378,12 @@ test("widget card and launcher share one iframe geometry", () => {
 });
 
 test("widget chat copy uses a compact type scale", () => {
-  expect(widgetStyles).toMatch(/\.messages p \{[^}]+font-size: 14px;/);
+  expect(widgetStyles).toMatch(/\.message-content \{[^}]+font-size: 14px;/);
   expect(widgetStyles).toMatch(/\.composer textarea \{[^}]+font-size: 14px;/);
 });
 
 test("widget message bubbles size to their content", () => {
-  const bubbleStyles = widgetStyles.match(/\.messages p \{[^}]+\}/)?.[0] ?? "";
+  const bubbleStyles = widgetStyles.match(/\.message-content \{[^}]+\}/)?.[0] ?? "";
 
   expect(bubbleStyles).toContain("width: fit-content;");
   expect(bubbleStyles).toContain("white-space: pre-wrap;");
@@ -347,9 +427,9 @@ test("light widget headers use a soft divider and normal-weight title", () => {
 
 test("widget renders visitor messages black and outbound replies neutrally", () => {
   const outboundMessageStyles =
-    widgetStyles.match(/\.messages p\.outgoing \{[^}]+\}/)?.[0] ?? "";
+    widgetStyles.match(/\.message-content\.outgoing \{[^}]+\}/)?.[0] ?? "";
   const visitorMessageStyles =
-    widgetStyles.match(/\.messages p\.incoming \{[^}]+\}/)?.[0] ?? "";
+    widgetStyles.match(/\.message-content\.incoming \{[^}]+\}/)?.[0] ?? "";
 
   expect(outboundMessageStyles).toContain("background: #f4f4f5;");
   expect(outboundMessageStyles).toContain("color: #18181b;");

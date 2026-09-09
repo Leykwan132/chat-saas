@@ -2,6 +2,7 @@ import { MessageScroller } from "@shadcn/react/message-scroller";
 import { formatWidgetMessageTime } from "./formatWidgetMessageTime";
 import type { WidgetMessage } from "./types";
 import { WidgetEmptyState } from "./WidgetEmptyState";
+import { WidgetMessageContent } from "./WidgetMessageContent";
 import { WidgetThinkingIndicator } from "./WidgetThinkingIndicator";
 
 type WidgetMessageScrollerProps = {
@@ -43,7 +44,12 @@ export function WidgetMessageScroller({
                     {message.direction === "outgoing" && sender ? (
                       <span className="message-sender">{sender}</span>
                     ) : null}
-                    <p className={message.direction}>{message.content}</p>
+                    <div className={`message-content ${message.direction}`}>
+                      <WidgetMessageContent
+                        content={message.content}
+                        isAssistantMessage={message.sender !== "visitor"}
+                      />
+                    </div>
                     <time
                       className="message-time"
                       dateTime={new Date(message.createdAt).toISOString()}
