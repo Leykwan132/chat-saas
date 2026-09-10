@@ -190,7 +190,6 @@ export const generatePlaygroundResponseAsync = internalAction({
       internal.workflowRuntimeContext.loadForAgent,
       { agentId: args.agentId },
     );
-
     const configuredAgent = buildAgent(
       agent,
       args.agentId,

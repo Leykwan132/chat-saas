@@ -25,23 +25,28 @@ If escalation is unavailable, follow the no-context fallback instead of inventin
 
   const responseOrder = hasWorkflowMediaNodes
     ? `### Workflow-aware response order
-1. Call \`fetchContext\` with the user's original query.
+1. Call \`fetchCustomerQa\` before answering any customer question. If it has no relevant answer, call \`fetchContext\` with the user's original query.
 2. Match the latest message against all Workflow Runtime node goals, media assets, and incoming conditions.
 3. Follow every matching workflow node and do not stop at the first match.
 4. For matching Send Photo/Video or Send Files nodes, write a short customer response without media URLs; the backend workflow planner sends the assets separately.
-5. Answer using only returned context and Workflow Runtime.
-6. If \`fetchContext\` returns nothing useful and no workflow media condition matches, ${noContextFallback}.`
+5. Answer using Customer-provided Q&A, returned context, and Workflow Runtime.
+6. If \`fetchCustomerQa\` and \`fetchContext\` return nothing useful and no workflow media condition matches, ${noContextFallback}.`
     : `### Response order
-1. Call \`fetchContext\` with the user's original query.
+1. Call \`fetchCustomerQa\` before answering any customer question. If it has no relevant answer, call \`fetchContext\` with the user's original query.
 2. Read the returned context carefully.
-3. If relevant context is found, answer using only that context.
-4. If no relevant context is found, ${noContextFallback}. Do not guess or add filler.`;
+3. If relevant context is found, answer using Customer-provided Q&A and that context.
+4. If \`fetchCustomerQa\` and \`fetchContext\` return nothing useful, ${noContextFallback}. Do not guess or add filler.`;
 
   return `## Tool Usage — REQUIRED
 
+### \`fetchCustomerQa\`
+**When to use:** Call before answering any customer question.
+**How to use:** Use the relevant current customer-provided Q&A answers as factual context.
+**Parameters:** None.
+
 ### \`fetchContext\`
-**When to use:** Call before answering any customer question. This step is important.
-**How to use:** Pass the customer's original message exactly as the query, then use only returned context for factual claims.
+**When to use:** Call when \`fetchCustomerQa\` has no relevant answer.
+**How to use:** Pass the customer's original message exactly as the query, then use the returned context for factual claims.
 **Parameters:**
 - \`query\` (required): The customer's original message, unchanged.
 #### Error handling

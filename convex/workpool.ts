@@ -212,7 +212,7 @@ export const cfDeleteWorker = internalAction({
   },
   handler: async (ctx, args) => {
     if (args.cfItemId) {
-      await deleteFromCF(args.cfItemId);
+      await deleteFromCFOrThrow(args.cfItemId);
     }
     if (args.r2Key) await r2.deleteObject(ctx, args.r2Key);
     return { deleted: true };

@@ -8,6 +8,7 @@ import { assertAgentAccess } from "./agentUsage";
 import { excludeConvertedWebLinks, hasParentWebUrl } from "../shared/webEntryUrl";
 import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 import { getPublicMediaUrl } from "./media/r2";
+import { Permission } from "../shared/permissions";
 
 type KnowledgeEntryTable = "textEntries" | "fileEntries" | "webEntries" | "qaEntries";
 
@@ -84,6 +85,29 @@ async function assertKnowledgeBaseLimit(
       `Knowledge base limit reached. Your plan allows up to ${Math.round(limit / 1024).toLocaleString()} KB per agent.`,
     );
   }
+}
+
+async function assertKnowledgeBaseManage(
+  ctx: Parameters<typeof getPlanForCurrentSession>[0],
+) {
+  const auth = await getAuthContext(ctx);
+  if (!auth.permissions.includes(Permission.KB_MANAGE)) {
+    throw new Error("Forbidden");
+  }
+  return auth;
+}
+
+async function assertKnowledgeBaseRead(
+  ctx: Parameters<typeof getPlanForCurrentSession>[0],
+) {
+  const auth = await getAuthContext(ctx);
+  if (
+    !auth.permissions.includes(Permission.KB_READ) &&
+    !auth.permissions.includes(Permission.KB_MANAGE)
+  ) {
+    throw new Error("Forbidden");
+  }
+  return auth;
 }
 
 // ─── Text Entries ──────────────────────────────────────────
@@ -307,6 +331,8 @@ export const removeWebEntry = mutation({
 export const listQAEntries = query({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
+    await assertKnowledgeBaseRead(ctx);
+    await assertAgentAccess(ctx, args.agentId);
     return await ctx.db
       .query("qaEntries")
       .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
@@ -322,7 +348,8 @@ export const addQAEntry = mutation({
     answer: v.string(),
   },
   handler: async (ctx, args) => {
-    const { userId, orgId } = await getAuthContext(ctx);
+    const { userId, orgId } = await assertKnowledgeBaseManage(ctx);
+    await assertAgentAccess(ctx, args.agentId);
     const question = args.question.trim();
     const answer = args.answer.trim();
     if (!question || !answer)
@@ -334,6 +361,7 @@ export const addQAEntry = mutation({
       question,
       answer,
       fileSize,
+      status: "completed",
       userId,
       orgId,
       createdAt: Date.now(),
@@ -348,6 +376,7 @@ export const updateQAEntry = mutation({
     answer: v.string(),
   },
   handler: async (ctx, args) => {
+    await assertKnowledgeBaseManage(ctx);
     const question = args.question.trim();
     const answer = args.answer.trim();
     if (!question || !answer)
@@ -355,17 +384,32 @@ export const updateQAEntry = mutation({
     const fileSize = new Blob([question + answer]).size;
     const existing = await ctx.db.get(args.entryId);
     if (!existing) throw new Error("Q&A entry not found");
+    await assertAgentAccess(ctx, existing.agentId);
     await assertKnowledgeBaseLimit(ctx, existing.agentId, fileSize, {
       table: "qaEntries",
       id: args.entryId,
     });
-    await ctx.db.patch(args.entryId, { question, answer, fileSize });
+    await ctx.db.patch(args.entryId, { question, answer, fileSize, cfItemId: undefined });
+    if (existing.cfItemId) {
+      await ctx.scheduler.runAfter(0, internal.cloudflare.internalDeleteLegacyQaIndex, {
+        cfItemId: existing.cfItemId,
+      });
+    }
   },
 });
 
 export const removeQAEntry = mutation({
   args: { entryId: v.id("qaEntries") },
   handler: async (ctx, args) => {
+    await assertKnowledgeBaseManage(ctx);
+    const existing = await ctx.db.get(args.entryId);
+    if (!existing) throw new Error("Q&A entry not found");
+    await assertAgentAccess(ctx, existing.agentId);
+    if (existing.cfItemId) {
+      await ctx.scheduler.runAfter(0, internal.cloudflare.internalDeleteLegacyQaIndex, {
+        cfItemId: existing.cfItemId,
+      });
+    }
     await ctx.db.delete(args.entryId);
   },
 });
@@ -409,6 +453,22 @@ export const internalGetQAEntry = internalQuery({
   args: { entryId: v.id("qaEntries") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.entryId);
+  },
+});
+
+export const internalListQAEntriesForPrompt = internalQuery({
+  args: { agentId: v.id("agents") },
+  handler: async (ctx, args) => {
+    const entries: { question: string; answer: string }[] = [];
+    const query = ctx.db
+      .query("qaEntries")
+      .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId));
+
+    for await (const entry of query) {
+      entries.push({ question: entry.question, answer: entry.answer });
+    }
+
+    return entries;
   },
 });
 
@@ -828,6 +888,7 @@ export const cfDeleteComplete = internalMutation({
         v.literal("file"),
         v.literal("web"),
         v.literal("qa"),
+        v.literal("qaIndex"),
       ),
     }),
     result: v.union(
@@ -860,6 +921,8 @@ export const cfDeleteComplete = internalMutation({
           await ctx.runMutation(internal.knowledgeBase.internalRemoveQAEntry, {
             entryId: entryId as never,
           });
+          break;
+        case "qaIndex":
           break;
       }
     }

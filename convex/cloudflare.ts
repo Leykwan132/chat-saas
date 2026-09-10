@@ -55,6 +55,19 @@ export async function deleteFromCFOrThrow(cfItemId: string): Promise<void> {
   }
 }
 
+export const internalDeleteLegacyQaIndex = internalAction({
+  args: { cfItemId: v.string() },
+  handler: async (ctx, args) => {
+    await cfDeletePool.enqueueAction(ctx, internal.workpool.cfDeleteWorker, {
+      cfItemId: args.cfItemId,
+    }, {
+      onComplete: internal.knowledgeBase.cfDeleteComplete,
+      context: { entryId: args.cfItemId, entryType: "qaIndex" },
+      retry: true,
+    });
+  },
+});
+
 export function isCloudflareNotFoundError(error: unknown): boolean {
   if (error instanceof Cloudflare.NotFoundError) return true;
   const status = (error as { status?: number; statusCode?: number })?.status ??
@@ -373,47 +386,6 @@ export const uploadWebEntry = action({
   },
 });
 
-export const uploadQAEntry = action({
-  args: {
-    agentId: v.id("agents"),
-    question: v.string(),
-    answer: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const auth = await getAuthContext(ctx);
-    const question = args.question.trim();
-    const answer = args.answer.trim();
-    if (!question || !answer) throw new Error("Question and answer are required");
-
-    const MAX_TOTAL_SIZE = 4 * 1024 * 1024;
-    const storageUsed = await ctx.runQuery(internal.knowledgeBase.internalGetAgentStorageUsed, {
-      agentId: args.agentId,
-    });
-
-    const safeName = question.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
-    const fileContent = new File([`Q: ${question}\nA: ${answer}`], `${safeName}.txt`, { type: "text/plain" });
-    const fileSize = fileContent.size;
-
-    if (storageUsed + fileSize > MAX_TOTAL_SIZE) {
-      throw new Error("Storage limit exceeded. Limit is 4 MB total per agent.");
-    }
-
-    const cfItemId = await uploadWorkspaceFileToCF(ctx, fileContent, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
-
-    await ctx.runMutation(internal.knowledgeBase.internalStoreQAEntry, {
-      agentId: args.agentId,
-      question,
-      answer,
-      fileSize,
-      cfItemId,
-      userId: auth.userId,
-      orgId: auth.orgId,
-    });
-
-    return { cfItemId };
-  },
-});
-
 // ─── Update actions ────────────────────────────────────────
 
 export const updateTextEntry = action({
@@ -490,39 +462,6 @@ export const updateWebEntry = action({
     await ctx.runMutation(internal.knowledgeBase.internalPatchWebEntry, {
       entryId: args.entryId,
       url,
-      fileSize,
-      cfItemId: newCfItemId,
-    });
-
-    return { cfItemId: newCfItemId };
-  },
-});
-
-export const updateQAEntry = action({
-  args: {
-    entryId: v.id("qaEntries"),
-    question: v.string(),
-    answer: v.string(),
-    cfItemId: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const question = args.question.trim();
-    const answer = args.answer.trim();
-    if (!question || !answer) throw new Error("Question and answer are required");
-
-    if (args.cfItemId) {
-      await deleteFromCF(args.cfItemId);
-    }
-    const auth = await getAuthContext(ctx);
-    const safeName = question.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
-    const fileContent = new File([`Q: ${question}\nA: ${answer}`], `${safeName}.txt`, { type: "text/plain" });
-    const fileSize = fileContent.size;
-    const newCfItemId = await uploadWorkspaceFileToCF(ctx, fileContent, { agent_id: "", org_id: auth.orgId, user_id: auth.userId });
-
-    await ctx.runMutation(internal.knowledgeBase.internalPatchQAEntry, {
-      entryId: args.entryId,
-      question,
-      answer,
       fileSize,
       cfItemId: newCfItemId,
     });
@@ -616,18 +555,6 @@ export const deleteWebEntryGroup = action({
         context: { entryId: entry._id, entryType: "web" },
       });
     }
-  },
-});
-
-export const deleteQAEntry = action({
-  args: { entryId: v.id("qaEntries") },
-  handler: async (ctx, args) => {
-    const entry = await ctx.runQuery(internal.knowledgeBase.internalGetQAEntry, { entryId: args.entryId });
-    if (!entry) throw new Error("Entry not found");
-    if (entry.cfItemId) {
-      await deleteFromCF(entry.cfItemId);
-    }
-    await ctx.runMutation(internal.knowledgeBase.internalRemoveQAEntry, { entryId: args.entryId });
   },
 });
 
@@ -730,50 +657,6 @@ export const enqueueFileUpload = action({
   },
 });
 
-export const enqueueQAUpload = action({
-  args: {
-    agentId: v.id("agents"),
-    question: v.string(),
-    answer: v.string(),
-  },
-  handler: async (ctx, args): Promise<{ entryId: string }> => {
-    const auth = await getAuthContext(ctx);
-    const question = args.question.trim();
-    const answer = args.answer.trim();
-    if (!question || !answer) throw new Error("Question and answer are required");
-
-    const fileSize = new Blob([question + answer]).size;
-    const entryId = await ctx.runMutation(internal.knowledgeBase.internalStoreQAEntry, {
-      agentId: args.agentId,
-      question,
-      answer,
-      fileSize,
-      userId: auth.userId,
-      orgId: auth.orgId,
-    });
-    await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
-      entryId,
-      status: "queued",
-    });
-
-    await cfUploadPool.enqueueAction(ctx, internal.workpool.cfUploadWorker, {
-      entryId,
-      entryType: "qa",
-      question,
-      answer,
-      agentId: args.agentId,
-      orgId: auth.orgId,
-      userId: auth.userId,
-    }, {
-      onComplete: internal.knowledgeBase.cfUploadComplete,
-      context: { entryId, entryType: "qa" },
-      retry: true
-    });
-
-    return { entryId };
-  },
-});
-
 export const enqueueWebScrape = action({
   args: {
     agentId: v.id("agents"),
@@ -834,13 +717,11 @@ export const enqueueDelete = action({
       v.id("textEntries"),
       v.id("fileEntries"),
       v.id("webEntries"),
-      v.id("qaEntries"),
     ),
     entryType: v.union(
       v.literal("text"),
       v.literal("file"),
       v.literal("web"),
-      v.literal("qa"),
     ),
     cfItemId: v.optional(v.string()),
   },
