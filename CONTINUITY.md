@@ -124,6 +124,7 @@
 # Receipts
 
 - 2026-09-09 [TOOL] PR #135 opened: https://github.com/Leykwan132/chat-saas/pull/135. Nine focused auth/recovery tests plus app and Convex TypeScript checks pass under Node 22; production availability UNCONFIRMED.
+- 2026-09-10 [TOOL] PR #140 updated with commit `561d902`: timezone-less availability timestamps now resolve in the booking service timezone; focused availability/prompt tests (22), Convex TypeScript, ESLint, and diff checks pass under Node 22. Local branch is synced; production availability UNCONFIRMED.
 - 2026-09-09 [TOOL] PR #134 opened: https://github.com/Leykwan132/chat-saas/pull/134 (`codex/avatar-session-duration-cap` → `main`).
 - 2026-09-09 [TOOL] Avatar session surfaces: 41 focused provider/session/embed/stage tests pass under Node 22, and `git diff --check` passes. Full suite remains blocked by unrelated Google Calendar projection, SiteFooter provider, and component-package fixture failures.
 - 2026-09-09 [TOOL] Avatar delete from Edit dropdown: pushed to https://github.com/Leykwan132/chat-saas/pull/133
