@@ -8,7 +8,7 @@ import type { BookingSlot, RosterEntry } from "./types";
 import { advanceCalendarAvailabilityPreload } from "../calendarAvailabilityPreload";
 import { loadAvailabilityRoster, type AvailabilityRosterEntry } from "./availabilityRoster";
 import {
-  availabilityRejectionReasons,
+  availabilityDecisionDetails,
   entryAvailableForSlot,
 } from "./availabilityEligibility";
 
@@ -90,10 +90,6 @@ function roundUpToSlotInterval(time: number, intervalMinutes = 30) {
   return Math.ceil(time / intervalMs) * intervalMs;
 }
 
-function availabilityTimestamp(time: number) {
-  return { epochMs: time, iso: new Date(time).toISOString() };
-}
-
 function logAvailabilityDiagnostic(event: string, data: unknown) {
   console.log(event, JSON.stringify(data));
 }
@@ -136,7 +132,7 @@ export async function generateSlots(
     teamId: Id<"teams">;
     rangeStartAt: number;
     rangeEndAt: number;
-    limit: number;
+    limit?: number;
     prioritizePreferredTimes?: boolean;
     excludeEventId?: Id<"calendarEvents">;
     ignoreGoogleHealth?: boolean;
@@ -147,8 +143,8 @@ export async function generateSlots(
   const slots: BookingSlot[] = [];
   const firstStartAt = roundUpToSlotInterval(args.rangeStartAt);
   if (firstStartAt + durationMs > args.rangeEndAt) return [];
-  const stopOnFilledLimit = args.prioritizePreferredTimes === false;
-  const lastCandidateStartAt = stopOnFilledLimit
+  const stopOnFilledLimit = args.prioritizePreferredTimes === false && args.limit !== undefined;
+  const lastCandidateStartAt = args.limit === undefined || stopOnFilledLimit
     ? args.rangeEndAt - durationMs
     : Math.min(args.rangeEndAt - durationMs, firstStartAt + 199 * 30 * 60 * 1000);
   const roster = await loadRoster(ctx, {
@@ -157,49 +153,16 @@ export async function generateSlots(
     windowStartAt: firstStartAt - bufferMs,
     windowEndAt: lastCandidateStartAt + durationMs + bufferMs,
   });
-  logAvailabilityDiagnostic("booking_availability_roster", {
-    serviceId: args.service._id,
-    assignmentStrategy: args.service.assignmentStrategy,
-    specificWorkosUserId: args.service.specificWorkosUserId,
-    assignedWorkosUserIds: args.service.assignedWorkosUserIds,
-    window: {
-      start: availabilityTimestamp(firstStartAt),
-      end: availabilityTimestamp(args.rangeEndAt),
-    },
-    durationMinutes: args.service.durationMinutes,
-    bufferMinutes: args.service.bufferMinutes ?? 0,
-    entries: roster.map((entry) => ({
-      scheduleId: entry.schedule._id,
-      workosUserId: entry.schedule.workosUserId,
-      userId: entry.user?._id,
-      enabled: entry.schedule.enabled,
-      mode: entry.schedule.mode,
-      manualStatus: entry.schedule.manualStatus,
-      timezone: entry.schedule.timezone,
-      shifts: entry.shifts.map((shift) => ({
-        dayOfWeek: shift.dayOfWeek,
-        startMinutes: shift.startMinutes,
-        endMinutes: shift.endMinutes,
-      })),
-      timeOff: entry.timeOff.map((row) => ({
-        start: availabilityTimestamp(row.startAt),
-        end: availabilityTimestamp(row.endAt),
-      })),
-      googleCalendarHealthy: entry.googleCalendarHealthy,
-      calendarAvailabilitySafe: entry.calendarAvailability.safe,
-      calendarIntervals: entry.calendarAvailability.intervals.map((interval) => ({
-        eventId: interval.eventId,
-        start: availabilityTimestamp(interval.startAt),
-        end: availabilityTimestamp(interval.endAt),
-      })),
-      futureAssignedEventCount: entry.futureAssignedEventCount,
-    })),
-  });
   let candidateCount = 0;
+  const rejectionReasonCounts = new Map<string, number>();
   for (
     let startAt = firstStartAt;
     startAt + durationMs <= args.rangeEndAt &&
-    (stopOnFilledLimit ? slots.length < args.limit : candidateCount < 200);
+    (args.limit === undefined
+      ? true
+      : stopOnFilledLimit
+        ? slots.length < args.limit
+        : candidateCount < 200);
     startAt += 30 * 60 * 1000
   ) {
     candidateCount += 1;
@@ -215,12 +178,6 @@ export async function generateSlots(
       ignoreGoogleHealth: args.ignoreGoogleHealth,
     });
     if (assignee?.user) {
-      logAvailabilityDiagnostic("booking_availability_candidate_available", {
-        start: availabilityTimestamp(startAt),
-        end: availabilityTimestamp(endAt),
-        assignedUserId: assignee.user._id,
-        assignedWorkosUserId: assignee.schedule.workosUserId,
-      });
       slots.push({
         startAt,
         endAt,
@@ -229,39 +186,31 @@ export async function generateSlots(
         assignedDisplayName: displayNameForUser(assignee.user),
       });
     } else {
-      logAvailabilityDiagnostic("booking_availability_candidate_rejected", {
-        start: availabilityTimestamp(startAt),
-        end: availabilityTimestamp(endAt),
-        entries: roster.map((entry) => ({
-          scheduleId: entry.schedule._id,
-          workosUserId: entry.schedule.workosUserId,
-          reasons: availabilityRejectionReasons({
-            service: args.service,
-            entry,
-            startAt: startAt - bufferMs,
-            endAt: endAt + bufferMs,
-            excludeEventId: args.excludeEventId,
-            ignoreGoogleHealth: args.ignoreGoogleHealth,
-          }),
-        })),
-      });
+      const rejectionReasons = roster.flatMap((entry) => availabilityDecisionDetails({
+        service: args.service,
+        entry,
+        startAt: startAt - bufferMs,
+        endAt: endAt + bufferMs,
+        excludeEventId: args.excludeEventId,
+        ignoreGoogleHealth: args.ignoreGoogleHealth,
+      }).reasons);
+      for (const reason of rejectionReasons) {
+        rejectionReasonCounts.set(reason, (rejectionReasonCounts.get(reason) ?? 0) + 1);
+      }
     }
   }
   const orderedSlots = args.prioritizePreferredTimes === false
     ? slots
     : sortSlotsWithPreferredTime(slots, args.service);
-  const returnedSlots = orderedSlots.slice(0, args.limit);
+  const returnedSlots = args.limit === undefined
+    ? orderedSlots
+    : orderedSlots.slice(0, args.limit);
   logAvailabilityDiagnostic("booking_availability_generated", {
     candidateCount,
     availableCount: slots.length,
     returnedCount: returnedSlots.length,
-    limit: args.limit,
-    slots: returnedSlots.map((slot) => ({
-      start: availabilityTimestamp(slot.startAt),
-      end: availabilityTimestamp(slot.endAt),
-      assignedUserId: slot.assignedUserId,
-      assignedWorkosUserId: slot.assignedWorkosUserId,
-    })),
+    limit: args.limit ?? "unlimited",
+    rejectionReasonCounts: Object.fromEntries(rejectionReasonCounts),
   });
   return returnedSlots;
 }

@@ -6,10 +6,13 @@ import { resolveBookingService, resolveTeamForAgent } from "./access";
 import {
   mergeCollectedFields,
   missingServiceFields,
+  serviceTimeZone,
   serviceSnapshot,
 } from "./fields";
 import { collectedFieldsValidator } from "./validators";
 import { getActiveSession, getOrCreateSession } from "./sessionStore";
+import { validateAvailabilityDates } from "./dateValidation";
+import { formatAvailabilitySlotsForTool } from "./availabilityPresentation";
 
 function availabilityInputTimestamp(value: number | undefined) {
   return value === undefined
@@ -150,15 +153,41 @@ export const checkAvailability = internalMutation({
 
     const collectedFields = session?.collectedFields ?? {};
     const missing = missingServiceFields(service, collectedFields);
+    const now = Date.now();
+    const dateValidation = validateAvailabilityDates({
+      now,
+      timeZone: serviceTimeZone(service),
+      preferredStartAt: args.preferredStartAt,
+      rangeStartAt: args.rangeStartAt,
+      rangeEndAt: args.rangeEndAt,
+    });
+    if (dateValidation !== null) {
+      logAvailabilityDiagnostic("booking_availability_invalid_date", {
+        conversationId: conversation._id,
+        serviceId: service._id,
+        todayDate: dateValidation.todayDate,
+        input: {
+          preferredStart: availabilityInputTimestamp(args.preferredStartAt),
+          rangeStart: availabilityInputTimestamp(args.rangeStartAt),
+          rangeEnd: availabilityInputTimestamp(args.rangeEndAt),
+        },
+      });
+      return {
+        success: false,
+        slots: [],
+        errorCode: dateValidation.code,
+        todayDate: dateValidation.todayDate,
+        message: `Availability dates must be ${dateValidation.todayDate} or later.`,
+      };
+    }
 
     const team = await resolveTeamForAgent(ctx, agent);
-    const now = Date.now();
     const rangeStartAt = Math.max(args.rangeStartAt ?? now + 60 * 60 * 1000, now);
     const rangeEndAt = args.preferredStartAt
       ? args.preferredStartAt + service.durationMinutes * 60 * 1000
       : args.rangeEndAt ?? rangeStartAt + 14 * 24 * 60 * 60 * 1000;
     const startAt = args.preferredStartAt ?? rangeStartAt;
-    const limit = args.preferredStartAt ? 1 : 5;
+    const limit = args.preferredStartAt ? 1 : undefined;
     const isEditing = session?.calendarEventId !== undefined;
     logAvailabilityDiagnostic("booking_availability_request", {
       conversationId: conversation._id,
@@ -185,7 +214,7 @@ export const checkAvailability = internalMutation({
         now: availabilityInputTimestamp(now),
         start: availabilityInputTimestamp(startAt),
         end: availabilityInputTimestamp(rangeEndAt),
-        limit,
+        limit: limit ?? "unlimited",
       },
     });
     const slots = await generateSlots(ctx, {
@@ -202,13 +231,12 @@ export const checkAvailability = internalMutation({
       sessionId: session?._id,
       serviceId: service._id,
       slotCount: slots.length,
-      slots: slots.map((slot) => ({
-        start: availabilityInputTimestamp(slot.startAt),
-        end: availabilityInputTimestamp(slot.endAt),
-        assignedUserId: slot.assignedUserId,
-        assignedWorkosUserId: slot.assignedWorkosUserId,
-        assignedDisplayName: slot.assignedDisplayName,
-      })),
+      firstSlot: slots[0]
+        ? availabilityInputTimestamp(slots[0].startAt)
+        : null,
+      lastSlot: slots.at(-1)
+        ? availabilityInputTimestamp(slots.at(-1)?.endAt ?? 0)
+        : null,
     });
     const customerRequestMessage = args.preferredStartAt !== undefined &&
         slots.some((slot) => slot.startAt === args.preferredStartAt) &&
@@ -260,6 +288,7 @@ export const checkAvailability = internalMutation({
       });
     }
 
+    const formattedSlots = formatAvailabilitySlotsForTool(slots, serviceTimeZone(service));
     return {
       success: true,
       previewOnly: bookingSession === undefined,
@@ -273,7 +302,7 @@ export const checkAvailability = internalMutation({
         bookingSession !== undefined &&
         missing.length === 0 &&
         effectiveConfirmationMessageId !== undefined,
-      slots,
+      slots: formattedSlots,
       message: isEditing
         ? "Slots ready for the booking update. Call updateBookingAppointment after the customer confirms."
         : undefined,

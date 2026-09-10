@@ -1,8 +1,16 @@
 import { afterEach, expect, test, vi } from "vitest";
 import type { Doc } from "./_generated/dataModel";
 import { isAssignedToService } from "./appointmentBooking/availability";
-import { availabilityRejectionReasons } from "./appointmentBooking/availabilityEligibility";
+import {
+  availabilityDecisionDetails,
+  availabilityRejectionReasons,
+} from "./appointmentBooking/availabilityEligibility";
 import type { AvailabilityRosterEntry } from "./appointmentBooking/availabilityRoster";
+import { validateAvailabilityDates } from "./appointmentBooking/dateValidation";
+import {
+  ensureAvailabilityTimesInReplies,
+  formatAvailabilitySlotsForTool,
+} from "./appointmentBooking/availabilityPresentation";
 
 const service = {
   assignedWorkosUserIds: ["selected-user"],
@@ -72,4 +80,154 @@ test("availability eligibility does not emit temporary debug logs", () => {
   });
 
   expect(log).not.toHaveBeenCalled();
+});
+
+test("reports the checks and records that caused a candidate rejection", () => {
+  const startAt = Date.UTC(2026, 7, 17, 9);
+  const endAt = Date.UTC(2026, 7, 17, 9, 30);
+  const details = availabilityDecisionDetails({
+    service: {
+      assignedWorkosUserIds: ["other-user"],
+      locationMode: "remote",
+    } as Doc<"appointmentServices">,
+    entry: {
+      ...scheduledEntry,
+      schedule: {
+        ...scheduledEntry.schedule,
+        _id: "schedule-1",
+        agentId: "agent-1",
+        mode: "scheduled",
+        manualStatus: "available",
+        enabled: true,
+      } as Doc<"userSchedules">,
+      shifts: [{
+        _id: "shift-1",
+        dayOfWeek: 2,
+        startMinutes: 600,
+        endMinutes: 1020,
+        userScheduleId: "schedule-1",
+      }] as Doc<"userShifts">[],
+      timeOff: [{
+        _id: "time-off-1",
+        userScheduleId: "schedule-1",
+        startAt: startAt - 1,
+        endAt: endAt + 1,
+        label: "Lunch",
+      }] as Doc<"userTimeOff">[],
+      calendarAvailability: {
+        safe: true,
+        intervals: [{
+          eventId: "event-1",
+          startAt: startAt - 1,
+          endAt: endAt + 1,
+        }],
+      },
+      googleCalendarHealthy: false,
+    } as AvailabilityRosterEntry,
+    startAt,
+    endAt,
+  });
+
+  expect(details.reasons).toEqual([
+    "service_not_assigned",
+    "outside_shift",
+    "time_off",
+    "google_calendar_unhealthy",
+    "calendar_conflict",
+  ]);
+  expect(details.checks).toMatchObject({
+    hasUser: true,
+    serviceAssigned: false,
+    withinShift: false,
+    timeOffOverlap: true,
+    googleCalendarHealthy: false,
+    calendarDataSafe: true,
+    calendarConflict: true,
+  });
+  expect(details.matchedRows).toEqual({
+    timeOffIds: ["time-off-1"],
+    calendarEventIds: ["event-1"],
+  });
+});
+
+test("rejects availability dates before today in the service timezone", () => {
+  const now = Date.parse("2026-09-10T08:05:19.803Z");
+
+  expect(validateAvailabilityDates({
+    now,
+    timeZone: "Asia/Kuala_Lumpur",
+    rangeStartAt: Date.parse("2025-01-21T00:00:00Z"),
+    rangeEndAt: Date.parse("2025-01-21T23:59:59Z"),
+  })).toEqual({
+    code: "past_date",
+    todayDate: "2026-09-10",
+  });
+
+  expect(validateAvailabilityDates({
+    now,
+    timeZone: "Asia/Kuala_Lumpur",
+    rangeStartAt: Date.parse("2026-09-10T00:00:00Z"),
+    rangeEndAt: Date.parse("2026-09-10T23:59:59Z"),
+  })).toBeNull();
+});
+
+test("formats returned slots with an exact date and time range", () => {
+  const formatted = formatAvailabilitySlotsForTool([
+    {
+      startAt: Date.UTC(2026, 8, 11, 1),
+      endAt: Date.UTC(2026, 8, 11, 1, 30),
+      assignedUserId: "user-1",
+      assignedWorkosUserId: "workos-1",
+      assignedDisplayName: "Kwan Kwan",
+    },
+  ], "Asia/Kuala_Lumpur");
+
+  expect(formatted[0]).toMatchObject({
+    startTimeIso: "2026-09-11T01:00:00.000Z",
+    endTimeIso: "2026-09-11T01:30:00.000Z",
+    date: "September 11 (Friday)",
+    timeRange: "9:00 AM - 9:30 AM",
+  });
+});
+
+test("summarizes more than five contiguous slots into a time range", () => {
+  const startAt = Date.UTC(2026, 8, 11, 1);
+  const formatted = formatAvailabilitySlotsForTool(
+    Array.from({ length: 6 }, (_, index) => ({
+      startAt: startAt + index * 30 * 60 * 1000,
+      endAt: startAt + (index + 1) * 30 * 60 * 1000,
+      assignedUserId: "user-1",
+      assignedWorkosUserId: "workos-1",
+      assignedDisplayName: "Kwan Kwan",
+    })),
+    "Asia/Kuala_Lumpur",
+  );
+
+  expect(formatted).toHaveLength(1);
+  expect(formatted[0]).toMatchObject({
+    date: "September 11 (Friday)",
+    timeRange: "9:00 AM - 12:00 PM",
+    endTimeIso: "2026-09-11T04:00:00.000Z",
+    slotCount: 6,
+  });
+});
+
+test("inserts exact times when the generated reply uses generic slot labels", () => {
+  const formattedSlots = formatAvailabilitySlotsForTool([
+    {
+      startAt: Date.UTC(2026, 8, 11, 1),
+      endAt: Date.UTC(2026, 8, 11, 1, 30),
+      assignedUserId: "user-1",
+      assignedWorkosUserId: "workos-1",
+      assignedDisplayName: "Kwan Kwan",
+    },
+  ], "Asia/Kuala_Lumpur");
+
+  const replies = ensureAvailabilityTimesInReplies(
+    ["There is one morning session available."],
+    [{ toolName: "checkAvailability", output: { success: true, slots: formattedSlots } }],
+  );
+
+  expect(replies[0]).toContain("September 11 (Friday), 9:00 AM - 9:30 AM");
+  expect(replies[0]).toContain("There is one morning session available.");
 });

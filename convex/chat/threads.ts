@@ -52,6 +52,7 @@ import {
 } from "../broadcastMessageValidators";
 import { broadcastAgentMetadata } from "./broadcastMessageMetadata";
 import { isTeamDeletionActive } from "../teamDeletion/access";
+import { parseAvailabilityIso } from "../appointmentBooking/availabilityDateTime";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -423,9 +424,8 @@ The following Services are available for appointment booking when the workflow i
 ${serviceSections}`;
 }
 
-function getCurrentDateInfo(timeZone: string) {
+function getCurrentDateInfo(timeZone: string, now = new Date()) {
   const tz = normalizeTimeZone(timeZone);
-  const now = new Date();
   const dateFormatter = new Intl.DateTimeFormat("en-US", {
     timeZone: tz,
     weekday: "long",
@@ -455,15 +455,19 @@ function getCurrentDateInfo(timeZone: string) {
   };
 }
 
-export function buildBookingFlowBlock() {
+export function buildBookingFlowBlock(
+  timeZone = DEFAULT_TEAM_TIME_ZONE,
+  now = new Date(),
+) {
+  const currentDate = getCurrentDateInfo(timeZone, now);
   return `\n\n## Booking Flow
 Use the Workflow Runtime first to decide whether the customer is in a Book appointment stage. Use the available Services listed above for service IDs and required fields.
 Available Services are the complete booking catalog for this turn. Knowledge-base results can help you understand or explain how a customer request relates to those Services, but they are not bookable Services and must not be used as service IDs.
 
 - Call \`getActiveBookingSession\` before booking-state replies or booking tools except a first \`checkAvailability\` preview. Availability itself checks the live database and does not require a session.
-- Call \`getTodayDate\` whenever you need today's date or current time — for example when interpreting "today", "tomorrow", "next week", or validating booking dates. Do not guess the current date.
+- Today's date is ${currentDate.dateIso} in ${currentDate.timeZone}. Use this date when interpreting "today", "tomorrow", "next week", or validating booking dates. Do not guess or use a different year.
 - Do not narrate tool steps or send progress updates such as "I will start the booking session" or "I will check availability." Call the tools immediately and reply only with the result or the next information the customer must provide.
-1. *Check slots* — For any availability question, call \`checkAvailability\` immediately with the matching service ID. Do not collect customer details first. For a specific time use \`preferredTimeIso\`; for a day or range use \`rangeStartIso\` and \`rangeEndIso\`.
+1. *Check slots* — For any availability question, call \`checkAvailability\` immediately with the matching service ID. Do not collect customer details first. For a specific time use \`preferredTimeIso\`; for a day or range use \`rangeStartIso\` and \`rangeEndIso\`. When presenting slots, include each returned slot's exact \`date\` and \`timeRange\`; if the tool groups more than five slots into ranges, present those summarized ranges and their exact times. Never replace them with generic labels such as "morning session" or "afternoon session". Use a numbered format such as "1. 5:00 AM - 5:30 AM" and "2. 3:00 PM - 3:30 PM".
 2. *Select slot* — A customer's exact requested time or choice from offered slots counts as confirmation. Call \`checkAvailability\` for that exact time. When available, it starts the session and returns only the missing booking fields.
 3. *Collect details* — Ask only for \`missingFields\`, then call \`startBookingSession\` with the new values. Always obtain name, phone, date, and time in chat for the person being booked. Do not use the chatter's contact details.
 4. *Book* — As soon as \`startBookingSession\` returns \`readyForBooking: true\`, call \`bookAppointment\` in the same turn. Do not ask for another confirmation. Booking creation revalidates the selected slot before writing the calendar event.
@@ -495,6 +499,11 @@ Additional rules:
 - Outside an edit, \`cancelBooking\` cancels the existing confirmed appointment when one exists.`;
 }
 
+export function buildAvailabilityDateRule(timeZone: string, now = new Date()) {
+  const currentDate = getCurrentDateInfo(timeZone, now);
+  return `The date must be today or later than ${currentDate.dateIso} in ${currentDate.timeZone}.`;
+}
+
 export function buildAgent(
   agent: {
     name: string;
@@ -511,9 +520,11 @@ export function buildAgent(
   activeBookingServices: ActiveBookingServiceForPrompt[] = [],
   workflowRuntimeContext: WorkflowRuntimeContextForPrompt = null,
   sourceAgentMessageId?: string,
+  playgroundAvailabilityOnly = false,
 ) {
   const appointmentBookingEnabled = conversationId !== undefined && activeBookingServices.length > 0;
   const defaultBookingTimeZone = normalizeTimeZone(activeBookingServices[0]?.timeZone);
+  const availabilityDateRule = buildAvailabilityDateRule(defaultBookingTimeZone);
   const humanEscalationNodeIds = new Set(
     workflowRuntimeContext?.nodes
       .filter((node) => node.kind === "humanEscalation")
@@ -660,14 +671,20 @@ export function buildAgent(
 
     tools.checkAvailability = createTool({
       description:
-        "Checks live appointment availability directly without requiring a booking session or customer details. Use a service ID from Available Appointment Services. Call immediately for availability questions. If an exact customer-requested or selected preferredTimeIso is available, this starts the booking session and returns missingFields.",
+        "Checks live appointment availability directly without requiring a booking session or customer details. Use a service ID from Available Appointment Services. Call immediately for availability questions. Dates must be today or later according to the current date in the system prompt; never send a past year or past date. A range search returns every available slot in that range. When more than five slots are available, contiguous slots are grouped into summarized time ranges; present those ranges with their exact date and timeRange instead of flooding the customer with every half-hour entry. Do not use generic morning or afternoon labels. Present slots or summarized ranges as numbered time ranges, for example \"1. 5:00 AM - 5:30 AM\" and \"2. 3:00 PM - 3:30 PM\". If an exact customer-requested or selected preferredTimeIso is available, this starts the booking session and returns missingFields.",
       inputSchema: z.object({
         serviceId: z.string().optional().describe("The selected Services service ID."),
-        preferredTimeIso: z.string().optional().describe("Customer's preferred appointment start time as an ISO timestamp."),
-        rangeStartIso: z.string().optional().describe("Start of the search range as an ISO timestamp."),
-        rangeEndIso: z.string().optional().describe("End of the search range as an ISO timestamp."),
+        preferredTimeIso: z.string().optional().describe(`Customer's preferred appointment start time as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`),
+        rangeStartIso: z.string().optional().describe(`Start of the search range as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`),
+        rangeEndIso: z.string().optional().describe(`End of the search range as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`),
       }),
       execute: async (ctx, input) => {
+        console.log("agent_tool_check_availability_invoked", JSON.stringify({
+          agentId,
+          conversationId,
+          sourceAgentMessageId,
+          input,
+        }));
         const args: {
           conversationId: Id<"conversations">;
           serviceId?: Id<"appointmentServices">;
@@ -678,16 +695,22 @@ export function buildAgent(
         if (input.serviceId) {
           args.serviceId = input.serviceId as Id<"appointmentServices">;
         }
-        const preferredStartAt = input.preferredTimeIso ? Date.parse(input.preferredTimeIso) : NaN;
-        if (Number.isFinite(preferredStartAt)) {
+        const preferredStartAt = input.preferredTimeIso
+          ? parseAvailabilityIso(input.preferredTimeIso, defaultBookingTimeZone)
+          : null;
+        if (preferredStartAt !== null) {
           args.preferredStartAt = preferredStartAt;
         }
-        const rangeStartAt = input.rangeStartIso ? Date.parse(input.rangeStartIso) : NaN;
-        if (Number.isFinite(rangeStartAt)) {
+        const rangeStartAt = input.rangeStartIso
+          ? parseAvailabilityIso(input.rangeStartIso, defaultBookingTimeZone)
+          : null;
+        if (rangeStartAt !== null) {
           args.rangeStartAt = rangeStartAt;
         }
-        const rangeEndAt = input.rangeEndIso ? Date.parse(input.rangeEndIso) : NaN;
-        if (Number.isFinite(rangeEndAt)) {
+        const rangeEndAt = input.rangeEndIso
+          ? parseAvailabilityIso(input.rangeEndIso, defaultBookingTimeZone)
+          : null;
+        if (rangeEndAt !== null) {
           args.rangeEndAt = rangeEndAt;
         }
         return await ctx.runMutation(internal.appointmentBooking.sessions.checkAvailability, {
@@ -838,7 +861,7 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
     : "";
 
   const bookingBlock = appointmentBookingEnabled
-    ? `${buildActiveBookingServicesBlock(activeBookingServices)}${buildBookingFlowBlock()}`
+    ? `${buildActiveBookingServicesBlock(activeBookingServices)}${buildBookingFlowBlock(defaultBookingTimeZone)}`
     : "";
   const workflowBlock = buildWorkflowRuntimeBlock(workflowRuntimeContext);
 
@@ -898,6 +921,14 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${aiReplyMessageBreakBlock}${tone
 
   const resolvedModel = resolveLanguageModel(agent.model);
 
+  if (playgroundAvailabilityOnly) {
+    for (const toolName of Object.keys(tools)) {
+      if (toolName !== "fetchContext" && toolName !== "checkAvailability") {
+        delete (tools as Partial<ToolSet>)[toolName as keyof ToolSet];
+      }
+    }
+  }
+
   return new Agent(components.agent, {
     name: agent.name,
     languageModel: resolvedModel.languageModel,
@@ -905,14 +936,6 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${aiReplyMessageBreakBlock}${tone
     instructions,
     stopWhen: stepCountIs(8),
     tools,
-    rawRequestResponseHandler: async (_ctx, { request, response }) => {
-      console.log("request", request);
-      console.log("response", response);
-    },
-    contextHandler: async (_ctx, { allMessages }) => {
-      console.log("context", allMessages);
-      return allMessages;
-    },
     usageHandler: async (ctx, args) => {
       const {
         userId,

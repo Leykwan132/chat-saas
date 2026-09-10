@@ -25,6 +25,7 @@ import { getModelProvider } from "../llm/modelPricing";
 import { logConversationEvent } from "../conversationLogs";
 import { splitAiReplyMessages } from "./aiReplyMessages";
 import { applyBookingReplyGate } from "./applyBookingReply";
+import { ensureAvailabilityTimesInReplies } from "../appointmentBooking/availabilityPresentation";
 
 /* ── Mutations / Queries / Actions ─────────────────────── */
 
@@ -198,6 +199,7 @@ export const generatePlaygroundResponseAsync = internalAction({
       activeBooking.services,
       workflowRuntimeContext,
       args.promptMessageId,
+      true,
     );
     const bookingBeforeReply = conv
       ? await ctx.runQuery(internal.appointmentBooking.currentBooking.getCurrentBooking, {
@@ -218,6 +220,11 @@ export const generatePlaygroundResponseAsync = internalAction({
 
     const rawReplyText = await result.text;
     let replyMessages = splitAiReplyMessages(rawReplyText);
+    const generationSteps = await result.steps;
+    replyMessages = ensureAvailabilityTimesInReplies(
+      replyMessages,
+      generationSteps.flatMap((step) => step.toolResults),
+    );
     if (conv && activeBooking.services.length > 0) {
       replyMessages = await applyBookingReplyGate(ctx, {
         conversationId: conv._id,
