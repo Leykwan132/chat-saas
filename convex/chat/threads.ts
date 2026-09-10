@@ -920,14 +920,6 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${aiReplyMessageBreakBlock}${tone
     instructions,
     stopWhen: stepCountIs(8),
     tools,
-    rawRequestResponseHandler: async (_ctx, { request, response }) => {
-      console.log("request", request);
-      console.log("response", response);
-    },
-    contextHandler: async (_ctx, { allMessages }) => {
-      console.log("context", allMessages);
-      return allMessages;
-    },
     usageHandler: async (ctx, args) => {
       const {
         userId,

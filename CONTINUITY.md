@@ -8,6 +8,8 @@
 - 2026-09-10 [CODE] Now: inbox, media, and playground replies no longer impose a persistent tool choice; the development Convex functions have been updated.
 - 2026-09-10 [USER] Goal: temporarily isolate Agent Setup tool calls to observe checkAvailability invocation. Unshipped in PR #140.
 - 2026-09-10 [CODE] Now: playground agents expose only fetchContext and checkAvailability; the checkAvailability tool logs each agent invocation before the live slot query.
+- 2026-09-10 [USER] Goal: hide generic raw model request/response logs while debugging availability. Unshipped in PR #140.
+- 2026-09-10 [CODE] Now: generic raw request, response, and context handlers were removed; availability-specific diagnostics remain visible.
 - 2026-09-09 [CODE] Now: deleted or invalid Partner Programme entitlement records return `ACCOUNT_UNAVAILABLE`; the app root shows a centered recovery modal and replaces every protected route with `/` when the user chooses Back to home. Unshipped.
 - 2026-09-09 [USER] Goal: Avatar dashboard preview must always use a sandbox session; public live links must always use a non-sandbox session. Unshipped.
 - 2026-09-09 [USER] Goal: Avatar create should persist preset opening text and representative instructions so visitors can chat immediately. Opening: `Hello, how can I help you.` Instructions fill `{{business_name}}` / `{{business_description}}` from the agent. Unshipped in PR https://github.com/Leykwan132/chat-saas/pull/133
