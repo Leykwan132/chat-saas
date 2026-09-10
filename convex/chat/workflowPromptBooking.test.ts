@@ -60,6 +60,8 @@ test("booking flow embeds the server current date for relative requests", () => 
   expect(block).toContain("Today's date is 2026-09-10");
   expect(block).toContain("Asia/Kuala_Lumpur");
   expect(block).toContain("Do not guess or use a different year");
+  expect(block).toContain("1. 5:00 AM - 5:30 AM");
+  expect(block).toContain("2. 3:00 PM - 3:30 PM");
 });
 
 test("availability date rule includes the generated current date", () => {
