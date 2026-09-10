@@ -513,13 +513,18 @@ export function TestChatWindow({
 
   return (
     <>
-      <div className={cn('w-full min-w-0 max-w-full', fillContainer && 'h-full')}>
+      <div
+        className={cn(
+          'flex min-h-0 w-full min-w-0 max-w-full flex-col',
+          fillContainer && 'h-full',
+        )}
+      >
         <div
           className={cn(
             'flex w-full min-w-0 max-w-full flex-col overflow-hidden',
             !fillContainer && 'rounded-lg border border-border bg-card shadow-sm',
             fillContainer
-              ? 'mt-0 h-full min-h-0 bg-card'
+              ? 'mt-0 min-h-0 flex-1 bg-card'
               : embedded
                 ? 'h-[min(744px,calc(100vh-10rem))] min-h-[541px]'
                 : 'mt-4 h-[calc(100vh-220px)] min-h-[600px]',

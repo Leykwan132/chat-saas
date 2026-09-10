@@ -7,4 +7,6 @@ const source = readFileSync(sourcePath, 'utf8');
 
 test('embedded chat bounds the message viewport for scrolling', () => {
   expect(source).toContain('className="h-0 min-h-0 min-w-0 flex-1 overflow-hidden"');
+  expect(source).toContain("'flex min-h-0 w-full min-w-0 max-w-full flex-col'");
+  expect(source).toContain("? 'mt-0 min-h-0 flex-1 bg-card'");
 });

@@ -3,7 +3,7 @@
 # Snapshot
 
 - 2026-09-10 [USER] Goal: Agent Setup test chat messages must scroll inside their fixed-height panel. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: the inline test-chat frame and its message viewport are bounded flex regions, allowing the conversation content to scroll.
+- 2026-09-10 [CODE] Now: inline and fullscreen test-chat layouts use bounded flex regions for the message viewport, allowing conversation history to scroll.
 - 2026-09-10 [USER] Goal: restore normal tool selection after the availability override left test-chat responses pending. Unshipped in PR #140.
 - 2026-09-10 [CODE] Now: inbox, media, and playground replies no longer impose a persistent tool choice; the development Convex functions have been updated.
 - 2026-09-09 [CODE] Now: deleted or invalid Partner Programme entitlement records return `ACCOUNT_UNAVAILABLE`; the app root shows a centered recovery modal and replaces every protected route with `/` when the user chooses Back to home. Unshipped.
