@@ -190,6 +190,28 @@ test("formats returned slots with an exact date and time range", () => {
   });
 });
 
+test("summarizes more than five contiguous slots into a time range", () => {
+  const startAt = Date.UTC(2026, 8, 11, 1);
+  const formatted = formatAvailabilitySlotsForTool(
+    Array.from({ length: 6 }, (_, index) => ({
+      startAt: startAt + index * 30 * 60 * 1000,
+      endAt: startAt + (index + 1) * 30 * 60 * 1000,
+      assignedUserId: "user-1",
+      assignedWorkosUserId: "workos-1",
+      assignedDisplayName: "Kwan Kwan",
+    })),
+    "Asia/Kuala_Lumpur",
+  );
+
+  expect(formatted).toHaveLength(1);
+  expect(formatted[0]).toMatchObject({
+    date: "September 11 (Friday)",
+    timeRange: "9:00 AM - 12:00 PM",
+    endTimeIso: "2026-09-11T04:00:00.000Z",
+    slotCount: 6,
+  });
+});
+
 test("inserts exact times when the generated reply uses generic slot labels", () => {
   const formattedSlots = formatAvailabilitySlotsForTool([
     {

@@ -7,17 +7,56 @@ type AvailabilityDisplaySlot = {
   assignedDisplayName?: string;
 };
 
-export function formatAvailabilitySlotsForTool(slots: BookingSlot[], timeZone: string) {
-  return slots.map((slot) => {
-    const display = formatBookingDateTime(slot.startAt, slot.endAt, timeZone);
+const MAX_INDIVIDUAL_SLOTS = 5;
+
+function formatAvailabilitySlot(slot: BookingSlot, timeZone: string) {
+  const display = formatBookingDateTime(slot.startAt, slot.endAt, timeZone);
+  return {
+    ...slot,
+    startTimeIso: new Date(slot.startAt).toISOString(),
+    endTimeIso: new Date(slot.endAt).toISOString(),
+    date: display.date,
+    timeRange: display.timeRange,
+  };
+}
+
+function summarizeAvailabilitySlots(slots: BookingSlot[], timeZone: string) {
+  const summaries: BookingSlot[][] = [];
+  for (const slot of slots) {
+    const previousGroup = summaries.at(-1);
+    const previousSlot = previousGroup?.at(-1);
+    const sameAssignee = previousSlot?.assignedUserId === slot.assignedUserId;
+    const sameDate = previousSlot !== undefined &&
+      formatBookingDateTime(previousSlot.startAt, previousSlot.endAt, timeZone).date ===
+      formatBookingDateTime(slot.startAt, slot.endAt, timeZone).date;
+    if (previousGroup !== undefined && previousSlot !== undefined &&
+        previousSlot.endAt === slot.startAt && sameAssignee && sameDate) {
+      previousGroup.push(slot);
+    } else {
+      summaries.push([slot]);
+    }
+  }
+
+  return summaries.map((group) => {
+    const first = group[0];
+    const last = group.at(-1) ?? first;
+    const display = formatBookingDateTime(first.startAt, last.endAt, timeZone);
     return {
-      ...slot,
-      startTimeIso: new Date(slot.startAt).toISOString(),
-      endTimeIso: new Date(slot.endAt).toISOString(),
+      ...first,
+      endAt: last.endAt,
+      endTimeIso: new Date(last.endAt).toISOString(),
       date: display.date,
       timeRange: display.timeRange,
+      slotCount: group.length,
     };
   });
+}
+
+export function formatAvailabilitySlotsForTool(slots: BookingSlot[], timeZone: string) {
+  if (slots.length <= MAX_INDIVIDUAL_SLOTS) {
+    return slots.map((slot) => formatAvailabilitySlot(slot, timeZone));
+  }
+  return summarizeAvailabilitySlots(slots, timeZone);
 }
 
 function isAvailabilityDisplaySlot(value: unknown): value is AvailabilityDisplaySlot {
