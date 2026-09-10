@@ -423,9 +423,8 @@ The following Services are available for appointment booking when the workflow i
 ${serviceSections}`;
 }
 
-function getCurrentDateInfo(timeZone: string) {
+function getCurrentDateInfo(timeZone: string, now = new Date()) {
   const tz = normalizeTimeZone(timeZone);
-  const now = new Date();
   const dateFormatter = new Intl.DateTimeFormat("en-US", {
     timeZone: tz,
     weekday: "long",
@@ -455,13 +454,17 @@ function getCurrentDateInfo(timeZone: string) {
   };
 }
 
-export function buildBookingFlowBlock() {
+export function buildBookingFlowBlock(
+  timeZone = DEFAULT_TEAM_TIME_ZONE,
+  now = new Date(),
+) {
+  const currentDate = getCurrentDateInfo(timeZone, now);
   return `\n\n## Booking Flow
 Use the Workflow Runtime first to decide whether the customer is in a Book appointment stage. Use the available Services listed above for service IDs and required fields.
 Available Services are the complete booking catalog for this turn. Knowledge-base results can help you understand or explain how a customer request relates to those Services, but they are not bookable Services and must not be used as service IDs.
 
 - Call \`getActiveBookingSession\` before booking-state replies or booking tools except a first \`checkAvailability\` preview. Availability itself checks the live database and does not require a session.
-- Call \`getTodayDate\` whenever you need today's date or current time — for example when interpreting "today", "tomorrow", "next week", or validating booking dates. Do not guess the current date.
+- Today's date is ${currentDate.dateIso} in ${currentDate.timeZone}. Use this date when interpreting "today", "tomorrow", "next week", or validating booking dates. Do not guess or use a different year.
 - Do not narrate tool steps or send progress updates such as "I will start the booking session" or "I will check availability." Call the tools immediately and reply only with the result or the next information the customer must provide.
 1. *Check slots* — For any availability question, call \`checkAvailability\` immediately with the matching service ID. Do not collect customer details first. For a specific time use \`preferredTimeIso\`; for a day or range use \`rangeStartIso\` and \`rangeEndIso\`.
 2. *Select slot* — A customer's exact requested time or choice from offered slots counts as confirmation. Call \`checkAvailability\` for that exact time. When available, it starts the session and returns only the missing booking fields.
@@ -845,7 +848,7 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
     : "";
 
   const bookingBlock = appointmentBookingEnabled
-    ? `${buildActiveBookingServicesBlock(activeBookingServices)}${buildBookingFlowBlock()}`
+    ? `${buildActiveBookingServicesBlock(activeBookingServices)}${buildBookingFlowBlock(defaultBookingTimeZone)}`
     : "";
   const workflowBlock = buildWorkflowRuntimeBlock(workflowRuntimeContext);
 

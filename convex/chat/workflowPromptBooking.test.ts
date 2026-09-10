@@ -50,3 +50,14 @@ test("booking flow chains a fully specified requested slot without progress chat
   expect(block).toContain("returns `readyForBooking: true`");
   expect(block).toContain("Do not ask for another confirmation");
 });
+
+test("booking flow embeds the server current date for relative requests", () => {
+  const block = buildBookingFlowBlock(
+    "Asia/Kuala_Lumpur",
+    new Date("2026-09-10T08:05:19.803Z"),
+  );
+
+  expect(block).toContain("Today's date is 2026-09-10");
+  expect(block).toContain("Asia/Kuala_Lumpur");
+  expect(block).toContain("Do not guess or use a different year");
+});
