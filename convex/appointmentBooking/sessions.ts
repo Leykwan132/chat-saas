@@ -6,10 +6,12 @@ import { resolveBookingService, resolveTeamForAgent } from "./access";
 import {
   mergeCollectedFields,
   missingServiceFields,
+  serviceTimeZone,
   serviceSnapshot,
 } from "./fields";
 import { collectedFieldsValidator } from "./validators";
 import { getActiveSession, getOrCreateSession } from "./sessionStore";
+import { validateAvailabilityDates } from "./dateValidation";
 
 function availabilityInputTimestamp(value: number | undefined) {
   return value === undefined
@@ -162,13 +164,39 @@ export const checkAvailability = internalMutation({
 
     const collectedFields = session?.collectedFields ?? {};
     const missing = missingServiceFields(service, collectedFields);
+    const now = Date.now();
+    const dateValidation = validateAvailabilityDates({
+      now,
+      timeZone: serviceTimeZone(service),
+      preferredStartAt: args.preferredStartAt,
+      rangeStartAt: args.rangeStartAt,
+      rangeEndAt: args.rangeEndAt,
+    });
+    if (dateValidation !== null) {
+      logAvailabilityDiagnostic("booking_availability_invalid_date", {
+        conversationId: conversation._id,
+        serviceId: service._id,
+        todayDate: dateValidation.todayDate,
+        input: {
+          preferredStart: availabilityInputTimestamp(args.preferredStartAt),
+          rangeStart: availabilityInputTimestamp(args.rangeStartAt),
+          rangeEnd: availabilityInputTimestamp(args.rangeEndAt),
+        },
+      });
+      return {
+        success: false,
+        slots: [],
+        errorCode: dateValidation.code,
+        todayDate: dateValidation.todayDate,
+        message: `Availability dates must be ${dateValidation.todayDate} or later.`,
+      };
+    }
 
     const team = await resolveTeamForAgent(ctx, agent);
     logAvailabilityDiagnostic("booking_availability_team_query", {
       agentId: conversation.assignedAgentId,
       teamId: team._id,
     });
-    const now = Date.now();
     const rangeStartAt = Math.max(args.rangeStartAt ?? now + 60 * 60 * 1000, now);
     const rangeEndAt = args.preferredStartAt
       ? args.preferredStartAt + service.durationMinutes * 60 * 1000

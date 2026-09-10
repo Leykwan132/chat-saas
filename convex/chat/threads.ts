@@ -664,12 +664,12 @@ export function buildAgent(
 
     tools.checkAvailability = createTool({
       description:
-        "Checks live appointment availability directly without requiring a booking session or customer details. Use a service ID from Available Appointment Services. Call immediately for availability questions. If an exact customer-requested or selected preferredTimeIso is available, this starts the booking session and returns missingFields.",
+        "Checks live appointment availability directly without requiring a booking session or customer details. Use a service ID from Available Appointment Services. Call immediately for availability questions. Dates must be today or later according to the current date in the system prompt; never send a past year or past date. If an exact customer-requested or selected preferredTimeIso is available, this starts the booking session and returns missingFields.",
       inputSchema: z.object({
         serviceId: z.string().optional().describe("The selected Services service ID."),
-        preferredTimeIso: z.string().optional().describe("Customer's preferred appointment start time as an ISO timestamp."),
-        rangeStartIso: z.string().optional().describe("Start of the search range as an ISO timestamp."),
-        rangeEndIso: z.string().optional().describe("End of the search range as an ISO timestamp."),
+        preferredTimeIso: z.string().optional().describe("Customer's preferred appointment start time as an ISO timestamp. The date must be today or later."),
+        rangeStartIso: z.string().optional().describe("Start of the search range as an ISO timestamp. The date must be today or later."),
+        rangeEndIso: z.string().optional().describe("End of the search range as an ISO timestamp. The date must be today or later."),
       }),
       execute: async (ctx, input) => {
         console.log("agent_tool_check_availability_invoked", JSON.stringify({

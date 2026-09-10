@@ -6,6 +6,7 @@ import {
   availabilityRejectionReasons,
 } from "./appointmentBooking/availabilityEligibility";
 import type { AvailabilityRosterEntry } from "./appointmentBooking/availabilityRoster";
+import { validateAvailabilityDates } from "./appointmentBooking/dateValidation";
 
 const service = {
   assignedWorkosUserIds: ["selected-user"],
@@ -143,4 +144,25 @@ test("reports the checks and records that caused a candidate rejection", () => {
     timeOffIds: ["time-off-1"],
     calendarEventIds: ["event-1"],
   });
+});
+
+test("rejects availability dates before today in the service timezone", () => {
+  const now = Date.parse("2026-09-10T08:05:19.803Z");
+
+  expect(validateAvailabilityDates({
+    now,
+    timeZone: "Asia/Kuala_Lumpur",
+    rangeStartAt: Date.parse("2025-01-21T00:00:00Z"),
+    rangeEndAt: Date.parse("2025-01-21T23:59:59Z"),
+  })).toEqual({
+    code: "past_date",
+    todayDate: "2026-09-10",
+  });
+
+  expect(validateAvailabilityDates({
+    now,
+    timeZone: "Asia/Kuala_Lumpur",
+    rangeStartAt: Date.parse("2026-09-10T00:00:00Z"),
+    rangeEndAt: Date.parse("2026-09-10T23:59:59Z"),
+  })).toBeNull();
 });
