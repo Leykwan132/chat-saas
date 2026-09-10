@@ -8,7 +8,7 @@ import type { BookingSlot, RosterEntry } from "./types";
 import { advanceCalendarAvailabilityPreload } from "../calendarAvailabilityPreload";
 import { loadAvailabilityRoster, type AvailabilityRosterEntry } from "./availabilityRoster";
 import {
-  availabilityRejectionReasons,
+  availabilityDecisionDetails,
   entryAvailableForSlot,
 } from "./availabilityEligibility";
 
@@ -233,9 +233,7 @@ export async function generateSlots(
         start: availabilityTimestamp(startAt),
         end: availabilityTimestamp(endAt),
         entries: roster.map((entry) => ({
-          scheduleId: entry.schedule._id,
-          workosUserId: entry.schedule.workosUserId,
-          reasons: availabilityRejectionReasons({
+          ...availabilityDecisionDetails({
             service: args.service,
             entry,
             startAt: startAt - bufferMs,

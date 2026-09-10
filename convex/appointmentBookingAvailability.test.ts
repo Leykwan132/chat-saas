@@ -1,7 +1,10 @@
 import { afterEach, expect, test, vi } from "vitest";
 import type { Doc } from "./_generated/dataModel";
 import { isAssignedToService } from "./appointmentBooking/availability";
-import { availabilityRejectionReasons } from "./appointmentBooking/availabilityEligibility";
+import {
+  availabilityDecisionDetails,
+  availabilityRejectionReasons,
+} from "./appointmentBooking/availabilityEligibility";
 import type { AvailabilityRosterEntry } from "./appointmentBooking/availabilityRoster";
 
 const service = {
@@ -72,4 +75,72 @@ test("availability eligibility does not emit temporary debug logs", () => {
   });
 
   expect(log).not.toHaveBeenCalled();
+});
+
+test("reports the checks and records that caused a candidate rejection", () => {
+  const startAt = Date.UTC(2026, 7, 17, 9);
+  const endAt = Date.UTC(2026, 7, 17, 9, 30);
+  const details = availabilityDecisionDetails({
+    service: {
+      assignedWorkosUserIds: ["other-user"],
+      locationMode: "remote",
+    } as Doc<"appointmentServices">,
+    entry: {
+      ...scheduledEntry,
+      schedule: {
+        ...scheduledEntry.schedule,
+        _id: "schedule-1",
+        agentId: "agent-1",
+        mode: "scheduled",
+        manualStatus: "available",
+        enabled: true,
+      } as Doc<"userSchedules">,
+      shifts: [{
+        _id: "shift-1",
+        dayOfWeek: 2,
+        startMinutes: 600,
+        endMinutes: 1020,
+        userScheduleId: "schedule-1",
+      }] as Doc<"userShifts">[],
+      timeOff: [{
+        _id: "time-off-1",
+        userScheduleId: "schedule-1",
+        startAt: startAt - 1,
+        endAt: endAt + 1,
+        label: "Lunch",
+      }] as Doc<"userTimeOff">[],
+      calendarAvailability: {
+        safe: true,
+        intervals: [{
+          eventId: "event-1",
+          startAt: startAt - 1,
+          endAt: endAt + 1,
+        }],
+      },
+      googleCalendarHealthy: false,
+    } as AvailabilityRosterEntry,
+    startAt,
+    endAt,
+  });
+
+  expect(details.reasons).toEqual([
+    "service_not_assigned",
+    "outside_shift",
+    "time_off",
+    "google_calendar_unhealthy",
+    "calendar_conflict",
+  ]);
+  expect(details.checks).toMatchObject({
+    hasUser: true,
+    serviceAssigned: false,
+    withinShift: false,
+    timeOffOverlap: true,
+    googleCalendarHealthy: false,
+    calendarDataSafe: true,
+    calendarConflict: true,
+  });
+  expect(details.matchedRows).toEqual({
+    timeOffIds: ["time-off-1"],
+    calendarEventIds: ["event-1"],
+  });
 });

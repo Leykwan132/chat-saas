@@ -127,6 +127,18 @@ export const checkAvailability = internalMutation({
       conversation.assignedAgentId,
       args.serviceId ?? session?.serviceId,
     );
+    logAvailabilityDiagnostic("booking_availability_service_query", {
+      agentId: conversation.assignedAgentId,
+      requestedServiceId: args.serviceId ?? session?.serviceId,
+      activeServices: services.map((row) => ({
+        serviceId: row._id,
+        name: row.name,
+        isActive: row.isActive,
+        durationMinutes: row.durationMinutes,
+        locationMode: row.locationMode,
+      })),
+      selectedServiceId: service?._id,
+    });
     if (services.length === 0) {
       return { success: false, slots: [], message: "No active Services are configured." };
     }
@@ -152,6 +164,10 @@ export const checkAvailability = internalMutation({
     const missing = missingServiceFields(service, collectedFields);
 
     const team = await resolveTeamForAgent(ctx, agent);
+    logAvailabilityDiagnostic("booking_availability_team_query", {
+      agentId: conversation.assignedAgentId,
+      teamId: team._id,
+    });
     const now = Date.now();
     const rangeStartAt = Math.max(args.rangeStartAt ?? now + 60 * 60 * 1000, now);
     const rangeEndAt = args.preferredStartAt
