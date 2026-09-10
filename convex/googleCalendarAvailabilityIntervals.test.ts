@@ -193,3 +193,19 @@ test("multi-slot generation stays within one window-level query budget", async (
 
   expect(slots).toHaveLength(8);
 });
+
+test("unlimited slot generation returns every available slot in the range", async () => {
+  const t = convexTest(schema, modules);
+  const fixture = await setup(t);
+  const rangeStartAt = Math.ceil((fixture.now + day) / (30 * minute)) * 30 * minute;
+  const slots = await t.run(async (ctx) => generateSlots(ctx, {
+    service: (await ctx.db.get(fixture.serviceId)) as Doc<"appointmentServices">,
+    teamId: fixture.teamId,
+    rangeStartAt,
+    rangeEndAt: rangeStartAt + 8 * hour,
+    limit: undefined,
+    prioritizePreferredTimes: false,
+  }));
+
+  expect(slots).toHaveLength(16);
+});

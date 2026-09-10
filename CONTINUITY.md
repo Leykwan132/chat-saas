@@ -18,6 +18,8 @@
 - 2026-09-10 [CODE] Now: playground streaming replies prepend exact availability dates/time ranges when the model returns generic slot labels despite a successful `checkAvailability` result. Unshipped in PR #140.
 - 2026-09-10 [CODE] Now: booking instructions include explicit numbered time-range examples (`1. 5:00 AM - 5:30 AM`, `2. 3:00 PM - 3:30 PM`) for availability replies. Unshipped in PR #140.
 - 2026-09-10 [CODE] Now: timezone-less availability timestamps are interpreted in the booking service timezone before candidate generation, so a 3:00 PM Asia/Kuala_Lumpur request is no longer parsed as 3:00 PM UTC. Unshipped in PR #140.
+- 2026-09-10 [USER] Goal: range availability requests must return every available slot instead of truncating at five. Unshipped in PR #140.
+- 2026-09-10 [CODE] Now: range checks pass an unlimited slot limit through the generator; exact preferred-time checks still return one matching slot. Unshipped in PR #140.
 - 2026-09-09 [CODE] Now: deleted or invalid Partner Programme entitlement records return `ACCOUNT_UNAVAILABLE`; the app root shows a centered recovery modal and replaces every protected route with `/` when the user chooses Back to home. Unshipped.
 - 2026-09-09 [USER] Goal: Avatar dashboard preview must always use a sandbox session; public live links must always use a non-sandbox session. Unshipped.
 - 2026-09-09 [USER] Goal: Avatar create should persist preset opening text and representative instructions so visitors can chat immediately. Opening: `Hello, how can I help you.` Instructions fill `{{business_name}}` / `{{business_description}}` from the agent. Unshipped in PR https://github.com/Leykwan132/chat-saas/pull/133
@@ -123,6 +125,7 @@
 
 # Receipts
 
+- 2026-09-10 [TOOL] PR #140 updated with unlimited range availability: 37 focused tests, Convex TypeScript, targeted ESLint, and diff checks pass under Node 22. Production availability UNCONFIRMED.
 - 2026-09-09 [TOOL] PR #135 opened: https://github.com/Leykwan132/chat-saas/pull/135. Nine focused auth/recovery tests plus app and Convex TypeScript checks pass under Node 22; production availability UNCONFIRMED.
 - 2026-09-10 [TOOL] PR #140 updated with commit `561d902`: timezone-less availability timestamps now resolve in the booking service timezone; focused availability/prompt tests (22), Convex TypeScript, ESLint, and diff checks pass under Node 22. Local branch is synced; production availability UNCONFIRMED.
 - 2026-09-09 [TOOL] PR #134 opened: https://github.com/Leykwan132/chat-saas/pull/134 (`codex/avatar-session-duration-cap` → `main`).

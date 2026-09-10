@@ -136,7 +136,7 @@ export async function generateSlots(
     teamId: Id<"teams">;
     rangeStartAt: number;
     rangeEndAt: number;
-    limit: number;
+    limit?: number;
     prioritizePreferredTimes?: boolean;
     excludeEventId?: Id<"calendarEvents">;
     ignoreGoogleHealth?: boolean;
@@ -147,8 +147,8 @@ export async function generateSlots(
   const slots: BookingSlot[] = [];
   const firstStartAt = roundUpToSlotInterval(args.rangeStartAt);
   if (firstStartAt + durationMs > args.rangeEndAt) return [];
-  const stopOnFilledLimit = args.prioritizePreferredTimes === false;
-  const lastCandidateStartAt = stopOnFilledLimit
+  const stopOnFilledLimit = args.prioritizePreferredTimes === false && args.limit !== undefined;
+  const lastCandidateStartAt = args.limit === undefined || stopOnFilledLimit
     ? args.rangeEndAt - durationMs
     : Math.min(args.rangeEndAt - durationMs, firstStartAt + 199 * 30 * 60 * 1000);
   const roster = await loadRoster(ctx, {
@@ -199,7 +199,11 @@ export async function generateSlots(
   for (
     let startAt = firstStartAt;
     startAt + durationMs <= args.rangeEndAt &&
-    (stopOnFilledLimit ? slots.length < args.limit : candidateCount < 200);
+    (args.limit === undefined
+      ? true
+      : stopOnFilledLimit
+        ? slots.length < args.limit
+        : candidateCount < 200);
     startAt += 30 * 60 * 1000
   ) {
     candidateCount += 1;
@@ -248,12 +252,14 @@ export async function generateSlots(
   const orderedSlots = args.prioritizePreferredTimes === false
     ? slots
     : sortSlotsWithPreferredTime(slots, args.service);
-  const returnedSlots = orderedSlots.slice(0, args.limit);
+  const returnedSlots = args.limit === undefined
+    ? orderedSlots
+    : orderedSlots.slice(0, args.limit);
   logAvailabilityDiagnostic("booking_availability_generated", {
     candidateCount,
     availableCount: slots.length,
     returnedCount: returnedSlots.length,
-    limit: args.limit,
+    limit: args.limit ?? "unlimited",
     slots: returnedSlots.map((slot) => ({
       start: availabilityTimestamp(slot.startAt),
       end: availabilityTimestamp(slot.endAt),

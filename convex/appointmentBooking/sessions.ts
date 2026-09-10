@@ -203,7 +203,7 @@ export const checkAvailability = internalMutation({
       ? args.preferredStartAt + service.durationMinutes * 60 * 1000
       : args.rangeEndAt ?? rangeStartAt + 14 * 24 * 60 * 60 * 1000;
     const startAt = args.preferredStartAt ?? rangeStartAt;
-    const limit = args.preferredStartAt ? 1 : 5;
+    const limit = args.preferredStartAt ? 1 : undefined;
     const isEditing = session?.calendarEventId !== undefined;
     logAvailabilityDiagnostic("booking_availability_request", {
       conversationId: conversation._id,
@@ -230,7 +230,7 @@ export const checkAvailability = internalMutation({
         now: availabilityInputTimestamp(now),
         start: availabilityInputTimestamp(startAt),
         end: availabilityInputTimestamp(rangeEndAt),
-        limit,
+        limit: limit ?? "unlimited",
       },
     });
     const slots = await generateSlots(ctx, {
