@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAction, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import { AlignLeft, FileText, Globe, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
@@ -74,6 +74,7 @@ export function CreateAgentKnowledgeStep({
   const storageLimits = useQuery(api.knowledgeBase.getStorageLimit);
 
   const enqueueDelete = useAction(api.cloudflare.enqueueDelete);
+  const removeQAEntry = useMutation(api.knowledgeBase.removeQAEntry);
   const deleteWebEntryGroup = useAction(api.cloudflare.deleteWebEntryGroup);
 
   const maxFileSize = storageLimits?.maxFileSize ?? 4 * 1024 * 1024;
@@ -103,6 +104,9 @@ export function CreateAgentKnowledgeStep({
       if (deleteTarget.isGroup && deleteTarget.type === 'web') {
         await deleteWebEntryGroup({ parentId: deleteTarget.entryId });
         toast.success('URL group is now being deleted');
+      } else if (deleteTarget.type === 'qa') {
+        await removeQAEntry({ entryId: deleteTarget.entryId });
+        toast.success('Q&A pair removed');
       } else {
         await enqueueDelete({
           entryId: deleteTarget.entryId,

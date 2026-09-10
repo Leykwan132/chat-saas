@@ -9,6 +9,7 @@ test("tool usage block follows a when/how/parameters/error handling pattern", ()
   });
 
   expect(block).toContain("## Tool Usage — REQUIRED");
+  expect(block).toContain("### `fetchCustomerQa`");
   expect(block).toContain("### `fetchContext`");
   expect(block).toContain("**When to use:**");
   expect(block).toContain("**How to use:**");
@@ -30,5 +31,6 @@ test("tool usage block omits escalation tool instructions when escalation is una
 
   expect(block).toContain("### `fetchContext`");
   expect(block).not.toContain("### `escalateToHuman`");
-  expect(block).toContain("If no relevant context is found");
+  expect(block).toContain("Call `fetchCustomerQa` before answering any customer question");
+  expect(block).toContain("If it has no relevant answer, call `fetchContext`");
 });

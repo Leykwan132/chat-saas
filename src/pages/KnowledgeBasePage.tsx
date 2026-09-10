@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAction, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import { useParams, useNavigate } from 'react-router';
 import { Globe, FileText, AlignLeft, HelpCircle, Info, XIcon } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
@@ -71,6 +71,7 @@ export default function KnowledgeBasePage() {
   const qaEntries = useQuery(api.knowledgeBase.listQAEntries, selectedAgentId ? { agentId: selectedAgentId } : "skip");
 
   const enqueueDelete = useAction(api.cloudflare.enqueueDelete);
+  const removeQAEntry = useMutation(api.knowledgeBase.removeQAEntry);
   const deleteWebEntryGroup = useAction(api.cloudflare.deleteWebEntryGroup);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -124,8 +125,13 @@ export default function KnowledgeBasePage() {
         await deleteWebEntryGroup({ parentId: deleteTarget.entryId });
         toast.success("URL group is now being deleted");
       } else {
-        await enqueueDelete({ entryId: deleteTarget.entryId, entryType: deleteTarget.type, cfItemId: deleteTarget.cfItemId });
-        toast.success("Item is now being deleted");
+        if (deleteTarget.type === 'qa') {
+          await removeQAEntry({ entryId: deleteTarget.entryId });
+          toast.success("Q&A pair removed");
+        } else {
+          await enqueueDelete({ entryId: deleteTarget.entryId, entryType: deleteTarget.type, cfItemId: deleteTarget.cfItemId });
+          toast.success("Item is now being deleted");
+        }
       }
     } catch {
       toast.error("Failed to delete item");

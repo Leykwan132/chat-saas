@@ -528,7 +528,7 @@ export function buildAgent(
   const tools: ToolSet = {
     fetchContext: createTool({
       description:
-        "MUST be called before answering ANY user question. Searches the knowledge base (uploaded documents, Q&A pairs, web references) for relevant context. Always call this first — even if you think you know the answer.",
+        "Searches uploaded documents and web references for relevant context when fetchCustomerQa does not answer the question.",
       inputSchema: z.object({
         query: z.string().describe("The exact user original query"),
       }),
@@ -538,6 +538,16 @@ export function buildAgent(
           query,
         });
         return result;
+      },
+    }),
+    fetchCustomerQa: createTool({
+      description:
+        "MUST be called before answering any customer question. Retrieves every current customer-provided Q&A pair for this agent. Use relevant answers as factual context and do not invent information.",
+      inputSchema: z.object({}),
+      execute: async (ctx) => {
+        return await ctx.runQuery(internal.knowledgeBase.internalListQAEntriesForPrompt, {
+          agentId,
+        });
       },
     }),
   };
@@ -819,13 +829,13 @@ export function buildAgent(
 
   const groundingBlock = escalationConfigured
     ? `\n\n## Grounding — REQUIRED
-- Only state facts that come directly from \`fetchContext\` results or explicit tool metadata (collection name, filename, etc.).
+- Only state facts that come directly from \`fetchCustomerQa\` or \`fetchContext\` results, or explicit tool metadata (collection name, filename, etc.).
 - Do NOT invent details, generic explanations, or filler about attachments or topics.
 - Do NOT describe media contents, room layouts, dimensions, benefits, or implications unless \`fetchContext\` provided that information.
 - Never mention internal tools, searches, or a "knowledge base" to the user.
 - If tools returned nothing useful for the user's question, do NOT reply to the user. Call \`escalateToHuman\` instead. Never tell the user you don't know or ask if there is something else you can help with.`
     : `\n\n## Grounding — REQUIRED
-- Only state facts that come directly from \`fetchContext\` results or explicit tool metadata (collection name, filename, etc.).
+- Only state facts that come directly from \`fetchCustomerQa\` or \`fetchContext\` results, or explicit tool metadata (collection name, filename, etc.).
 - Do NOT invent details, generic explanations, or filler about attachments or topics.
 - Do NOT describe media contents, room layouts, dimensions, benefits, or implications unless \`fetchContext\` provided that information.
 - Never mention internal tools, searches, or a "knowledge base" to the user.
