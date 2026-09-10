@@ -205,7 +205,6 @@ export const finalizeBatchAndEnqueueReply = internalMutation({
   args: {
     batchId: v.id("inboundMediaBatches"),
     revision: v.number(),
-    promptContent: v.string(),
   },
   handler: async (ctx, args) => {
     const batch = await ctx.db.get(args.batchId);
@@ -226,7 +225,6 @@ export const finalizeBatchAndEnqueueReply = internalMutation({
       {
         conversationId: batch.conversationId,
         promptMessageId: batch.latestPromptMessageId,
-        promptContent: args.promptContent,
         inboundExternalId: batch.latestExternalId,
       },
     );

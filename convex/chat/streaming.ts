@@ -25,7 +25,6 @@ import { getModelProvider } from "../llm/modelPricing";
 import { logConversationEvent } from "../conversationLogs";
 import { splitAiReplyMessages } from "./aiReplyMessages";
 import { applyBookingReplyGate } from "./applyBookingReply";
-import { availabilityToolCallRequirement } from "./availabilityToolGuard";
 
 /* ── Mutations / Queries / Actions ─────────────────────── */
 
@@ -149,7 +148,6 @@ export const sendMessage = mutation({
         threadId: args.threadId,
         agentId: args.agentId,
         promptMessageId: messageId,
-        promptContent: args.prompt,
         enableCitations: args.enableCitations,
         billingUserId: userId,
         deductCredits,
@@ -165,7 +163,6 @@ export const generatePlaygroundResponseAsync = internalAction({
     threadId: v.string(),
     agentId: v.id("agents"),
     promptMessageId: v.string(),
-    promptContent: v.string(),
     enableCitations: v.optional(v.boolean()),
     billingUserId: v.string(),
     deductCredits: v.boolean(),
@@ -210,13 +207,7 @@ export const generatePlaygroundResponseAsync = internalAction({
     const result = await configuredAgent.streamText(
       ctx,
       { threadId: args.threadId },
-      {
-        promptMessageId: args.promptMessageId,
-        ...availabilityToolCallRequirement({
-          question: args.promptContent,
-          hasAvailabilityTool: activeBooking.services.length > 0,
-        }),
-      },
+      { promptMessageId: args.promptMessageId },
       {
         saveStreamDeltas: {
           chunking: "word",
