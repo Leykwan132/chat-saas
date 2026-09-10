@@ -47,6 +47,7 @@ import { canProcessWorkspaceActivity } from "../teamDeletion/access";
 import { notifyHumanEscalation } from "../telegramNotifications/events";
 import { splitAiReplyMessages } from "./aiReplyMessages";
 import { applyBookingReplyGate } from "./applyBookingReply";
+import { availabilityToolCallRequirement } from "./availabilityToolGuard";
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
@@ -739,19 +740,26 @@ export const generateAiReplyWorker = internalAction({
         ? resolveWorkflowActionPlanText(workflowActionPlan, workflowRuntimeContext)
         : null;
 
+      const availabilityRequirement = availabilityToolCallRequirement({
+        question: args.promptContent,
+        hasAvailabilityTool: activeBooking.services.length > 0,
+      });
       let replyMessages: string[];
 
-      if (hasMatches && plannedWorkflowText !== null) {
+      if (!availabilityRequirement && hasMatches && plannedWorkflowText !== null) {
         replyMessages = [plannedWorkflowText];
       } else {
         const result = await configuredAgent.generateText(
           ctx,
           { threadId: conv.threadId },
-          workflowActionPlanReplyPromptArgs(
-            args,
-            workflowActionPlan,
-            workflowRuntimeContext,
-          ),
+          {
+            ...workflowActionPlanReplyPromptArgs(
+              args,
+              workflowActionPlan,
+              workflowRuntimeContext,
+            ),
+            ...availabilityRequirement,
+          },
           { storageOptions: { saveMessages: "none" } },
         );
         replyMessages = splitAiReplyMessages(result.text);

@@ -376,7 +376,7 @@ test("AI reply worker always runs the planner and injects language into generate
   expect(inboxSource).toContain("generateWorkflowActionPlan(");
   expect(inboxSource).toContain("hasWorkflowActionMatches(");
   expect(inboxSource).toContain("resolveWorkflowActionPlanMedia(");
-  expect(inboxSource).toContain("if (hasMatches && plannedWorkflowText !== null)");
+  expect(inboxSource).toContain("if (!availabilityRequirement && hasMatches && plannedWorkflowText !== null)");
   expect(inboxSource).toContain("workflowActionPlanReplyPromptArgs(");
   expect(inboxSource).toContain("const allMediaItems = plannedMediaItems");
   expect(inboxSource).toContain(

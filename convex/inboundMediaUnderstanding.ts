@@ -125,6 +125,10 @@ export const processBatch = internalAction({
       return;
     }
 
+    let latestPromptContent = claimed.items
+      .find((item) => item.promptMessageId === claimed.batch.latestPromptMessageId)
+      ?.caption ?? "";
+
     try {
       const resultsByPromptMessageId = new Map<string, InboundMediaResult[]>();
       const captionResponseByPromptMessageId = new Map<string, string>();
@@ -217,6 +221,14 @@ export const processBatch = internalAction({
       );
       const captionResponse =
         captionResponseByPromptMessageId.get(promptMessageId);
+      const content = agentFacingContent(
+        displayText,
+        captionResponse,
+        assets,
+      );
+      if (promptMessageId === claimed.batch.latestPromptMessageId) {
+        latestPromptContent = content;
+      }
       const providerMetadata = {
         ...(doc.providerMetadata as Record<string, unknown> | undefined),
         inbox: {
@@ -237,11 +249,7 @@ export const processBatch = internalAction({
           patch: {
             message: {
               role: "user",
-              content: agentFacingContent(
-                displayText,
-                captionResponse,
-                assets,
-              ),
+              content,
             },
             status: "success",
           },
@@ -267,7 +275,7 @@ export const processBatch = internalAction({
     } finally {
       await ctx.runMutation(
         internal.inboundMediaBatch.finalizeBatchAndEnqueueReply,
-        args,
+        { ...args, promptContent: latestPromptContent },
       );
     }
   },

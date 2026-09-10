@@ -2,6 +2,8 @@
 
 # Snapshot
 
+- 2026-09-10 [USER] Goal: availability-related customer questions must always call the live availability tool. Unshipped on `codex/mandatory-availability-check`.
+- 2026-09-10 [CODE] Now: inbox/channel, media-batch, and playground replies force the model to call only `checkAvailability` for availability, slots, openings, time, or booking-time questions when a bookable service exists; planned workflow text cannot bypass the tool. Focused tests and production build pass.
 - 2026-09-09 [CODE] Now: deleted or invalid Partner Programme entitlement records return `ACCOUNT_UNAVAILABLE`; the app root shows a centered recovery modal and replaces every protected route with `/` when the user chooses Back to home. Unshipped.
 - 2026-09-09 [USER] Goal: Avatar dashboard preview must always use a sandbox session; public live links must always use a non-sandbox session. Unshipped.
 - 2026-09-09 [USER] Goal: Avatar create should persist preset opening text and representative instructions so visitors can chat immediately. Opening: `Hello, how can I help you.` Instructions fill `{{business_name}}` / `{{business_description}}` from the agent. Unshipped in PR https://github.com/Leykwan132/chat-saas/pull/133
@@ -35,6 +37,7 @@
 
 # Decisions
 
+- 2026-09-10 [USER] D797 ACTIVE: availability-related customer questions force `checkAvailability` before a response across inbox/channel and playground reply paths.
 - 2026-09-06 [USER] D782 ACTIVE: availability checks precede session creation and customer-detail collection; an exact requested/selected available slot is confirmation, and complete details must proceed directly to booking and canonical confirmation without an extra confirmation turn.
 - 2026-09-07 [TOOL] D781 RESOLVED: Official Meta docs confirm Messenger private replies use `POST /{page-id}/messages` with `recipient.comment_id`; public replies use the comment’s `/comments` edge. Page read/manage permissions are required for keyword fetches and public replies.
 - 2026-09-04 [USER] D780 ACTIVE: The customer-facing navigation label is “Comment-to-Inbox”; Comment automations use the unshipped `commentAutomations` backend tables and APIs.
