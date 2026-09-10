@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import type { Id } from "../_generated/dataModel";
-import { buildBookingFlowBlock } from "./threads";
+import { buildAvailabilityDateRule, buildBookingFlowBlock } from "./threads";
 import { buildWorkflowRuntimeBlock } from "./workflowPrompt";
 
 test("workflow runtime describes book appointment by services instead of goal", () => {
@@ -60,4 +60,11 @@ test("booking flow embeds the server current date for relative requests", () => 
   expect(block).toContain("Today's date is 2026-09-10");
   expect(block).toContain("Asia/Kuala_Lumpur");
   expect(block).toContain("Do not guess or use a different year");
+});
+
+test("availability date rule includes the generated current date", () => {
+  expect(buildAvailabilityDateRule(
+    "Asia/Kuala_Lumpur",
+    new Date("2026-09-10T08:05:19.803Z"),
+  )).toBe("The date must be today or later than 2026-09-10 in Asia/Kuala_Lumpur.");
 });

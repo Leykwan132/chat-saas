@@ -498,6 +498,11 @@ Additional rules:
 - Outside an edit, \`cancelBooking\` cancels the existing confirmed appointment when one exists.`;
 }
 
+export function buildAvailabilityDateRule(timeZone: string, now = new Date()) {
+  const currentDate = getCurrentDateInfo(timeZone, now);
+  return `The date must be today or later than ${currentDate.dateIso} in ${currentDate.timeZone}.`;
+}
+
 export function buildAgent(
   agent: {
     name: string;
@@ -518,6 +523,7 @@ export function buildAgent(
 ) {
   const appointmentBookingEnabled = conversationId !== undefined && activeBookingServices.length > 0;
   const defaultBookingTimeZone = normalizeTimeZone(activeBookingServices[0]?.timeZone);
+  const availabilityDateRule = buildAvailabilityDateRule(defaultBookingTimeZone);
   const humanEscalationNodeIds = new Set(
     workflowRuntimeContext?.nodes
       .filter((node) => node.kind === "humanEscalation")
@@ -667,9 +673,9 @@ export function buildAgent(
         "Checks live appointment availability directly without requiring a booking session or customer details. Use a service ID from Available Appointment Services. Call immediately for availability questions. Dates must be today or later according to the current date in the system prompt; never send a past year or past date. If an exact customer-requested or selected preferredTimeIso is available, this starts the booking session and returns missingFields.",
       inputSchema: z.object({
         serviceId: z.string().optional().describe("The selected Services service ID."),
-        preferredTimeIso: z.string().optional().describe("Customer's preferred appointment start time as an ISO timestamp. The date must be today or later."),
-        rangeStartIso: z.string().optional().describe("Start of the search range as an ISO timestamp. The date must be today or later."),
-        rangeEndIso: z.string().optional().describe("End of the search range as an ISO timestamp. The date must be today or later."),
+        preferredTimeIso: z.string().optional().describe(`Customer's preferred appointment start time as an ISO timestamp. ${availabilityDateRule}`),
+        rangeStartIso: z.string().optional().describe(`Start of the search range as an ISO timestamp. ${availabilityDateRule}`),
+        rangeEndIso: z.string().optional().describe(`End of the search range as an ISO timestamp. ${availabilityDateRule}`),
       }),
       execute: async (ctx, input) => {
         console.log("agent_tool_check_availability_invoked", JSON.stringify({
