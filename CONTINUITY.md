@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-10 [USER] Goal: availability-related customer questions must always call the live availability tool. Unshipped on `codex/mandatory-availability-check`.
+- 2026-09-10 [USER] Goal: availability-related customer questions must always call the live availability tool. Unshipped in PR #140 (`codex/mandatory-availability-check`).
 - 2026-09-10 [CODE] Now: inbox/channel, media-batch, and playground replies force the model to call only `checkAvailability` for availability, slots, openings, time, or booking-time questions when a bookable service exists; planned workflow text cannot bypass the tool. Focused tests and production build pass.
 - 2026-09-09 [CODE] Now: deleted or invalid Partner Programme entitlement records return `ACCOUNT_UNAVAILABLE`; the app root shows a centered recovery modal and replaces every protected route with `/` when the user chooses Back to home. Unshipped.
 - 2026-09-09 [USER] Goal: Avatar dashboard preview must always use a sandbox session; public live links must always use a non-sandbox session. Unshipped.
