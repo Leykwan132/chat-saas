@@ -511,6 +511,7 @@ export function buildAgent(
   activeBookingServices: ActiveBookingServiceForPrompt[] = [],
   workflowRuntimeContext: WorkflowRuntimeContextForPrompt = null,
   sourceAgentMessageId?: string,
+  playgroundAvailabilityOnly = false,
 ) {
   const appointmentBookingEnabled = conversationId !== undefined && activeBookingServices.length > 0;
   const defaultBookingTimeZone = normalizeTimeZone(activeBookingServices[0]?.timeZone);
@@ -668,6 +669,12 @@ export function buildAgent(
         rangeEndIso: z.string().optional().describe("End of the search range as an ISO timestamp."),
       }),
       execute: async (ctx, input) => {
+        console.log("agent_tool_check_availability_invoked", JSON.stringify({
+          agentId,
+          conversationId,
+          sourceAgentMessageId,
+          input,
+        }));
         const args: {
           conversationId: Id<"conversations">;
           serviceId?: Id<"appointmentServices">;
@@ -897,6 +904,14 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${aiReplyMessageBreakBlock}${tone
   ${citationBlock}${escalationBlock}${workflowBlock}${bookingBlock}`;
 
   const resolvedModel = resolveLanguageModel(agent.model);
+
+  if (playgroundAvailabilityOnly) {
+    for (const toolName of Object.keys(tools)) {
+      if (toolName !== "fetchContext" && toolName !== "checkAvailability") {
+        delete (tools as Partial<ToolSet>)[toolName as keyof ToolSet];
+      }
+    }
+  }
 
   return new Agent(components.agent, {
     name: agent.name,

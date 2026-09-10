@@ -198,6 +198,7 @@ export const generatePlaygroundResponseAsync = internalAction({
       activeBooking.services,
       workflowRuntimeContext,
       args.promptMessageId,
+      true,
     );
     const bookingBeforeReply = conv
       ? await ctx.runQuery(internal.appointmentBooking.currentBooking.getCurrentBooking, {
