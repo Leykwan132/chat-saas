@@ -52,6 +52,7 @@ import {
 } from "../broadcastMessageValidators";
 import { broadcastAgentMetadata } from "./broadcastMessageMetadata";
 import { isTeamDeletionActive } from "../teamDeletion/access";
+import { parseAvailabilityIso } from "../appointmentBooking/availabilityDateTime";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -673,9 +674,9 @@ export function buildAgent(
         "Checks live appointment availability directly without requiring a booking session or customer details. Use a service ID from Available Appointment Services. Call immediately for availability questions. Dates must be today or later according to the current date in the system prompt; never send a past year or past date. Each returned slot includes an exact date and timeRange; show those values when offering slots and do not use generic morning or afternoon labels. Present slots as numbered time ranges, for example \"1. 5:00 AM - 5:30 AM\" and \"2. 3:00 PM - 3:30 PM\". If an exact customer-requested or selected preferredTimeIso is available, this starts the booking session and returns missingFields.",
       inputSchema: z.object({
         serviceId: z.string().optional().describe("The selected Services service ID."),
-        preferredTimeIso: z.string().optional().describe(`Customer's preferred appointment start time as an ISO timestamp. ${availabilityDateRule}`),
-        rangeStartIso: z.string().optional().describe(`Start of the search range as an ISO timestamp. ${availabilityDateRule}`),
-        rangeEndIso: z.string().optional().describe(`End of the search range as an ISO timestamp. ${availabilityDateRule}`),
+        preferredTimeIso: z.string().optional().describe(`Customer's preferred appointment start time as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`),
+        rangeStartIso: z.string().optional().describe(`Start of the search range as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`),
+        rangeEndIso: z.string().optional().describe(`End of the search range as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`),
       }),
       execute: async (ctx, input) => {
         console.log("agent_tool_check_availability_invoked", JSON.stringify({
@@ -694,16 +695,22 @@ export function buildAgent(
         if (input.serviceId) {
           args.serviceId = input.serviceId as Id<"appointmentServices">;
         }
-        const preferredStartAt = input.preferredTimeIso ? Date.parse(input.preferredTimeIso) : NaN;
-        if (Number.isFinite(preferredStartAt)) {
+        const preferredStartAt = input.preferredTimeIso
+          ? parseAvailabilityIso(input.preferredTimeIso, defaultBookingTimeZone)
+          : null;
+        if (preferredStartAt !== null) {
           args.preferredStartAt = preferredStartAt;
         }
-        const rangeStartAt = input.rangeStartIso ? Date.parse(input.rangeStartIso) : NaN;
-        if (Number.isFinite(rangeStartAt)) {
+        const rangeStartAt = input.rangeStartIso
+          ? parseAvailabilityIso(input.rangeStartIso, defaultBookingTimeZone)
+          : null;
+        if (rangeStartAt !== null) {
           args.rangeStartAt = rangeStartAt;
         }
-        const rangeEndAt = input.rangeEndIso ? Date.parse(input.rangeEndIso) : NaN;
-        if (Number.isFinite(rangeEndAt)) {
+        const rangeEndAt = input.rangeEndIso
+          ? parseAvailabilityIso(input.rangeEndIso, defaultBookingTimeZone)
+          : null;
+        if (rangeEndAt !== null) {
           args.rangeEndAt = rangeEndAt;
         }
         return await ctx.runMutation(internal.appointmentBooking.sessions.checkAvailability, {
