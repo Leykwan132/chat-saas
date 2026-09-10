@@ -7,7 +7,10 @@ import {
 } from "./appointmentBooking/availabilityEligibility";
 import type { AvailabilityRosterEntry } from "./appointmentBooking/availabilityRoster";
 import { validateAvailabilityDates } from "./appointmentBooking/dateValidation";
-import { formatAvailabilitySlotsForTool } from "./appointmentBooking/availabilityPresentation";
+import {
+  ensureAvailabilityTimesInReplies,
+  formatAvailabilitySlotsForTool,
+} from "./appointmentBooking/availabilityPresentation";
 
 const service = {
   assignedWorkosUserIds: ["selected-user"],
@@ -185,4 +188,24 @@ test("formats returned slots with an exact date and time range", () => {
     date: "September 11 (Friday)",
     timeRange: "9:00 AM - 9:30 AM",
   });
+});
+
+test("inserts exact times when the generated reply uses generic slot labels", () => {
+  const formattedSlots = formatAvailabilitySlotsForTool([
+    {
+      startAt: Date.UTC(2026, 8, 11, 1),
+      endAt: Date.UTC(2026, 8, 11, 1, 30),
+      assignedUserId: "user-1",
+      assignedWorkosUserId: "workos-1",
+      assignedDisplayName: "Kwan Kwan",
+    },
+  ], "Asia/Kuala_Lumpur");
+
+  const replies = ensureAvailabilityTimesInReplies(
+    ["There is one morning session available."],
+    [{ toolName: "checkAvailability", output: { success: true, slots: formattedSlots } }],
+  );
+
+  expect(replies[0]).toContain("September 11 (Friday), 9:00 AM - 9:30 AM");
+  expect(replies[0]).toContain("There is one morning session available.");
 });
