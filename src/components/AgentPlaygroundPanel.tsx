@@ -130,7 +130,7 @@ export function AgentPlaygroundPanel({
             <X />
           </Button>
         </div>
-        <div className="h-[min(744px,calc(100svh-10rem))] min-h-[541px] overflow-hidden rounded-lg border border-border bg-card">
+        <div className="flex h-[min(744px,calc(100svh-10rem))] min-h-[541px] flex-col overflow-hidden rounded-lg border border-border bg-card">
           {renderChat(true, true)}
         </div>
       </motion.section>
