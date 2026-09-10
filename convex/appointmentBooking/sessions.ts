@@ -130,18 +130,6 @@ export const checkAvailability = internalMutation({
       conversation.assignedAgentId,
       args.serviceId ?? session?.serviceId,
     );
-    logAvailabilityDiagnostic("booking_availability_service_query", {
-      agentId: conversation.assignedAgentId,
-      requestedServiceId: args.serviceId ?? session?.serviceId,
-      activeServices: services.map((row) => ({
-        serviceId: row._id,
-        name: row.name,
-        isActive: row.isActive,
-        durationMinutes: row.durationMinutes,
-        locationMode: row.locationMode,
-      })),
-      selectedServiceId: service?._id,
-    });
     if (services.length === 0) {
       return { success: false, slots: [], message: "No active Services are configured." };
     }
@@ -194,10 +182,6 @@ export const checkAvailability = internalMutation({
     }
 
     const team = await resolveTeamForAgent(ctx, agent);
-    logAvailabilityDiagnostic("booking_availability_team_query", {
-      agentId: conversation.assignedAgentId,
-      teamId: team._id,
-    });
     const rangeStartAt = Math.max(args.rangeStartAt ?? now + 60 * 60 * 1000, now);
     const rangeEndAt = args.preferredStartAt
       ? args.preferredStartAt + service.durationMinutes * 60 * 1000
@@ -247,13 +231,12 @@ export const checkAvailability = internalMutation({
       sessionId: session?._id,
       serviceId: service._id,
       slotCount: slots.length,
-      slots: slots.map((slot) => ({
-        start: availabilityInputTimestamp(slot.startAt),
-        end: availabilityInputTimestamp(slot.endAt),
-        assignedUserId: slot.assignedUserId,
-        assignedWorkosUserId: slot.assignedWorkosUserId,
-        assignedDisplayName: slot.assignedDisplayName,
-      })),
+      firstSlot: slots[0]
+        ? availabilityInputTimestamp(slots[0].startAt)
+        : null,
+      lastSlot: slots.at(-1)
+        ? availabilityInputTimestamp(slots.at(-1)?.endAt ?? 0)
+        : null,
     });
     const customerRequestMessage = args.preferredStartAt !== undefined &&
         slots.some((slot) => slot.startAt === args.preferredStartAt) &&
