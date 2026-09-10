@@ -55,6 +55,7 @@ import { ChatPromptInput } from "@/components/ChatPromptInput";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { playgroundAssistantTextParts } from "@/lib/playgroundMessageParts";
+import { useStickToBottomContext } from "use-stick-to-bottom";
 import { PlaygroundAssistantResponse } from '@/components/PlaygroundAssistantResponse';
 import { PlaygroundAssistantResponseDialog } from '@/components/PlaygroundAssistantResponseDialog';
 import {
@@ -241,6 +242,60 @@ type ExpandedAssistantResponse = {
   textParts: string[];
 };
 
+function LoadMoreMessagesOnScroll({
+  loadMore,
+  status,
+}: {
+  loadMore: (numItems: number) => void;
+  status: string;
+}) {
+  const { scrollRef } = useStickToBottomContext();
+  const loadMoreRef = useRef(loadMore);
+  const statusRef = useRef(status);
+  const loadingMoreRef = useRef(false);
+
+  useEffect(() => {
+    loadMoreRef.current = loadMore;
+  }, [loadMore]);
+
+  useEffect(() => {
+    statusRef.current = status;
+    if (status !== "LoadingMore") {
+      loadingMoreRef.current = false;
+    }
+  }, [status]);
+
+  useEffect(() => {
+    const scrollElement = scrollRef.current;
+    if (!scrollElement) return;
+
+    const requestOlderMessages = () => {
+      if (
+        scrollElement.scrollTop <= 80 &&
+        statusRef.current === "CanLoadMore" &&
+        !loadingMoreRef.current
+      ) {
+        loadingMoreRef.current = true;
+        loadMoreRef.current(20);
+      }
+    };
+
+    const handleScroll = () => requestOlderMessages();
+    const handleWheel = (event: WheelEvent) => {
+      if (event.deltaY < 0) requestOlderMessages();
+    };
+
+    scrollElement.addEventListener("scroll", handleScroll);
+    scrollElement.addEventListener("wheel", handleWheel);
+    return () => {
+      scrollElement.removeEventListener("scroll", handleScroll);
+      scrollElement.removeEventListener("wheel", handleWheel);
+    };
+  }, [scrollRef]);
+
+  return null;
+}
+
 export function TestChatWindow({
   agentId,
   threadId,
@@ -288,7 +343,7 @@ export function TestChatWindow({
     threadId ? { threadId } : "skip",
   );
 
-  const { results: messages, status } = useUIMessages(
+  const { results: messages, status, loadMore } = useUIMessages(
     api.chat.streaming.listThreadMessages,
     threadId ? { threadId } : "skip",
     { initialNumItems: 10, stream: true },
@@ -563,6 +618,7 @@ export function TestChatWindow({
           </div>
 
           <Conversation className="h-0 min-h-0 min-w-0 flex-1 overflow-hidden">
+            <LoadMoreMessagesOnScroll loadMore={loadMore} status={status} />
             {renderMessages()}
           </Conversation>
 
