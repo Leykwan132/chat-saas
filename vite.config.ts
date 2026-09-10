@@ -1,31 +1,44 @@
 import path from "path"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import { defineConfig, loadEnv } from "vite"
 
 import { cloudflare } from "@cloudflare/vite-plugin";
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), tailwindcss(), cloudflare()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
-  build: {
-    rollupOptions: {
-      input: {
-        app: path.resolve(__dirname, "index.html"),
-        widget: path.resolve(__dirname, "widget.html"),
+export default defineConfig(({ mode }) => {
+  const convexUrl = loadEnv(mode, process.cwd(), "").VITE_CONVEX_URL;
+  if (!convexUrl) throw new Error("VITE_CONVEX_URL must be configured.");
+
+  return {
+    plugins: [
+      react(),
+      tailwindcss(),
+      cloudflare({ config: { vars: { CONVEX_URL: convexUrl } } }),
+    ],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
       },
     },
-  },
-  // ngrok (and similar tunnels) send a Host header like *.ngrok-free.dev.
-  // Vite blocks unknown hosts by default; strings starting with "." allow
-  // that domain and all its subdomains.
-  server: {
-    host: true,
-    allowedHosts: [".ngrok-free.dev", ".ngrok-free.app", ".ngrok.io"],
-  },
+    environments: {
+      client: {
+        build: {
+          rollupOptions: {
+            input: {
+              app: path.resolve(__dirname, "index.html"),
+              widget: path.resolve(__dirname, "widget.html"),
+            },
+          },
+        },
+      },
+    },
+    // ngrok (and similar tunnels) send a Host header like *.ngrok-free.dev.
+    // Vite blocks unknown hosts by default; strings starting with "." allow
+    // that domain and all its subdomains.
+    server: {
+      host: true,
+      allowedHosts: [".ngrok-free.dev", ".ngrok-free.app", ".ngrok.io"],
+    },
+  };
 })
