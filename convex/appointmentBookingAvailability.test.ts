@@ -7,6 +7,7 @@ import {
 } from "./appointmentBooking/availabilityEligibility";
 import type { AvailabilityRosterEntry } from "./appointmentBooking/availabilityRoster";
 import { validateAvailabilityDates } from "./appointmentBooking/dateValidation";
+import { formatAvailabilitySlotsForTool } from "./appointmentBooking/availabilityPresentation";
 
 const service = {
   assignedWorkosUserIds: ["selected-user"],
@@ -165,4 +166,23 @@ test("rejects availability dates before today in the service timezone", () => {
     rangeStartAt: Date.parse("2026-09-10T00:00:00Z"),
     rangeEndAt: Date.parse("2026-09-10T23:59:59Z"),
   })).toBeNull();
+});
+
+test("formats returned slots with an exact date and time range", () => {
+  const formatted = formatAvailabilitySlotsForTool([
+    {
+      startAt: Date.UTC(2026, 8, 11, 1),
+      endAt: Date.UTC(2026, 8, 11, 1, 30),
+      assignedUserId: "user-1",
+      assignedWorkosUserId: "workos-1",
+      assignedDisplayName: "Kwan Kwan",
+    },
+  ], "Asia/Kuala_Lumpur");
+
+  expect(formatted[0]).toMatchObject({
+    startTimeIso: "2026-09-11T01:00:00.000Z",
+    endTimeIso: "2026-09-11T01:30:00.000Z",
+    date: "September 11 (Friday)",
+    timeRange: "9:00 AM - 9:30 AM",
+  });
 });

@@ -12,6 +12,7 @@ import {
 import { collectedFieldsValidator } from "./validators";
 import { getActiveSession, getOrCreateSession } from "./sessionStore";
 import { validateAvailabilityDates } from "./dateValidation";
+import { formatAvailabilitySlotsForTool } from "./availabilityPresentation";
 
 function availabilityInputTimestamp(value: number | undefined) {
   return value === undefined
@@ -304,6 +305,7 @@ export const checkAvailability = internalMutation({
       });
     }
 
+    const formattedSlots = formatAvailabilitySlotsForTool(slots, serviceTimeZone(service));
     return {
       success: true,
       previewOnly: bookingSession === undefined,
@@ -317,7 +319,7 @@ export const checkAvailability = internalMutation({
         bookingSession !== undefined &&
         missing.length === 0 &&
         effectiveConfirmationMessageId !== undefined,
-      slots,
+      slots: formattedSlots,
       message: isEditing
         ? "Slots ready for the booking update. Call updateBookingAppointment after the customer confirms."
         : undefined,
