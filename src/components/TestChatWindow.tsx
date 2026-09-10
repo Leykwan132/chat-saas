@@ -557,7 +557,7 @@ export function TestChatWindow({
             </div>
           </div>
 
-          <Conversation className="min-h-0 min-w-0 flex-1 overflow-hidden">
+          <Conversation className="h-0 min-h-0 min-w-0 flex-1 overflow-hidden">
             {renderMessages()}
           </Conversation>
 
