@@ -5,23 +5,17 @@ import {
   PartnerLimitInput,
   PartnerModelSelect,
   PartnerPlanSelect,
+  PartnerScheduledNote,
 } from "@/components/partner/PartnerCustomerControls";
+import { PartnerOrganizationDeleteDialog } from "@/components/partner/PartnerOrganizationDeleteDialog";
 import { PartnerPanel } from "@/components/partner/PartnerPanel";
 import {
   PartnerPlanChangeDialog,
-  type PendingPlanChange,
+  type PendingLimitChange,
 } from "@/components/partner/PartnerPlanChangeDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,8 +36,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Spinner } from "@/components/ui/spinner";
-import { formatRenewalDate } from "@/lib/formatRenewalDate";
 import { PLAN_CATALOG } from "../../../shared/planCatalog";
 import {
   type PartnerOverview,
@@ -69,34 +61,40 @@ export function PartnerOrganizationList({
   onEntitlementsChange: (
     organization: Organization,
     entitlements: { maxAgents?: number; monthlyCredits?: number; modelId?: string },
+    timing?: PlanChangeTiming,
   ) => void;
   onDelete: (organization: Organization) => Promise<boolean>;
 }) {
-  const [pendingPlanChange, setPendingPlanChange] =
-    useState<PendingPlanChange | null>(null);
-  const [pendingDeletion, setPendingDeletion] = useState<Organization | null>(
-    null,
-  );
+  const [pendingChange, setPendingChange] = useState<PendingLimitChange | null>(null);
+  const [pendingDeletion, setPendingDeletion] = useState<Organization | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [limitInputEpoch, setLimitInputEpoch] = useState(0);
   const models = useQuery(whiteLabelApi.portal.listEnabledAgentModels);
 
-  const confirmPlanChange = (timing: PlanChangeTiming) => {
-    if (pendingPlanChange === null) return;
-    onPlanChange(
-      pendingPlanChange.organization,
-      pendingPlanChange.planKey,
-      timing,
-    );
-    setPendingPlanChange(null);
+  const closePendingChange = () => {
+    setPendingChange(null);
+    setLimitInputEpoch((epoch) => epoch + 1);
+  };
+
+  const confirmChange = (timing: PlanChangeTiming) => {
+    if (pendingChange === null) return;
+    if (pendingChange.kind === "plan") {
+      onPlanChange(pendingChange.organization, pendingChange.planKey, timing);
+    } else {
+      onEntitlementsChange(
+        pendingChange.organization,
+        { monthlyCredits: pendingChange.monthlyCredits },
+        timing,
+      );
+    }
+    closePendingChange();
   };
 
   const confirmDeletion = async () => {
     if (pendingDeletion === null) return;
     setIsDeleting(true);
     try {
-      if (await onDelete(pendingDeletion)) {
-        setPendingDeletion(null);
-      }
+      if (await onDelete(pendingDeletion)) setPendingDeletion(null);
     } finally {
       setIsDeleting(false);
     }
@@ -152,19 +150,22 @@ export function PartnerOrganizationList({
                           value={organization.planKey}
                           onValueChange={(planKey) => {
                             if (planKey !== organization.planKey) {
-                              setPendingPlanChange({ organization, planKey });
+                              setPendingChange({
+                                kind: "plan",
+                                organization,
+                                planKey,
+                              });
                             }
                           }}
                           compact
                         />
                         {organization.scheduledPlanChange ? (
-                          <p className="text-center text-xs text-muted-foreground">
-                            {PLAN_CATALOG[organization.scheduledPlanChange.planKey].name} credits
-                            from{" "}
-                            {formatRenewalDate(
-                              organization.scheduledPlanChange.effectiveAt,
-                            )}
-                          </p>
+                          <PartnerScheduledNote
+                            value={`${PLAN_CATALOG[organization.scheduledPlanChange.planKey].name} credits`}
+                            effectiveAt={
+                              organization.scheduledPlanChange.effectiveAt
+                            }
+                          />
                         ) : null}
                       </div>
                     </TableCell>
@@ -184,29 +185,49 @@ export function PartnerOrganizationList({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex justify-center">
+                      <div className="flex flex-col items-center gap-1">
                         <PartnerLimitInput
                           aria-label={`Agents for ${organization.name}`}
                           compact
+                          key={`agents-${organization.maxAgents}-${organization.scheduledMaxAgents?.value ?? "none"}-${limitInputEpoch}`}
                           value={organization.maxAgents}
                           onCommit={(maxAgents) =>
                             onEntitlementsChange(organization, { maxAgents })
                           }
                         />
+                        {organization.scheduledMaxAgents ? (
+                          <PartnerScheduledNote
+                            value={organization.scheduledMaxAgents.value.toLocaleString()}
+                            effectiveAt={
+                              organization.scheduledMaxAgents.effectiveAt
+                            }
+                          />
+                        ) : null}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex justify-center">
+                      <div className="flex flex-col items-center gap-1">
                         <PartnerLimitInput
                           aria-label={`Monthly credits for ${organization.name}`}
                           compact
+                          key={`monthly-${organization.monthlyAllowance}-${organization.scheduledMonthlyCredits?.value ?? "none"}-${limitInputEpoch}`}
                           value={organization.monthlyAllowance}
                           onCommit={(monthlyCredits) =>
-                            onEntitlementsChange(organization, {
+                            setPendingChange({
+                              kind: "monthly",
+                              organization,
                               monthlyCredits,
                             })
                           }
                         />
+                        {organization.scheduledMonthlyCredits ? (
+                          <PartnerScheduledNote
+                            value={organization.scheduledMonthlyCredits.value.toLocaleString()}
+                            effectiveAt={
+                              organization.scheduledMonthlyCredits.effectiveAt
+                            }
+                          />
+                        ) : null}
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
@@ -255,43 +276,16 @@ export function PartnerOrganizationList({
         </PartnerPanel>
       )}
       <PartnerPlanChangeDialog
-        pendingChange={pendingPlanChange}
-        onCancel={() => setPendingPlanChange(null)}
-        onConfirm={confirmPlanChange}
+        pendingChange={pendingChange}
+        onCancel={closePendingChange}
+        onConfirm={confirmChange}
       />
-      <Dialog
-        open={pendingDeletion !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingDeletion(null);
-        }}
-      >
-        <DialogContent className="rounded-lg border border-border shadow-none ring-0">
-          <DialogHeader>
-            <DialogTitle>Delete organization</DialogTitle>
-            <DialogDescription>
-              Delete {pendingDeletion?.name}? This removes the workspace and
-              all user access within it.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              disabled={isDeleting}
-              variant="ghost"
-              onClick={() => setPendingDeletion(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              disabled={isDeleting}
-              variant="destructive"
-              onClick={() => void confirmDeletion()}
-            >
-              {isDeleting ? <Spinner data-icon="inline-start" /> : null}
-              Delete organization
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PartnerOrganizationDeleteDialog
+        organization={pendingDeletion}
+        isDeleting={isDeleting}
+        onCancel={() => setPendingDeletion(null)}
+        onConfirm={() => void confirmDeletion()}
+      />
     </section>
   );
 }

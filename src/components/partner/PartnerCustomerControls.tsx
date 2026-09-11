@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { formatRenewalDate } from "@/lib/formatRenewalDate";
 import { PLAN_CATALOG } from "../../../shared/planCatalog";
 import { type PartnerOverview, type PlanKey } from "@/lib/whiteLabelApi";
 
@@ -108,7 +109,12 @@ export function PartnerModelSelect({
       <SelectTrigger
         id={id}
         aria-label={ariaLabel}
-        className={compact ? "w-44 text-sm" : fullWidthSelectClassName}
+        className={
+          compact
+            ? "w-28 min-w-0 overflow-hidden text-sm"
+            : fullWidthSelectClassName
+        }
+        title={selected?.label ?? value}
       >
         <SelectValue>{selected?.label ?? value}</SelectValue>
       </SelectTrigger>
@@ -185,7 +191,7 @@ export function PartnerLimitInput({
   onValueChange?: (value: number) => void;
 }) {
   const className = compact
-    ? "h-8 w-20 text-center text-sm"
+    ? "h-8 w-28 px-2 text-center text-sm tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
     : fullWidthSelectClassName;
   const commit = (raw: string, restore: HTMLInputElement) => {
     const next = Number(raw);
@@ -232,5 +238,19 @@ export function PartnerLimitInput({
         if (Number.isSafeInteger(next) && next >= 1) onValueChange?.(next);
       }}
     />
+  );
+}
+
+export function PartnerScheduledNote({
+  value,
+  effectiveAt,
+}: {
+  value: string;
+  effectiveAt: number;
+}) {
+  return (
+    <p className="text-center text-xs text-muted-foreground">
+      {value} from {formatRenewalDate(effectiveAt)}
+    </p>
   );
 }

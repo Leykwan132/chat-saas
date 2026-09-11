@@ -1,5 +1,5 @@
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { type PlanKey } from "../planCatalog";
 import { resolvePartnerMonthlyCredits } from "../../shared/partnerEntitlementLimits";
@@ -137,6 +137,37 @@ export async function createPartnerCreditPeriod(
   return periodId;
 }
 
+async function applyDuePartnerEntitlementOverrides(
+  ctx: MutationCtx,
+  plan: Doc<"whiteLabelPartnerOrganizationPlans">,
+  now: number,
+) {
+  const maxAgentsDue =
+    plan.pendingMaxAgents !== undefined &&
+    (plan.pendingMaxAgentsEffectiveAt ?? 0) <= now;
+  const monthlyCreditsDue =
+    plan.pendingMonthlyCredits !== undefined &&
+    (plan.pendingMonthlyCreditsEffectiveAt ?? 0) <= now;
+  if (!maxAgentsDue && !monthlyCreditsDue) return;
+  await ctx.db.patch(plan._id, {
+    ...(maxAgentsDue
+      ? {
+          maxAgents: plan.pendingMaxAgents,
+          pendingMaxAgents: undefined,
+          pendingMaxAgentsEffectiveAt: undefined,
+        }
+      : {}),
+    ...(monthlyCreditsDue
+      ? {
+          monthlyCredits: plan.pendingMonthlyCredits,
+          pendingMonthlyCredits: undefined,
+          pendingMonthlyCreditsEffectiveAt: undefined,
+        }
+      : {}),
+    updatedAt: now,
+  });
+}
+
 export async function ensureCurrentPartnerCreditPeriod(
   ctx: MutationCtx,
   args: { partnerOrganizationId: Id<"whiteLabelPartnerOrganizations">; actorUserId?: Id<"users"> },
@@ -146,6 +177,7 @@ export async function ensureCurrentPartnerCreditPeriod(
   if (current !== null && current.periodEnd > now) return current;
   const plan = await ctx.db.query("whiteLabelPartnerOrganizationPlans").withIndex("by_partnerOrganizationId", (q) => q.eq("partnerOrganizationId", args.partnerOrganizationId)).unique();
   if (plan === null) throw new Error("Customer organization plan not found.");
+  await applyDuePartnerEntitlementOverrides(ctx, plan, now);
   const creditPlanKey = plan.pendingCreditPlanKey && (plan.pendingCreditPlanEffectiveAt ?? 0) <= now ? plan.pendingCreditPlanKey : plan.creditPlanKey;
   if (creditPlanKey !== plan.creditPlanKey || plan.pendingCreditPlanKey !== undefined) {
     await ctx.db.patch(plan._id, { creditPlanKey, pendingCreditPlanKey: undefined, pendingCreditPlanEffectiveAt: undefined, updatedAt: now });

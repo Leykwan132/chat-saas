@@ -71,3 +71,13 @@ export function getPlanLimitChanges(
   );
   return changes;
 }
+
+export function getCountLimitChange(
+  label: string,
+  from: number,
+  to: number,
+): PlanLimitChange[] {
+  const changes: PlanLimitChange[] = [];
+  pushChange(changes, label, from, to, formatCount);
+  return changes;
+}
