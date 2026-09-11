@@ -4,7 +4,7 @@
 
 - 2026-09-11 [USER] Goal: partners pick each org’s plan, agent count, monthly credits, and model. Customers do not choose models. Unshipped on `cursor/partner-org-agent-limit`.
 - 2026-09-11 [CODE] Now: Partner Programme create-org and org table set plan, agents, credits, and model. Agent and model edits apply immediately. Plan and monthly credit edits use the confirm modal; monthly can wait until the billing date. Org table monthly inputs stay fully visible; compact model labels truncate. Agent Setup and create-agent hide the model picker in partner workspaces.
-- 2026-09-11 [CODE] Next: open a follow-up PR for monthly credit confirm timing, then verify immediate vs billing-date credit changes on a partner host.
+- 2026-09-11 [CODE] Next: review/merge [PR #146](https://github.com/Leykwan132/chat-saas/pull/146), then verify immediate vs billing-date monthly credit changes on a partner host.
 - 2026-09-11 [CODE] Milestone: deleted partner recovery and in-app reset-password shipped via #144.
 - 2026-09-10 [CODE] Milestone: Agent Setup test-chat scroll, availability presentation, and tool restoration unshipped in PR #140.
 - 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and Q&A fetch-before-search are on `main` or recent PRs; production dates UNCONFIRMED.
@@ -78,6 +78,7 @@
 
 # Receipts
 
+- 2026-09-11 [TOOL] PR #146 opened: https://github.com/Leykwan132/chat-saas/pull/146 (`cursor/partner-monthly-credit-timing` → `main`).
 - 2026-09-11 [USER] D801: agent cap is immediate; only monthly credits use the plan confirm modal / billing-date delay. 34 focused tests pass under Node 22.
 - 2026-09-11 [TOOL] Org table monthly input widened and model column truncated: PartnerPage tests pass under Node 22.
 - 2026-09-11 [TOOL] D801 agent/monthly confirm+billing-date scheduling: 41 focused tests pass under Node 22; `git diff --check` passes. Partner Programme unshipped, no changelog.
