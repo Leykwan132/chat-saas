@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAction } from 'convex/react';
+import { useMutation } from 'convex/react';
 import {
   Trash2,
   Check,
@@ -38,8 +38,8 @@ interface QASectionProps {
 }
 
 export function QASection({ entries, agentId, openDeleteDialog, canManage = true }: QASectionProps) {
-  const enqueueQAUpload = useAction(api.cloudflare.enqueueQAUpload);
-  const updateQAEntry = useAction(api.cloudflare.updateQAEntry);
+  const addQAEntry = useMutation(api.knowledgeBase.addQAEntry);
+  const updateQAEntry = useMutation(api.knowledgeBase.updateQAEntry);
 
   const [qaPairs, setQAPairs] = useState<QAPairDraft[]>([{ question: "", answer: "" }]);
   const [isSavingQA, setIsSavingQA] = useState(false);
@@ -52,10 +52,10 @@ export function QASection({ entries, agentId, openDeleteDialog, canManage = true
     const validPairs = qaPairs.filter((p) => p.question.trim() && p.answer.trim());
     if (validPairs.length === 0) return;
     setIsSavingQA(true);
-    toast.success(`${validPairs.length} Q&A pair${validPairs.length > 1 ? "s" : ""} queued for processing`);
     try {
-      for (const pair of validPairs) await enqueueQAUpload({ agentId, question: pair.question.trim(), answer: pair.answer.trim() });
+      for (const pair of validPairs) await addQAEntry({ agentId, question: pair.question.trim(), answer: pair.answer.trim() });
       setQAPairs([{ question: "", answer: "" }]);
+      toast.success(`${validPairs.length} Q&A pair${validPairs.length > 1 ? "s" : ""} saved`);
     } catch { toast.error("Failed to save Q&A entry"); } finally { setIsSavingQA(false); }
   };
 
@@ -83,7 +83,7 @@ export function QASection({ entries, agentId, openDeleteDialog, canManage = true
     if (!pair.question.trim() || !pair.answer.trim()) return;
     setIsSavingQA(true);
     try {
-      await updateQAEntry({ entryId: editingQAEntry._id, question: pair.question.trim(), answer: pair.answer.trim(), cfItemId: editingQAEntry.cfItemId ?? undefined });
+      await updateQAEntry({ entryId: editingQAEntry._id, question: pair.question.trim(), answer: pair.answer.trim() });
       toast.success("Q&A pair updated"); setEditingQAEntry(null);
     } catch { toast.error("Failed to update Q&A entry"); } finally { setIsSavingQA(false); }
   };

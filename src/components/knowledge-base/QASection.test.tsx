@@ -4,7 +4,7 @@ import { expect, test, vi } from 'vitest';
 import { QASection } from './QASection';
 
 vi.mock('convex/react', () => ({
-  useAction: () => vi.fn(),
+  useMutation: () => vi.fn(),
 }));
 
 test('shows common-question presets before the Q&A form', () => {
