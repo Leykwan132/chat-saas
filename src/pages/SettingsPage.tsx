@@ -1,16 +1,15 @@
 import { useLocation, useSearchParams } from 'react-router';
 import { useState } from 'react';
 import { useAuth } from '@/partnerAuth/AppAuthProvider';
-import { useAction, useQuery } from 'convex/react';
-import { toast } from 'sonner';
+import { useQuery } from 'convex/react';
 import { Building2, CreditCard, User, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanTab } from '@/components/PlanTab';
 import { AccountUsageTab } from '@/components/AccountUsageTab';
+import { ResetPasswordDialog } from '@/components/ResetPasswordDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { TeamDetailSection } from '@/components/teams/TeamDetailSection';
 import { TeamsTableSection } from '@/components/teams/TeamsTableSection';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -64,11 +63,7 @@ function ProfileContent() {
     api.whiteLabel.customerAccounts.hasCurrentPasswordAccount,
     user ? {} : 'skip',
   );
-  const startPasswordReset = useAction(
-    api.whiteLabel.customerPasswordResetActions.startCurrentUserPasswordReset,
-  );
-  const [isStartingPasswordReset, setIsStartingPasswordReset] =
-    useState(false);
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
 
   if (isLoading || !user) {
     return <ProfileSkeleton />;
@@ -76,24 +71,6 @@ function ProfileContent() {
 
   const displayName =
     [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'Account';
-
-  const handlePasswordReset = async () => {
-    setIsStartingPasswordReset(true);
-    try {
-      const result = await startPasswordReset({
-        origin: window.location.origin,
-        returnPath: '/sign-in',
-      });
-      window.location.assign(result.passwordResetUrl);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Unable to start password reset.',
-      );
-      setIsStartingPasswordReset(false);
-    }
-  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -130,15 +107,15 @@ function ProfileContent() {
           </p>
           <Button
             className="w-fit"
-            disabled={isStartingPasswordReset}
             variant="outline"
-            onClick={() => void handlePasswordReset()}
+            onClick={() => setIsResetPasswordOpen(true)}
           >
-            {isStartingPasswordReset ? (
-              <Spinner data-icon="inline-start" />
-            ) : null}
             Reset password
           </Button>
+          <ResetPasswordDialog
+            open={isResetPasswordOpen}
+            onOpenChange={setIsResetPasswordOpen}
+          />
         </div>
       ) : null}
     </div>

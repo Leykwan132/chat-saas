@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAction, useQuery } from 'convex/react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { Spinner } from '@/components/ui/spinner';
+import { ResetPasswordPreparingState } from '@/components/ResetPasswordDialog';
 import { Button } from '@/components/ui/button';
 import {
   Field,
@@ -54,10 +54,10 @@ export default function ResetPasswordPage() {
     }
   };
 
-  if (branding === undefined) {
+  if (branding === undefined || isSubmitting) {
     return (
       <div className="flex min-h-[100svh] items-center justify-center bg-background">
-        <Spinner className="size-7 text-muted-foreground" />
+        <ResetPasswordPreparingState />
       </div>
     );
   }
@@ -106,10 +106,7 @@ export default function ResetPasswordPage() {
         )}
         {error ? <FieldError>{error}</FieldError> : null}
         {token ? (
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? <Spinner data-icon="inline-start" /> : null}
-            Save password
-          </Button>
+          <Button type="submit">Save password</Button>
         ) : (
           <Button asChild variant="outline">
             <Link to="/sign-in">Back to sign in</Link>
