@@ -366,8 +366,13 @@ test("widget refreshes agent replies while its chat is open", () => {
 
 test("widget card and launcher share one iframe geometry", () => {
   expect(widgetHostSource).toContain('"min(390px, calc(100vw - 24px))"');
-  expect(widgetStyles).toContain("width: 100vw;");
-  expect(widgetStyles).toContain("height: 100dvh;");
+  expect(widgetStyles).toMatch(
+    /html,\s*body,\s*#root \{[^}]+width: 100%;[^}]+height: 100%;/,
+  );
+  expect(widgetStyles).toMatch(
+    /\.widget-shell \{[^}]+width: 100%;[^}]+height: 100%;/,
+  );
+  expect(widgetStyles).not.toContain(".widget-shell.is-open");
   expect(widgetStyles).toContain("width: 100%;");
   expect(widgetStyles).toContain("height: min(620px, calc(100dvh - 64px));");
   expect(widgetStyles).toContain("bottom: 64px;");
