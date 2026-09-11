@@ -78,7 +78,7 @@
 
 # Receipts
 
-- 2026-09-11 [TOOL] PR #145 opened: https://github.com/Leykwan132/chat-saas/pull/145 (`cursor/partner-org-agent-limit` → `main`). Partner Programme unshipped, no changelog.
+- 2026-09-11 [TOOL] PR #145 Convex typecheck: restored `requestTeamDeletion` import in `portal.ts`; narrowed `workosOrgId` in `partnerAgentModel.ts`.
 - 2026-09-11 [TOOL] Partner org agent/credit overrides on `cursor/partner-org-agent-limit`: 40 focused tests pass under Node 22; `git diff --check` passes. Partner Programme unshipped, no changelog.
 - 2026-09-11 [TOOL] PR #144 merged to main: in-app reset password and deleted-partner session clear (`c86ee21`).
 

@@ -13,6 +13,7 @@ import {
 } from "./planChange";
 import { applyPartnerOrganizationEntitlements } from "./entitlementChange";
 import { listEnabledModels } from "../llm/modelPricing";
+import { requestTeamDeletion, teamDeletionRequestResultValidator } from "../teamDeletion/request";
 
 const planKeyValidator = v.union(
   v.literal("free"),

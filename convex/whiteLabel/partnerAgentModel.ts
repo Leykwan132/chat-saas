@@ -18,14 +18,15 @@ export async function applyAssignedModelToOrganizationAgents(
   const organization = await ctx.db.get(partnerOrganizationId);
   if (organization === null) throw new Error("Customer organization not found.");
   const team = await ctx.db.get(organization.teamId);
-  if (team === null || team.workosOrgId === undefined) {
+  const workosOrgId = team?.workosOrgId;
+  if (workosOrgId === undefined) {
     throw new Error("Customer organization team not found.");
   }
   const now = Date.now();
   const provider = getModelProvider(modelId);
   const agents = await ctx.db
     .query("agents")
-    .withIndex("by_orgId", (q) => q.eq("orgId", team.workosOrgId))
+    .withIndex("by_orgId", (q) => q.eq("orgId", workosOrgId))
     .take(100);
   for (const agent of agents) {
     if (agent.model === modelId) continue;
