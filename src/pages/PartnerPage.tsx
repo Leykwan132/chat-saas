@@ -32,6 +32,9 @@ export default function PartnerPage() {
   );
   const grantCredits = useMutation(whiteLabelApi.portal.grantCredits);
   const assignPlan = useMutation(whiteLabelApi.portal.assignOrganizationPlan);
+  const setOrganizationEntitlements = useMutation(
+    whiteLabelApi.portal.setOrganizationEntitlements,
+  );
   const deletePartnerOrganization = useMutation(
     whiteLabelApi.portal.deletePartnerOrganization,
   );
@@ -198,13 +201,16 @@ export default function PartnerPage() {
             isCreatingOrganization={pendingCustomerAction === "organization"}
             isCreatingCustomer={pendingCustomerAction === "customer"}
             isGivingCredits={pendingCustomerAction === "credits"}
-            onCreateOrganization={async () =>
+            onCreateOrganization={async ({ maxAgents, monthlyCredits, modelId }) =>
               (await runCustomerAction(
                 "organization",
                 async () => {
                   await createOrganization({
                     name: organizationName,
                     planKey: organizationPlan,
+                    maxAgents,
+                    monthlyCredits,
+                    modelId,
                   });
                   setOrganizationName("");
                 },
@@ -244,9 +250,25 @@ export default function PartnerPage() {
                     planKey,
                     timing,
                   }),
-                timing === "immediate"
-                  ? "Plan updated. Monthly credits changed now."
-                  : "Plan updated. Monthly credits change at the end of the billing period.",
+                organization.hasCustomMonthlyCredits
+                  ? "Plan updated. Monthly credits stay as set for this organization."
+                  : timing === "immediate"
+                    ? "Plan updated. Monthly credits changed now."
+                    : "Plan updated. Monthly credits change at the end of the billing period.",
+              )
+            }
+            onEntitlementsChange={(organization, entitlements) =>
+              void run(
+                () =>
+                  setOrganizationEntitlements({
+                    partnerOrganizationId: organization.partnerOrganizationId,
+                    ...entitlements,
+                  }),
+                entitlements.maxAgents !== undefined
+                  ? "Agent limit updated."
+                  : entitlements.modelId !== undefined
+                    ? "Model updated."
+                    : "Monthly credits updated.",
               )
             }
             onDelete={async (organization) =>

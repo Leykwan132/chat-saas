@@ -5,6 +5,10 @@ const source = readFileSync(
   new URL("./PartnerCustomerForms.tsx", import.meta.url),
   "utf8",
 );
+const createOrganizationSource = readFileSync(
+  new URL("./PartnerCreateOrganizationDialog.tsx", import.meta.url),
+  "utf8",
+);
 
 test("shows one-time customer credentials after creation", () => {
   expect(source).toContain("PartnerCustomerCredentialsDialog");
@@ -13,10 +17,11 @@ test("shows one-time customer credentials after creation", () => {
 });
 
 test("groups each dialog close action beside its primary action", () => {
-  expect(source).toContain('className="justify-end gap-2"');
-  expect(source.match(/variant="ghost"/g)).toHaveLength(3);
-  expect(source.match(/>\n              Close\n            <\/Button>/g)).toHaveLength(3);
-  expect(source).toContain("setIsOrganizationDialogOpen(false)");
+  const combined = source + createOrganizationSource;
+  expect(combined).toContain('className="justify-end gap-2"');
+  expect(combined.match(/variant="ghost"/g)).toHaveLength(3);
+  expect(combined.match(/>\s*Close\s*<\/Button>/g)).toHaveLength(3);
+  expect(createOrganizationSource).toContain("setOpen(false)");
   expect(source).toContain("setIsCustomerDialogOpen(false)");
   expect(source).toContain("setIsCreditDialogOpen(false)");
 });

@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { PLAN_CATALOG } from "../../../shared/planCatalog";
 import { type PartnerOverview, type PlanKey } from "@/lib/whiteLabelApi";
 
@@ -80,6 +81,50 @@ export function PartnerPlanSelect({
   );
 }
 
+export function PartnerModelSelect({
+  id,
+  value,
+  models,
+  compact = false,
+  disabled = false,
+  "aria-label": ariaLabel,
+  onValueChange,
+}: {
+  id?: string;
+  value: string;
+  models: Array<{ value: string; label: string }> | undefined;
+  compact?: boolean;
+  disabled?: boolean;
+  "aria-label"?: string;
+  onValueChange: (value: string) => void;
+}) {
+  const selected = models?.find((model) => model.value === value);
+  return (
+    <Select
+      disabled={disabled || models === undefined}
+      value={value}
+      onValueChange={onValueChange}
+    >
+      <SelectTrigger
+        id={id}
+        aria-label={ariaLabel}
+        className={compact ? "w-44 text-sm" : fullWidthSelectClassName}
+      >
+        <SelectValue>{selected?.label ?? value}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          {(models ?? []).map((model) => (
+            <SelectItem key={model.value} value={model.value} className="text-sm">
+              {model.label}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
+}
+
 export function PartnerRoleSelect({
   value,
   onValueChange,
@@ -119,5 +164,73 @@ export function PartnerRoleSelect({
         </SelectGroup>
       </SelectContent>
     </Select>
+  );
+}
+
+export function PartnerLimitInput({
+  id,
+  value,
+  compact = false,
+  disabled = false,
+  "aria-label": ariaLabel,
+  onCommit,
+  onValueChange,
+}: {
+  id?: string;
+  value: number;
+  compact?: boolean;
+  disabled?: boolean;
+  "aria-label"?: string;
+  onCommit?: (value: number) => void;
+  onValueChange?: (value: number) => void;
+}) {
+  const className = compact
+    ? "h-8 w-20 text-center text-sm"
+    : fullWidthSelectClassName;
+  const commit = (raw: string, restore: HTMLInputElement) => {
+    const next = Number(raw);
+    if (!Number.isSafeInteger(next) || next < 1) {
+      restore.value = String(value);
+      return;
+    }
+    if (onValueChange && next !== value) onValueChange(next);
+    if (onCommit && next !== value) onCommit(next);
+  };
+
+  if (onCommit) {
+    return (
+      <Input
+        id={id}
+        aria-label={ariaLabel}
+        key={value}
+        className={className}
+        defaultValue={value}
+        disabled={disabled}
+        inputMode="numeric"
+        min={1}
+        type="number"
+        onBlur={(event) => commit(event.currentTarget.value, event.currentTarget)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") event.currentTarget.blur();
+        }}
+      />
+    );
+  }
+
+  return (
+    <Input
+      id={id}
+      aria-label={ariaLabel}
+      className={className}
+      disabled={disabled}
+      inputMode="numeric"
+      min={1}
+      type="number"
+      value={value}
+      onChange={(event) => {
+        const next = Number(event.currentTarget.value);
+        if (Number.isSafeInteger(next) && next >= 1) onValueChange?.(next);
+      }}
+    />
   );
 }

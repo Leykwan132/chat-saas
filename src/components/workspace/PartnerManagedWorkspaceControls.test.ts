@@ -29,6 +29,18 @@ const settingsSource = readFileSync(
   new URL('../../pages/SettingsPage.tsx', import.meta.url),
   'utf8',
 );
+const instructionsSource = readFileSync(
+  new URL('../../pages/InstructionsPage.tsx', import.meta.url),
+  'utf8',
+);
+const agentSetupPanelsSource = readFileSync(
+  new URL('../agent-setup/AgentSetupPanels.tsx', import.meta.url),
+  'utf8',
+);
+const agentSetupConfigSource = readFileSync(
+  new URL('../agent-setup/AgentSetupConfigurationPanel.tsx', import.meta.url),
+  'utf8',
+);
 
 describe('partner-managed workspace controls', () => {
   test('reads the managed-workspace state from Convex', () => {
@@ -52,5 +64,15 @@ describe('partner-managed workspace controls', () => {
     expect(sidebarSource).toContain(
       'referralProgramEnabled && isPartnerManagedWorkspace === false',
     );
+  });
+
+  test('hides agent model selection for partner-managed workspaces', () => {
+    expect(instructionsSource).toContain('usePartnerManagedWorkspace');
+    expect(instructionsSource).toContain(
+      'showModelPicker={isPartnerManagedWorkspace === false}',
+    );
+    expect(agentSetupPanelsSource).toContain('showModelPicker={showModelPicker}');
+    expect(agentSetupConfigSource).toContain('showModelPicker = true');
+    expect(agentSetupConfigSource).toContain('{showModelPicker ? "Model & Style" : "Style"}');
   });
 });

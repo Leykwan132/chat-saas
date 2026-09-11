@@ -40,19 +40,27 @@ function pushChange(
 export function getPlanLimitChanges(
   fromPlanKey: PlanKey,
   toPlanKey: PlanKey,
+  options: {
+    includeAgents?: boolean;
+    includeMonthlyCredits?: boolean;
+  } = {},
 ): PlanLimitChange[] {
   const from = PLAN_CATALOG[fromPlanKey];
   const to = PLAN_CATALOG[toPlanKey];
   const changes: PlanLimitChange[] = [];
-  pushChange(changes, "Agents", from.maxAgents, to.maxAgents, formatCount);
+  if (options.includeAgents !== false) {
+    pushChange(changes, "Agents", from.maxAgents, to.maxAgents, formatCount);
+  }
   pushChange(changes, "Channels", from.maxChannels, to.maxChannels, formatCount);
-  pushChange(
-    changes,
-    "Monthly credits",
-    from.monthlyCredits,
-    to.monthlyCredits,
-    formatCount,
-  );
+  if (options.includeMonthlyCredits !== false) {
+    pushChange(
+      changes,
+      "Monthly credits",
+      from.monthlyCredits,
+      to.monthlyCredits,
+      formatCount,
+    );
+  }
   pushChange(changes, "Team members", from.maxMembers, to.maxMembers, formatCount);
   pushChange(
     changes,

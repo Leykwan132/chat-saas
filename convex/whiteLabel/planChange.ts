@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
-import { PLAN_CATALOG, type PlanKey } from "../planCatalog";
+import { type PlanKey } from "../planCatalog";
+import { resolvePartnerMonthlyCredits } from "../../shared/partnerEntitlementLimits";
 import { getLatestPartnerCreditPeriod } from "./creditLedger";
 
 export const planChangeTimingValidator = v.union(
@@ -36,7 +37,10 @@ export async function applyPartnerOrganizationPlanChange(
   const now = Date.now();
 
   if (args.timing === "immediate") {
-    const grantedCredits = PLAN_CATALOG[args.planKey].monthlyCredits;
+    const grantedCredits = resolvePartnerMonthlyCredits(
+      args.planKey,
+      plan.monthlyCredits,
+    );
     await ctx.db.patch(plan._id, {
       activePlanKey: args.planKey,
       creditPlanKey: args.planKey,

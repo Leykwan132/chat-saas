@@ -62,6 +62,7 @@ type AgentSetupConfigurationPanelProps = {
   onEmojiUseChange: (value: EmojiUse) => void;
   onFormalityChange: (value: Formality) => void;
   onHumorLevelChange: (value: HumorLevel) => void;
+  showModelPicker?: boolean;
 };
 
 function SettingSelect<T extends string>({
@@ -132,11 +133,12 @@ export function AgentSetupConfigurationPanel({
   onEmojiUseChange,
   onFormalityChange,
   onHumorLevelChange,
+  showModelPicker = true,
 }: AgentSetupConfigurationPanelProps) {
   return (
     <section className="flex flex-col gap-4">
       <h2 className="m-0 text-lg font-semibold tracking-tight text-foreground">
-        Model & Style
+        {showModelPicker ? "Model & Style" : "Style"}
       </h2>
       <FieldGroup className="gap-5">
         <Field className="gap-2.5">
@@ -152,15 +154,17 @@ export function AgentSetupConfigurationPanel({
             className="h-12 border-border px-4"
           />
         </Field>
-        <Field className="gap-2.5">
-          <FieldLabelWithIcon Icon={Bot}>Model</FieldLabelWithIcon>
-          <ModelPicker
-            models={models}
-            value={model}
-            onChange={onModelChange}
-            className="min-h-12 rounded-lg border-border px-4"
-          />
-        </Field>
+        {showModelPicker ? (
+          <Field className="gap-2.5">
+            <FieldLabelWithIcon Icon={Bot}>Model</FieldLabelWithIcon>
+            <ModelPicker
+              models={models}
+              value={model}
+              onChange={onModelChange}
+              className="min-h-12 rounded-lg border-border px-4"
+            />
+          </Field>
+        ) : null}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-1">
           <SettingSelect
             label="Response length"

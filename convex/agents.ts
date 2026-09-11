@@ -2,11 +2,11 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { getModelProvider } from "./llm/modelPricing";
-import { checkModelAccess, checkAgentCreationLimit, getPlanForCurrentSession, getPlan } from "./plans";
+import { checkAgentCreationLimit, getPlanForCurrentSession } from "./plans";
+import { getMaxAgentsForSession } from "./whiteLabel/planResolver";
 import { provisionOrgMemberSchedulesForAgent } from "./leadRouting/provision";
 import { ensureWorkflowForAgent } from "./workflowCore";
 import { applyAgentBookingOnboarding } from "./agentBookingOnboarding";
-import { DEFAULT_AGENT_MODEL } from "../shared/agentModelDefaults";
 import {
   buildAgentSystemPrompt,
   templateKeyForAgentGoal,
@@ -19,7 +19,8 @@ import {
 import { deleteSubscriptionsForAgent } from "./telegramNotifications/subscriptionAccess";
 import { mutation, query, internalQuery } from "./_generated/server";
 import { agentGoalValidator, templateKeyValidator } from "./agentValidators";
-import { assertEnabledAgentModel, listAgentsForCreationContext } from "./agentCreationAccess";
+import { listAgentsForCreationContext } from "./agentCreationAccess";
+import { resolveAgentWriteModel } from "./agentModelAccess";
 
 export const list = query({
   args: {},
@@ -67,14 +68,14 @@ export const canCreate = query({
     const { userId, orgId } = await getAuthContext(ctx);
     const stripeInfo = await getPlanForCurrentSession(ctx);
     const plan = stripeInfo.plan;
-    const planConfig = getPlan(plan);
     const currentAgents = await listAgentsForCreationContext(ctx, userId, orgId);
+    const maxAgents = await getMaxAgentsForSession(ctx, stripeInfo);
 
     return {
-      allowed: checkAgentCreationLimit(plan, currentAgents.length),
+      allowed: checkAgentCreationLimit(plan, currentAgents.length, maxAgents),
       plan,
       currentCount: currentAgents.length,
-      maxAgents: planConfig.maxAgents,
+      maxAgents,
     };
   },
 });
@@ -118,10 +119,10 @@ export const create = mutation({
 
     const stripeInfo = await getPlanForCurrentSession(ctx);
     const plan = stripeInfo.plan;
-
     const currentAgents = await listAgentsForCreationContext(ctx, userId, orgId);
+    const maxAgents = await getMaxAgentsForSession(ctx, stripeInfo);
 
-    if (!checkAgentCreationLimit(plan, currentAgents.length)) {
+    if (!checkAgentCreationLimit(plan, currentAgents.length, maxAgents)) {
       throw new Error(`Your plan (${plan ?? "free"}) limit exceeded for agents.`);
     }
 
@@ -143,12 +144,7 @@ export const create = mutation({
       throw new Error("Booking onboarding requires the Book a Service goal");
     }
 
-    const model = DEFAULT_AGENT_MODEL;
-    await assertEnabledAgentModel(model);
-
-    if (!checkModelAccess(plan, model)) {
-      throw new Error(`Your plan (${plan ?? "free"}) does not have access to model: ${model}`);
-    }
+    const model = await resolveAgentWriteModel(ctx, stripeInfo);
 
     const agentId = await ctx.db.insert("agents", {
       name,
@@ -223,26 +219,19 @@ export const update = mutation({
     }
 
     const stripeInfo = await getPlanForCurrentSession(ctx);
-    const plan = stripeInfo.plan;
 
     const name = args.name.trim();
-    const model = args.model.trim();
+    const model = await resolveAgentWriteModel(ctx, stripeInfo, {
+      requestedModel: args.model,
+      currentModel: agent.model,
+    });
     const systemPrompt = args.systemPrompt.trim();
 
     if (!name) {
       throw new Error("Agent name is required");
     }
-    if (!model) {
-      throw new Error("Model is required");
-    }
     if (!systemPrompt) {
       throw new Error("System prompt is required");
-    }
-
-    await assertEnabledAgentModel(model);
-
-    if (!checkModelAccess(plan, model)) {
-      throw new Error(`Your plan (${plan ?? "free"}) does not have access to model: ${model}`);
     }
 
     const patch: Partial<Doc<"agents">> = {

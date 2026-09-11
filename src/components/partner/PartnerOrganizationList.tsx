@@ -1,6 +1,11 @@
 import { useState } from "react";
+import { useQuery } from "convex/react";
 import { MoreHorizontal, Trash2 } from "lucide-react";
-import { PartnerPlanSelect } from "@/components/partner/PartnerCustomerControls";
+import {
+  PartnerLimitInput,
+  PartnerModelSelect,
+  PartnerPlanSelect,
+} from "@/components/partner/PartnerCustomerControls";
 import { PartnerPanel } from "@/components/partner/PartnerPanel";
 import {
   PartnerPlanChangeDialog,
@@ -44,6 +49,7 @@ import {
   type PartnerOverview,
   type PlanChangeTiming,
   type PlanKey,
+  whiteLabelApi,
 } from "@/lib/whiteLabelApi";
 
 type Organization = PartnerOverview["organizations"][number];
@@ -51,6 +57,7 @@ type Organization = PartnerOverview["organizations"][number];
 export function PartnerOrganizationList({
   organizations,
   onPlanChange,
+  onEntitlementsChange,
   onDelete,
 }: {
   organizations: PartnerOverview["organizations"];
@@ -58,6 +65,10 @@ export function PartnerOrganizationList({
     organization: Organization,
     planKey: PlanKey,
     timing: PlanChangeTiming,
+  ) => void;
+  onEntitlementsChange: (
+    organization: Organization,
+    entitlements: { maxAgents?: number; monthlyCredits?: number; modelId?: string },
   ) => void;
   onDelete: (organization: Organization) => Promise<boolean>;
 }) {
@@ -67,6 +78,7 @@ export function PartnerOrganizationList({
     null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const models = useQuery(whiteLabelApi.portal.listEnabledAgentModels);
 
   const confirmPlanChange = (timing: PlanChangeTiming) => {
     if (pendingPlanChange === null) return;
@@ -95,7 +107,7 @@ export function PartnerOrganizationList({
       <div className="flex flex-col gap-1">
         <h2 className="font-heading text-base font-medium">Organizations</h2>
         <p className="text-sm text-muted-foreground">
-          Manage customer organizations, plans, and credits.
+          Manage customer organizations, plans, models, and credits.
         </p>
       </div>
       {organizations.length === 0 ? (
@@ -116,6 +128,8 @@ export function PartnerOrganizationList({
                   <TableHead>Organization</TableHead>
                   <TableHead className="text-center">Users</TableHead>
                   <TableHead className="text-center">Plan</TableHead>
+                  <TableHead className="text-center">Model</TableHead>
+                  <TableHead className="text-center">Agents</TableHead>
                   <TableHead className="text-center">Monthly</TableHead>
                   <TableHead className="text-center">Top-up</TableHead>
                   <TableHead className="text-center">Remaining</TableHead>
@@ -154,8 +168,46 @@ export function PartnerOrganizationList({
                         ) : null}
                       </div>
                     </TableCell>
-                    <TableCell className="text-center">
-                      {organization.monthlyAllowance.toLocaleString()}
+                    <TableCell>
+                      <div className="flex justify-center">
+                        <PartnerModelSelect
+                          aria-label={`Model for ${organization.name}`}
+                          compact
+                          value={organization.modelId}
+                          models={models}
+                          onValueChange={(modelId) => {
+                            if (modelId !== organization.modelId) {
+                              onEntitlementsChange(organization, { modelId });
+                            }
+                          }}
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-center">
+                        <PartnerLimitInput
+                          aria-label={`Agents for ${organization.name}`}
+                          compact
+                          value={organization.maxAgents}
+                          onCommit={(maxAgents) =>
+                            onEntitlementsChange(organization, { maxAgents })
+                          }
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-center">
+                        <PartnerLimitInput
+                          aria-label={`Monthly credits for ${organization.name}`}
+                          compact
+                          value={organization.monthlyAllowance}
+                          onCommit={(monthlyCredits) =>
+                            onEntitlementsChange(organization, {
+                              monthlyCredits,
+                            })
+                          }
+                        />
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
                       {organization.addedCredits.toLocaleString()}

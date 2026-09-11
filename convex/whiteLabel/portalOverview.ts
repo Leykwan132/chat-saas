@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { QueryCtx } from "../_generated/server";
 import { type PlanKey } from "../planCatalog";
+import { resolvePartnerMaxAgents, resolvePartnerAgentModel } from "../../shared/partnerEntitlementLimits";
 import { orgRoleKeyFromWorkosSlug } from "../../shared/teamRoleCatalog";
 import { assertCurrentPartnerAccess } from "./access";
 import { getPartnerCreditBalance } from "./creditLedger";
@@ -39,6 +40,9 @@ export const partnerOverviewValidator = v.object({
         v.object({ planKey: planKeyValidator, effectiveAt: v.number() }),
         v.null(),
       ),
+      maxAgents: v.number(),
+      modelId: v.string(),
+      hasCustomMonthlyCredits: v.boolean(),
       monthlyAllowance: v.number(),
       renewalAt: v.number(),
       customerCount: v.number(),
@@ -167,6 +171,10 @@ export async function getPartnerOverview(ctx: QueryCtx) {
               effectiveAt: plan.pendingCreditPlanEffectiveAt,
             }
           : null;
+      const maxAgents = resolvePartnerMaxAgents(planKey, plan?.maxAgents);
+      if (maxAgents === "unlimited") {
+        throw new Error("Customer organization agent limit not found.");
+      }
       return {
         organization: {
           partnerOrganizationId: organization._id,
@@ -174,6 +182,9 @@ export async function getPartnerOverview(ctx: QueryCtx) {
           status: "active" as const,
           planKey,
           scheduledPlanChange,
+          maxAgents,
+          modelId: resolvePartnerAgentModel(plan?.modelId),
+          hasCustomMonthlyCredits: plan?.monthlyCredits !== undefined,
           monthlyAllowance: balance.period.grantedCredits,
           renewalAt: balance.period.periodEnd,
           customerCount: customers.length,

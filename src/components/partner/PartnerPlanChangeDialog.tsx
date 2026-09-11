@@ -41,7 +41,15 @@ export function PartnerPlanChangeDialog({
     ? formatRenewalDate(pendingChange.organization.renewalAt)
     : null;
   const limitChanges = pendingChange
-    ? getPlanLimitChanges(pendingChange.organization.planKey, pendingChange.planKey)
+    ? getPlanLimitChanges(
+        pendingChange.organization.planKey,
+        pendingChange.planKey,
+        {
+          includeAgents: false,
+          includeMonthlyCredits:
+            !pendingChange.organization.hasCustomMonthlyCredits,
+        },
+      )
     : [];
 
   const close = (confirm: boolean) => {

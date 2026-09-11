@@ -28,6 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/usePermissions';
+import { usePartnerManagedWorkspace } from '@/hooks/usePartnerManagedWorkspace';
 import { Permission } from '../../shared/permissions';
 
 export default function InstructionsPage() {
@@ -36,6 +37,7 @@ export default function InstructionsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { can, isLoading: permissionsLoading } = usePermissions();
+  const isPartnerManagedWorkspace = usePartnerManagedWorkspace();
   const canReadRouting = can(Permission.ROUTING_READ);
   const canManageRouting = can(Permission.ROUTING_MANAGE);
   const agent = useQuery(
@@ -229,6 +231,7 @@ export default function InstructionsPage() {
         onHumorLevelChange={setHumorLevel}
         onReplyModeChange={setReplyMode}
         onTestOpenChange={setIsTestOpen}
+        showModelPicker={isPartnerManagedWorkspace === false}
       />
 
       <UnsavedChangesDialog

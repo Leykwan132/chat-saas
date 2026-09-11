@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Building2, UserPlus, WalletCards } from "lucide-react";
+import { ArrowRight, UserPlus, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,10 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import {
   PartnerOrganizationSelect,
-  PartnerPlanSelect,
   PartnerRoleSelect,
 } from "@/components/partner/PartnerCustomerControls";
-import { PartnerPlanDetails } from "@/components/partner/PartnerPlanDetails";
+import { PartnerCreateOrganizationDialog } from "@/components/partner/PartnerCreateOrganizationDialog";
 import {
   PartnerCustomerCredentialsDialog,
   type CustomerCredentials,
@@ -59,25 +58,21 @@ export function PartnerCustomerForms({
   onCreditAmountChange: (value: string) => void;
   onInviteEmailChange: (value: string) => void;
   onInviteRoleChange: (value: "owner" | "admin" | "member") => void;
-  onCreateOrganization: () => Promise<boolean>;
+  onCreateOrganization: (limits: {
+    maxAgents: number;
+    monthlyCredits: number;
+    modelId: string;
+  }) => Promise<boolean>;
   onCreateCustomer: () => Promise<CustomerCredentials | null>;
   onGiveCredits: () => void;
   isCreatingOrganization: boolean;
   isCreatingCustomer: boolean;
   isGivingCredits: boolean;
 }) {
-  const [isOrganizationDialogOpen, setIsOrganizationDialogOpen] =
-    useState(false);
   const [isCustomerDialogOpen, setIsCustomerDialogOpen] = useState(false);
   const [isCreditDialogOpen, setIsCreditDialogOpen] = useState(false);
   const [customerCredentials, setCustomerCredentials] =
     useState<CustomerCredentials | null>(null);
-
-  const handleCreateOrganization = async () => {
-    if (await onCreateOrganization()) {
-      setIsOrganizationDialogOpen(false);
-    }
-  };
 
   const handleCreateCustomer = async () => {
     const credentials = await onCreateCustomer();
@@ -90,77 +85,14 @@ export function PartnerCustomerForms({
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-3">
-      <Dialog
-        open={isOrganizationDialogOpen}
-        onOpenChange={setIsOrganizationDialogOpen}
-      >
-        <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            className="relative h-36 w-full flex-col items-start justify-start gap-3 rounded-lg px-6 py-5 text-left shadow-none has-data-[icon=inline-start]:pl-6"
-          >
-            <Building2 data-icon="inline-start" />
-            <span className="font-heading text-base font-medium">
-              Create organization
-            </span>
-            <span className="max-w-48 text-sm text-muted-foreground whitespace-normal">
-              Start a workspace and choose its plan.
-            </span>
-            <ArrowRight
-              data-icon="inline-end"
-              className="absolute bottom-5 right-6"
-            />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="rounded-lg border border-border shadow-none ring-0">
-          <DialogHeader>
-            <DialogTitle>Create organization</DialogTitle>
-            <DialogDescription>
-              Start a new customer workspace with its initial plan.
-            </DialogDescription>
-          </DialogHeader>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="organization-name">
-                Organization name
-              </FieldLabel>
-              <Input
-                id="organization-name"
-                value={organizationName}
-                onChange={(event) =>
-                  onOrganizationNameChange(event.target.value)
-                }
-                placeholder="Customer organization"
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="organization-plan">Plan</FieldLabel>
-              <PartnerPlanSelect
-                id="organization-plan"
-                value={organizationPlan}
-                onValueChange={onOrganizationPlanChange}
-              />
-              <PartnerPlanDetails planKey={organizationPlan} />
-            </Field>
-          </FieldGroup>
-          <DialogFooter className="justify-end gap-2">
-            <Button
-              disabled={isCreatingOrganization}
-              variant="ghost"
-              onClick={() => setIsOrganizationDialogOpen(false)}
-            >
-              Close
-            </Button>
-            <Button
-              disabled={!organizationName.trim() || isCreatingOrganization}
-              onClick={() => void handleCreateOrganization()}
-            >
-              {isCreatingOrganization ? <Spinner data-icon="inline-start" /> : null}
-              Create organization
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PartnerCreateOrganizationDialog
+        organizationName={organizationName}
+        organizationPlan={organizationPlan}
+        isCreating={isCreatingOrganization}
+        onOrganizationNameChange={onOrganizationNameChange}
+        onOrganizationPlanChange={onOrganizationPlanChange}
+        onCreate={onCreateOrganization}
+      />
 
       <Dialog
         open={isCustomerDialogOpen}
