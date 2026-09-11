@@ -6,7 +6,7 @@
 - 2026-09-11 [CODE] Now: Back to home clears `kilobot.partnerSession`, signs out, and hard-redirects to `/`. Loading shows “Preparing session”.
 - 2026-09-11 [USER] Goal: Settings Reset password opens a modal instead of navigating away; loading states show “Preparing session”. Unshipped on `cursor/reset-password-modal`.
 - 2026-09-11 [CODE] Now: signed-in reset stays on Settings in `ResetPasswordDialog`; the action returns `passwordResetToken`. Email/token links still use `/reset-password`.
-- 2026-09-11 [CODE] Next: verify partner deleted-user recovery and the reset modal, then open a PR to `main`.
+- 2026-09-11 [CODE] Next: merge PR #144, then verify partner deleted-user recovery and the reset modal in production.
 - 2026-09-10 [CODE] Milestone: Agent Setup test-chat scroll, availability presentation, and tool restoration unshipped in PR #140.
 - 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and Q&A fetch-before-search are on `main` or recent PRs; production dates UNCONFIRMED.
 - 2026-09-09 [CODE] Now: `ACCOUNT_UNAVAILABLE` shows a recovery modal; Back to home signs out, clears partner localStorage, and reloads `/`. Unshipped.
@@ -79,6 +79,7 @@
 
 # Receipts
 
+- 2026-09-11 [TOOL] PR #144 opened: https://github.com/Leykwan132/chat-saas/pull/144 (`cursor/reset-password-modal` → `main`).
 - 2026-09-11 [TOOL] Deleted-partner recovery: Back to home now clears `kilobot.partnerSession`, signs out, and `location.replace("/")`. 4 focused tests pass under Node 22. Production loop on chat.gosolutions.sg UNCONFIRMED until this ships.
 - 2026-09-11 [TOOL] Password reset modal on `cursor/reset-password-modal`: 6 focused tests pass under Node 22; `git diff --check` passes. Settings UI needs a signed-in password account; `/reset-password` without a token still renders. Unshipped.
 
