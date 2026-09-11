@@ -40,6 +40,7 @@ type AgentSetupPanelsProps = {
   onHumorLevelChange: (value: HumorLevel) => void;
   onReplyModeChange: (value: ReplyMode) => void;
   onTestOpenChange: (open: boolean) => void;
+  showModelPicker?: boolean;
 };
 
 export function AgentSetupPanels({
@@ -68,6 +69,7 @@ export function AgentSetupPanels({
   onHumorLevelChange,
   onReplyModeChange,
   onTestOpenChange,
+  showModelPicker = true,
 }: AgentSetupPanelsProps) {
   return (
     <div
@@ -99,6 +101,7 @@ export function AgentSetupPanels({
           onEmojiUseChange={onEmojiUseChange}
           onFormalityChange={onFormalityChange}
           onHumorLevelChange={onHumorLevelChange}
+          showModelPicker={showModelPicker}
         />
         <AgentSetupRoutingPanel
           canReadRouting={canReadRouting}

@@ -8,3 +8,7 @@ const source = readFileSync(sourcePath, 'utf8');
 test('system prompt panel receives the agent workflow route', () => {
   expect(source).toContain('workflowHref={`/dashboard/${agentId}/workflow`}');
 });
+
+test('forwards the model picker visibility into configuration', () => {
+  expect(source).toContain('showModelPicker={showModelPicker}');
+});

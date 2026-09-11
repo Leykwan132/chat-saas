@@ -20,7 +20,8 @@ import {
   replaceMediaUrlsWithKeys,
 } from "./mediaUrlExtractor";
 import { isPlaygroundCreditsEnabled } from "../credits";
-import { checkModelAccess, getPlanForCurrentSession } from "../plans";
+import { getPlanForCurrentSession } from "../plans";
+import { sessionAllowsAgentModel } from "../agentModelAccess";
 import { getModelProvider } from "../llm/modelPricing";
 import { logConversationEvent } from "../conversationLogs";
 import { splitAiReplyMessages } from "./aiReplyMessages";
@@ -113,9 +114,8 @@ export const sendMessage = mutation({
     }
 
     const stripeInfo = await getPlanForCurrentSession(ctx);
-    const plan = stripeInfo.plan;
 
-    if (!checkModelAccess(plan, agentDoc.model)) {
+    if (!(await sessionAllowsAgentModel(ctx, stripeInfo, agentDoc.model))) {
       throw new Error(`Your plan does not support model: ${agentDoc.model}`);
     }
 

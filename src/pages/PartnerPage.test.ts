@@ -13,6 +13,14 @@ const customerFormsSource = readFileSync(
   new URL("../components/partner/PartnerCustomerForms.tsx", import.meta.url),
   "utf8",
 );
+const createOrganizationSource = readFileSync(
+  new URL(
+    "../components/partner/PartnerCreateOrganizationDialog.tsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const customerActionSource = customerFormsSource + createOrganizationSource;
 const customerListSource = readFileSync(
   new URL("../components/partner/PartnerCustomerList.tsx", import.meta.url),
   "utf8",
@@ -164,19 +172,19 @@ describe("Partner Programme", () => {
       "<SelectValue>{PLAN_CATALOG[value].name}</SelectValue>",
     );
     expect(customerControlsSource.match(/className="text-sm"/g)).toHaveLength(
-      5,
+      6,
     );
   });
 
   test("separates organizations and users below the customer operations", () => {
-    expect(customerFormsSource).toContain('from "@/components/ui/dialog"');
-    expect(customerFormsSource.match(/<DialogTrigger asChild>/g)).toHaveLength(
+    expect(customerActionSource).toContain('from "@/components/ui/dialog"');
+    expect(customerActionSource.match(/<DialogTrigger asChild>/g)).toHaveLength(
       3,
     );
-    expect(customerFormsSource).toContain("Create organization");
-    expect(customerFormsSource).toContain("Create user");
-    expect(customerFormsSource).toContain("Add credits");
-    expect(customerFormsSource).toContain(
+    expect(customerActionSource).toContain("Create organization");
+    expect(customerActionSource).toContain("Create user");
+    expect(customerActionSource).toContain("Add credits");
+    expect(customerActionSource).toContain(
       'className="rounded-lg border border-border shadow-none ring-0"',
     );
     expect(customerListSource).toContain('from "@/components/ui/table"');
@@ -205,23 +213,20 @@ describe("Partner Programme", () => {
     expect(customerFormsSource).toContain("isCreatingCustomer");
     expect(customerFormsSource).toContain("isGivingCredits");
     expect(customerFormsSource).toContain('<Spinner data-icon="inline-start" />');
+    expect(createOrganizationSource).toContain(
+      '<Spinner data-icon="inline-start" />',
+    );
     expect(pageSource).toContain("pendingCustomerAction");
   });
 
   test("closes the organization dialog only after creation succeeds and confirms it", () => {
-    expect(customerFormsSource).toMatch(
-      /const \[isOrganizationDialogOpen, setIsOrganizationDialogOpen\]\s*=\s*useState\(false\);/,
+    expect(createOrganizationSource).toContain("const [open, setOpen] = useState(false);");
+    expect(createOrganizationSource).toContain("open={open}");
+    expect(createOrganizationSource).toContain("setOpen(nextOpen)");
+    expect(createOrganizationSource).toContain(
+      "if (await onCreate({ maxAgents, monthlyCredits, modelId })) {",
     );
-    expect(customerFormsSource).toContain("open={isOrganizationDialogOpen}");
-    expect(customerFormsSource).toContain(
-      "onOpenChange={setIsOrganizationDialogOpen}",
-    );
-    expect(customerFormsSource).toContain(
-      "if (await onCreateOrganization()) {",
-    );
-    expect(customerFormsSource).toContain(
-      "setIsOrganizationDialogOpen(false);",
-    );
+    expect(createOrganizationSource).toContain("setOpen(false);");
     expect(pageSource).toContain("toast.success(success);");
     expect(pageSource).toContain("return result;");
   });
@@ -271,7 +276,7 @@ describe("Partner Programme", () => {
   test("keeps the organization name left-aligned and other columns centered", () => {
     expect(
       organizationListSource.match(/<TableHead className="text-center">/g),
-    ).toHaveLength(7);
+    ).toHaveLength(9);
     expect(organizationListSource).toContain(
       '<TableCell className="font-medium">',
     );
@@ -336,29 +341,50 @@ describe("Partner Programme", () => {
     expect(customerFormsSource).toContain(
       '<div className="grid gap-4 sm:grid-cols-3">',
     );
-    expect(customerFormsSource).toContain("ArrowRight");
-    expect(customerFormsSource).toContain("Building2");
-    expect(customerFormsSource).toContain("UserPlus");
-    expect(customerFormsSource).toContain("WalletCards");
-    expect(customerFormsSource.match(/h-36/g)).toHaveLength(3);
-    expect(customerFormsSource.match(/px-6 py-5/g)).toHaveLength(3);
+    expect(customerActionSource).toContain("ArrowRight");
+    expect(customerActionSource).toContain("Building2");
+    expect(customerActionSource).toContain("UserPlus");
+    expect(customerActionSource).toContain("WalletCards");
+    expect(customerActionSource.match(/h-36/g)).toHaveLength(3);
+    expect(customerActionSource.match(/px-6 py-5/g)).toHaveLength(3);
     expect(
-      customerFormsSource.match(/has-data-\[icon=inline-start\]:pl-6/g),
+      customerActionSource.match(/has-data-\[icon=inline-start\]:pl-6/g),
     ).toHaveLength(3);
-    expect(customerFormsSource).not.toContain("aspect-square");
-    expect(customerFormsSource.match(/bottom-5 right-6/g)).toHaveLength(3);
-    expect(customerFormsSource).toContain(
+    expect(customerActionSource).not.toContain("aspect-square");
+    expect(customerActionSource.match(/bottom-5 right-6/g)).toHaveLength(3);
+    expect(customerActionSource).toContain(
       "Start a workspace and choose its plan.",
     );
-    expect(customerFormsSource).toContain("Create an active account for an organization.");
-    expect(customerFormsSource).toContain("Top up an organization&apos;s balance.");
+    expect(customerActionSource).toContain("Create an active account for an organization.");
+    expect(customerActionSource).toContain("Top up an organization&apos;s balance.");
   });
 
   test("shows the selected plan inclusions below the organization plan field", () => {
-    expect(customerFormsSource).toContain("PartnerPlanDetails");
-    expect(customerFormsSource).toContain(
+    expect(createOrganizationSource).toContain("PartnerPlanDetails");
+    expect(createOrganizationSource).toContain(
       "<PartnerPlanDetails planKey={organizationPlan} />",
     );
+  });
+
+  test("lets partners set per-organization agent, credit, and model limits", () => {
+    expect(createOrganizationSource).toContain("organization-agents");
+    expect(createOrganizationSource).toContain("organization-credits");
+    expect(createOrganizationSource).toContain("organization-model");
+    expect(createOrganizationSource).toContain("override the selected plan");
+    expect(organizationListSource).toContain("Agents");
+    expect(organizationListSource).toContain("PartnerModelSelect");
+    expect(organizationListSource).toContain("onEntitlementsChange");
+    expect(pageSource).toContain("setOrganizationEntitlements");
+    expect(pageSource).toContain("maxAgents");
+    expect(pageSource).toContain("monthlyCredits");
+    expect(pageSource).toContain("modelId");
+    expect(apiSource).toContain("setOrganizationEntitlements");
+    expect(apiSource).toContain("listEnabledAgentModels");
+    expect(portalSource).toContain("export const setOrganizationEntitlements");
+    expect(portalSource).toContain("export const listEnabledAgentModels");
+    expect(portalOverviewSource).toContain("maxAgents: v.number(),");
+    expect(portalOverviewSource).toContain("modelId: v.string(),");
+    expect(planChangeDialogSource).toContain("includeAgents: false");
   });
 
   test("supports uploading a partner logo from Branding", () => {

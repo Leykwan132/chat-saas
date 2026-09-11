@@ -2,17 +2,14 @@
 
 # Snapshot
 
-- 2026-09-11 [USER] Goal: deleted partner users must leave the “Account no longer available” modal without a local-session loop. Unshipped on `cursor/reset-password-modal`.
-- 2026-09-11 [CODE] Now: Back to home clears `kilobot.partnerSession`, signs out, and hard-redirects to `/`. Loading shows “Preparing session”.
-- 2026-09-11 [USER] Goal: Settings Reset password opens a modal instead of navigating away; loading states show “Preparing session”. Unshipped on `cursor/reset-password-modal`.
-- 2026-09-11 [CODE] Now: signed-in reset stays on Settings in `ResetPasswordDialog`; the action returns `passwordResetToken`. Email/token links still use `/reset-password`.
-- 2026-09-11 [CODE] Next: merge PR #144, then verify partner deleted-user recovery and the reset modal in production.
+- 2026-09-11 [USER] Goal: partners pick each org’s plan, agent count, monthly credits, and model. Customers do not choose models. Unshipped on `cursor/partner-org-agent-limit`.
+- 2026-09-11 [CODE] Now: Partner Programme create-org and org table set plan, agents, credits, and model. Agent Setup and create-agent hide the model picker in partner workspaces.
+- 2026-09-11 [CODE] Next: review/merge [PR #145](https://github.com/Leykwan132/chat-saas/pull/145), then verify Partner Programme create/edit entitlements on a partner host.
+- 2026-09-11 [CODE] Milestone: deleted partner recovery and in-app reset-password shipped via #144.
 - 2026-09-10 [CODE] Milestone: Agent Setup test-chat scroll, availability presentation, and tool restoration unshipped in PR #140.
 - 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and Q&A fetch-before-search are on `main` or recent PRs; production dates UNCONFIRMED.
-- 2026-09-09 [CODE] Now: `ACCOUNT_UNAVAILABLE` shows a recovery modal; Back to home signs out, clears partner localStorage, and reloads `/`. Unshipped.
 - 2026-09-09 [CODE] Milestone: Instagram Login + Comment-to-Inbox private-reply ingestion unshipped in later PRs; trigger comments do not create Inbox data.
 - 2026-09-08 [CODE] Milestone: native Kilobot onboard (D793/I009) and same-origin password reset (D794) shipped via #117.
-- 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash/spinner (I004/I005), hostname branding, and unused-import build fix shipped (#107–#116).
 - 2026-09-01 [USER] White-label Partner Programme remains unshipped on `codex/white-label-partner-portal`.
 
 # Decisions
@@ -29,6 +26,8 @@
 - 2026-09-02 [USER] D757 ACTIVE: Gemini credentials are externally registered with LiveAvatar. The app reads only opaque `HEYGEN_GEMINI_SECRET_ID` server-side and never persists or exposes the Gemini API key.
 - 2026-08-19 [USER] D734 ACTIVE: white-label state is isolated in dedicated partner tables; existing user, team, Stripe, and admin-session records change only through ID relationships.
 - 2026-08-19 [USER] D735 SUPERSEDED by D787: shared plan limits take effect immediately; only the new monthly allowance starts at the organization’s next credit cycle.
+- 2026-09-11 [USER] D800 ACTIVE: each partner organization has one assigned agent model, chosen in Partner Programme and stored on the org plan row. It may be any enabled model and is not limited by the org’s plan catalog. New agents use that model; changing it updates existing org agents. Partner customers do not see or change the model in create-agent or Agent Setup. Until a model is stored, new agents use Ilmu Mini and existing agent models stay in place.
+- 2026-09-11 [USER] D799 ACTIVE: each partner organization has its own agent count and monthly credit amount. Those values override the assigned plan catalog for that org only, on any plan. Plan changes keep the overrides; editing monthly credits rewrites the current period immediately (used credits kept, remaining floored at zero). Legacy orgs without stored overrides still follow the catalog until a partner sets them.
 - 2026-09-07 [USER] D787 ACTIVE: partners choose plan-change timing per organization. Immediate rewrites the current credit period to the new catalog allowance (used credits kept, remaining floored at zero); end-of-period keeps current credits and schedules the switch for the period end. Plan limits still change immediately. Overview Monthly reflects the current period’s granted credits, and a scheduled change is shown under the plan.
 - 2026-09-07 [USER] D788 ACTIVE: each new partner organization credit period durably schedules its next renewal for the exact period end; renewal is idempotent, applies pending credit plans, preserves manual grants, and keeps usage-time renewal as a delayed-job fallback.
 - 2026-09-07 [USER] D789 ACTIVE: retain the Partner Programme “Customers” tab, but call organization members “users”; one customer organization may contain many users, and Overview shows separate Organizations and Users metrics.
@@ -64,24 +63,24 @@
 
 # Done (recent)
 
-- 2026-09-11 [CODE] Deleted partner accounts leave via Back to home after the local session is cleared; home no longer loops on ACCOUNT_UNAVAILABLE. Unshipped.
-- 2026-09-11 [CODE] Settings Reset password opens a modal; token start/submit loading shows “Preparing session”. Unshipped.
+- 2026-09-11 [CODE] Partner orgs get per-org plan, agent count, monthly credits, and model. Customers cannot pick models. Unshipped.
+- 2026-09-11 [CODE] Deleted partner accounts leave via Back to home after the local session is cleared. Shipped in #144.
+- 2026-09-11 [CODE] Settings Reset password opens a modal; token start/submit loading shows “Preparing session”. Shipped in #144.
 - 2026-09-09 [CODE] Avatar dashboard previews create sandbox sessions; public shared links use non-sandbox sessions by default, with an explicit `?isSandbox=true` sandbox override.
 - 2026-09-10 [CODE] Public Avatar embed routes bypass the Avatar feature flag and do not require application authentication.
 - 2026-09-10 [CODE] Web Widget assistant and team messages render Markdown emphasis as bold and HTTP(S) links as `noopener noreferrer` new-tab links; visitor messages remain plain text.
 - 2026-09-09 [CODE] Creating an Avatar now saves default opening text and representative instructions to LiveAvatar so chat can start without a separate context save.
-- 2026-09-09 [CODE] Avatar Edit is a dropdown with Edit Avatar and Delete Avatar.
 
 # Working set
 
-- 2026-09-11 [CODE] `src/components/AccountUnavailableBoundary.tsx`, `src/components/ResetPasswordDialog.tsx`, `src/pages/{SettingsPage,ResetPasswordPage}.tsx`
-- 2026-09-11 [CODE] `convex/whiteLabel/customerPasswordResetActions.ts`, `src/lib/whiteLabelApi.ts`, `src/partnerAuth/partnerSessionStorage.ts`
+- 2026-09-11 [CODE] `shared/partnerEntitlementLimits.ts`, `convex/agentModelAccess.ts`, `convex/whiteLabel/{entitlementChange,partnerAgentModel,portalProvisioning,portal,portalOverview,planResolver}.ts`
+- 2026-09-11 [CODE] `src/components/partner/{PartnerCreateOrganizationDialog,PartnerCustomerControls,PartnerOrganizationList}.tsx`, `src/components/agent-setup/AgentSetupConfigurationPanel.tsx`, `src/pages/{PartnerPage,InstructionsPage}.tsx`
 
 # Receipts
 
-- 2026-09-11 [TOOL] PR #144 opened: https://github.com/Leykwan132/chat-saas/pull/144 (`cursor/reset-password-modal` → `main`).
-- 2026-09-11 [TOOL] Deleted-partner recovery: Back to home now clears `kilobot.partnerSession`, signs out, and `location.replace("/")`. 4 focused tests pass under Node 22. Production loop on chat.gosolutions.sg UNCONFIRMED until this ships.
-- 2026-09-11 [TOOL] Password reset modal on `cursor/reset-password-modal`: 6 focused tests pass under Node 22; `git diff --check` passes. Settings UI needs a signed-in password account; `/reset-password` without a token still renders. Unshipped.
+- 2026-09-11 [TOOL] PR #145 Convex typecheck: restored `requestTeamDeletion` import in `portal.ts`; narrowed `workosOrgId` in `partnerAgentModel.ts`.
+- 2026-09-11 [TOOL] Partner org agent/credit overrides on `cursor/partner-org-agent-limit`: 40 focused tests pass under Node 22; `git diff --check` passes. Partner Programme unshipped, no changelog.
+- 2026-09-11 [TOOL] PR #144 merged to main: in-app reset password and deleted-partner session clear (`c86ee21`).
 
 - 2026-09-10 [TOOL] PR #140 updated with availability log cleanup: 39 focused tests, Convex TypeScript, targeted ESLint, and diff checks pass under Node 22. Production availability UNCONFIRMED.
 - 2026-09-10 [TOOL] PR #140 updated with grouped availability presentation: 38 focused tests, Convex TypeScript, targeted ESLint, and diff checks pass under Node 22. Production availability UNCONFIRMED.

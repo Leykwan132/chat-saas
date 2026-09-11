@@ -1,8 +1,10 @@
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
-import { PLAN_CATALOG, type PlanKey } from "../planCatalog";
+import { type PlanKey } from "../planCatalog";
+import { resolvePartnerMonthlyCredits } from "../../shared/partnerEntitlementLimits";
 import { deductPartnerOrganizationCredits } from "./partnerCreditModel";
+import { getWhiteLabelPlanRecord } from "./planResolver";
 
 type DbCtx = QueryCtx | MutationCtx;
 const CREDIT_PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
@@ -101,7 +103,12 @@ export async function createPartnerCreditPeriod(
   },
 ) {
   const now = Date.now();
-  const grantedCredits = PLAN_CATALOG[args.planKey].monthlyCredits;
+  const plan = await getWhiteLabelPlanRecord(ctx, args.partnerOrganizationId);
+  if (plan === null) throw new Error("Customer organization plan not found.");
+  const grantedCredits = resolvePartnerMonthlyCredits(
+    args.planKey,
+    plan.monthlyCredits,
+  );
   const periodId = await ctx.db.insert("whiteLabelPartnerOrganizationCreditPeriods", {
     partnerOrganizationId: args.partnerOrganizationId,
     planKey: args.planKey,

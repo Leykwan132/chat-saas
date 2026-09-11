@@ -74,6 +74,9 @@ export type PartnerOverview = {
     remainingCredits: number;
     lastGrantAt: number | null;
     grantCount: number;
+    maxAgents: number;
+    modelId: string;
+    hasCustomMonthlyCredits: boolean;
   }>;
   customers: Array<{
     partnerOrganizationId: string;
@@ -125,6 +128,21 @@ export const whiteLabelApi = {
       },
       null
     >("whiteLabel/portal:assignOrganizationPlan"),
+    setOrganizationEntitlements: makeFunctionReference<
+      "mutation",
+      {
+        partnerOrganizationId: string;
+        maxAgents?: number;
+        monthlyCredits?: number;
+        modelId?: string;
+      },
+      null
+    >("whiteLabel/portal:setOrganizationEntitlements"),
+    listEnabledAgentModels: makeFunctionReference<
+      "query",
+      Record<string, never>,
+      Array<{ value: string; label: string }>
+    >("whiteLabel/portal:listEnabledAgentModels"),
     generateLogoUploadUrl: makeFunctionReference<
       "mutation",
       Record<string, never>,
@@ -179,7 +197,13 @@ export const whiteLabelApi = {
   actions: {
     createOrganization: makeFunctionReference<
       "action",
-      { name: string; planKey: PlanKey },
+      {
+        name: string;
+        planKey: PlanKey;
+        maxAgents: number;
+        monthlyCredits: number;
+        modelId: string;
+      },
       { partnerOrganizationId: string; teamId: string }
     >("whiteLabel/portalActions:createOrganization"),
     inviteOrganizationAccount: makeFunctionReference<

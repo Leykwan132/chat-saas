@@ -19,3 +19,15 @@ test("marks higher limits as upgrades including unlimited channels", () => {
     { label: "Knowledge base", from: "400KB", to: "5MB", direction: "up" },
   ]);
 });
+
+test("can omit agent and monthly credit rows when partner overrides own those limits", () => {
+  expect(
+    getPlanLimitChanges("growth", "starter", {
+      includeAgents: false,
+      includeMonthlyCredits: false,
+    }),
+  ).toEqual([
+    { label: "Team members", from: "10", to: "5", direction: "down" },
+    { label: "Knowledge base", from: "20MB", to: "5MB", direction: "down" },
+  ]);
+});

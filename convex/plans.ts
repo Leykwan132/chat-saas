@@ -9,6 +9,7 @@ import {
 import { getPartnerCreditBalance } from "./whiteLabel/creditLedger";
 import {
   getWhiteLabelPlanForOrganization,
+  getWhiteLabelPlanRecord,
   isWhiteLabelTeam,
 } from "./whiteLabel/planResolver";
 import {
@@ -24,9 +25,11 @@ import {
   type PlanFeatureFlags,
   type PlanKey,
 } from "./planCatalog";
+import { snapshotUserCredit } from "./creditPeriodPool";
 import {
-  snapshotUserCredit,
-} from "./creditPeriodPool";
+  resolvePartnerMaxAgents,
+  resolvePartnerMonthlyCredits,
+} from "../shared/partnerEntitlementLimits";
 import { selectLatestStripeSubscription } from "./latestStripeSubscription";
 import {
   getTeamStripePlanHelper,
@@ -185,10 +188,10 @@ export function getPlanEntitlements(planName: string | undefined) {
 export function checkAgentCreationLimit(
   planName: string | undefined,
   currentAgentCount: number,
+  maxAgents = getPlan(planName).maxAgents,
 ): boolean {
-  const plan = getPlan(planName);
-  if (plan.maxAgents === "unlimited") return true;
-  return currentAgentCount < plan.maxAgents;
+  if (maxAgents === "unlimited") return true;
+  return currentAgentCount < maxAgents;
 }
 
 export async function getBillingEntityForUser(
@@ -253,11 +256,25 @@ export const getPlanAndUsage = query({
         scope.organization._id,
       );
       if (plan === null) throw new Error("Customer organization plan not found.");
+      const planRecord = await getWhiteLabelPlanRecord(
+        ctx,
+        scope.organization._id,
+      );
       const balance = await getPartnerCreditBalance(
         ctx,
         scope.organization._id,
       );
-      const planConfig = getPlan(plan);
+      const maxAgents = resolvePartnerMaxAgents(plan, planRecord?.maxAgents);
+      const monthlyCreditsLimit = resolvePartnerMonthlyCredits(
+        plan,
+        planRecord?.monthlyCredits,
+      );
+      const planConfig = {
+        ...getPlan(plan),
+        maxAgents,
+        monthlyCredits: monthlyCreditsLimit,
+      };
+      const entitlements = getPlanEntitlements(plan);
       const channelLimit = planConfig.maxChannels === "unlimited" ? 999999 : planConfig.maxChannels;
       return {
         orgName: activeTeam.name,
@@ -265,10 +282,17 @@ export const getPlanAndUsage = query({
         canManageBilling: false,
         plan,
         planConfig,
-        entitlements: getPlanEntitlements(plan),
+        entitlements: {
+          ...entitlements,
+          limits: {
+            ...entitlements.limits,
+            maxAgents,
+            monthlyCredits: monthlyCreditsLimit,
+          },
+        },
         credits: balance.remainingCredits,
         monthlyCredits: balance.monthlyCredits,
-        monthlyAllowance: balance.period?.grantedCredits ?? planConfig.monthlyCredits,
+        monthlyAllowance: balance.period?.grantedCredits ?? monthlyCreditsLimit,
         monthlyUsed: balance.period?.usedCredits ?? 0,
         purchasedCredits: balance.manualCredits,
         purchasedCreditsGranted: balance.balance?.manualGrantedCredits ?? 0,

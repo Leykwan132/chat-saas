@@ -23,7 +23,13 @@ function validateOrganizationName(name: string) {
 }
 
 export const createOrganization = action({
-  args: { name: v.string(), planKey: planKeyValidator },
+  args: {
+    name: v.string(),
+    planKey: planKeyValidator,
+    maxAgents: v.number(),
+    monthlyCredits: v.number(),
+    modelId: v.string(),
+  },
   returns: v.object({ partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"), teamId: v.id("teams") }),
   handler: async (ctx, args): Promise<{ partnerOrganizationId: Id<"whiteLabelPartnerOrganizations">; teamId: Id<"teams"> }> => {
     const auth = await getAuthContext(ctx);
@@ -32,7 +38,16 @@ export const createOrganization = action({
     const organization = await workosRequest<WorkOSOrganization>("/organizations", { method: "POST", body: JSON.stringify({ name }) });
     await provisionOrganizationRoles(organization.id);
     await workosRequest("/user_management/organization_memberships", { method: "POST", body: JSON.stringify({ user_id: auth.userId, organization_id: organization.id, role_slug: WORKOS_OWNER_ROLE_SLUG }) });
-    const created: { partnerOrganizationId: Id<"whiteLabelPartnerOrganizations">; teamId: Id<"teams"> } = await ctx.runMutation(internal.whiteLabel.portalProvisioning.persistCreatedOrganization, { partnerId: access.partnerId, workosUserId: auth.userId, workosOrgId: organization.id, name: organization.name ?? name, planKey: args.planKey });
+    const created: { partnerOrganizationId: Id<"whiteLabelPartnerOrganizations">; teamId: Id<"teams"> } = await ctx.runMutation(internal.whiteLabel.portalProvisioning.persistCreatedOrganization, {
+      partnerId: access.partnerId,
+      workosUserId: auth.userId,
+      workosOrgId: organization.id,
+      name: organization.name ?? name,
+      planKey: args.planKey,
+      maxAgents: args.maxAgents,
+      monthlyCredits: args.monthlyCredits,
+      modelId: args.modelId,
+    });
     return created;
   },
 });

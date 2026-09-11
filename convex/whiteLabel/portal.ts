@@ -11,6 +11,8 @@ import {
   applyPartnerOrganizationPlanChange,
   planChangeTimingValidator,
 } from "./planChange";
+import { applyPartnerOrganizationEntitlements } from "./entitlementChange";
+import { listEnabledModels } from "../llm/modelPricing";
 import { requestTeamDeletion, teamDeletionRequestResultValidator } from "../teamDeletion/request";
 
 const planKeyValidator = v.union(
@@ -153,6 +155,49 @@ export const assignOrganizationPlan = mutation({
       actorUserId: user._id,
     });
     return null;
+  },
+});
+
+export const setOrganizationEntitlements = mutation({
+  args: {
+    partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
+    maxAgents: v.optional(v.number()),
+    monthlyCredits: v.optional(v.number()),
+    modelId: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { partner, user } = await assertCurrentPartnerAccess(ctx);
+    await assertPartnerOrganizationAccess(
+      ctx,
+      partner._id,
+      args.partnerOrganizationId,
+    );
+    await applyPartnerOrganizationEntitlements(ctx, {
+      partnerOrganizationId: args.partnerOrganizationId,
+      maxAgents: args.maxAgents,
+      monthlyCredits: args.monthlyCredits,
+      modelId: args.modelId,
+      actorUserId: user._id,
+    });
+    return null;
+  },
+});
+
+export const listEnabledAgentModels = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      value: v.string(),
+      label: v.string(),
+    }),
+  ),
+  handler: async (ctx) => {
+    await assertCurrentPartnerAccess(ctx);
+    return listEnabledModels().map((model) => ({
+      value: model.value,
+      label: model.label,
+    }));
   },
 });
 

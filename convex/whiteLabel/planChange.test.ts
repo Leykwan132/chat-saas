@@ -137,3 +137,40 @@ test("immediate downgrade below used credits floors remaining at zero", async ()
   expect(balance.period?.usedCredits).toBe(1500);
   expect(balance.remainingCredits).toBe(0);
 });
+
+test("immediate plan change keeps a custom monthly credit override", async () => {
+  const { t, userId, partnerOrganizationId } = await seedStarterOrganization();
+  await t.run(async (ctx) => {
+    const plan = await ctx.db
+      .query("whiteLabelPartnerOrganizationPlans")
+      .withIndex("by_partnerOrganizationId", (q) =>
+        q.eq("partnerOrganizationId", partnerOrganizationId),
+      )
+      .unique();
+    await ctx.db.patch(plan!._id, { monthlyCredits: 12500, maxAgents: 7 });
+  });
+
+  await t.run((ctx) =>
+    applyPartnerOrganizationPlanChange(ctx, {
+      partnerOrganizationId,
+      planKey: "business",
+      timing: "immediate",
+      actorUserId: userId,
+    }),
+  );
+
+  const { plan, balance } = await t.run(async (ctx) => ({
+    plan: await ctx.db
+      .query("whiteLabelPartnerOrganizationPlans")
+      .withIndex("by_partnerOrganizationId", (q) =>
+        q.eq("partnerOrganizationId", partnerOrganizationId),
+      )
+      .unique(),
+    balance: await getPartnerCreditBalance(ctx, partnerOrganizationId),
+  }));
+  expect(plan?.activePlanKey).toBe("business");
+  expect(plan?.maxAgents).toBe(7);
+  expect(plan?.monthlyCredits).toBe(12500);
+  expect(balance.period?.grantedCredits).toBe(12500);
+  expect(balance.remainingCredits).toBe(12000);
+});
