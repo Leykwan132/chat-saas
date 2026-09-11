@@ -385,6 +385,18 @@ test("widget card and launcher share one iframe geometry", () => {
   expect(widgetHostSource).toContain("width:52px;height:52px");
 });
 
+test("widget reserves the composer row below a shrinkable transcript", () => {
+  expect(widgetStyles).toContain(
+    "grid-template-rows: auto minmax(0, 1fr) auto;",
+  );
+  expect(widgetStyles).toMatch(
+    /\.messages-viewport \{[^}]+min-height: 0;[^}]+overflow-y: auto;/,
+  );
+  expect(widgetStyles).toMatch(
+    /\.messages-content \{[^}]+height: auto;[^}]+min-height: 100%;/,
+  );
+});
+
 test("widget chat copy uses a compact type scale", () => {
   expect(widgetStyles).toMatch(/\.message-content \{[^}]+font-size: 14px;/);
   expect(widgetStyles).toMatch(/\.composer textarea \{[^}]+font-size: 14px;/);
