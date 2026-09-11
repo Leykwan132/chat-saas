@@ -105,13 +105,16 @@ test("widget transcript uses the Message Scroller primitive through its local ad
   expect(widgetSource).not.toContain('from "@/components/ui/message-scroller"');
 });
 
-test("widget transcript anchors assistant replies without a manual jump control", () => {
+test("widget transcript always follows the latest content", () => {
   expect(messageScrollerSource).toContain("autoScroll");
+  expect(messageScrollerSource).toContain("useLayoutEffect");
+  expect(messageScrollerSource).toContain("useMessageScroller");
+  expect(messageScrollerSource).toContain(
+    'scrollToEnd({ behavior: "auto" })',
+  );
   expect(messageScrollerSource).not.toContain("defaultScrollPosition");
   expect(messageScrollerSource).not.toContain("<MessageScroller.Button");
-  expect(messageScrollerSource).toContain(
-    'scrollAnchor={message.direction === "outgoing"}',
-  );
+  expect(messageScrollerSource).not.toContain("scrollAnchor=");
   expect(widgetStyles).not.toContain(".messages-latest");
 });
 
@@ -394,6 +397,17 @@ test("widget reserves the composer row below a shrinkable transcript", () => {
   );
   expect(widgetStyles).toMatch(
     /\.messages-content \{[^}]+height: auto;[^}]+min-height: 100%;/,
+  );
+});
+
+test("widget bullet lists use compact spacing", () => {
+  const listStyles =
+    widgetStyles.match(/\.message-content ul,\s*\.message-content ol \{[^}]+\}/)?.[0] ?? "";
+
+  expect(listStyles).toContain("margin: 0;");
+  expect(listStyles).toContain("padding-left: 20px;");
+  expect(widgetStyles).toMatch(
+    /\.message-content li \+ li \{[^}]+margin-top: 6px;/,
   );
 });
 

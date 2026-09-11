@@ -1,4 +1,8 @@
-import { MessageScroller } from "@shadcn/react/message-scroller";
+import { useLayoutEffect } from "react";
+import {
+  MessageScroller,
+  useMessageScroller,
+} from "@shadcn/react/message-scroller";
 import { formatWidgetMessageTime } from "./formatWidgetMessageTime";
 import type { WidgetMessage } from "./types";
 import { WidgetEmptyState } from "./WidgetEmptyState";
@@ -9,6 +13,19 @@ type WidgetMessageScrollerProps = {
   isThinking?: boolean;
   messages: WidgetMessage[];
 };
+
+function WidgetMessageScrollerAutoScroll({
+  isThinking,
+  messages,
+}: WidgetMessageScrollerProps) {
+  const { scrollToEnd } = useMessageScroller();
+
+  useLayoutEffect(() => {
+    scrollToEnd({ behavior: "auto" });
+  }, [isThinking, messages, scrollToEnd]);
+
+  return null;
+}
 
 export function WidgetMessageScroller({
   isThinking = false,
@@ -38,7 +55,6 @@ export function WidgetMessageScroller({
                 <MessageScroller.Item
                   key={message.id}
                   messageId={message.id}
-                  scrollAnchor={message.direction === "outgoing"}
                 >
                   <div className={`message-row ${message.direction}`}>
                     {message.direction === "outgoing" && sender ? (
@@ -68,6 +84,10 @@ export function WidgetMessageScroller({
           </MessageScroller.Content>
         </MessageScroller.Viewport>
       </MessageScroller.Root>
+      <WidgetMessageScrollerAutoScroll
+        isThinking={isThinking}
+        messages={messages}
+      />
     </MessageScroller.Provider>
   );
 }

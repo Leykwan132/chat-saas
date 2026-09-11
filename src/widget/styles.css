@@ -312,6 +312,14 @@ header {
 .message-content p + p {
   margin-top: 8px;
 }
+.message-content ul,
+.message-content ol {
+  margin: 0;
+  padding-left: 20px;
+}
+.message-content li + li {
+  margin-top: 6px;
+}
 .message-content a {
   color: #2563eb;
   font-weight: 600;
