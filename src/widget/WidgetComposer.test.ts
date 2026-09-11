@@ -105,8 +105,13 @@ test("widget transcript uses the Message Scroller primitive through its local ad
   expect(widgetSource).not.toContain('from "@/components/ui/message-scroller"');
 });
 
-test("widget transcript keeps auto scroll without a manual jump control", () => {
+test("widget transcript always follows the latest content", () => {
   expect(messageScrollerSource).toContain("autoScroll");
+  expect(messageScrollerSource).toContain("useLayoutEffect");
+  expect(messageScrollerSource).toContain("useMessageScroller");
+  expect(messageScrollerSource).toContain(
+    'scrollToEnd({ behavior: "auto" })',
+  );
   expect(messageScrollerSource).not.toContain("defaultScrollPosition");
   expect(messageScrollerSource).not.toContain("<MessageScroller.Button");
   expect(messageScrollerSource).not.toContain("scrollAnchor=");
@@ -366,8 +371,13 @@ test("widget refreshes agent replies while its chat is open", () => {
 
 test("widget card and launcher share one iframe geometry", () => {
   expect(widgetHostSource).toContain('"min(390px, calc(100vw - 24px))"');
-  expect(widgetStyles).toContain("width: 100vw;");
-  expect(widgetStyles).toContain("height: 100dvh;");
+  expect(widgetStyles).toMatch(
+    /html,\s*body,\s*#root \{[^}]+width: 100%;[^}]+height: 100%;/,
+  );
+  expect(widgetStyles).toMatch(
+    /\.widget-shell \{[^}]+width: 100%;[^}]+height: 100%;/,
+  );
+  expect(widgetStyles).not.toContain(".widget-shell.is-open");
   expect(widgetStyles).toContain("width: 100%;");
   expect(widgetStyles).toContain("height: min(620px, calc(100dvh - 64px));");
   expect(widgetStyles).toContain("bottom: 64px;");
@@ -376,6 +386,29 @@ test("widget card and launcher share one iframe geometry", () => {
   expect(widgetStyles).not.toContain(".launcher:hover");
   expect(widgetStyles).not.toContain("transform: scale(");
   expect(widgetHostSource).toContain("width:52px;height:52px");
+});
+
+test("widget reserves the composer row below a shrinkable transcript", () => {
+  expect(widgetStyles).toContain(
+    "grid-template-rows: auto minmax(0, 1fr) auto;",
+  );
+  expect(widgetStyles).toMatch(
+    /\.messages-viewport \{[^}]+min-height: 0;[^}]+overflow-y: auto;/,
+  );
+  expect(widgetStyles).toMatch(
+    /\.messages-content \{[^}]+height: auto;[^}]+min-height: 100%;/,
+  );
+});
+
+test("widget bullet lists use compact spacing", () => {
+  const listStyles =
+    widgetStyles.match(/\.message-content ul,\s*\.message-content ol \{[^}]+\}/)?.[0] ?? "";
+
+  expect(listStyles).toContain("margin: 0;");
+  expect(listStyles).toContain("padding-left: 20px;");
+  expect(widgetStyles).toMatch(
+    /\.message-content li \+ li \{[^}]+margin-top: 6px;/,
+  );
 });
 
 test("widget chat copy uses a compact type scale", () => {

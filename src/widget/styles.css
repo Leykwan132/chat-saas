@@ -3,6 +3,12 @@
   color: #f5f5f7;
   background: transparent;
 }
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+}
 * {
   box-sizing: border-box;
 }
@@ -20,12 +26,8 @@ button {
 }
 .widget-shell {
   position: relative;
-  width: 52px;
-  height: 52px;
-}
-.widget-shell.is-open {
-  width: 100vw;
-  height: 100dvh;
+  width: 100%;
+  height: 100%;
 }
 .launcher {
   position: absolute;
@@ -171,7 +173,7 @@ select {
   height: 100%;
   padding: 0;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 header {
   display: flex;
@@ -217,13 +219,14 @@ header {
 .messages-viewport {
   position: relative;
   height: 100%;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
 }
 .messages-content {
   display: grid;
-  height: 100%;
+  height: auto;
   min-height: 100%;
   align-content: start;
   gap: 9px;
@@ -308,6 +311,14 @@ header {
 }
 .message-content p + p {
   margin-top: 8px;
+}
+.message-content ul,
+.message-content ol {
+  margin: 0;
+  padding-left: 20px;
+}
+.message-content li + li {
+  margin-top: 6px;
 }
 .message-content a {
   color: #2563eb;
@@ -425,10 +436,6 @@ header {
   right: 16px;
   color: #ffb4b4;
   font-size: 13px;
-}
-.widget-shell.is-mobile.is-open {
-  width: 100vw;
-  height: 100dvh;
 }
 .widget-shell.is-mobile .widget {
   height: min(650px, calc(100dvh - 64px));
