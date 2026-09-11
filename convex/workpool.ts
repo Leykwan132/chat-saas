@@ -6,7 +6,6 @@ import { components } from "./_generated/api";
 import { Workpool } from "@convex-dev/workpool";
 import {
   uploadToCF,
-  deleteFromCF,
   deleteFromCFOrThrow,
   scrapeMarkdown,
   scrapeLinks,
