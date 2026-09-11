@@ -29,6 +29,13 @@ const organizationListSource = readFileSync(
   new URL("../components/partner/PartnerOrganizationList.tsx", import.meta.url),
   "utf8",
 );
+const organizationDeleteDialogSource = readFileSync(
+  new URL(
+    "../components/partner/PartnerOrganizationDeleteDialog.tsx",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const customerControlsSource = readFileSync(
   new URL("../components/partner/PartnerCustomerControls.tsx", import.meta.url),
   "utf8",
@@ -233,7 +240,7 @@ describe("Partner Programme", () => {
 
   test("requires confirmation before applying a customer plan change", () => {
     expect(organizationListSource).toContain("PartnerPlanChangeDialog");
-    expect(organizationListSource).toContain("setPendingPlanChange({");
+    expect(organizationListSource).toContain("setPendingChange({");
     expect(organizationListSource).toContain("organization.scheduledPlanChange");
     expect(organizationListSource).toContain(
       "PLAN_CATALOG[organization.scheduledPlanChange.planKey].name",
@@ -268,7 +275,7 @@ describe("Partner Programme", () => {
 
   test("shows active organization status with a dot and confirms deletion", () => {
     expect(organizationListSource).toContain("bg-emerald-500");
-    expect(organizationListSource).toContain('variant="destructive"');
+    expect(organizationDeleteDialogSource).toContain('variant="destructive"');
     expect(organizationListSource).toContain("Delete organization");
     expect(organizationListSource).toContain("setPendingDeletion(organization)");
   });
@@ -373,8 +380,22 @@ describe("Partner Programme", () => {
     expect(createOrganizationSource).toContain("override the selected plan");
     expect(organizationListSource).toContain("Agents");
     expect(organizationListSource).toContain("PartnerModelSelect");
+    expect(customerControlsSource).toContain(
+      '"w-28 min-w-0 overflow-hidden text-sm"',
+    );
+    expect(customerControlsSource).toContain("h-8 w-28 px-2 text-center text-sm tabular-nums");
+    expect(pageSource).toContain("max-w-7xl");
     expect(organizationListSource).toContain("onEntitlementsChange");
+    expect(organizationListSource).toContain("{ maxAgents }");
+    expect(organizationListSource).not.toContain('kind: "agents"');
+    expect(organizationListSource).toContain('kind: "monthly"');
+    expect(organizationListSource).toContain("scheduledMonthlyCredits");
+    expect(planChangeDialogSource).not.toContain("Confirm agents change");
+    expect(planChangeDialogSource).toContain("Confirm monthly credits change");
+    expect(planChangeDialogSource).toContain('pendingChange.kind === "plan" ? "immediate" : "next_period"');
     expect(pageSource).toContain("setOrganizationEntitlements");
+    expect(pageSource).not.toContain("Agent limit changes at the end of the billing period.");
+    expect(pageSource).toContain("Monthly credits change at the end of the billing period.");
     expect(pageSource).toContain("maxAgents");
     expect(pageSource).toContain("monthlyCredits");
     expect(pageSource).toContain("modelId");
@@ -383,6 +404,9 @@ describe("Partner Programme", () => {
     expect(portalSource).toContain("export const setOrganizationEntitlements");
     expect(portalSource).toContain("export const listEnabledAgentModels");
     expect(portalOverviewSource).toContain("maxAgents: v.number(),");
+    expect(portalOverviewSource).toContain("scheduledMaxAgents");
+    expect(portalOverviewSource).toContain("scheduledMonthlyCredits");
+    expect(apiSource).toContain("scheduledMaxAgents");
     expect(portalOverviewSource).toContain("modelId: v.string(),");
     expect(planChangeDialogSource).toContain("includeAgents: false");
   });

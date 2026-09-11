@@ -140,7 +140,7 @@ export default function PartnerPage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-6xl p-5 sm:p-8">
+    <main className="mx-auto w-full max-w-7xl p-5 sm:p-8">
       <div className="flex flex-col gap-2 sm:pl-48">
         <h1 className="text-3xl font-semibold tracking-tight">
           Partner Programme
@@ -257,18 +257,21 @@ export default function PartnerPage() {
                     : "Plan updated. Monthly credits change at the end of the billing period.",
               )
             }
-            onEntitlementsChange={(organization, entitlements) =>
+            onEntitlementsChange={(organization, entitlements, timing) =>
               void run(
                 () =>
                   setOrganizationEntitlements({
                     partnerOrganizationId: organization.partnerOrganizationId,
                     ...entitlements,
+                    ...(timing === undefined ? {} : { timing }),
                   }),
                 entitlements.maxAgents !== undefined
                   ? "Agent limit updated."
                   : entitlements.modelId !== undefined
                     ? "Model updated."
-                    : "Monthly credits updated.",
+                    : timing === "next_period"
+                      ? "Monthly credits change at the end of the billing period."
+                      : "Monthly credits updated.",
               )
             }
             onDelete={async (organization) =>

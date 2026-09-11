@@ -138,6 +138,56 @@ test("automatic renewal applies a pending plan once and schedules the next cycle
   expect(result.plan?.pendingCreditPlanKey).toBeUndefined();
 });
 
+test("automatic renewal applies pending agent and monthly credit overrides", async () => {
+  const periodEnd = start + 30 * DAY;
+  const { t, partnerOrganizationId, periodId } =
+    await seedOrganization(periodEnd);
+  await t.run(async (ctx) => {
+    const plan = await ctx.db
+      .query("whiteLabelPartnerOrganizationPlans")
+      .withIndex("by_partnerOrganizationId", (q) =>
+        q.eq("partnerOrganizationId", partnerOrganizationId),
+      )
+      .unique();
+    await ctx.db.patch(plan!._id, {
+      pendingMaxAgents: 6,
+      pendingMaxAgentsEffectiveAt: periodEnd,
+      pendingMonthlyCredits: 9000,
+      pendingMonthlyCreditsEffectiveAt: periodEnd,
+    });
+  });
+  vi.setSystemTime(periodEnd);
+
+  await t.mutation(
+    internal.whiteLabel.creditRenewal.renewOrganizationCredits,
+    { partnerOrganizationId, expectedPeriodId: periodId },
+  );
+
+  const result = await t.run(async (ctx) => {
+    const periods = await ctx.db
+      .query("whiteLabelPartnerOrganizationCreditPeriods")
+      .withIndex("by_partnerOrganizationId_and_periodStart", (q) =>
+        q.eq("partnerOrganizationId", partnerOrganizationId),
+      )
+      .collect();
+    const plan = await ctx.db
+      .query("whiteLabelPartnerOrganizationPlans")
+      .withIndex("by_partnerOrganizationId", (q) =>
+        q.eq("partnerOrganizationId", partnerOrganizationId),
+      )
+      .unique();
+    return { periods, plan };
+  });
+  expect(result.plan?.maxAgents).toBe(6);
+  expect(result.plan?.monthlyCredits).toBe(9000);
+  expect(result.plan?.pendingMaxAgents).toBeUndefined();
+  expect(result.plan?.pendingMonthlyCredits).toBeUndefined();
+  expect(result.periods[1]).toMatchObject({
+    grantedCredits: 9000,
+    usedCredits: 0,
+  });
+});
+
 test("a delayed fallback skips expired cycles without creating stale periods", async () => {
   const oldPeriodEnd = start - 75 * DAY;
   const { t, partnerOrganizationId, periodId } =

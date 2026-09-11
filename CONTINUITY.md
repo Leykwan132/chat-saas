@@ -3,8 +3,8 @@
 # Snapshot
 
 - 2026-09-11 [USER] Goal: partners pick each org’s plan, agent count, monthly credits, and model. Customers do not choose models. Unshipped on `cursor/partner-org-agent-limit`.
-- 2026-09-11 [CODE] Now: Partner Programme create-org and org table set plan, agents, credits, and model. Agent Setup and create-agent hide the model picker in partner workspaces.
-- 2026-09-11 [CODE] Next: review/merge [PR #145](https://github.com/Leykwan132/chat-saas/pull/145), then verify Partner Programme create/edit entitlements on a partner host.
+- 2026-09-11 [CODE] Now: Partner Programme create-org and org table set plan, agents, credits, and model. Agent and model edits apply immediately. Plan and monthly credit edits use the confirm modal; monthly can wait until the billing date. Org table monthly inputs stay fully visible; compact model labels truncate. Agent Setup and create-agent hide the model picker in partner workspaces.
+- 2026-09-11 [CODE] Next: open a follow-up PR for monthly credit confirm timing, then verify immediate vs billing-date credit changes on a partner host.
 - 2026-09-11 [CODE] Milestone: deleted partner recovery and in-app reset-password shipped via #144.
 - 2026-09-10 [CODE] Milestone: Agent Setup test-chat scroll, availability presentation, and tool restoration unshipped in PR #140.
 - 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and Q&A fetch-before-search are on `main` or recent PRs; production dates UNCONFIRMED.
@@ -27,7 +27,8 @@
 - 2026-08-19 [USER] D734 ACTIVE: white-label state is isolated in dedicated partner tables; existing user, team, Stripe, and admin-session records change only through ID relationships.
 - 2026-08-19 [USER] D735 SUPERSEDED by D787: shared plan limits take effect immediately; only the new monthly allowance starts at the organization’s next credit cycle.
 - 2026-09-11 [USER] D800 ACTIVE: each partner organization has one assigned agent model, chosen in Partner Programme and stored on the org plan row. It may be any enabled model and is not limited by the org’s plan catalog. New agents use that model; changing it updates existing org agents. Partner customers do not see or change the model in create-agent or Agent Setup. Until a model is stored, new agents use Ilmu Mini and existing agent models stay in place.
-- 2026-09-11 [USER] D799 ACTIVE: each partner organization has its own agent count and monthly credit amount. Those values override the assigned plan catalog for that org only, on any plan. Plan changes keep the overrides; editing monthly credits rewrites the current period immediately (used credits kept, remaining floored at zero). Legacy orgs without stored overrides still follow the catalog until a partner sets them.
+- 2026-09-11 [USER] D801 ACTIVE: partner edits to monthly credits use the same confirm modal as plan changes, because immediate monthly rewrites the current period (used kept, remaining floored at zero). End-of-period stores pending monthly credits and applies them at credit renewal. Agent count and model apply immediately with no billing-date delay.
+- 2026-09-11 [USER] D799 ACTIVE: each partner organization has its own agent count and monthly credit amount. Those values override the assigned plan catalog for that org only, on any plan. Plan changes keep the overrides. Agent and monthly edit timing is D801. Legacy orgs without stored overrides still follow the catalog until a partner sets them.
 - 2026-09-07 [USER] D787 ACTIVE: partners choose plan-change timing per organization. Immediate rewrites the current credit period to the new catalog allowance (used credits kept, remaining floored at zero); end-of-period keeps current credits and schedules the switch for the period end. Plan limits still change immediately. Overview Monthly reflects the current period’s granted credits, and a scheduled change is shown under the plan.
 - 2026-09-07 [USER] D788 ACTIVE: each new partner organization credit period durably schedules its next renewal for the exact period end; renewal is idempotent, applies pending credit plans, preserves manual grants, and keeps usage-time renewal as a delayed-job fallback.
 - 2026-09-07 [USER] D789 ACTIVE: retain the Partner Programme “Customers” tab, but call organization members “users”; one customer organization may contain many users, and Overview shows separate Organizations and Users metrics.
@@ -63,7 +64,7 @@
 
 # Done (recent)
 
-- 2026-09-11 [CODE] Partner orgs get per-org plan, agent count, monthly credits, and model. Customers cannot pick models. Unshipped.
+- 2026-09-11 [CODE] Partner orgs get per-org plan, agent count, monthly credits, and model. Agent and model edits apply immediately. Plan and monthly table edits confirm like plan changes; monthly can wait until the billing date. Customers cannot pick models. Unshipped.
 - 2026-09-11 [CODE] Deleted partner accounts leave via Back to home after the local session is cleared. Shipped in #144.
 - 2026-09-11 [CODE] Settings Reset password opens a modal; token start/submit loading shows “Preparing session”. Shipped in #144.
 - 2026-09-09 [CODE] Avatar dashboard previews create sandbox sessions; public shared links use non-sandbox sessions by default, with an explicit `?isSandbox=true` sandbox override.
@@ -73,11 +74,13 @@
 
 # Working set
 
-- 2026-09-11 [CODE] `shared/partnerEntitlementLimits.ts`, `convex/agentModelAccess.ts`, `convex/whiteLabel/{entitlementChange,partnerAgentModel,portalProvisioning,portal,portalOverview,planResolver}.ts`
-- 2026-09-11 [CODE] `src/components/partner/{PartnerCreateOrganizationDialog,PartnerCustomerControls,PartnerOrganizationList}.tsx`, `src/components/agent-setup/AgentSetupConfigurationPanel.tsx`, `src/pages/{PartnerPage,InstructionsPage}.tsx`
+- 2026-09-11 [CODE] `convex/whiteLabel/{entitlementChange,creditLedger,portal,portalOverview}.ts`, `convex/schema.ts`, `src/components/partner/{PartnerOrganizationList,PartnerPlanChangeDialog,PartnerCustomerControls}.tsx`, `src/pages/PartnerPage.tsx`
 
 # Receipts
 
+- 2026-09-11 [USER] D801: agent cap is immediate; only monthly credits use the plan confirm modal / billing-date delay. 34 focused tests pass under Node 22.
+- 2026-09-11 [TOOL] Org table monthly input widened and model column truncated: PartnerPage tests pass under Node 22.
+- 2026-09-11 [TOOL] D801 agent/monthly confirm+billing-date scheduling: 41 focused tests pass under Node 22; `git diff --check` passes. Partner Programme unshipped, no changelog.
 - 2026-09-11 [TOOL] PR #145 Convex typecheck: restored `requestTeamDeletion` import in `portal.ts`; narrowed `workosOrgId` in `partnerAgentModel.ts`.
 - 2026-09-11 [TOOL] Partner org agent/credit overrides on `cursor/partner-org-agent-limit`: 40 focused tests pass under Node 22; `git diff --check` passes. Partner Programme unshipped, no changelog.
 - 2026-09-11 [TOOL] PR #144 merged to main: in-app reset password and deleted-partner session clear (`c86ee21`).

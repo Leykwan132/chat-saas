@@ -66,6 +66,8 @@ export type PartnerOverview = {
     status: "active" | "suspended";
     planKey: PlanKey;
     scheduledPlanChange: { planKey: PlanKey; effectiveAt: number } | null;
+    scheduledMaxAgents: { value: number; effectiveAt: number } | null;
+    scheduledMonthlyCredits: { value: number; effectiveAt: number } | null;
     monthlyAllowance: number;
     renewalAt: number;
     customerCount: number;
@@ -135,6 +137,7 @@ export const whiteLabelApi = {
         maxAgents?: number;
         monthlyCredits?: number;
         modelId?: string;
+        timing?: PlanChangeTiming;
       },
       null
     >("whiteLabel/portal:setOrganizationEntitlements"),

@@ -6,6 +6,7 @@ import {
   applyAssignedModelToOrganizationAgents,
   parsePartnerAgentModel,
 } from "./partnerAgentModel";
+import { type PlanChangeTiming } from "./planChange";
 import { getWhiteLabelPlanRecord } from "./planResolver";
 
 export async function applyPartnerOrganizationEntitlements(
@@ -15,6 +16,7 @@ export async function applyPartnerOrganizationEntitlements(
     maxAgents?: number;
     monthlyCredits?: number;
     modelId?: string;
+    timing?: PlanChangeTiming;
     actorUserId: Id<"users">;
   },
 ) {
@@ -40,10 +42,56 @@ export async function applyPartnerOrganizationEntitlements(
     args.modelId === undefined
       ? undefined
       : parsePartnerAgentModel(args.modelId);
+  const scheduleLimits =
+    args.timing === "next_period" && monthlyCredits !== undefined;
+
+  if (scheduleLimits) {
+    const period = await getLatestPartnerCreditPeriod(
+      ctx,
+      args.partnerOrganizationId,
+    );
+    if (period === null) {
+      throw new Error("Customer organization credit period not found.");
+    }
+    await ctx.db.patch(plan._id, {
+      ...(maxAgents === undefined
+        ? {}
+        : {
+            maxAgents,
+            pendingMaxAgents: undefined,
+            pendingMaxAgentsEffectiveAt: undefined,
+          }),
+      pendingMonthlyCredits: monthlyCredits,
+      pendingMonthlyCreditsEffectiveAt: period.periodEnd,
+      ...(modelId === undefined ? {} : { modelId }),
+      updatedByUserId: args.actorUserId,
+      updatedAt: now,
+    });
+    if (modelId !== undefined) {
+      await applyAssignedModelToOrganizationAgents(
+        ctx,
+        args.partnerOrganizationId,
+        modelId,
+      );
+    }
+    return;
+  }
 
   await ctx.db.patch(plan._id, {
-    ...(maxAgents === undefined ? {} : { maxAgents }),
-    ...(monthlyCredits === undefined ? {} : { monthlyCredits }),
+    ...(maxAgents === undefined
+      ? {}
+      : {
+          maxAgents,
+          pendingMaxAgents: undefined,
+          pendingMaxAgentsEffectiveAt: undefined,
+        }),
+    ...(monthlyCredits === undefined
+      ? {}
+      : {
+          monthlyCredits,
+          pendingMonthlyCredits: undefined,
+          pendingMonthlyCreditsEffectiveAt: undefined,
+        }),
     ...(modelId === undefined ? {} : { modelId }),
     updatedByUserId: args.actorUserId,
     updatedAt: now,

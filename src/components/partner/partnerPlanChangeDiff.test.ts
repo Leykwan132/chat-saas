@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { getPlanLimitChanges } from "./partnerPlanChangeDiff";
+import { getCountLimitChange, getPlanLimitChanges } from "./partnerPlanChangeDiff";
 
 test("lists only the limits that change between plans", () => {
   expect(getPlanLimitChanges("growth", "starter")).toEqual([
@@ -29,5 +29,14 @@ test("can omit agent and monthly credit rows when partner overrides own those li
   ).toEqual([
     { label: "Team members", from: "10", to: "5", direction: "down" },
     { label: "Knowledge base", from: "20MB", to: "5MB", direction: "down" },
+  ]);
+});
+
+test("lists a single agent or monthly credit change for entitlement edits", () => {
+  expect(getCountLimitChange("Agents", 2, 4)).toEqual([
+    { label: "Agents", from: "2", to: "4", direction: "up" },
+  ]);
+  expect(getCountLimitChange("Monthly credits", 2000, 9000)).toEqual([
+    { label: "Monthly credits", from: "2,000", to: "9,000", direction: "up" },
   ]);
 });

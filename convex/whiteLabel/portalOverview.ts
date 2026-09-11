@@ -19,6 +19,14 @@ const customerInvitationStateValidator = v.union(
   v.literal("active"),
 );
 
+function scheduledNumber(
+  value: number | undefined,
+  effectiveAt: number | undefined,
+) {
+  if (value === undefined || effectiveAt === undefined) return null;
+  return { value, effectiveAt };
+}
+
 export const partnerOverviewValidator = v.object({
   activeOrganizations: v.number(),
   grantCount: v.number(),
@@ -38,6 +46,14 @@ export const partnerOverviewValidator = v.object({
       planKey: planKeyValidator,
       scheduledPlanChange: v.union(
         v.object({ planKey: planKeyValidator, effectiveAt: v.number() }),
+        v.null(),
+      ),
+      scheduledMaxAgents: v.union(
+        v.object({ value: v.number(), effectiveAt: v.number() }),
+        v.null(),
+      ),
+      scheduledMonthlyCredits: v.union(
+        v.object({ value: v.number(), effectiveAt: v.number() }),
         v.null(),
       ),
       maxAgents: v.number(),
@@ -182,9 +198,19 @@ export async function getPartnerOverview(ctx: QueryCtx) {
           status: "active" as const,
           planKey,
           scheduledPlanChange,
+          scheduledMaxAgents: scheduledNumber(
+            plan?.pendingMaxAgents,
+            plan?.pendingMaxAgentsEffectiveAt,
+          ),
+          scheduledMonthlyCredits: scheduledNumber(
+            plan?.pendingMonthlyCredits,
+            plan?.pendingMonthlyCreditsEffectiveAt,
+          ),
           maxAgents,
           modelId: resolvePartnerAgentModel(plan?.modelId),
-          hasCustomMonthlyCredits: plan?.monthlyCredits !== undefined,
+          hasCustomMonthlyCredits:
+            plan?.monthlyCredits !== undefined ||
+            plan?.pendingMonthlyCredits !== undefined,
           monthlyAllowance: balance.period.grantedCredits,
           renewalAt: balance.period.periodEnd,
           customerCount: customers.length,

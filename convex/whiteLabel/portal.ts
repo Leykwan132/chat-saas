@@ -164,6 +164,7 @@ export const setOrganizationEntitlements = mutation({
     maxAgents: v.optional(v.number()),
     monthlyCredits: v.optional(v.number()),
     modelId: v.optional(v.string()),
+    timing: v.optional(planChangeTimingValidator),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -178,6 +179,7 @@ export const setOrganizationEntitlements = mutation({
       maxAgents: args.maxAgents,
       monthlyCredits: args.monthlyCredits,
       modelId: args.modelId,
+      timing: args.timing,
       actorUserId: user._id,
     });
     return null;

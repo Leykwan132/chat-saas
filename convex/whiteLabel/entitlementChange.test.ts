@@ -90,6 +90,91 @@ test("partner entitlement overrides rewrite agents and the current monthly grant
   expect(balance.remainingCredits).toBe(8600);
 });
 
+test("next-period monthly credits leave the current period alone", async () => {
+  const t = convexTest(schema, modules);
+  const seeded = await t.run(async (ctx) => {
+    const now = Date.now();
+    const userId = await ctx.db.insert("users", {
+      workosUserId: "user_owner",
+      email: "owner@partner.test",
+      createdAt: now,
+      updatedAt: now,
+    });
+    const partnerId = await ctx.db.insert("whiteLabelPartners", {
+      name: "Acme",
+      status: "active",
+      createdAt: now,
+      updatedAt: now,
+    });
+    const teamId = await ctx.db.insert("teams", {
+      type: "organizational",
+      name: "Customer",
+      ownerId: userId,
+      workosOrgId: "org_customer",
+      createdAt: now,
+      updatedAt: now,
+    });
+    const partnerOrganizationId = await ctx.db.insert(
+      "whiteLabelPartnerOrganizations",
+      {
+        partnerId,
+        teamId,
+        status: "active",
+        createdByUserId: userId,
+        createdAt: now,
+        updatedAt: now,
+      },
+    );
+    await ctx.db.insert("whiteLabelPartnerOrganizationPlans", {
+      partnerOrganizationId,
+      activePlanKey: "starter",
+      creditPlanKey: "starter",
+      updatedByUserId: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+    const periodEnd = now + 30 * DAY;
+    await ctx.db.insert("whiteLabelPartnerOrganizationCreditPeriods", {
+      partnerOrganizationId,
+      planKey: "starter",
+      periodStart: now,
+      periodEnd,
+      grantedCredits: PLAN_CATALOG.starter.monthlyCredits,
+      usedCredits: 400,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return { userId, partnerOrganizationId, periodEnd };
+  });
+
+  await t.run((ctx) =>
+    applyPartnerOrganizationEntitlements(ctx, {
+      partnerOrganizationId: seeded.partnerOrganizationId,
+      maxAgents: 4,
+      monthlyCredits: 9000,
+      timing: "next_period",
+      actorUserId: seeded.userId,
+    }),
+  );
+
+  const { plan, balance } = await t.run(async (ctx) => ({
+    plan: await ctx.db
+      .query("whiteLabelPartnerOrganizationPlans")
+      .withIndex("by_partnerOrganizationId", (q) =>
+        q.eq("partnerOrganizationId", seeded.partnerOrganizationId),
+      )
+      .unique(),
+    balance: await getPartnerCreditBalance(ctx, seeded.partnerOrganizationId),
+  }));
+  expect(plan?.maxAgents).toBe(4);
+  expect(plan?.monthlyCredits).toBeUndefined();
+  expect(plan?.pendingMaxAgents).toBeUndefined();
+  expect(plan?.pendingMonthlyCredits).toBe(9000);
+  expect(plan?.pendingMonthlyCreditsEffectiveAt).toBe(seeded.periodEnd);
+  expect(balance.period?.grantedCredits).toBe(PLAN_CATALOG.starter.monthlyCredits);
+  expect(balance.remainingCredits).toBe(PLAN_CATALOG.starter.monthlyCredits - 400);
+});
+
 test("partner model assignment updates existing organization agents", async () => {
   const t = convexTest(schema, modules);
   const seeded = await t.run(async (ctx) => {
