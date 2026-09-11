@@ -109,6 +109,7 @@ test("widget transcript keeps auto scroll without a manual jump control", () => 
   expect(messageScrollerSource).toContain("autoScroll");
   expect(messageScrollerSource).not.toContain("defaultScrollPosition");
   expect(messageScrollerSource).not.toContain("<MessageScroller.Button");
+  expect(messageScrollerSource).not.toContain("scrollAnchor=");
   expect(widgetStyles).not.toContain(".messages-latest");
 });
 

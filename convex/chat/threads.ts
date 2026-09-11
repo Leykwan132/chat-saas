@@ -933,7 +933,7 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${aiReplyMessageBreakBlock}${tone
 
   if (playgroundAvailabilityOnly) {
     for (const toolName of Object.keys(tools)) {
-      if (toolName !== "fetchContext" && toolName !== "checkAvailability") {
+      if (toolName !== "fetchCustomerQa" && toolName !== "fetchContext" && toolName !== "checkAvailability") {
         delete (tools as Partial<ToolSet>)[toolName as keyof ToolSet];
       }
     }
