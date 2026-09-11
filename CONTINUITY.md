@@ -4,7 +4,7 @@
 
 - 2026-09-11 [USER] Goal: partners pick each org’s plan, agent count, monthly credits, and model. Customers do not choose models. Unshipped on `cursor/partner-org-agent-limit`.
 - 2026-09-11 [CODE] Now: Partner Programme create-org and org table set plan, agents, credits, and model. Agent Setup and create-agent hide the model picker in partner workspaces.
-- 2026-09-11 [CODE] Next: verify Partner Programme create/edit entitlements on a partner host after this branch ships.
+- 2026-09-11 [CODE] Next: review/merge [PR #145](https://github.com/Leykwan132/chat-saas/pull/145), then verify Partner Programme create/edit entitlements on a partner host.
 - 2026-09-11 [CODE] Milestone: deleted partner recovery and in-app reset-password shipped via #144.
 - 2026-09-10 [CODE] Milestone: Agent Setup test-chat scroll, availability presentation, and tool restoration unshipped in PR #140.
 - 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and Q&A fetch-before-search are on `main` or recent PRs; production dates UNCONFIRMED.
@@ -78,7 +78,7 @@
 
 # Receipts
 
-- 2026-09-11 [TOOL] Partner org model assignment + hidden customer model picker on `cursor/partner-org-agent-limit`: 53 focused tests pass under Node 22; `git diff --check` passes. Partner Programme unshipped, no changelog.
+- 2026-09-11 [TOOL] PR #145 opened: https://github.com/Leykwan132/chat-saas/pull/145 (`cursor/partner-org-agent-limit` → `main`). Partner Programme unshipped, no changelog.
 - 2026-09-11 [TOOL] Partner org agent/credit overrides on `cursor/partner-org-agent-limit`: 40 focused tests pass under Node 22; `git diff --check` passes. Partner Programme unshipped, no changelog.
 - 2026-09-11 [TOOL] PR #144 merged to main: in-app reset password and deleted-partner session clear (`c86ee21`).
 
