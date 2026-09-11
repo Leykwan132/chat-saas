@@ -6,7 +6,6 @@ import { action } from "../_generated/server";
 import { getAuthContext } from "../authUtils";
 import { createWorkOSClient } from "../workosClient";
 import {
-  buildSameOriginPasswordResetUrl,
   isNativeAuthHostname,
   parsePasswordResetOrigin,
 } from "../../shared/passwordResetReturn";
@@ -14,9 +13,8 @@ import {
 export const startCurrentUserPasswordReset = action({
   args: {
     origin: v.string(),
-    returnPath: v.optional(v.string()),
   },
-  returns: v.object({ passwordResetUrl: v.string() }),
+  returns: v.object({ passwordResetToken: v.string() }),
   handler: async (ctx, args) => {
     const auth = await getAuthContext(ctx);
     const account: { email: string } | null = await ctx.runQuery(
@@ -26,7 +24,7 @@ export const startCurrentUserPasswordReset = action({
     if (account === null) {
       throw new Error("Password reset is unavailable for this account.");
     }
-    const { origin, hostname } = parsePasswordResetOrigin(args.origin);
+    const { hostname } = parsePasswordResetOrigin(args.origin);
     if (!isNativeAuthHostname(hostname)) {
       const branding = await ctx.runQuery(
         api.whiteLabel.partnerAuthGateway.getBrandingForHostname,
@@ -44,11 +42,7 @@ export const startCurrentUserPasswordReset = action({
       throw new Error("Unable to start password reset.");
     }
     return {
-      passwordResetUrl: buildSameOriginPasswordResetUrl({
-        origin,
-        token: passwordReset.passwordResetToken,
-        returnPath: args.returnPath ?? "/sign-in",
-      }),
+      passwordResetToken: passwordReset.passwordResetToken,
     };
   },
 });

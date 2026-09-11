@@ -15,10 +15,9 @@ test("hides the plan section for partner-managed workspaces", () => {
 
 test("only exposes password reset to active password accounts", () => {
   expect(settingsSource).toContain("hasCurrentPasswordAccount");
-  expect(settingsSource).toContain("startCurrentUserPasswordReset");
+  expect(settingsSource).toContain("ResetPasswordDialog");
   expect(settingsSource).toContain("Reset password");
-  expect(settingsSource).toContain("window.location.assign");
-  expect(settingsSource).toContain("passwordResetUrl");
-  expect(settingsSource).toContain("window.location.origin");
-  expect(settingsSource).toContain("returnPath: '/sign-in'");
+  expect(settingsSource).toContain("setIsResetPasswordOpen(true)");
+  expect(settingsSource).not.toContain("window.location.assign");
+  expect(settingsSource).not.toContain("passwordResetUrl");
 });

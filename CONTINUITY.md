@@ -2,57 +2,17 @@
 
 # Snapshot
 
-- 2026-09-10 [USER] Goal: Agent Setup test chat messages must scroll inside their fixed-height panel. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: inline and fullscreen test-chat layouts use bounded flex regions and load older pages at the top, allowing all conversation history to scroll.
-- 2026-09-10 [USER] Goal: restore normal tool selection after the availability override left test-chat responses pending. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: inbox, media, and playground replies no longer impose a persistent tool choice; the development Convex functions have been updated.
-- 2026-09-10 [USER] Goal: temporarily isolate Agent Setup tool calls to observe checkAvailability invocation. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: playground agents expose only fetchContext and checkAvailability; the checkAvailability tool logs each agent invocation before the live slot query.
-- 2026-09-10 [USER] Goal: hide generic raw model request/response logs while debugging availability. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: generic raw request, response, and context handlers were removed; availability-specific diagnostics remain visible.
-- 2026-09-10 [CODE] Now: availability diagnostics log service/team resolution, queried schedule/shift/time-off rows, calendar intervals, future event counts, and per-candidate eligibility checks with matched rejection rows. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: booking system prompts include the server-generated current date in the booking timezone, replacing the playground's unavailable getTodayDate dependency for relative-date interpretation. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: availability tool descriptions require today-or-future dates, and the mutation rejects any preferred/range date before today in the service timezone with `past_date` plus `todayDate`. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: `checkAvailability` parameter descriptions include the generated current service date, e.g. “today or later than 2026-09-10,” for preferred and range timestamps. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: availability tool results include timezone-formatted `date`, `timeRange`, and ISO start/end fields; the prompt requires showing exact times instead of generic morning/afternoon labels. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: playground streaming replies prepend exact availability dates/time ranges when the model returns generic slot labels despite a successful `checkAvailability` result. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: booking instructions include explicit numbered time-range examples (`1. 5:00 AM - 5:30 AM`, `2. 3:00 PM - 3:30 PM`) for availability replies. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: timezone-less availability timestamps are interpreted in the booking service timezone before candidate generation, so a 3:00 PM Asia/Kuala_Lumpur request is no longer parsed as 3:00 PM UTC. Unshipped in PR #140.
-- 2026-09-10 [USER] Goal: range availability requests must return every available slot instead of truncating at five. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: range checks pass an unlimited slot limit through the generator; exact preferred-time checks still return one matching slot. Unshipped in PR #140.
-- 2026-09-10 [USER] Goal: when more than five slots are available, present contiguous availability as summarized time ranges instead of flooding the customer with every half-hour slot. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: availability presentation groups contiguous slots for the same teammate and local date into exact time ranges; underlying proposed slots remain unchanged for booking. Unshipped in PR #140.
-- 2026-09-10 [USER] Goal: availability diagnostics should be concise after debugging is complete. Unshipped in PR #140.
-- 2026-09-10 [CODE] Now: removed repetitive roster, calendar-row, and per-candidate logs; retained agent invocation, request/result, invalid-date, and aggregated rejection counts. Unshipped in PR #140.
-- 2026-09-09 [CODE] Now: deleted or invalid Partner Programme entitlement records return `ACCOUNT_UNAVAILABLE`; the app root shows a centered recovery modal and replaces every protected route with `/` when the user chooses Back to home. Unshipped.
-- 2026-09-09 [USER] Goal: Avatar dashboard preview must always use a sandbox session; public live links must always use a non-sandbox session. Unshipped.
-- 2026-09-09 [USER] Goal: Avatar create should persist preset opening text and representative instructions so visitors can chat immediately. Opening: `Hello, how can I help you.` Instructions fill `{{business_name}}` / `{{business_description}}` from the agent. Unshipped in PR https://github.com/Leykwan132/chat-saas/pull/133
-- 2026-09-09 [CODE] Now: `avatarEmbed.configure` writes that default LiveAvatar context when none exists; existing custom context is left alone.
-- 2026-09-09 [CODE] Now: Edit is a dropdown with Edit Avatar and Delete Avatar; delete clears the live avatar and returns the empty create state.
-- 2026-09-10 [USER] Goal: the public Avatar embed URL bypasses all application auth and Avatar feature-flag checks. Unshipped.
-- 2026-09-10 [USER] Goal: Web Widget assistant messages render single/double-asterisk text as bold and HTTP(S) links as safe new-tab links. Unshipped.
-- 2026-09-10 [CODE] Now: public Avatar portrait video covers mobile stages but fits the full portrait to desktop stage height; the active dashboard preview fills its entire stage. `?isSandbox=true` explicitly starts the public embed in sandbox mode and displays only the raw test avatar stream, bypassing configured background compositing; otherwise it uses live mode. The `/avatar/embed/:publicKey` route now forwards directly to the public page; dashboard Avatar management remains feature- and auth-gated. Live failures show only `Unexpected error. Please contact support.` as a toast. Production availability UNCONFIRMED.
-- 2026-09-09 [CODE] Now: Instagram connect uses direct Instagram Login (`META_IG_APP_ID` / `META_IG_APP_SECRET`), resolves and persists webhook-facing `user_id` from `graph.instagram.com/{version}/me?fields=user_id,username,account_type` (never profile `id`), then subscribes through `me/subscribed_apps`. Direct messages and media use `graph.instagram.com/{version}/me/messages`; only typing and seen indicators use that IG endpoint. Reactions retain `graph.facebook.com/{version}/me/messages`; `reactToMessage` admits Instagram. The user manually verified `typing_on`; correction is in PR #128, awaiting review.
-- 2026-09-09 [CODE] Now: Instagram Comment-to-Inbox routes `comments` webhook entries into the matcher using `entry.id` as `igUserId`; trigger comments never create Inbox data. Only a successful private reply creates the customer, conversation, and outgoing message, labeled “Comment-to-inbox message”. Unshipped in PR #132. Supersedes #130/#131 on main, which persisted the trigger comment as an incoming thread message.
-- 2026-09-08 [TOOL] Instagram assignment fix is in PR #119 (`codex/instagram-agent-assignment` → `main`), unshipped. [CODE] Route agentId is required and authorized, pending/reconnected rows atomically use it, completion revalidates assignment, and errors only affect that attempt's pending row. [USER] User will reconnect manually; no production data repair requested.
-- 2026-09-08 [TOOL] Prod `kilobot.app` was verified `connected`, assigned to `Adwav Newswav` (`jh76x3zjkn4a5b171t163664dx8d42c4`); supersedes earlier disconnected status. [CODE] Agent-filtered Channels UI hid it because signup retained old/latest-agent assignment. Empty backfill does not disconnect.
-- 2026-09-08 [CODE] Now: first-signup welcome modal uses the host brand name (`Welcome to {{Brand Name}}` on partner domains). Native Kilobot onboard and same-origin password reset shipped via #117. Next: merge #118, then verify copy on a partner hostname.
-- 2026-09-08 [TOOL] Prod Instagram `kilobot.app` channel `k9760yy2qkn3ee51etb974q0f18dzwra` set to `disconnected` via `internalDisconnectByIgUserId` so Embedded Signup can run again.
-- 2026-09-08 [TOOL] Milestone: unused-import production build fix merged via #116.
-- 2026-09-08 [CODE] Milestone: partner-host `/workspace` infinite loading spinner (I005) merged via #111. Post-deploy verification on `chat.morphswiftstudio.com` UNCONFIRMED.
-- 2026-09-08 [CODE] Now: signed-in sidebars (`/workspace`, `/dashboard/*`) show the partner logo and name on custom hostnames; in #110 (merged with `main` at #109).
-- 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash (I004) fix, partner favicon, and customizable browser tab title shipped on `main` (#107–#109).
-- 2026-09-07 [CODE] Now: partner organization credit periods schedule an exact-time automatic renewal; no existing-organization backfill is needed. Unshipped on `codex/partner-plan-change-timing`.
-- 2026-09-07 [CODE] Now: the Partner Programme Customers tab presents organizations and their users; account UI uses “user” terminology and Overview separates organization and user totals. Unshipped.
-- 2026-09-07 [USER] Goal: replace Instagram redirect OAuth with Embedded Signup under the same Meta app, using IG-named frontend configuration variables. SUPERSEDED by D795.
-- 2026-09-07 [CODE] Now: partner Branding brand name, logo preview tile, sign-in header, sign-in preview link, and atomic organization credit provisioning merged via #101–#104. Partner Programme remains unshipped overall.
-- 2026-09-07 [CODE] Next: deploy #100, test ordinary and allowlisted connects for both channels, then verify live message/comment delivery.
-- 2026-09-07 [CODE] Milestone: booking confirmations and widget newlines shipped on `main` via #96.
-- 2026-09-06 [CODE] Milestone: AI booking availability, live-session verification, and confirmation races are on `main` (#94–#96).
-- 2026-09-06 [CODE] Milestone: Comment-to-Inbox list/edit/delete/activation and Meta page subscriptions are on `main` (#90–#93); comment webhook ingestion remains unshipped (D781).
-- 2026-09-04 [USER] Goal: feature-flagged Comment-to-Inbox for `leykwan132@gmail.com`; design/plan at `docs/superpowers/{specs,plans}/2026-09-04-comment-to-inbox*`.
-- 2026-09-04 [TOOL] PostHog flag `enable_comment_to_inbox` (ID 866490) is 100% rolled out; app email allowlist still limits access.
-- 2026-09-03 [CODE] Milestone: Gemini Live Avatar connector, cover/background media, and setup editor shipped via #89.
+- 2026-09-11 [USER] Goal: deleted partner users must leave the “Account no longer available” modal without a local-session loop. Unshipped on `cursor/reset-password-modal`.
+- 2026-09-11 [CODE] Now: Back to home clears `kilobot.partnerSession`, signs out, and hard-redirects to `/`. Loading shows “Preparing session”.
+- 2026-09-11 [USER] Goal: Settings Reset password opens a modal instead of navigating away; loading states show “Preparing session”. Unshipped on `cursor/reset-password-modal`.
+- 2026-09-11 [CODE] Now: signed-in reset stays on Settings in `ResetPasswordDialog`; the action returns `passwordResetToken`. Email/token links still use `/reset-password`.
+- 2026-09-11 [CODE] Next: verify partner deleted-user recovery and the reset modal, then open a PR to `main`.
+- 2026-09-10 [CODE] Milestone: Agent Setup test-chat scroll, availability presentation, and tool restoration unshipped in PR #140.
+- 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and Q&A fetch-before-search are on `main` or recent PRs; production dates UNCONFIRMED.
+- 2026-09-09 [CODE] Now: `ACCOUNT_UNAVAILABLE` shows a recovery modal; Back to home signs out, clears partner localStorage, and reloads `/`. Unshipped.
+- 2026-09-09 [CODE] Milestone: Instagram Login + Comment-to-Inbox private-reply ingestion unshipped in later PRs; trigger comments do not create Inbox data.
+- 2026-09-08 [CODE] Milestone: native Kilobot onboard (D793/I009) and same-origin password reset (D794) shipped via #117.
+- 2026-09-08 [CODE] Milestone: partner-host `/workspace` crash/spinner (I004/I005), hostname branding, and unused-import build fix shipped (#107–#116).
 - 2026-09-01 [USER] White-label Partner Programme remains unshipped on `codex/white-label-partner-portal`.
 
 # Decisions
@@ -81,7 +41,9 @@
 - 2026-08-25 [USER] D773 ACTIVE: partners can change active customer roles and WorkOS/local membership records update together.
 - 2026-08-25 [USER] D774–D775 ACTIVE: members without agent-create access see an explanatory empty state; partner-managed workspaces hide Get Free Credits.
 - 2026-08-25 [USER] D776 SUPERSEDED by D793: native Kilobot no longer rejects partner-created WorkOS identities.
-- 2026-09-08 [CODE] D794 ACTIVE: partner password reset uses the current origin’s `/reset-password` page and a relative `/sign-in` return, not WorkOS-hosted `passwordResetUrl` (AuthKit homepage is kilobot.app).
+- 2026-09-11 [CODE] D798 ACTIVE: ACCOUNT_UNAVAILABLE recovery signs the user out, clears partner localStorage, and hard-redirects to `/` so home cannot keep calling authenticated APIs with a deleted account’s JWT.
+- 2026-09-11 [CODE] D797 ACTIVE: signed-in Settings password reset opens an in-app modal and returns `passwordResetToken`; loading/submit states show “Preparing session”. Email/token links still use `/reset-password`.
+- 2026-09-08 [CODE] D794 ACTIVE: partner password reset uses the current origin’s `/reset-password` page and a relative `/sign-in` return, not WorkOS-hosted `passwordResetUrl` (AuthKit homepage is kilobot.app). D797 covers the signed-in Settings path.
 - 2026-09-08 [USER] D793 ACTIVE: one WorkOS identity may complete Kilobot onboarding on `kilobot.app` (Stripe/personal, `onboardingAnswers` required) and keep partner orgs on custom hostnames (signed JWT, org wallet). Native sessions always provision a personal team; `users.onboarded` from partner provisioning does not skip Kilobot onboarding. No second WorkOS user, no copied partner data, no auto-completed Kilobot onboarding.
 - 2026-09-08 [USER] D790 ACTIVE: billing is session-surface scoped, allowing one WorkOS identity to use native Kilobot and one or more Partner Programme organizations. Native AuthKit sessions use Stripe; custom-domain partner JWTs use their exact signed `partnerOrganizationId` plan/credits. `activeTeamId` and mere account existence cannot select billing context. Multiple valid organizations on one partner domain are selected after password verification and revalidated before issuing the scoped JWT.
 - 2026-09-08 [USER] D792 ACTIVE: Instagram and Messenger channel connect are separate early-access flags. PostHog `enable_instagram` (ID 871040) and `enable_messenger` (ID 871041) each require person email `leykwan132@gmail.com` at 100%, plus the app/server allowlist. One flag must not unlock the other. Existing connected channels stay visible. WhatsApp is unchanged.
@@ -102,32 +64,23 @@
 
 # Done (recent)
 
+- 2026-09-11 [CODE] Deleted partner accounts leave via Back to home after the local session is cleared; home no longer loops on ACCOUNT_UNAVAILABLE. Unshipped.
+- 2026-09-11 [CODE] Settings Reset password opens a modal; token start/submit loading shows “Preparing session”. Unshipped.
 - 2026-09-09 [CODE] Avatar dashboard previews create sandbox sessions; public shared links use non-sandbox sessions by default, with an explicit `?isSandbox=true` sandbox override.
 - 2026-09-10 [CODE] Public Avatar embed routes bypass the Avatar feature flag and do not require application authentication.
 - 2026-09-10 [CODE] Web Widget assistant and team messages render Markdown emphasis as bold and HTTP(S) links as `noopener noreferrer` new-tab links; visitor messages remain plain text.
 - 2026-09-09 [CODE] Creating an Avatar now saves default opening text and representative instructions to LiveAvatar so chat can start without a separate context save.
 - 2026-09-09 [CODE] Avatar Edit is a dropdown with Edit Avatar and Delete Avatar.
-- 2026-09-08 [CODE] First-signup welcome modal uses the current host brand name instead of a hardcoded Kilobot title.
-- 2026-09-08 [CODE] Partner password reset completes on the current hostname and returns to `/sign-in` instead of kilobot.app (D794).
-- 2026-09-08 [CODE] Partner-created WorkOS logins on `kilobot.app` provision a personal team and complete Kilobot onboarding instead of crashing or inheriting partner `onboarded` (D793 / I009).
-- 2026-09-08 [CODE] Partner agent credit usage/spend history read the signed org wallet instead of Stripe/personal team (I008).
 
 # Working set
 
-- 2026-09-09 [CODE] `convex/avatar{Provider,Session}.ts`, `src/components/avatar/{AvatarVideoStage,useAvatarSession}.ts`, `src/pages/AvatarPage.tsx`
-- 2026-09-09 [CODE] `shared/avatarContextDefaults.ts`, `convex/{avatarContext,avatarEmbed,avatar,avatarRemove}.ts`, `src/pages/AvatarPage.tsx`
-- 2026-09-08 [CODE] `convex/instagram{ChannelAssignment,AgentAssignment.test,EmbeddedSignup}.ts`, `src/components/ConnectInstagramButton{,.test}.tsx`, `convex/_generated/api.d.ts`
-- 2026-09-08 [CODE] `src/components/setup-checklist/WorkspaceSetupChecklistIntroDialog*`
-- 2026-09-08 [CODE] `convex/{authUtils,users,teamHelpers,nativeKilobotOnboarding.test.ts}*`, `src/lib/organizationAccess.ts`, `src/components/{RequireOrganization,OnboardingFlow}*`
-- 2026-09-07 [CODE] `convex/whiteLabel/{creditLedger,creditRenewal,portalProvisioning}*`, `convex/_generated/api.d.ts`
-- 2026-09-09 [CODE] `src/components/ConnectInstagramButton*`, `convex/{instagramAuth,instagramConnect,instagramChannelAssignment,oauthSessions,channels,http,schema}*`
-- 2026-09-08 [CODE] `src/lib/host{Branding,Favicon,DocumentTitle}*`, `src/hooks/useHostBranding.ts`, `src/components/{HostBrandMark,ExpandedAppSidebarHeader,app-sidebar,AppRuntimeEffects}*`, `src/components/workspace/AgentsSidebar*`
-- 2026-09-08 [CODE] `convex/creditUsageAnalytics.ts`
-- 2026-09-08 [CODE] `convex/{entitlementScope,authUtils,plans,credits,creditUsageAnalytics,creditUsageSession,teams,teamHelpers}*`, `convex/whiteLabel/{partnerAuth*,customerWorkspace*,sessionEntitlementScope.test.ts}`, `src/pages/SignInPage.tsx`
-- 2026-09-08 [CODE] `src/partnerAuth/{AppAuthProvider.tsx,appAuthUsage.test.ts,usePartnerConvexAuth.ts,usePartnerConvexAuth.test.tsx}`, `src/components/RequireOrganization.tsx`, `src/pages/{SettingsPage,PricingPage}.tsx`, `src/router/AppRouteComponents.tsx`
-- 2026-09-07 [CODE] `src/components/partner/PartnerBrandingTab*`, `src/pages/{PartnerPage,SignInPage}.tsx`, `convex/whiteLabel/{portal,portalActions,portalProvisioning,portalOverview,creditLedger}.ts`
+- 2026-09-11 [CODE] `src/components/AccountUnavailableBoundary.tsx`, `src/components/ResetPasswordDialog.tsx`, `src/pages/{SettingsPage,ResetPasswordPage}.tsx`
+- 2026-09-11 [CODE] `convex/whiteLabel/customerPasswordResetActions.ts`, `src/lib/whiteLabelApi.ts`, `src/partnerAuth/partnerSessionStorage.ts`
 
 # Receipts
+
+- 2026-09-11 [TOOL] Deleted-partner recovery: Back to home now clears `kilobot.partnerSession`, signs out, and `location.replace("/")`. 4 focused tests pass under Node 22. Production loop on chat.gosolutions.sg UNCONFIRMED until this ships.
+- 2026-09-11 [TOOL] Password reset modal on `cursor/reset-password-modal`: 6 focused tests pass under Node 22; `git diff --check` passes. Settings UI needs a signed-in password account; `/reset-password` without a token still renders. Unshipped.
 
 - 2026-09-10 [TOOL] PR #140 updated with availability log cleanup: 39 focused tests, Convex TypeScript, targeted ESLint, and diff checks pass under Node 22. Production availability UNCONFIRMED.
 - 2026-09-10 [TOOL] PR #140 updated with grouped availability presentation: 38 focused tests, Convex TypeScript, targeted ESLint, and diff checks pass under Node 22. Production availability UNCONFIRMED.
