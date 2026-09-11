@@ -38,6 +38,7 @@ export function WidgetMessageScroller({
                 <MessageScroller.Item
                   key={message.id}
                   messageId={message.id}
+                  scrollAnchor={message.direction === "outgoing"}
                 >
                   <div className={`message-row ${message.direction}`}>
                     {message.direction === "outgoing" && sender ? (

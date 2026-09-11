@@ -105,11 +105,13 @@ test("widget transcript uses the Message Scroller primitive through its local ad
   expect(widgetSource).not.toContain('from "@/components/ui/message-scroller"');
 });
 
-test("widget transcript keeps auto scroll without a manual jump control", () => {
+test("widget transcript anchors assistant replies without a manual jump control", () => {
   expect(messageScrollerSource).toContain("autoScroll");
   expect(messageScrollerSource).not.toContain("defaultScrollPosition");
   expect(messageScrollerSource).not.toContain("<MessageScroller.Button");
-  expect(messageScrollerSource).not.toContain("scrollAnchor=");
+  expect(messageScrollerSource).toContain(
+    'scrollAnchor={message.direction === "outgoing"}',
+  );
   expect(widgetStyles).not.toContain(".messages-latest");
 });
 
