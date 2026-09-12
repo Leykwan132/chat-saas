@@ -4,7 +4,7 @@
 
 - 2026-09-11 [USER] Goal: website knowledge uses Perplexity research (markdown), stored in R2, then Convex RAG. Unshipped on `cursor/convex-rag`.
 - 2026-09-12 [CODE] Now: knowledge ingest, search, and backfill use Convex RAG instead of Cloudflare AI Search.
-- 2026-09-12 [CODE] Next: open the Convex RAG PR, then run prod backfill after deploy.
+- 2026-09-12 [TOOL] Next: review/merge [PR #147](https://github.com/Leykwan132/chat-saas/pull/147), then run prod backfill after deploy.
 - 2026-09-11 [CODE] Milestone: partner per-org plan/agents/credits/model shipped via #145/#146; deleted-partner recovery and in-app reset shipped via #144.
 - 2026-09-10 [CODE] Milestone: Agent Setup test-chat scroll, availability presentation, and tool restoration unshipped in PR #140.
 - 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and Q&A fetch-before-search are on `main` or recent PRs; production dates UNCONFIRMED.
@@ -87,6 +87,7 @@
 
 # Receipts
 
+- 2026-09-12 [TOOL] PR #147 opened: https://github.com/Leykwan132/chat-saas/pull/147 (`cursor/convex-rag` → `main`).
 - 2026-09-12 [TOOL] `npx convex run rag/backfill:start` started on `outstanding-rabbit-215` (not prod). Re-embeds text/Q&A, fetches CF files into RAG, re-researches parent websites, deletes child scrape rows.
 - 2026-09-12 [CODE] Web/text/Q&A Update and Delete enqueue existing workpools, close the modal, and show row progress. Q&A delete uses `enqueueDelete`.
 - 2026-09-12 [CODE] Website list rows drop the timestamp; leading status is a green check circle or a red X circle, with no Failed label.
