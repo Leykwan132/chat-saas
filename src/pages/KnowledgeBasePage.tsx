@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAction, useMutation, useQuery } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { useParams, useNavigate } from 'react-router';
 import { Globe, FileText, AlignLeft, HelpCircle, Info, XIcon } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
@@ -37,7 +37,7 @@ import {
 import { KnowledgeBaseTestLayout } from '@/components/knowledge-base/KnowledgeBaseTestLayout';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
-import { useAgentIndexingStatus } from '@/hooks/useAgentIndexingStatus';
+import { indexingStatusFromEntries } from '@/lib/agentIndexingStatus';
 import {
   Tooltip,
   TooltipContent,
@@ -71,16 +71,25 @@ export default function KnowledgeBasePage() {
   const qaEntries = useQuery(api.knowledgeBase.listQAEntries, selectedAgentId ? { agentId: selectedAgentId } : "skip");
 
   const enqueueDelete = useAction(api.cloudflare.enqueueDelete);
-  const removeQAEntry = useMutation(api.knowledgeBase.removeQAEntry);
   const deleteWebEntryGroup = useAction(api.cloudflare.deleteWebEntryGroup);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTestOpen, setIsTestOpen] = useState(false);
-  const { indexingStatus, isCheckingStatus } = useAgentIndexingStatus({
-    enabled: Boolean(selectedAgentId),
-  });
+  const kbLoaded = textEntries !== undefined
+    && fileEntries !== undefined
+    && webEntries !== undefined
+    && qaEntries !== undefined;
+  const indexingStatus = kbLoaded
+    ? indexingStatusFromEntries([
+      ...textEntries,
+      ...fileEntries,
+      ...webEntries,
+      ...qaEntries,
+    ])
+    : null;
+  const isCheckingStatus = !kbLoaded;
 
   const storageLimits = useQuery(api.knowledgeBase.getStorageLimit);
   const maxFileSize = storageLimits?.maxFileSize ?? 4 * 1024 * 1024;
@@ -88,7 +97,9 @@ export default function KnowledgeBasePage() {
 
   const textCount = textEntries?.filter((entry) => entry.status === "completed").length ?? 0;
   const fileCount = fileEntries?.filter((entry) => entry.status === "completed").length ?? 0;
-  const webCount = webEntries?.filter((entry) => entry.parentId && entry.status === "completed").length ?? 0;
+  const webCount = webEntries?.filter((entry) =>
+    entry.status === "completed" && (entry.markdownR2Key || entry.parentId)
+  ).length ?? 0;
   const qaCount = qaEntries?.filter((entry) => entry.status === "completed").length ?? 0;
   const webSize = webEntries?.reduce((sum, entry) => sum + (entry.fileSize ?? 0), 0) ?? 0;
   const fileSizeVal = fileEntries?.reduce((sum, entry) => sum + (entry.fileSize ?? 0), 0) ?? 0;
@@ -125,13 +136,8 @@ export default function KnowledgeBasePage() {
         await deleteWebEntryGroup({ parentId: deleteTarget.entryId });
         toast.success("URL group is now being deleted");
       } else {
-        if (deleteTarget.type === 'qa') {
-          await removeQAEntry({ entryId: deleteTarget.entryId });
-          toast.success("Q&A pair removed");
-        } else {
-          await enqueueDelete({ entryId: deleteTarget.entryId, entryType: deleteTarget.type, cfItemId: deleteTarget.cfItemId });
-          toast.success("Item is now being deleted");
-        }
+        await enqueueDelete({ entryId: deleteTarget.entryId, entryType: deleteTarget.type, cfItemId: deleteTarget.cfItemId });
+        toast.success("Item is now being deleted");
       }
     } catch {
       toast.error("Failed to delete item");
@@ -213,7 +219,7 @@ export default function KnowledgeBasePage() {
                       {type === 'qa' && 'Q&A'}
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {type === 'web' && 'Crawl websites and import pages as knowledge.'}
+                      {type === 'web' && 'Research a website and save the extracted knowledge for your agent.'}
                       {type === 'file' && 'Upload documents for your agent to reference.'}
                       {type === 'text' && 'Write or paste raw text content directly.'}
                       {type === 'qa' && 'Add question and answer pairs your agent can learn from.'}

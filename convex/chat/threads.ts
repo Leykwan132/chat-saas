@@ -539,26 +539,16 @@ export function buildAgent(
   const tools: ToolSet = {
     fetchContext: createTool({
       description:
-        "Searches uploaded documents and web references for relevant context when fetchCustomerQa does not answer the question.",
+        "Search for context related to this user prompt. Call before answering any customer question. Searches customer-provided Q&A, uploaded documents, and web references.",
       inputSchema: z.object({
-        query: z.string().describe("The exact user original query"),
+        query: z.string().describe("Describe the context you're looking for"),
       }),
       execute: async (ctx, { query }) => {
-        const result = await ctx.runAction(internal.cloudflare.internalSearch, {
+        const result = await ctx.runAction(internal.rag.search.internalSearchKnowledge, {
           agentId,
           query,
         });
         return result;
-      },
-    }),
-    fetchCustomerQa: createTool({
-      description:
-        "MUST be called before answering any customer question. Retrieves every current customer-provided Q&A pair for this agent. Use relevant answers as factual context and do not invent information.",
-      inputSchema: z.object({}),
-      execute: async (ctx) => {
-        return await ctx.runQuery(internal.knowledgeBase.internalListQAEntriesForPrompt, {
-          agentId,
-        });
       },
     }),
   };
@@ -850,15 +840,17 @@ export function buildAgent(
 - When you can help, sound glad to assist. When you can't, say so kindly (e.g. "Sorry, I'm not sure about that" or "I don't have that info — let me know if there's something else I can help with").
 - Friendliness comes from how you say things, not from adding extra facts you don't have.`;
 
+  const groundingSources = "`fetchContext` results";
+
   const groundingBlock = escalationConfigured
     ? `\n\n## Grounding — REQUIRED
-- Only state facts that come directly from \`fetchCustomerQa\` or \`fetchContext\` results, or explicit tool metadata (collection name, filename, etc.).
+- Only state facts that come directly from ${groundingSources}, or explicit tool metadata (collection name, filename, etc.).
 - Do NOT invent details, generic explanations, or filler about attachments or topics.
 - Do NOT describe media contents, room layouts, dimensions, benefits, or implications unless \`fetchContext\` provided that information.
 - Never mention internal tools, searches, or a "knowledge base" to the user.
 - If tools returned nothing useful for the user's question, do NOT reply to the user. Call \`escalateToHuman\` instead. Never tell the user you don't know or ask if there is something else you can help with.`
     : `\n\n## Grounding — REQUIRED
-- Only state facts that come directly from \`fetchCustomerQa\` or \`fetchContext\` results, or explicit tool metadata (collection name, filename, etc.).
+- Only state facts that come directly from ${groundingSources}, or explicit tool metadata (collection name, filename, etc.).
 - Do NOT invent details, generic explanations, or filler about attachments or topics.
 - Do NOT describe media contents, room layouts, dimensions, benefits, or implications unless \`fetchContext\` provided that information.
 - Never mention internal tools, searches, or a "knowledge base" to the user.
@@ -933,7 +925,7 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${aiReplyMessageBreakBlock}${tone
 
   if (playgroundAvailabilityOnly) {
     for (const toolName of Object.keys(tools)) {
-      if (toolName !== "fetchCustomerQa" && toolName !== "fetchContext" && toolName !== "checkAvailability") {
+      if (toolName !== "fetchContext" && toolName !== "checkAvailability") {
         delete (tools as Partial<ToolSet>)[toolName as keyof ToolSet];
       }
     }

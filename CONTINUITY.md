@@ -2,10 +2,10 @@
 
 # Snapshot
 
-- 2026-09-11 [USER] Goal: partners pick each org’s plan, agent count, monthly credits, and model. Customers do not choose models. Unshipped on `cursor/partner-org-agent-limit`.
-- 2026-09-11 [CODE] Now: Partner Programme create-org and org table set plan, agents, credits, and model. Agent and model edits apply immediately. Plan and monthly credit edits use the confirm modal; monthly can wait until the billing date. Org table monthly inputs stay fully visible; compact model labels truncate. Agent Setup and create-agent hide the model picker in partner workspaces.
-- 2026-09-11 [CODE] Next: review/merge [PR #146](https://github.com/Leykwan132/chat-saas/pull/146), then verify immediate vs billing-date monthly credit changes on a partner host.
-- 2026-09-11 [CODE] Milestone: deleted partner recovery and in-app reset-password shipped via #144.
+- 2026-09-11 [USER] Goal: website knowledge uses Perplexity research (markdown), stored in R2, then Convex RAG. Unshipped on `cursor/convex-rag`.
+- 2026-09-12 [CODE] Now: knowledge ingest, search, and backfill use Convex RAG instead of Cloudflare AI Search.
+- 2026-09-12 [CODE] Next: open the Convex RAG PR, then run prod backfill after deploy.
+- 2026-09-11 [CODE] Milestone: partner per-org plan/agents/credits/model shipped via #145/#146; deleted-partner recovery and in-app reset shipped via #144.
 - 2026-09-10 [CODE] Milestone: Agent Setup test-chat scroll, availability presentation, and tool restoration unshipped in PR #140.
 - 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and Q&A fetch-before-search are on `main` or recent PRs; production dates UNCONFIRMED.
 - 2026-09-09 [CODE] Milestone: Instagram Login + Comment-to-Inbox private-reply ingestion unshipped in later PRs; trigger comments do not create Inbox data.
@@ -14,6 +14,12 @@
 
 # Decisions
 
+- 2026-09-12 [USER] D810 ACTIVE: knowledge backfill moves off Cloudflare AI Search. Text and Q&A are re-embedded from Convex fields. Parent websites are re-researched with Perplexity and replace the old row (child scrape URLs are deleted). Files are downloaded from CF when needed, stored in R2/RAG, then the CF item is queued for delete. CF chunks are the fallback when a file has no extracted text.
+- 2026-09-11 [USER] D805 ACTIVE: Convex RAG is the knowledge-base backend for every workspace (web, file, text, Q&A). Retrieval is one `fetchContext` path; `fetchCustomerQa` is removed. PostHog `enable_convex_rag` (ID 879759) is deleted and there is no email allowlist.
+- 2026-09-11 [USER] D809 ACTIVE: website knowledge is researched with Perplexity Agent API (`PERPLEXITY_API_KEY`, model `perplexity/deepseek-v4-flash-0731`, web_search + fetch_url, max_steps 5). Output is Markdown stored in R2; embeddings still use Cloudflare Workers AI. Cloudflare Browser Rendering is not used for websites.
+- 2026-09-11 [USER] D808 ACTIVE: `fetchContext` takes a model-written description of the needed context, not the customer's raw message.
+- 2026-09-11 [USER] D806 ACTIVE: embeddings use Cloudflare Workers AI `@cf/baai/bge-m3` (1024 dims) over the OpenAI-compatible endpoint, reusing `CF_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`. `CF_AI_SEARCH_TOKEN` is not authorized for Workers AI (verified: HTTP 401). `CF_WORKERS_AI_TOKEN` is unused.
+- 2026-09-11 [USER] D807 ACTIVE: knowledge base files are parsed in the browser — PDF.js for PDF, direct read for txt/md/csv/json — and the extracted text is sent to the server. Images carry no extracted text and are described server-side by the vision model. doc/docx are not accepted.
 - 2026-09-06 [USER] D782 ACTIVE: availability checks precede session creation and customer-detail collection; an exact requested/selected available slot is confirmation, and complete details must proceed directly to booking and canonical confirmation without an extra confirmation turn.
 - 2026-09-07 [TOOL] D781 RESOLVED: Official Meta docs confirm Messenger private replies use `POST /{page-id}/messages` with `recipient.comment_id`; public replies use the comment’s `/comments` edge. Page read/manage permissions are required for keyword fetches and public replies.
 - 2026-09-04 [USER] D780 ACTIVE: The customer-facing navigation label is “Comment-to-Inbox”; Comment automations use the unshipped `commentAutomations` backend tables and APIs.
@@ -64,69 +70,31 @@
 
 # Done (recent)
 
-- 2026-09-11 [CODE] Partner orgs get per-org plan, agent count, monthly credits, and model. Agent and model edits apply immediately. Plan and monthly table edits confirm like plan changes; monthly can wait until the billing date. Customers cannot pick models. Unshipped.
-- 2026-09-11 [CODE] Deleted partner accounts leave via Back to home after the local session is cleared. Shipped in #144.
-- 2026-09-11 [CODE] Settings Reset password opens a modal; token start/submit loading shows “Preparing session”. Shipped in #144.
-- 2026-09-09 [CODE] Avatar dashboard previews create sandbox sessions; public shared links use non-sandbox sessions by default, with an explicit `?isSandbox=true` sandbox override.
-- 2026-09-10 [CODE] Public Avatar embed routes bypass the Avatar feature flag and do not require application authentication.
-- 2026-09-10 [CODE] Web Widget assistant and team messages render Markdown emphasis as bold and HTTP(S) links as `noopener noreferrer` new-tab links; visitor messages remain plain text.
-- 2026-09-09 [CODE] Creating an Avatar now saves default opening text and representative instructions to LiveAvatar so chat can start without a separate context save.
+- 2026-09-12 [CODE] Knowledge backfill re-embeds all text/Q&A, fetches CF files into Convex RAG, and re-researches parent websites while deleting child scrape rows. Unshipped.
+- 2026-09-12 [CODE] Knowledge Update/Delete enqueue workpools and show row progress instead of blocking the modal. Unshipped.
+- 2026-09-12 [CODE] Website markdown updates store a new unique R2 key and schedule the old object on `mediaDeletePool`. Unshipped.
+- 2026-09-12 [CODE] Website research is paid-only. Refresh was removed. Knowledge previews stay full-screen modals. Unshipped.
+- 2026-09-11 [CODE] Website ingest uses Perplexity markdown research, R2 storage, then Convex RAG. Feature flag removed. Unshipped.
+- 2026-09-11 [CODE] Partner per-org entitlements shipped via #145/#146; deleted-partner recovery and in-app reset shipped via #144.
+- 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and availability checks are on `main`.
 
 # Working set
 
-- 2026-09-11 [CODE] `convex/whiteLabel/{entitlementChange,creditLedger,portal,portalOverview}.ts`, `convex/schema.ts`, `src/components/partner/{PartnerOrganizationList,PartnerPlanChangeDialog,PartnerCustomerControls}.tsx`, `src/pages/PartnerPage.tsx`
+- 2026-09-12 [CODE] `convex/rag/{backfill,backfillIndex,backfillWeb,backfillPage,backfillPlan,cfFetch,fileBytesText}.ts`
+- 2026-09-12 [CODE] `convex/webResearch/{enqueue,update,persist,worker,prompt,markdown,markdownKey}.ts`
+- 2026-09-12 [CODE] `src/components/knowledge-base/{WebSection,WebKnowledgeModal,WebEntryDetails,TextEntryDetails,QAEntryDetails,FileEntryDetails}.tsx`
+- 2026-09-12 [CODE] `src/components/knowledge-base/{FileSection,FileEntryDetails}.tsx`, `src/lib/knowledgeBaseFileText.ts`
 
 # Receipts
 
+- 2026-09-12 [TOOL] `npx convex run rag/backfill:start` started on `outstanding-rabbit-215` (not prod). Re-embeds text/Q&A, fetches CF files into RAG, re-researches parent websites, deletes child scrape rows.
+- 2026-09-12 [CODE] Web/text/Q&A Update and Delete enqueue existing workpools, close the modal, and show row progress. Q&A delete uses `enqueueDelete`.
+- 2026-09-12 [CODE] Website list rows drop the timestamp; leading status is a green check circle or a red X circle, with no Failed label.
+- 2026-09-12 [CODE] Website markdown update writes a unique R2 key (`…/{uuid}.md`, `personal` when org is empty) and enqueues `mediaDeleteWorker` for the previous key after the row points at the new object.
+- 2026-09-12 [CODE] Website research gated to paid plans; Refresh removed. Free UI shows an upgrade prompt instead of the URL field.
+- 2026-09-12 [CODE] File knowledge items open a preview modal: extracted text is stored on the row, original files go to R2, images/PDFs render from the public URL.
+- 2026-09-11 [TOOL] Convex RAG: `@convex-dev/rag` pinned to `0.7.5`; embeddings use `CLOUDFLARE_API_TOKEN`; PostHog `enable_convex_rag` (ID 879759) soft-deleted.
 - 2026-09-11 [TOOL] PR #146 opened: https://github.com/Leykwan132/chat-saas/pull/146 (`cursor/partner-monthly-credit-timing` → `main`).
-- 2026-09-11 [USER] D801: agent cap is immediate; only monthly credits use the plan confirm modal / billing-date delay. 34 focused tests pass under Node 22.
-- 2026-09-11 [TOOL] Org table monthly input widened and model column truncated: PartnerPage tests pass under Node 22.
-- 2026-09-11 [TOOL] D801 agent/monthly confirm+billing-date scheduling: 41 focused tests pass under Node 22; `git diff --check` passes. Partner Programme unshipped, no changelog.
-- 2026-09-11 [TOOL] PR #145 Convex typecheck: restored `requestTeamDeletion` import in `portal.ts`; narrowed `workosOrgId` in `partnerAgentModel.ts`.
-- 2026-09-11 [TOOL] Partner org agent/credit overrides on `cursor/partner-org-agent-limit`: 40 focused tests pass under Node 22; `git diff --check` passes. Partner Programme unshipped, no changelog.
+- 2026-09-11 [TOOL] PR #145 Convex typecheck and partner org agent/credit overrides merged lineage on main.
 - 2026-09-11 [TOOL] PR #144 merged to main: in-app reset password and deleted-partner session clear (`c86ee21`).
-
-- 2026-09-10 [TOOL] PR #140 updated with availability log cleanup: 39 focused tests, Convex TypeScript, targeted ESLint, and diff checks pass under Node 22. Production availability UNCONFIRMED.
-- 2026-09-10 [TOOL] PR #140 updated with grouped availability presentation: 38 focused tests, Convex TypeScript, targeted ESLint, and diff checks pass under Node 22. Production availability UNCONFIRMED.
-- 2026-09-10 [TOOL] PR #140 updated with unlimited range availability: 37 focused tests, Convex TypeScript, targeted ESLint, and diff checks pass under Node 22. Production availability UNCONFIRMED.
-- 2026-09-09 [TOOL] PR #135 opened: https://github.com/Leykwan132/chat-saas/pull/135. Nine focused auth/recovery tests plus app and Convex TypeScript checks pass under Node 22; production availability UNCONFIRMED.
-- 2026-09-10 [TOOL] PR #140 updated with commit `561d902`: timezone-less availability timestamps now resolve in the booking service timezone; focused availability/prompt tests (22), Convex TypeScript, ESLint, and diff checks pass under Node 22. Local branch is synced; production availability UNCONFIRMED.
-- 2026-09-09 [TOOL] PR #134 opened: https://github.com/Leykwan132/chat-saas/pull/134 (`codex/avatar-session-duration-cap` → `main`).
-- 2026-09-09 [TOOL] Avatar session surfaces: 41 focused provider/session/embed/stage tests pass under Node 22, and `git diff --check` passes. Full suite remains blocked by unrelated Google Calendar projection, SiteFooter provider, and component-package fixture failures.
-- 2026-09-09 [TOOL] Avatar delete from Edit dropdown: pushed to https://github.com/Leykwan132/chat-saas/pull/133
-- 2026-09-09 [TOOL] Avatar create defaults: 18 focused default-prompt, configure, and editor tests pass under Node 22.
-- 2026-09-09 [TOOL] Instagram Comment-to-Inbox: 9 focused webhook, Meta request, ingestion, and delivery tests pass; Convex TypeScript check and `git diff --check` pass under Node 22. Convex codegen did not refresh the checked-in API declaration, so the new internal module was added to `convex/_generated/api.d.ts` with the corresponding generator shape.
-- 2026-09-09 [TOOL] Comment-to-Inbox outbound persistence: 13 focused webhook, delivery, metadata, and Inbox-card tests pass under Node 22; Convex and app TypeScript checks produced no errors and `git diff --check` passed.
-- 2026-09-09 [TOOL] Comment trigger suppression and sender label: 13 focused tests pass; Convex TypeScript check and `git diff --check` pass under Node 22.
-- 2026-09-09 [USER] Replaced temporary Instagram response diagnostics with direct `me/subscribed_apps` webhook subscription, authenticated only by the long-lived Instagram access token. Fields: `comments`, `messages`, `message_reactions`, `messaging_seen`, `live_comments`, `message_echoes`. The user-provided token appeared in chat and should be revoked/reissued. Twelve focused Instagram/Comment-to-Inbox/UI tests, Convex TypeScript check, and diff check pass; deployment uploaded and PR #124 is open.
-- 2026-09-09 [USER] Instagram Login direct message sends, typing indicators, and seen receipts must use `graph.facebook.com/{version}/me/messages`; direct conversations and webhook subscription stay on `graph.instagram.com`. Twelve focused routing/channel tests and Convex TypeScript check pass; deployment uploaded and PR #124 updated.
-- 2026-09-09 [USER] Instagram reactions were blocked as unsupported. [CODE] React and unreact now post their sender actions through Facebook's Instagram Login `/me/messages` endpoint. Eight focused routing/channel tests and Convex TypeScript check pass; deployment uploaded and PR #124 updated.
-- 2026-09-09 [USER] Meta rejected direct Instagram `message_echoes` webhook subscription. [CODE] Removed the unsupported field; 13 focused Instagram/routing/channel tests and Convex TypeScript check pass. PR #124 merged before this correction; replacement PR #125 is open and deployment is uploaded.
-- 2026-09-09 [USER] Webhooks refer to Instagram `/me.user_id`, not profile `id`. [CODE] OAuth now fetches `user_id,username,account_type` before creating the pending channel and persists that `user_id`; focused tests prove it differs from OAuth/profile IDs and preserves the selected-agent race guard. Thirteen focused tests and Convex TypeScript check pass; deployment uploaded and PR #125 updated. The user pasted another access token; revoke/reissue it.
-- 2026-09-09 [USER] `reactToMessage` rejected Instagram even though the transport supports it. [CODE] Added Instagram to its supported services; 13 focused Instagram/routing/channel tests and Convex TypeScript check pass. PR #125 merged before this correction; deployment uploaded and replacement PR #126 is open.
-- 2026-09-09 [USER] Instagram reply requests failed because Facebook's Graph endpoint rejected the Instagram Login token. [CODE] Reverted direct message and media sends to Instagram's Graph endpoint while keeping sender actions on Facebook's endpoint; 13 focused tests and Convex TypeScript check pass. Deployment uploaded; PR #127 was merged before the scoped typing/seen route correction in PR #128.
-- 2026-09-09 [TOOL] PR #122 opened: https://github.com/Leykwan132/chat-saas/pull/122 (`codex/remove-instagram-subscription` → `main`). Isolated direct Instagram subscription fix: 18 focused Instagram/UI tests and Convex TypeScript check pass. A direct-connect regression assertion rejects any `/subscribed_apps` request. Convex codegen uploaded the fix; production verification UNCONFIRMED.
-- 2026-09-09 [TOOL] PR #120 opened: https://github.com/Leykwan132/chat-saas/pull/120 (`codex/instagram-agent-assignment` → `main`). Direct Instagram Login: 15 focused Instagram/UI tests, Convex TypeScript check, regenerated bindings, and diff check pass under Node 22. Reviewer found no critical/important issues; one minor env-name diagnostic was fixed. Convex codegen uploaded the configured deployment; production availability UNCONFIRMED.
-- 2026-09-09 [TOOL] PR #120 merge conflict resolved by merging `origin/main` at `98d040f` (including #119) into the branch; 15 focused tests and the Convex TypeScript check passed before merge commit `174c67b` was pushed.
-- 2026-09-09 [TOOL] PR #121 opened: https://github.com/Leykwan132/chat-saas/pull/121 (`codex/instagram-agent-assignment` → `main`) to remove rejected direct Instagram `/subscribed_apps` calls after Meta returned unsupported-object/missing-permissions. 18 focused tests and Convex TypeScript check pass; review found no issues. Convex codegen uploaded the change; production verification UNCONFIRMED.
-- 2026-09-09 [USER] Instagram Login must not request `instagram_business_content_publish`; the revised scope deployment was uploaded after 18 focused tests and Convex TypeScript check passed. PR #121 update pending.
-- 2026-09-09 [TOOL] PR #121 merged latest `origin/main` at `bb31f2f` and pushed `e967124`; 18 focused tests and Convex TypeScript check passed. GitHub reports open/non-draft, no checks listed, review approval required.
-- 2026-09-08 [TOOL] PR #119 opened: https://github.com/Leykwan132/chat-saas/pull/119 (fix commit `c371fd1`). 12 tests revalidated under Node 22; targeted ESLint + diff check pass; review found no actionable issues. Convex API bindings regenerated; no production deploy/changelog (unshipped).
-- 2026-09-08 [TOOL] Prod Instagram reconnect unblock: `npx convex run --prod internal.channels.internalDisconnectByIgUserId` for IG user `17841415503021124` (`kilobot.app`); row `k9760yy2qkn3ee51etb974q0f18dzwra` was `error` after a failed re-connect. No conversations in the last 500.
-- 2026-09-08 [TOOL] #118 opened from `cursor/host-branded-welcome` onto `main` with host-branded first-signup welcome title. 4 focused tests pass under Node 22.
-- 2026-09-08 [TOOL] #117 opened from `cursor/native-kilobot-onboarding` onto `main` with native Kilobot onboard (D793 / I009) and same-origin password reset (D794). 15 focused tests pass under Node 22.
-- 2026-09-08 [TOOL] Native Kilobot onboard (I009): 22 focused auth/plan/onboarding tests pass under Node 22, including new `convex/nativeKilobotOnboarding.test.ts`. OnboardingFlow stays at 299 lines. No changelog (Partner Programme unshipped).
-- 2026-09-08 [TOOL] #116 opened from `cursor/fix-credit-usage-unused-import` onto `main`. `tsc -b` passes under Node 22.
-- 2026-09-08 [TOOL] #113 opened from `cursor/partner-usage-and-settings` onto `main` with the I007 Usage fix plus leftover post-#112 Settings/admin follow-ups. 15 focused tests pass under Node 22.
-- 2026-09-08 [TOOL] #112 admin-create + plan-dialog follow-up: 32 focused tests pass; targeted ESLint and app TypeScript check pass under Node 22. Pre-existing `TeamRolesAndPermissionsPanel` `set-state-in-effect` lint remains.
-- 2026-09-08 [TOOL] Dual-role revision committed as `d6fda7e`, pushed, and #112 updated and marked ready for review.
-- 2026-09-08 [TOOL] Dual-role entitlement revision: 25 focused plan/credit/auth/workspace tests pass; Convex codegen, app/Convex TypeScript checks, targeted ESLint, full TypeScript/Vite production build, and `git diff --check` pass under Node 22. Full Vitest exposes only `convex/backfillEvents.test.ts`, independently reproduced without the changed analytics file; its fixed July/August 2026 billing period is stale against the current September clock.
-- 2026-09-08 [TOOL] Revised I006 fix: 20 plan, credit, provisioning, and workspace tests pass; three new assertions fail on old active-team logic (wrong org plan and owner marked managed twice). Node v22 targeted ESLint, Convex TypeScript check, and `git diff --check` pass.
-- 2026-09-08 [TOOL] Partner-owner workspace access: new `currentUser` test fails on old code (`expected false to be true`) and passes on the fix; Node v22 targeted ESLint, `tsc --noEmit -p convex/tsconfig.json`, and `git diff --check` pass. Prod inspected read-only via `convex data --prod`.
-- 2026-09-08 [TOOL] Partner-host auth loop fix: new identity test fails on the old inline arrow (`expected 3 to be 1`) and passes on the fix; Node v22 targeted ESLint, `tsc --noEmit -p tsconfig.app.json`, and `git diff --check` pass.
-- 2026-09-08 [TOOL] Hostname sidebar brand passed 23 focused tests (header lockup, loading, no-logo initial, both sidebars, favicon/title), Node v22 targeted ESLint, `tsc --noEmit -p tsconfig.app.json`, and `git diff --check`.
-- 2026-09-08 [TOOL] Partner-host `useAuth` fix: new guard test fails on the old `RequireOrganization` import and passes on the fix; Node v22 targeted ESLint, `tsc --noEmit -p tsconfig.app.json`, and `git diff --check` pass.
-- 2026-09-08 [TOOL] Partner browser tab title passed 39 focused tests, targeted ESLint, and `git diff --check`.
-- 2026-09-07 [TOOL] Separate Partner Overview Organizations and Users metrics passed 22 focused UI tests, targeted ESLint, and `git diff --check`.
-- 2026-09-07 [TOOL] `origin/main` merged into `codex/partner-plan-change-timing` at `f14bdd4`; atomic provisioning, scheduled renewal, and plan-change integration passed 7 focused tests.
-- 2026-09-07 [TOOL] Older branding preview, Comment-to-Inbox, Instagram/Messenger, Avatar, partner, and booking receipts compressed; see #89–#96, #100–#104, and prior CONTINUITY history.
+- 2026-09-10 [TOOL] Older availability, Avatar, Instagram, and partner receipts compressed; see #117–#140 and prior CONTINUITY history.

@@ -3,6 +3,7 @@ import {
   getAgentTrainingDescription,
   getAgentTrainingLabel,
   getAgentTrainingStatus,
+  indexingStatusFromEntries,
 } from './agentIndexingStatus';
 
 describe('agent indexing status', () => {
@@ -31,5 +32,18 @@ describe('agent indexing status', () => {
     expect(getAgentTrainingDescription('ready')).toBe(
       'All knowledge changes are indexed and ready for your agent to use.',
     );
+  });
+
+  it('counts queued and processing knowledge rows as indexing', () => {
+    expect(indexingStatusFromEntries([
+      { status: 'queued' },
+      { status: 'gettingMarkdown' },
+      { status: 'completed' },
+    ])).toEqual({ isIndexing: true, queued: 1, running: 1 });
+    expect(indexingStatusFromEntries([{ status: 'completed' }])).toEqual({
+      isIndexing: false,
+      queued: 0,
+      running: 0,
+    });
   });
 });

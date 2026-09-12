@@ -6,13 +6,11 @@ const workpoolSource = readFileSync(
   "utf8",
 );
 
-test("limits each website scraping pool to one concurrent worker", () => {
+test("limits website research to one concurrent worker", () => {
   expect(workpoolSource).toMatch(
     /new Workpool\(components\.webScraperWorkpool, \{\s*maxParallelism: 1/,
   );
-  expect(workpoolSource).toMatch(
-    /new Workpool\(components\.linkDiscovererWorkpool, \{\s*maxParallelism: 1/,
-  );
+  expect(workpoolSource).not.toContain("linkDiscovererWorkpool");
 });
 
 test("does not add worker-side request delays", () => {

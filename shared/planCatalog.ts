@@ -14,6 +14,7 @@ export type PlanFeatureFlags = {
   agent_usage: boolean;
   team_analytics: boolean;
   topic_analytics: boolean;
+  website_research: boolean;
 };
 
 export type PlanCatalogEntry = {
@@ -151,6 +152,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       agent_usage: true,
       team_analytics: false,
       topic_analytics: false,
+      website_research: false,
     },
   },
   starter: {
@@ -189,6 +191,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       agent_usage: true,
       team_analytics: true,
       topic_analytics: false,
+      website_research: true,
     },
   },
   growth: {
@@ -228,6 +231,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       agent_usage: true,
       team_analytics: true,
       topic_analytics: true,
+      website_research: true,
     },
   },
   business: {
@@ -263,6 +267,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       agent_usage: true,
       team_analytics: true,
       topic_analytics: true,
+      website_research: true,
     },
   },
 };

@@ -680,6 +680,7 @@ export const generateAiReplyWorker = internalAction({
       activeBooking.services,
       workflowRuntimeContext,
       args.promptMessageId,
+      false,
     );
     const bookingBeforeReply = activeBooking.enabled
       ? await ctx.runQuery(internal.appointmentBooking.currentBooking.getCurrentBooking, {

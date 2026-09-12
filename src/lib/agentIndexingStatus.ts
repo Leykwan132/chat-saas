@@ -6,6 +6,21 @@ export type AgentIndexingStatus = {
 
 export type AgentTrainingStatus = 'loading' | 'ready' | 'indexing';
 
+export function indexingStatusFromEntries(
+  entries: Array<{ status?: string } | undefined>,
+): AgentIndexingStatus {
+  const queued = entries.filter((entry) =>
+    entry?.status === "queued"
+    || entry?.status === "gettingLinks"
+    || entry?.status === "linksObtained",
+  ).length;
+  const running = entries.filter((entry) =>
+    entry?.status === "gettingMarkdown"
+    || entry?.status === "processing",
+  ).length;
+  return { isIndexing: queued + running > 0, queued, running };
+}
+
 export function getAgentTrainingStatus(
   isCheckingStatus: boolean,
   indexingStatus: AgentIndexingStatus | null | undefined,

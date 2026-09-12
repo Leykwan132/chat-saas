@@ -8,12 +8,14 @@ import r2 from "@convex-dev/r2/convex.config.js";
 import stripe from "@convex-dev/stripe/convex.config.js";
 import aggregate from "@convex-dev/aggregate/convex.config";
 import migrations from "@convex-dev/migrations/convex.config.js";
+import rag from "@convex-dev/rag/convex.config.js";
 
 const app = defineApp();
 app.use(migrations);
 app.use(stripe);
 app.use(r2);
 app.use(agent);
+app.use(rag);
 app.use(workpool, { name: "cfUploadWorkpool" });
 app.use(workpool, { name: "cfDeleteWorkpool" });
 app.use(workpool, { name: "webScraperWorkpool" });

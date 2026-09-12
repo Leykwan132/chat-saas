@@ -9,17 +9,6 @@ export function formatFileSize(bytes: number): string {
   return `${kb.toFixed(1)} KB`;
 }
 
-export function formatTimeAgo(ts: number): string {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
 /** react-drag-drop-files passes a FileList (not File[]) when multiple is enabled. */
 export function normalizeUploaderFiles(
   fileOrFiles: File | FileList | File[],
@@ -34,7 +23,7 @@ export function StatusBadge({ status }: { status?: string }) {
   if (!status || status === "completed") return null;
   switch (status) {
     case "failed":
-      return <span className="inline-flex items-center gap-1 text-xs text-red-500 shrink-0 ml-2"><X className="size-3" />Failed</span>;
+      return <span className="inline-flex items-center gap-1 text-xs text-red-500 shrink-0"><X className="size-3" />Failed</span>;
     default:
       return null;
   }

@@ -9,7 +9,7 @@ test("tool usage block follows a when/how/parameters/error handling pattern", ()
   });
 
   expect(block).toContain("## Tool Usage — REQUIRED");
-  expect(block).toContain("### `fetchCustomerQa`");
+  expect(block).not.toContain("fetchCustomerQa");
   expect(block).toContain("### `fetchContext`");
   expect(block).toContain("**When to use:**");
   expect(block).toContain("**How to use:**");
@@ -20,6 +20,9 @@ test("tool usage block follows a when/how/parameters/error handling pattern", ()
   expect(block).toContain("### Workflow-aware response order");
   expect(block).toContain("Follow every matching workflow node");
   expect(block).toContain("the backend workflow planner sends the assets separately");
+  expect(block).toContain(
+    "Call `fetchContext` with a query that describes the context you need before answering any customer question.",
+  );
 });
 
 test("tool usage block omits escalation tool instructions when escalation is unavailable", () => {
@@ -31,6 +34,8 @@ test("tool usage block omits escalation tool instructions when escalation is una
 
   expect(block).toContain("### `fetchContext`");
   expect(block).not.toContain("### `escalateToHuman`");
-  expect(block).toContain("Call `fetchCustomerQa` before answering any customer question");
-  expect(block).toContain("If it has no relevant answer, call `fetchContext`");
+  expect(block).not.toContain("fetchCustomerQa");
+  expect(block).toContain(
+    "Call `fetchContext` with a query that describes the context you need before answering any customer question.",
+  );
 });
