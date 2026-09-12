@@ -87,6 +87,7 @@
 
 # Receipts
 
+- 2026-09-12 [CODE] Removed unused `uploadWorkspaceFileToCF` so PR #147 `tsc -b` no longer fails TS6133.
 - 2026-09-12 [TOOL] PR #147 opened: https://github.com/Leykwan132/chat-saas/pull/147 (`cursor/convex-rag` → `main`).
 - 2026-09-12 [TOOL] `npx convex run rag/backfill:start` started on `outstanding-rabbit-215` (not prod). Re-embeds text/Q&A, fetches CF files into RAG, re-researches parent websites, deletes child scrape rows.
 - 2026-09-12 [CODE] Web/text/Q&A Update and Delete enqueue existing workpools, close the modal, and show row progress. Q&A delete uses `enqueueDelete`.

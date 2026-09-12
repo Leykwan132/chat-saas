@@ -2,12 +2,10 @@
 
 import { v } from "convex/values";
 import { action, internalAction } from "./_generated/server";
-import type { ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthContext } from "./authUtils";
 import { cfUploadPool, cfDeletePool } from "./workpool";
 import Cloudflare from "cloudflare";
-import { createWorkspaceExternalState } from "./teamDeletion/externalGuard";
 import { r2 } from "./media/r2";
 
 const cfAccountId = process.env.CF_ACCOUNT_ID!;
@@ -77,20 +75,6 @@ export async function deleteFromCF(cfItemId: string): Promise<void> {
   } catch (err) {
     console.warn(`Cloudflare delete warning:`, err);
   }
-}
-
-async function uploadWorkspaceFileToCF(
-  ctx: ActionCtx,
-  content: File,
-  metadata: { agent_id: string; org_id: string; user_id: string },
-): Promise<string> {
-  return await createWorkspaceExternalState(
-    ctx,
-    metadata.org_id,
-    "cloudflare",
-    async () => await uploadToCF(content, metadata),
-    deleteFromCFOrThrow,
-  );
 }
 
 // ─── Update actions ────────────────────────────────────────
