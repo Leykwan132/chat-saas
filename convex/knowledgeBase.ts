@@ -1,11 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
-import { internal, api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import { getAuthContext } from "./authUtils";
 import { getPlan, getPlanForCurrentSession } from "./plans";
 import type { Id } from "./_generated/dataModel";
 import { assertAgentAccess } from "./agentUsage";
-import { excludeConvertedWebLinks, hasParentWebUrl } from "../shared/webEntryUrl";
+import { hasParentWebUrl } from "../shared/webEntryUrl";
 import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 import { getPublicMediaUrl } from "./media/r2";
 import { Permission } from "../shared/permissions";
@@ -257,6 +257,27 @@ export const getWebEntryMarkdown = query({
   },
 });
 
+export const getFileEntryPreview = query({
+  args: { entryId: v.id("fileEntries") },
+  returns: v.object({
+    fileName: v.string(),
+    fileSize: v.number(),
+    extractedText: v.union(v.string(), v.null()),
+    previewUrl: v.union(v.string(), v.null()),
+  }),
+  handler: async (ctx, args) => {
+    const entry = await ctx.db.get(args.entryId);
+    if (entry === null) throw new Error("File entry not found");
+    await assertAgentAccess(ctx, entry.agentId);
+    return {
+      fileName: entry.fileName,
+      fileSize: entry.fileSize,
+      extractedText: entry.extractedText ?? null,
+      previewUrl: entry.previewR2Key ? getPublicMediaUrl(entry.previewR2Key) : null,
+    };
+  },
+});
+
 export const internalHasParentWebUrl = internalQuery({
   args: {
     agentId: v.id("agents"),
@@ -356,16 +377,19 @@ export const addQAEntry = mutation({
       throw new Error("Question and answer are required");
     const fileSize = new Blob([question + answer]).size;
     await assertKnowledgeBaseLimit(ctx, args.agentId, fileSize);
-    return await ctx.db.insert("qaEntries", {
+    const entryId = await ctx.db.insert("qaEntries", {
       agentId: args.agentId,
       question,
       answer,
       fileSize,
-      status: "completed",
+      status: "queued",
       userId,
       orgId,
       createdAt: Date.now(),
     });
+    console.log("[convex-rag] addQAEntry scheduled", { entryId, agentId: args.agentId, question });
+    await ctx.scheduler.runAfter(0, internal.rag.qaSync.indexQaEntry, { entryId });
+    return entryId;
   },
 });
 
@@ -389,12 +413,21 @@ export const updateQAEntry = mutation({
       table: "qaEntries",
       id: args.entryId,
     });
-    await ctx.db.patch(args.entryId, { question, answer, fileSize, cfItemId: undefined });
+    await ctx.db.patch(args.entryId, {
+      question,
+      answer,
+      fileSize,
+      cfItemId: undefined,
+      status: "queued",
+    });
     if (existing.cfItemId) {
       await ctx.scheduler.runAfter(0, internal.cloudflare.internalDeleteLegacyQaIndex, {
         cfItemId: existing.cfItemId,
       });
     }
+    await ctx.scheduler.runAfter(0, internal.rag.qaSync.indexQaEntry, {
+      entryId: args.entryId,
+    });
   },
 });
 
@@ -408,6 +441,11 @@ export const removeQAEntry = mutation({
     if (existing.cfItemId) {
       await ctx.scheduler.runAfter(0, internal.cloudflare.internalDeleteLegacyQaIndex, {
         cfItemId: existing.cfItemId,
+      });
+    }
+    if (existing.ragEntryId) {
+      await ctx.scheduler.runAfter(0, internal.rag.qaSync.removeQaFromRag, {
+        ragEntryId: existing.ragEntryId,
       });
     }
     await ctx.db.delete(args.entryId);
@@ -575,6 +613,7 @@ export const internalStoreFileEntry = internalMutation({
     fileName: v.string(),
     fileSize: v.number(),
     cfItemId: v.optional(v.string()),
+    extractedText: v.optional(v.string()),
     userId: v.string(),
     orgId: v.string(),
   },
@@ -585,6 +624,7 @@ export const internalStoreFileEntry = internalMutation({
       fileName: args.fileName,
       fileSize: args.fileSize,
       cfItemId: args.cfItemId,
+      extractedText: args.extractedText,
       userId: args.userId,
       orgId: args.orgId,
       createdAt: Date.now(),
@@ -767,13 +807,15 @@ export const internalSetStatus = internalMutation({
 export const internalCompleteTextEntry = internalMutation({
   args: {
     entryId: v.id("textEntries"),
-    cfItemId: v.string(),
+    cfItemId: v.optional(v.string()),
+    ragEntryId: v.optional(v.string()),
     fileSize: v.number(),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.entryId, {
       status: "completed",
       cfItemId: args.cfItemId,
+      ragEntryId: args.ragEntryId,
       fileSize: args.fileSize,
     });
   },
@@ -782,22 +824,45 @@ export const internalCompleteTextEntry = internalMutation({
 export const internalCompleteFileEntry = internalMutation({
   args: {
     entryId: v.id("fileEntries"),
-    cfItemId: v.string(),
+    cfItemId: v.optional(v.string()),
+    ragEntryId: v.optional(v.string()),
     fileSize: v.number(),
+    extractedText: v.optional(v.string()),
+    previewR2Key: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.entryId, {
       status: "completed",
       cfItemId: args.cfItemId,
+      ragEntryId: args.ragEntryId,
       fileSize: args.fileSize,
+      ...(args.extractedText !== undefined ? { extractedText: args.extractedText } : {}),
+      ...(args.previewR2Key !== undefined ? { previewR2Key: args.previewR2Key } : {}),
     });
+  },
+});
+
+export const internalSetFilePreview = internalMutation({
+  args: {
+    entryId: v.id("fileEntries"),
+    extractedText: v.optional(v.string()),
+    previewR2Key: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const patch: { extractedText?: string; previewR2Key?: string } = {};
+    if (args.extractedText !== undefined) patch.extractedText = args.extractedText;
+    if (args.previewR2Key !== undefined) patch.previewR2Key = args.previewR2Key;
+    await ctx.db.patch(args.entryId, patch);
+    return null;
   },
 });
 
 export const internalCompleteWebEntry = internalMutation({
   args: {
     entryId: v.id("webEntries"),
-    cfItemId: v.string(),
+    cfItemId: v.optional(v.string()),
+    ragEntryId: v.optional(v.string()),
     fileSize: v.number(),
     markdownR2Key: v.string(),
   },
@@ -807,6 +872,7 @@ export const internalCompleteWebEntry = internalMutation({
     await ctx.db.patch(args.entryId, {
       status: "completed",
       cfItemId: args.cfItemId,
+      ragEntryId: args.ragEntryId,
       fileSize: args.fileSize,
       markdownR2Key: entry.markdownR2Key ?? args.markdownR2Key,
     });
@@ -816,13 +882,15 @@ export const internalCompleteWebEntry = internalMutation({
 export const internalCompleteQAEntry = internalMutation({
   args: {
     entryId: v.id("qaEntries"),
-    cfItemId: v.string(),
+    cfItemId: v.optional(v.string()),
+    ragEntryId: v.optional(v.string()),
     fileSize: v.number(),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.entryId, {
       status: "completed",
       cfItemId: args.cfItemId,
+      ragEntryId: args.ragEntryId,
       fileSize: args.fileSize,
     });
   },
@@ -851,25 +919,46 @@ export const cfUploadComplete = internalMutation({
     const { entryId, entryType } = args.context;
 
     if (args.result.kind === "success" && args.result.returnValue) {
-      const { cfItemId, fileSize } = args.result.returnValue as { cfItemId: string; fileSize: number };
+      const { cfItemId, ragEntryId, fileSize } = args.result.returnValue as {
+        cfItemId?: string;
+        ragEntryId?: string;
+        fileSize: number;
+      };
+      console.log("[convex-rag] uploadComplete success", {
+        entryId,
+        entryType,
+        cfItemId: cfItemId ?? null,
+        ragEntryId: ragEntryId ?? null,
+        fileSize,
+      });
       switch (entryType) {
         case "text":
           await ctx.runMutation(internal.knowledgeBase.internalCompleteTextEntry, {
-            entryId: entryId as never, cfItemId, fileSize,
+            entryId: entryId as never, cfItemId, ragEntryId, fileSize,
           });
           break;
         case "file":
           await ctx.runMutation(internal.knowledgeBase.internalCompleteFileEntry, {
-            entryId: entryId as never, cfItemId, fileSize,
+            entryId: entryId as never,
+            cfItemId,
+            ragEntryId,
+            fileSize,
+            extractedText: (args.result.returnValue as { extractedText?: string }).extractedText,
+            previewR2Key: (args.result.returnValue as { previewR2Key?: string }).previewR2Key,
           });
           break;
         case "qa":
           await ctx.runMutation(internal.knowledgeBase.internalCompleteQAEntry, {
-            entryId: entryId as never, cfItemId, fileSize,
+            entryId: entryId as never, cfItemId, ragEntryId, fileSize,
           });
           break;
       }
     } else {
+      console.log("[convex-rag] uploadComplete failed", {
+        entryId,
+        entryType,
+        result: args.result,
+      });
       await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
         entryId: entryId as never,
         status: "failed",
@@ -945,13 +1034,14 @@ export const webScraperComplete = internalMutation({
     const { entryId } = args.context;
 
     if (args.result.kind === "success" && args.result.returnValue) {
-      const { cfItemId, fileSize, markdownR2Key } = args.result.returnValue as {
-        cfItemId: string;
+      const { cfItemId, ragEntryId, fileSize, markdownR2Key } = args.result.returnValue as {
+        cfItemId?: string;
+        ragEntryId?: string;
         fileSize: number;
         markdownR2Key: string;
       };
       await ctx.runMutation(internal.knowledgeBase.internalCompleteWebEntry, {
-        entryId: entryId as never, cfItemId, fileSize, markdownR2Key,
+        entryId: entryId as never, cfItemId, ragEntryId, fileSize, markdownR2Key,
       });
 
       // Check if all siblings are completed, and if so, mark parent as completed
@@ -971,59 +1061,6 @@ export const webScraperComplete = internalMutation({
         entryId: entryId as never,
         status: "failed",
       });
-    }
-  },
-});
-
-export const linkDiscovererComplete = internalMutation({
-  args: {
-    workId: v.string(),
-    context: v.object({
-      entryId: v.string(),
-      agentId: v.string(),
-      parentUrl: v.string(),
-      userId: v.string(),
-      orgId: v.string(),
-    }),
-    result: v.union(
-      v.object({ kind: v.literal("success"), returnValue: v.any() }),
-      v.object({ kind: v.literal("failed"), error: v.string() }),
-      v.object({ kind: v.literal("canceled") }),
-    ),
-  },
-  handler: async (ctx, args) => {
-    const { entryId, agentId, parentUrl, userId, orgId } = args.context;
-
-    if (args.result.kind === "success" && args.result.returnValue) {
-      const { links } = args.result.returnValue as { links: string[]; sourceUrl: string };
-      const existingEntries = await ctx.db
-      .query("webEntries")
-      .withIndex("by_agentId", (q) => q.eq("agentId", agentId as never))
-      .collect();
-      const pendingLinks = excludeConvertedWebLinks(links, existingEntries);
-
-      if (pendingLinks.length === 0) {
-        await ctx.db.delete(entryId as never);
-        return;
-      }
-
-      // Mark parent as processing while children are being scraped
-      await ctx.db.patch(entryId as never, { status: "gettingMarkdown" });
-
-      // Schedule enqueueWebScrape for each link — it handles DB insertion + workpool enqueueing
-      for (const link of pendingLinks) {
-        await ctx.scheduler.runAfter(0, api.cloudflare.enqueueWebScrape, {
-          agentId: agentId as never,
-          url: link,
-          parentUrl,
-          parentId: entryId as never,
-          userId,
-          orgId,
-        });
-      }
-    } else {
-      // On failure or cancel, mark parent as failed
-      await ctx.db.patch(entryId as never, { status: "failed" });
     }
   },
 });

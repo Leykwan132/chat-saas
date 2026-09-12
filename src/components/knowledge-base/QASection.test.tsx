@@ -26,4 +26,6 @@ test('shows common-question presets before the Q&A form', () => {
   expect(markup).not.toContain('Pricing');
   expect(markup.indexOf('Refund policy')).toBeLessThan(markup.indexOf('Add Q&amp;A'));
   expect(markup).not.toContain('Add more');
+  expect(markup).not.toContain('Pair 1');
+  expect(markup).toContain('field-sizing-content');
 });

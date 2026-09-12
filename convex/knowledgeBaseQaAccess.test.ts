@@ -24,11 +24,12 @@ test("Q&A has no public Cloudflare indexing actions", () => {
   expect(cloudflareSource).not.toContain("export const enqueueQAUpload");
 });
 
-test("the generic Cloudflare delete action cannot delete Q&A", () => {
+test("the generic delete action queues Q&A on the delete workpool", () => {
   const enqueueDeleteSource = cloudflareSource.slice(
     cloudflareSource.indexOf("export const enqueueDelete"),
-    cloudflareSource.indexOf("export const enqueueLinkDiscovery"),
+    cloudflareSource.indexOf("export const internalSearch"),
   );
-  expect(enqueueDeleteSource).not.toContain('v.id("qaEntries")');
-  expect(enqueueDeleteSource).not.toContain('v.literal("qa")');
+  expect(enqueueDeleteSource).toContain('v.id("qaEntries")');
+  expect(enqueueDeleteSource).toContain('v.literal("qa")');
+  expect(enqueueDeleteSource).toContain("cfDeletePool.enqueueAction");
 });

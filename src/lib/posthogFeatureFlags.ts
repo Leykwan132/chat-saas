@@ -2,7 +2,6 @@ import { useFeatureFlagEnabled } from '@posthog/react';
 export { isCommentToInboxUserAllowed } from '../../shared/commentToInboxAccess';
 export { isInstagramUserAllowed } from '../../shared/instagramAccess';
 export { isMessengerUserAllowed } from '../../shared/messengerAccess';
-
 export const POSTHOG_FEATURE_FLAGS = {
   showTokenUsage: 'show-token-usage',
   showSavedReplies: 'show-saved-replies',

@@ -11,15 +11,6 @@ import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 
 import {
   formatFileSize,
@@ -28,7 +19,7 @@ import {
   KnowledgeBaseEmptyState,
   type OpenDeleteDialog,
 } from './helpers';
-import { TextKnowledgeEditForm } from './TextKnowledgeEditForm';
+import { TextEntryDetails } from './TextEntryDetails';
 import { TextKnowledgeEntry } from './TextKnowledgeEntry';
 
 interface TextSectionProps {
@@ -71,7 +62,7 @@ export function TextSection({ entries, agentId, openDeleteDialog, canManage = tr
     setIsSavingText(true);
     try {
       await updateTextEntry({ entryId: editingTextEntry._id, title: editTextTitle.trim(), content: editTextContent.trim(), cfItemId: editingTextEntry.cfItemId ?? undefined });
-      toast.success("Text entry updated"); setEditingTextEntry(null);
+      toast.success("Text is now being processed"); setEditingTextEntry(null);
     } catch { toast.error("Failed to update text entry"); } finally { setIsSavingText(false); }
   };
 
@@ -102,7 +93,7 @@ export function TextSection({ entries, agentId, openDeleteDialog, canManage = tr
           <h2 className="text-sm font-semibold text-foreground mb-3">{canManage ? 'Your text' : 'Sources'}</h2>
           <div className="space-y-2">
             {inProgressEntries.map((entry: any) => (
-              <div key={entry._id} onClick={canManage ? () => openEditText(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-3 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
+              <div key={entry._id} onClick={() => openEditText(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
                   <Spinner className="size-4 shrink-0 text-yellow-500" />
                   <span className={`text-sm truncate ${entry.status === "deleting" ? "line-through opacity-50" : ""}`}>{entry.title}</span>
@@ -117,7 +108,7 @@ export function TextSection({ entries, agentId, openDeleteDialog, canManage = tr
               </div>
             ))}
             {completedEntries.map((entry: any) => (
-              <div key={entry._id} onClick={canManage ? () => openEditText(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-3 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
+              <div key={entry._id} onClick={() => openEditText(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-600"><Check className="size-2.5 text-white" /></div>
                   <span className="text-sm truncate">{entry.title}</span>
@@ -135,26 +126,23 @@ export function TextSection({ entries, agentId, openDeleteDialog, canManage = tr
         </div>
       )}
 
-      {canManage && editingTextEntry !== null ? (
-      <Sheet open={editingTextEntry !== null} onOpenChange={(open) => { if (!open) setEditingTextEntry(null); }}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Edit Text Knowledge</SheetTitle>
-            <SheetDescription>Update this text knowledge entry.</SheetDescription>
-          </SheetHeader>
-          <TextKnowledgeEditForm
-            content={editTextContent}
-            onContentChange={setEditTextContent}
-            onTitleChange={setEditTextTitle}
-            title={editTextTitle}
-          />
-          <SheetFooter className="flex flex-row justify-end gap-2">
-            <Button type="button" variant="destructive" onClick={() => { setEditingTextEntry(null); if (editingTextEntry) openDeleteDialog('text', editingTextEntry._id, editingTextEntry.cfItemId); }}><Trash2 className="size-4 mr-1" />Delete</Button>
-            <Button type="button" onClick={handleUpdateText} disabled={!editTextTitle.trim() || !editTextContent.trim() || isSavingText}>{isSavingText ? <Spinner className="size-4" /> : "Update"}</Button>
-            <SheetClose asChild><Button variant="outline">Cancel</Button></SheetClose>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      {editingTextEntry !== null ? (
+        <TextEntryDetails
+          key={editingTextEntry._id}
+          open={true}
+          onOpenChange={(open) => { if (!open) setEditingTextEntry(null); }}
+          title={editTextTitle}
+          content={editTextContent}
+          canManage={canManage}
+          isSaving={isSavingText}
+          onTitleChange={setEditTextTitle}
+          onContentChange={setEditTextContent}
+          onSave={handleUpdateText}
+          onDelete={() => {
+            setEditingTextEntry(null);
+            openDeleteDialog('text', editingTextEntry._id, editingTextEntry.cfItemId);
+          }}
+        />
       ) : null}
     </>
   );

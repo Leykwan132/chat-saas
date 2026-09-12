@@ -2,25 +2,27 @@
 
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
-import { components } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import { Workpool } from "@convex-dev/workpool";
-import {
-  uploadToCF,
-  deleteFromCFOrThrow,
-  scrapeMarkdown,
-  scrapeLinks,
-} from "./cloudflare";
+import { deleteFromCFOrThrow } from "./cloudflare";
 import {
   r2,
+  generateFilePreviewKey,
   generateKnowledgeBaseImageKey,
-  generateWebMarkdownKey,
   generateWorkflowMediaKey,
   getPublicMediaUrl,
+  knowledgeFileMimeType,
 } from "./media/r2";
 import {
   assertWorkspaceCanCreateExternalState,
   createWorkspaceExternalState,
 } from "./teamDeletion/externalGuard";
+import {
+  addKnowledgeEntryToRag,
+  deleteKnowledgeEntryFromRag,
+  knowledgeEntryPayload,
+} from "./rag/ingest";
+import { describeImageForKnowledgeBase, isImageFileName } from "./rag/imageText";
 
 // ─── Workpool instances ───────────────────────────────────
 
@@ -33,10 +35,6 @@ export const cfDeletePool = new Workpool(components.cfDeleteWorkpool, {
 });
 
 export const webScraperPool = new Workpool(components.webScraperWorkpool, {
-  maxParallelism: 1,
-});
-
-export const linkDiscovererPool = new Workpool(components.linkDiscovererWorkpool, {
   maxParallelism: 1,
 });
 
@@ -56,64 +54,67 @@ export const cfUploadWorker = internalAction({
     fileBytes: v.optional(v.bytes()),
     question: v.optional(v.string()),
     answer: v.optional(v.string()),
-    agentId: v.optional(v.string()),
+    extractedText: v.optional(v.string()),
+    agentId: v.string(),
     orgId: v.optional(v.string()),
     userId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await assertWorkspaceCanCreateExternalState(ctx, args.orgId ?? "");
-    let fileContent: File;
-    let fileSize: number;
 
-    // Use the Convex entryId as a stable unique suffix to prevent CF filename collisions
-    const uid = args.entryId.slice(-8);
+    console.log("[convex-rag] uploadWorker", {
+      entryType: args.entryType,
+      entryId: args.entryId,
+      agentId: args.agentId,
+      fileName: args.fileName ?? null,
+      title: args.title ?? null,
+      extractedChars: args.extractedText?.length ?? 0,
+    });
 
-    switch (args.entryType) {
-      case "text": {
-        const title = args.title?.trim() ?? "";
-        const content = args.content?.trim() ?? "";
-        fileContent = new File([`${title}\n\n${content}`], `${title}_${uid}.txt`, { type: "text/plain" });
-        fileSize = fileContent.size;
-        break;
-      }
-      case "file": {
-        const fileName = args.fileName ?? "";
-        const bytes = args.fileBytes ?? new ArrayBuffer(0);
-        // Insert uid before the extension: e.g. report.pdf → report_abc12345.pdf
-        const dotIdx = fileName.lastIndexOf(".");
-        const uniqueName = dotIdx > -1
-          ? `${fileName.slice(0, dotIdx)}_${uid}${fileName.slice(dotIdx)}`
-          : `${fileName}_${uid}`;
-        fileContent = new File([bytes], uniqueName);
-        fileSize = fileContent.size;
-        break;
-      }
-      case "qa": {
-        const q = args.question?.trim() ?? "";
-        const a = args.answer?.trim() ?? "";
-        const safeName = q.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
-        fileContent = new File([`Q: ${q}\nA: ${a}`], `${safeName}_${uid}.txt`, { type: "text/plain" });
-        fileSize = fileContent.size;
-        break;
-      }
-      default:
-        throw new Error(`Unknown entry type: ${args.entryType}`);
+    const needsVision = args.entryType === "file"
+      && !args.extractedText?.trim()
+      && isImageFileName(args.fileName ?? "");
+    console.log("[convex-rag] uploadWorker rag", { needsVision });
+    const extractedText = needsVision
+      ? await describeImageForKnowledgeBase(args.fileName!, args.fileBytes!)
+      : args.extractedText;
+
+    let previewR2Key: string | undefined;
+    if (args.entryType === "file" && args.fileBytes && args.fileName && args.orgId) {
+      const storedPreviewR2Key = generateFilePreviewKey(
+        args.orgId,
+        args.agentId,
+        args.entryId,
+        args.fileName,
+      );
+      previewR2Key = storedPreviewR2Key;
+      const previewBlob = new Blob([args.fileBytes], {
+        type: knowledgeFileMimeType(args.fileName),
+      });
+      await createWorkspaceExternalState(
+        ctx,
+        args.orgId,
+        "r2",
+        async () => {
+          await r2.store(ctx, previewBlob, { key: storedPreviewR2Key });
+          return storedPreviewR2Key;
+        },
+        async (createdKey) => await r2.deleteObject(ctx, createdKey),
+      );
+      await ctx.runMutation(internal.knowledgeBase.internalSetFilePreview, {
+        entryId: args.entryId as never,
+        extractedText,
+        previewR2Key,
+      });
     }
 
-    const cfItemId = await createWorkspaceExternalState(
-      ctx,
-      args.orgId ?? "",
-      "cloudflare",
-      async () =>
-        await uploadToCF(fileContent, {
-          agent_id: args.agentId ?? "",
-          org_id: args.orgId ?? "",
-          user_id: args.userId ?? "",
-        }),
-      deleteFromCFOrThrow,
-    );
-
-    return { cfItemId, fileSize };
+    const rag = await addKnowledgeEntryToRag(ctx, {
+      agentId: args.agentId,
+      entryType: args.entryType,
+      entryId: args.entryId,
+      ...knowledgeEntryPayload({ ...args, extractedText }),
+    });
+    return { ...rag, extractedText, previewR2Key };
   },
 });
 
@@ -207,85 +208,23 @@ export const workflowMediaUploadWorker = internalAction({
 export const cfDeleteWorker = internalAction({
   args: {
     cfItemId: v.optional(v.string()),
+    ragEntryId: v.optional(v.string()),
     r2Key: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    console.log("[convex-rag] deleteWorker", {
+      cfItemId: args.cfItemId ?? null,
+      ragEntryId: args.ragEntryId ?? null,
+      r2Key: args.r2Key ?? null,
+    });
     if (args.cfItemId) {
       await deleteFromCFOrThrow(args.cfItemId);
     }
+    if (args.ragEntryId) {
+      await deleteKnowledgeEntryFromRag(ctx, args.ragEntryId);
+    }
     if (args.r2Key) await r2.deleteObject(ctx, args.r2Key);
     return { deleted: true };
-  },
-});
-
-// ─── Web Scraper Worker ───────────────────────────────────
-
-export const webScraperWorker = internalAction({
-  args: {
-    entryId: v.string(),
-    url: v.string(),
-    parentUrl: v.optional(v.string()),
-    agentId: v.string(),
-    orgId: v.string(),
-    userId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await assertWorkspaceCanCreateExternalState(ctx, args.orgId);
-    const markdown = await scrapeMarkdown(args.url);
-    const uid = args.entryId.slice(-8);
-    const safeName = args.url.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
-    const markdownBlob = new File([markdown], `${safeName}_${uid}.md`, { type: "text/markdown" });
-    const fileSize = markdownBlob.size;
-
-    const cfItemId = await createWorkspaceExternalState(
-      ctx,
-      args.orgId,
-      "cloudflare",
-      async () =>
-        await uploadToCF(markdownBlob, {
-          agent_id: args.agentId,
-          org_id: args.orgId,
-          user_id: args.userId,
-        }),
-      deleteFromCFOrThrow,
-    );
-    const markdownR2Key = generateWebMarkdownKey(
-      args.orgId,
-      args.agentId,
-      args.entryId,
-    );
-    await createWorkspaceExternalState(
-      ctx,
-      args.orgId,
-      "r2",
-      async () => {
-        await r2.store(ctx, markdownBlob, { key: markdownR2Key });
-        return markdownR2Key;
-      },
-      async (createdKey) => await r2.deleteObject(ctx, createdKey),
-    );
-
-    return { url: args.url, cfItemId, fileSize, markdownR2Key };
-  },
-});
-
-// ─── Link Discoverer Worker ────────────────────────────────
-
-export const linkDiscovererWorker = internalAction({
-  args: {
-    entryId: v.string(),
-    url: v.string(),
-  },
-  handler: async (_ctx, args) => {
-    let links: string[] = [];
-    try {
-      links = await scrapeLinks(args.url);
-    } catch (err) {
-      console.warn(`Failed to scrape links from ${args.url}:`, err);
-    }
-    const uniqueLinks = [...new Set([args.url, ...links])].slice(0, 20);
-
-    return { links: uniqueLinks, sourceUrl: args.url };
   },
 });
 

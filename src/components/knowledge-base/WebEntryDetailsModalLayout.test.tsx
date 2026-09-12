@@ -10,6 +10,7 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogDescription: ({ children }: { children: ReactNode }) => createElement("p", null, children),
   DialogHeader: ({ children }: { children: ReactNode }) => createElement("div", null, children),
   DialogTitle: ({ children }: { children: ReactNode }) => createElement("h2", null, children),
+  DialogFooter: ({ children }: { children: ReactNode }) => createElement("div", null, children),
 }));
 
 import { WebEntryDetails } from "./WebEntryDetails";

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAction } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { usePostHog } from '@posthog/react';
 import {
   Upload,
@@ -9,17 +9,7 @@ import {
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { toast } from "sonner";
-import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
 import { FileUploader } from "react-drag-drop-files";
 import {
   formatFileSize,
@@ -30,13 +20,34 @@ import {
   type OpenDeleteDialog,
 } from './helpers';
 import { FileUploadDropzoneContainer } from './FileUploadDropzoneContainer';
+import { FileEntryDetails } from './FileEntryDetails';
+import {
+  extractKnowledgeBaseFileText,
+  RAG_UPLOAD_EXTENSIONS,
+} from '@/lib/knowledgeBaseFileText';
+
+type FileEntry = {
+  _id: Id<'fileEntries'>;
+  fileName: string;
+  fileSize: number;
+  status?: string;
+  cfItemId?: string;
+  extractedText?: string;
+  previewR2Key?: string;
+};
 
 interface FileSectionProps {
-  entries: any[] | undefined;
+  entries: FileEntry[] | undefined;
   agentId: Id<'agents'> | undefined;
   openDeleteDialog: OpenDeleteDialog;
   maxFileSize: number;
   canManage?: boolean;
+}
+
+function canPreviewFile(entry: FileEntry) {
+  return entry.status === "completed"
+    || Boolean(entry.extractedText?.trim())
+    || Boolean(entry.previewR2Key);
 }
 
 export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, canManage = true }: FileSectionProps) {
@@ -44,7 +55,11 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, c
   const enqueueFileUpload = useAction(api.cloudflare.enqueueFileUpload);
 
   const [, setIsSavingFile] = useState(false);
-  const [editingFileEntry, setEditingFileEntry] = useState<any | null>(null);
+  const [previewEntry, setPreviewEntry] = useState<FileEntry | null>(null);
+  const filePreview = useQuery(
+    api.knowledgeBase.getFileEntryPreview,
+    previewEntry ? { entryId: previewEntry._id } : "skip",
+  );
 
   const handleSaveFile = async (files: File[]) => {
     if (!agentId || files.length === 0) return;
@@ -53,10 +68,13 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, c
     setIsSavingFile(true);
     try {
       for (const file of files) {
+        const extractedText = await extractKnowledgeBaseFileText(file);
         const fileBytes = await file.arrayBuffer();
-        await enqueueFileUpload({ agentId, fileName: file.name, fileBytes });
+        await enqueueFileUpload({ agentId, fileName: file.name, fileBytes, extractedText });
       }
-    } catch { toast.error("Failed to save files"); } finally { setIsSavingFile(false); }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save files");
+    } finally { setIsSavingFile(false); }
   };
 
   const visibleEntries = (entries ?? []).filter(e => e.status !== "deleting");
@@ -86,7 +104,7 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, c
             }}
             multiple
             maxSize={maxFileSize}
-            types={["txt", "doc", "docx", "csv", "json"]}
+            types={RAG_UPLOAD_EXTENSIONS}
           >
             <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6 text-center hover:border-muted-foreground/50 transition-colors cursor-pointer">
               <Upload className="size-8 text-muted-foreground mb-3" />
@@ -102,8 +120,8 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, c
         <div>
           <h2 className="text-sm font-semibold text-foreground mb-3">{canManage ? 'Your files' : 'Sources'}</h2>
           <div className="space-y-2">
-            {inProgressEntries.map((entry: any) => (
-              <div key={entry._id} onClick={canManage ? () => setEditingFileEntry(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-3 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
+            {inProgressEntries.map((entry) => (
+              <div key={entry._id} onClick={canPreviewFile(entry) ? () => setPreviewEntry(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-3 ${canPreviewFile(entry) ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <Spinner className="size-4 shrink-0 text-yellow-500" />
                   <span className="text-sm truncate">{entry.fileName}</span>
@@ -117,8 +135,8 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, c
                 </div>
               </div>
             ))}
-            {completedEntries.map((entry: any) => (
-              <div key={entry._id} onClick={canManage ? () => setEditingFileEntry(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-3 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
+            {completedEntries.map((entry) => (
+              <div key={entry._id} onClick={() => setPreviewEntry(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-600"><Check className="size-2.5 text-white" /></div>
                   <span className="text-sm truncate">{entry.fileName}</span>
@@ -136,29 +154,17 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, c
         </div>
       )}
 
-      {canManage && editingFileEntry !== null ? (
-      <Sheet open={editingFileEntry !== null} onOpenChange={(open) => { if (!open) setEditingFileEntry(null); }}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>File Details</SheetTitle>
-            <SheetDescription>View file details.</SheetDescription>
-          </SheetHeader>
-          <div className="flex-1 px-6 py-4 space-y-4">
-            {editingFileEntry && (
-              <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 space-y-1.5">
-                <p className="text-sm font-medium">{editingFileEntry.fileName}</p>
-                <p className="text-xs text-muted-foreground tabular-nums">{formatFileSize(editingFileEntry.fileSize)}</p>
-              </div>
-            )}
-          </div>
-          <SheetFooter className="flex flex-row justify-end gap-2">
-            {editingFileEntry && (
-              <Button type="button" variant="destructive" onClick={() => { setEditingFileEntry(null); openDeleteDialog('file', editingFileEntry._id, editingFileEntry.cfItemId); }}><Trash2 className="size-4 mr-1" />Delete</Button>
-            )}
-            <SheetClose asChild><Button variant="outline">Cancel</Button></SheetClose>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      {previewEntry !== null ? (
+        <FileEntryDetails
+          key={previewEntry._id}
+          open={true}
+          onOpenChange={(open) => { if (!open) setPreviewEntry(null); }}
+          fileName={previewEntry.fileName}
+          fileSizeLabel={formatFileSize(previewEntry.fileSize)}
+          extractedText={filePreview?.extractedText ?? previewEntry.extractedText}
+          previewUrl={filePreview?.previewUrl}
+          isPreviewLoading={filePreview === undefined}
+        />
       ) : null}
     </>
   );

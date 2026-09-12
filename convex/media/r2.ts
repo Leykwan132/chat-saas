@@ -116,13 +116,29 @@ export function generateKnowledgeBaseImageKey(
   return `knowledge-base/${orgId}/${agentId}/${safeCollection}/${safeFileName}`;
 }
 
-export function generateWebMarkdownKey(
+export function knowledgeFileMimeType(fileName: string) {
+  const ext = fileName.trim().toLowerCase().split(".").pop() ?? "";
+  if (ext === "pdf") return "application/pdf";
+  if (ext === "png") return "image/png";
+  if (ext === "jpg" || ext === "jpeg") return "image/jpeg";
+  if (ext === "webp") return "image/webp";
+  if (ext === "gif") return "image/gif";
+  if (ext === "txt") return "text/plain";
+  if (ext === "md") return "text/markdown";
+  if (ext === "csv") return "text/csv";
+  if (ext === "json") return "application/json";
+  return "application/octet-stream";
+}
+
+export function generateFilePreviewKey(
   orgId: string,
   agentId: string,
   entryId: string,
+  fileName: string,
 ): string {
   const safeEntryId = sanitizePathSegment(entryId.trim());
-  return `knowledge-base/web-markdown/${orgId}/${agentId}/${safeEntryId}.md`;
+  const safeFileName = sanitizePathSegment(fileName.trim());
+  return `knowledge-base/file-preview/${orgId}/${agentId}/${safeEntryId}/${safeFileName}`;
 }
 
 export function buildWorkflowMediaFileName(originalFileName: string): string {
