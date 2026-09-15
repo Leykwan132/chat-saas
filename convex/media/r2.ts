@@ -127,6 +127,10 @@ export function knowledgeFileMimeType(fileName: string) {
   if (ext === "md") return "text/markdown";
   if (ext === "csv") return "text/csv";
   if (ext === "json") return "application/json";
+  if (ext === "xls") return "application/vnd.ms-excel";
+  if (ext === "xlsx") {
+    return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  }
   return "application/octet-stream";
 }
 
