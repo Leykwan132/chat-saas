@@ -92,6 +92,7 @@
 
 # Receipts
 
+- 2026-09-15 [TOOL] PR #148 opened: https://github.com/Leykwan132/chat-saas/pull/148 (`codex/fix-scroll-to-bottom` → `main`).
 - 2026-09-15 [TOOL] Production migration status: `webThreadHistoryMigration:backfillWebConversationThreads` processed 77 conversations and ended with `state: success`; a 200-message guard failure was resolved by increasing the tested bound to 1,000 and resetting the idempotent migration.
 - 2026-09-15 [TOOL] `bunx convex deploy --yes` deployed the migration to `strong-chameleon-837`; no indexes were deleted and Convex generated bindings and ran TypeScript.
 - 2026-09-15 [TOOL] `bunx vitest run --exclude '.worktrees/**' convex/webThreadHistoryMigration.test.ts convex/webWidget.test.ts src/lib/knowledgeBaseFileText.test.ts src/widget/WidgetComposer.test.ts convex/mediaR2.test.ts`: 5 files, 53 tests passed; `git diff --check` passed.
