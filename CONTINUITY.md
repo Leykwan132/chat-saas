@@ -4,8 +4,7 @@
 
 - 2026-09-11 [USER] Goal: website knowledge uses Perplexity research (markdown), stored in R2, then Convex RAG. Unshipped on `cursor/convex-rag`.
 - 2026-09-12 [CODE] Now: knowledge ingest, search, and backfill use Convex RAG instead of Cloudflare AI Search.
-- 2026-09-12 [TOOL] Next: watch prod backfill logs and Knowledge Base rows until parent websites, text/Q&A, and files settle.
-- 2026-09-12 [ASSUMPTION] Margin report is hypothetical, RM only. Server RM 117.5 + RM 141.0 knowledge = RM 258.5. Conversation = 20 messages (10 customer + 10 AI). Plan cost includes reply + workflow + analytics/lead (no separate analytics table). Worst 100% / Middle 70% / Low 30%. Free RM 0.71 / 0.50 / 0.21. Starter RM 5.89 / 4.12 / 1.77. Growth RM 23.83 / 16.68 / 7.15. Business RM 59.57 / 41.70 / 17.87.
+- 2026-09-12 [TOOL] Next: review/merge [PR #147](https://github.com/Leykwan132/chat-saas/pull/147), then run prod backfill after deploy.
 - 2026-09-11 [CODE] Milestone: partner per-org plan/agents/credits/model shipped via #145/#146; deleted-partner recovery and in-app reset shipped via #144.
 - 2026-09-10 [CODE] Milestone: Agent Setup test-chat scroll, availability presentation, and tool restoration unshipped in PR #140.
 - 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and Q&A fetch-before-search are on `main` or recent PRs; production dates UNCONFIRMED.
