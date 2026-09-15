@@ -57,4 +57,17 @@ describe("getWebThreadBackfillDecision", () => {
       }),
     ).toThrow("exceeds the safe limit");
   });
+
+  it("accepts a 201-message legacy web history", () => {
+    expect(
+      getWebThreadBackfillDecision({
+        service: "web",
+        ledgerMessages: Array.from(
+          { length: 201 },
+          () => ({ agentMessageId: undefined }),
+        ),
+        threadMessageIds: [],
+      }),
+    ).toEqual("backfill");
+  });
 });

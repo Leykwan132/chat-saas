@@ -12,7 +12,7 @@ import { inferMediaMimeType } from "./chat/mediaUrlExtractor";
 
 const migrations = new Migrations<DataModel>(components.migrations);
 
-export const MAX_WEB_THREAD_BACKFILL_MESSAGES = 200;
+export const MAX_WEB_THREAD_BACKFILL_MESSAGES = 1000;
 
 type BackfillLedgerMessage = { agentMessageId?: string };
 

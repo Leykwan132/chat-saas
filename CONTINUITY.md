@@ -12,7 +12,7 @@
 - 2026-09-09 [CODE] Milestone: Instagram Login + Comment-to-Inbox private-reply ingestion unshipped in later PRs; trigger comments do not create Inbox data.
 - 2026-09-08 [CODE] Milestone: native Kilobot onboard (D793/I009) and same-origin password reset (D794) shipped via #117.
 - 2026-09-01 [USER] White-label Partner Programme remains unshipped on `codex/white-label-partner-portal`.
-- 2026-09-15 [USER] Goal: historical Web Widget conversations must be represented in their Agent threads; validate the repair on Convex development before any production run.
+- 2026-09-15 [TOOL] Web Widget history migration completed on both Convex development and production; production processed 77 conversations successfully.
 
 # Decisions
 
@@ -73,13 +73,12 @@
 
 # Done (recent)
 
-- 2026-09-15 [TOOL] Development-only Web Widget history migration completed: 19 conversations processed successfully; orphaned Agent thread IDs are recreated and relinked before legacy messages are copied. Production untouched.
-- 2026-09-15 [CODE] Web Widget opens saved history at its first message without forcing the latest position. Unshipped.
-- 2026-09-15 [CODE] Knowledge Base accepts `.xls` and `.xlsx`, extracts every worksheet for retrieval, and preserves Excel preview content types. JSON remains accepted. Unshipped.
+- 2026-09-15 [TOOL] Web Widget history migration completed in production: 77 conversations processed successfully; orphaned Agent thread IDs are recreated and relinked before legacy messages are copied.
+- 2026-09-15 [CODE] Web Widget opens saved history at its first message without forcing the latest position. Released.
+- 2026-09-15 [CODE] Knowledge Base accepts `.xls` and `.xlsx`, extracts every worksheet for retrieval, and preserves Excel preview content types. JSON remains accepted. Released.
 - 2026-09-12 [CODE] Knowledge backfill re-embeds all text/Q&A, fetches CF files into Convex RAG, and re-researches parent websites while deleting child scrape rows. Unshipped.
 - 2026-09-12 [CODE] Knowledge Update/Delete enqueue workpools and show row progress instead of blocking the modal. Unshipped.
 - 2026-09-12 [CODE] Website markdown updates store a new unique R2 key and schedule the old object on `mediaDeletePool`. Unshipped.
-- 2026-09-12 [CODE] Website research is paid-only. Refresh was removed. Knowledge previews stay full-screen modals. Unshipped.
 
 # Working set
 
@@ -93,6 +92,9 @@
 
 # Receipts
 
+- 2026-09-15 [TOOL] Production migration status: `webThreadHistoryMigration:backfillWebConversationThreads` processed 77 conversations and ended with `state: success`; a 200-message guard failure was resolved by increasing the tested bound to 1,000 and resetting the idempotent migration.
+- 2026-09-15 [TOOL] `bunx convex deploy --yes` deployed the migration to `strong-chameleon-837`; no indexes were deleted and Convex generated bindings and ran TypeScript.
+- 2026-09-15 [TOOL] `bunx vitest run --exclude '.worktrees/**' convex/webThreadHistoryMigration.test.ts convex/webWidget.test.ts src/lib/knowledgeBaseFileText.test.ts src/widget/WidgetComposer.test.ts convex/mediaR2.test.ts`: 5 files, 53 tests passed; `git diff --check` passed.
 - 2026-09-15 [TOOL] `bunx convex dev --once` deployed the thread-history migration to `outstanding-rabbit-215` only; Convex typecheck passed and functions were ready.
 - 2026-09-15 [TOOL] Development migration status: `webThreadHistoryMigration:backfillWebConversationThreads` processed 19 conversations and ended with `state: success`.
 - 2026-09-15 [TOOL] `bunx vitest run --exclude '.worktrees/**' convex/webThreadHistoryMigration.test.ts convex/webWidget.test.ts src/lib/knowledgeBaseFileText.test.ts src/widget/WidgetComposer.test.ts convex/mediaR2.test.ts`: 5 files, 52 tests passed; `git diff --check` passed.
