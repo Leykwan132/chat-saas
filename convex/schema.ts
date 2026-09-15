@@ -1222,6 +1222,7 @@ export default defineSchema({
     leadAssignmentFallback: v.optional(v.boolean()),
     metaConversationId: v.optional(v.string()),
     threadId: v.string(),
+    threadHistoryBackfilledAt: v.optional(v.number()),
     lastMessageAt: v.number(),
     /** Last inbound (customer) message time — used for Meta messaging window checks. */
     lastCustomerMessageAt: v.optional(v.number()),

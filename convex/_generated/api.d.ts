@@ -407,6 +407,7 @@ import type * as webResearch_prompt from "../webResearch/prompt.js";
 import type * as webResearch_store from "../webResearch/store.js";
 import type * as webResearch_update from "../webResearch/update.js";
 import type * as webResearch_worker from "../webResearch/worker.js";
+import type * as webThreadHistoryMigration from "../webThreadHistoryMigration.js";
 import type * as webWidget from "../webWidget.js";
 import type * as webWidgetAccess from "../webWidgetAccess.js";
 import type * as webWidgetAdmin from "../webWidgetAdmin.js";
@@ -940,6 +941,7 @@ declare const fullApi: ApiFromModules<{
   "webResearch/store": typeof webResearch_store;
   "webResearch/update": typeof webResearch_update;
   "webResearch/worker": typeof webResearch_worker;
+  webThreadHistoryMigration: typeof webThreadHistoryMigration;
   webWidget: typeof webWidget;
   webWidgetAccess: typeof webWidgetAccess;
   webWidgetAdmin: typeof webWidgetAdmin;

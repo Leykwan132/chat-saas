@@ -4,16 +4,19 @@
 
 - 2026-09-11 [USER] Goal: website knowledge uses Perplexity research (markdown), stored in R2, then Convex RAG. Unshipped on `cursor/convex-rag`.
 - 2026-09-12 [CODE] Now: knowledge ingest, search, and backfill use Convex RAG instead of Cloudflare AI Search.
-- 2026-09-12 [TOOL] Next: review/merge [PR #147](https://github.com/Leykwan132/chat-saas/pull/147), then run prod backfill after deploy.
+- 2026-09-12 [TOOL] Next: watch prod backfill logs and Knowledge Base rows until parent websites, text/Q&A, and files settle.
+- 2026-09-12 [ASSUMPTION] Margin report is hypothetical, RM only. Server RM 117.5 + RM 141.0 knowledge = RM 258.5. Conversation = 20 messages (10 customer + 10 AI). Plan cost includes reply + workflow + analytics/lead (no separate analytics table). Worst 100% / Middle 70% / Low 30%. Free RM 0.71 / 0.50 / 0.21. Starter RM 5.89 / 4.12 / 1.77. Growth RM 23.83 / 16.68 / 7.15. Business RM 59.57 / 41.70 / 17.87.
 - 2026-09-11 [CODE] Milestone: partner per-org plan/agents/credits/model shipped via #145/#146; deleted-partner recovery and in-app reset shipped via #144.
 - 2026-09-10 [CODE] Milestone: Agent Setup test-chat scroll, availability presentation, and tool restoration unshipped in PR #140.
 - 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and Q&A fetch-before-search are on `main` or recent PRs; production dates UNCONFIRMED.
 - 2026-09-09 [CODE] Milestone: Instagram Login + Comment-to-Inbox private-reply ingestion unshipped in later PRs; trigger comments do not create Inbox data.
 - 2026-09-08 [CODE] Milestone: native Kilobot onboard (D793/I009) and same-origin password reset (D794) shipped via #117.
 - 2026-09-01 [USER] White-label Partner Programme remains unshipped on `codex/white-label-partner-portal`.
+- 2026-09-15 [USER] Goal: historical Web Widget conversations must be represented in their Agent threads; validate the repair on Convex development before any production run.
 
 # Decisions
 
+- 2026-09-15 [USER] D811 ACTIVE: conversations, including Web Widget visitor history and AI replies, live in Agent threads. The ledger remains only as channel delivery/audit metadata during this migration.
 - 2026-09-12 [USER] D810 ACTIVE: knowledge backfill moves off Cloudflare AI Search. Text and Q&A are re-embedded from Convex fields. Parent websites are re-researched with Perplexity and replace the old row (child scrape URLs are deleted). Files are downloaded from CF when needed, stored in R2/RAG, then the CF item is queued for delete. CF chunks are the fallback when a file has no extracted text.
 - 2026-09-11 [USER] D805 ACTIVE: Convex RAG is the knowledge-base backend for every workspace (web, file, text, Q&A). Retrieval is one `fetchContext` path; `fetchCustomerQa` is removed. PostHog `enable_convex_rag` (ID 879759) is deleted and there is no email allowlist.
 - 2026-09-11 [USER] D809 ACTIVE: website knowledge is researched with Perplexity Agent API (`PERPLEXITY_API_KEY`, model `perplexity/deepseek-v4-flash-0731`, web_search + fetch_url, max_steps 5). Output is Markdown stored in R2; embeddings still use Cloudflare Workers AI. Cloudflare Browser Rendering is not used for websites.
@@ -70,13 +73,13 @@
 
 # Done (recent)
 
+- 2026-09-15 [TOOL] Development-only Web Widget history migration completed: 19 conversations processed successfully; orphaned Agent thread IDs are recreated and relinked before legacy messages are copied. Production untouched.
+- 2026-09-15 [CODE] Web Widget opens saved history at its first message without forcing the latest position. Unshipped.
+- 2026-09-15 [CODE] Knowledge Base accepts `.xls` and `.xlsx`, extracts every worksheet for retrieval, and preserves Excel preview content types. JSON remains accepted. Unshipped.
 - 2026-09-12 [CODE] Knowledge backfill re-embeds all text/Q&A, fetches CF files into Convex RAG, and re-researches parent websites while deleting child scrape rows. Unshipped.
 - 2026-09-12 [CODE] Knowledge Update/Delete enqueue workpools and show row progress instead of blocking the modal. Unshipped.
 - 2026-09-12 [CODE] Website markdown updates store a new unique R2 key and schedule the old object on `mediaDeletePool`. Unshipped.
 - 2026-09-12 [CODE] Website research is paid-only. Refresh was removed. Knowledge previews stay full-screen modals. Unshipped.
-- 2026-09-11 [CODE] Website ingest uses Perplexity markdown research, R2 storage, then Convex RAG. Feature flag removed. Unshipped.
-- 2026-09-11 [CODE] Partner per-org entitlements shipped via #145/#146; deleted-partner recovery and in-app reset shipped via #144.
-- 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and availability checks are on `main`.
 
 # Working set
 
@@ -84,9 +87,19 @@
 - 2026-09-12 [CODE] `convex/webResearch/{enqueue,update,persist,worker,prompt,markdown,markdownKey}.ts`
 - 2026-09-12 [CODE] `src/components/knowledge-base/{WebSection,WebKnowledgeModal,WebEntryDetails,TextEntryDetails,QAEntryDetails,FileEntryDetails}.tsx`
 - 2026-09-12 [CODE] `src/components/knowledge-base/{FileSection,FileEntryDetails}.tsx`, `src/lib/knowledgeBaseFileText.ts`
+- 2026-09-15 [CODE] `src/widget/{WidgetMessageScroller.tsx,WidgetComposer.test.ts}`
+- 2026-09-15 [CODE] `convex/media/{r2.ts}`, `convex/mediaR2.test.ts`, `package.json`, `bun.lock`
+- 2026-09-15 [CODE] `convex/{webThreadHistoryMigration.ts,webThreadHistoryMigration.test.ts,schema.ts}`
 
 # Receipts
 
+- 2026-09-15 [TOOL] `bunx convex dev --once` deployed the thread-history migration to `outstanding-rabbit-215` only; Convex typecheck passed and functions were ready.
+- 2026-09-15 [TOOL] Development migration status: `webThreadHistoryMigration:backfillWebConversationThreads` processed 19 conversations and ended with `state: success`.
+- 2026-09-15 [TOOL] `bunx vitest run --exclude '.worktrees/**' convex/webThreadHistoryMigration.test.ts convex/webWidget.test.ts src/lib/knowledgeBaseFileText.test.ts src/widget/WidgetComposer.test.ts convex/mediaR2.test.ts`: 5 files, 52 tests passed; `git diff --check` passed.
+- 2026-09-15 [TOOL] `bunx vitest run src/lib/knowledgeBaseFileText.test.ts src/widget/WidgetComposer.test.ts convex/mediaR2.test.ts`: 5 files, 98 tests passed.
+- 2026-09-15 [TOOL] `bunx vitest run src/widget/WidgetComposer.test.ts`: 3 files, 95 tests passed after the saved-history scroll regression test.
+- 2026-09-12 [TOOL] Margin canvas switched to hypothetical tokens only; live PostHog mix removed. Canvas: `kilobot-plan-base-cost.canvas.tsx`.
+- 2026-09-12 [TOOL] `npx convex run --prod rag/backfill:start` started after #147 deploy. Watch logs and Knowledge Base rows.
 - 2026-09-12 [CODE] Removed unused `uploadWorkspaceFileToCF` so PR #147 `tsc -b` no longer fails TS6133.
 - 2026-09-12 [TOOL] PR #147 opened: https://github.com/Leykwan132/chat-saas/pull/147 (`cursor/convex-rag` → `main`).
 - 2026-09-12 [TOOL] `npx convex run rag/backfill:start` started on `outstanding-rabbit-215` (not prod). Re-embeds text/Q&A, fetches CF files into RAG, re-researches parent websites, deletes child scrape rows.

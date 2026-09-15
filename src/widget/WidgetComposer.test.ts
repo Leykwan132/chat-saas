@@ -105,14 +105,12 @@ test("widget transcript uses the Message Scroller primitive through its local ad
   expect(widgetSource).not.toContain('from "@/components/ui/message-scroller"');
 });
 
-test("widget transcript always follows the latest content", () => {
+test("widget keeps saved history at its first message when the chat opens", () => {
   expect(messageScrollerSource).toContain("autoScroll");
-  expect(messageScrollerSource).toContain("useLayoutEffect");
-  expect(messageScrollerSource).toContain("useMessageScroller");
-  expect(messageScrollerSource).toContain(
-    'scrollToEnd({ behavior: "auto" })',
-  );
-  expect(messageScrollerSource).not.toContain("defaultScrollPosition");
+  expect(messageScrollerSource).toContain('defaultScrollPosition="start"');
+  expect(messageScrollerSource).not.toContain("useLayoutEffect");
+  expect(messageScrollerSource).not.toContain("useMessageScroller");
+  expect(messageScrollerSource).not.toContain("scrollToEnd");
   expect(messageScrollerSource).not.toContain("<MessageScroller.Button");
   expect(messageScrollerSource).not.toContain("scrollAnchor=");
   expect(widgetStyles).not.toContain(".messages-latest");

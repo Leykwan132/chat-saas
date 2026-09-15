@@ -1,6 +1,12 @@
 export const PLAIN_TEXT_EXTENSIONS = ["txt", "md", "csv", "json"] as const;
+export const EXCEL_EXTENSIONS = ["xls", "xlsx"] as const;
 export const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "gif"] as const;
-export const RAG_UPLOAD_EXTENSIONS = ["pdf", ...PLAIN_TEXT_EXTENSIONS, ...IMAGE_EXTENSIONS];
+export const RAG_UPLOAD_EXTENSIONS = [
+  "pdf",
+  ...PLAIN_TEXT_EXTENSIONS,
+  ...EXCEL_EXTENSIONS,
+  ...IMAGE_EXTENSIONS,
+];
 
 export function fileExtension(fileName: string) {
   return fileName.trim().toLowerCase().split(".").pop() ?? "";
@@ -8,6 +14,10 @@ export function fileExtension(fileName: string) {
 
 export function isPlainTextFile(fileName: string) {
   return (PLAIN_TEXT_EXTENSIONS as readonly string[]).includes(fileExtension(fileName));
+}
+
+export function isExcelFile(fileName: string) {
+  return (EXCEL_EXTENSIONS as readonly string[]).includes(fileExtension(fileName));
 }
 
 export function isImageFile(fileName: string) {
@@ -43,9 +53,26 @@ async function extractPdfText(file: File) {
   return pages.filter(Boolean).join("\n\n");
 }
 
+async function extractExcelText(file: File) {
+  const { read, utils } = await import("xlsx");
+  const workbook = read(await file.arrayBuffer(), { type: "array" });
+
+  return workbook.SheetNames.map((sheetName) => {
+    const text = utils.sheet_to_csv(workbook.Sheets[sheetName]).trim();
+    return text ? `${sheetName}\n${text}` : "";
+  })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 export async function extractKnowledgeBaseFileText(file: File): Promise<string | undefined> {
   if (isImageFile(file.name)) return undefined;
   if (isPlainTextFile(file.name)) return (await file.text()).trim();
+  if (isExcelFile(file.name)) {
+    const text = (await extractExcelText(file)).trim();
+    if (!text) throw new Error(`${file.name} has no readable worksheet data.`);
+    return text;
+  }
   if (fileExtension(file.name) === "pdf") {
     const text = (await extractPdfText(file)).trim();
     if (!text) {
