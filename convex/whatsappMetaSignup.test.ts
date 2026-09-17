@@ -50,9 +50,15 @@ describe("WhatsApp Meta asset selection", () => {
       response: { data: { granular_scopes: [] } },
       count: 0,
     },
-    {
-      name: "multiple WABA targets",
-      response: {
+  ])("rejects $name", ({ response, count }) => {
+    expect(() => selectSingleWhatsAppBusinessAccountId(response)).toThrow(
+      `Expected Meta to authorize exactly one WhatsApp Business Account, received ${count}.`,
+    );
+  });
+
+  test("uses the first WABA when Meta authorizes multiple accounts", () => {
+    expect(
+      selectSingleWhatsAppBusinessAccountId({
         data: {
           granular_scopes: [
             {
@@ -61,13 +67,8 @@ describe("WhatsApp Meta asset selection", () => {
             },
           ],
         },
-      },
-      count: 2,
-    },
-  ])("rejects $name", ({ response, count }) => {
-    expect(() => selectSingleWhatsAppBusinessAccountId(response)).toThrow(
-      `Expected Meta to authorize exactly one WhatsApp Business Account, received ${count}.`,
-    );
+      }),
+    ).toBe("waba-1");
   });
 
   test("deduplicates the same WABA across granular scopes", () => {
@@ -167,6 +168,7 @@ test("Meta signup client exchanges the code and discovers one backend-owned asse
   });
   expect(assets).toEqual({
     wabaId: "waba-123",
+    wabaIds: ["waba-123"],
     phoneNumber: {
       id: "phone-123",
       display_phone_number: "+1 555 078 3881",

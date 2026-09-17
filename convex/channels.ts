@@ -336,6 +336,7 @@ export const internalUpsertWhatsApp = internalMutation({
   args: {
     orgId: v.string(),
     wabaId: v.string(),
+    wabaIds: v.array(v.string()),
     phoneNumberId: v.string(),
     displayPhoneNumber: v.optional(v.string()),
     displayUsername: v.optional(v.string()),
@@ -354,6 +355,7 @@ async function upsertWhatsAppChannel(
   args: {
     orgId: string;
     wabaId: string;
+    wabaIds: string[];
     phoneNumberId: string;
     displayPhoneNumber?: string;
     displayUsername?: string;
@@ -376,6 +378,7 @@ async function upsertWhatsAppChannel(
   const existing = channels.find((c) => c.orgId === args.orgId) ?? null;
   const patch = {
     wabaId: args.wabaId,
+    wabaIds: args.wabaIds,
     phoneNumberId: args.phoneNumberId,
     displayPhoneNumber: args.displayPhoneNumber,
     displayUsername: args.displayUsername,
@@ -437,6 +440,7 @@ export const internalStartPending = internalMutation({
   args: {
     orgId: v.string(),
     wabaId: v.string(),
+    wabaIds: v.array(v.string()),
     phoneNumberId: v.string(),
     connectedByUserId: v.string(),
     agentId: v.optional(v.id("agents")),
@@ -513,6 +517,7 @@ export const internalStartPending = internalMutation({
         orgId: args.orgId,
         service: "whatsapp",
         wabaId: args.wabaId,
+        wabaIds: args.wabaIds,
         phoneNumberId: args.phoneNumberId,
         status: "pending",
         progressStep: "linking",
@@ -533,6 +538,7 @@ export const internalStartPending = internalMutation({
     await ctx.db.patch(existing._id, {
       orgId: args.orgId,
       wabaId: args.wabaId,
+      wabaIds: args.wabaIds,
       phoneNumberId: args.phoneNumberId,
       status: "pending",
       progressStep: "linking",

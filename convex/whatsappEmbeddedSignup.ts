@@ -112,6 +112,7 @@ export const internalUpdateConnectionAttempt = internalMutation({
   args: {
     attemptId: v.id("whatsappConnectionAttempts"),
     wabaId: v.optional(v.string()),
+    wabaIds: v.optional(v.array(v.string())),
     phoneNumberId: v.optional(v.string()),
     channelId: v.optional(v.id("channels")),
     status: v.optional(
@@ -140,6 +141,7 @@ export const internalUpdateConnectionAttempt = internalMutation({
     }
     await ctx.db.patch(args.attemptId, {
       ...(args.wabaId !== undefined ? { wabaId: args.wabaId } : {}),
+      ...(args.wabaIds !== undefined ? { wabaIds: args.wabaIds } : {}),
       ...(args.phoneNumberId !== undefined
         ? { phoneNumberId: args.phoneNumberId }
         : {}),

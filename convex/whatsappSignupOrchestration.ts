@@ -14,6 +14,7 @@ type CompletionInput = {
 
 type AttemptPatch = {
   wabaId?: string;
+  wabaIds?: string[];
   phoneNumberId?: string;
   channelId?: Id<"channels">;
   status: "signup_finished" | "token_ready";
@@ -21,6 +22,7 @@ type AttemptPatch = {
 
 type PendingChannelInput = {
   wabaId: string;
+  wabaIds: string[];
   phoneNumberId: string;
   agentId?: Id<"agents">;
 };
@@ -57,7 +59,6 @@ export async function runServerOwnedWhatsAppSignup(
     failedStage = "code_exchange";
     dependencies.reportStage("code_exchange_started");
     const token = await dependencies.exchangeAuthorizationCode(input.code);
-    console.log("[whatsapp-connect]:token_exchange", token);
     dependencies.reportStage("code_exchange_completed", {
       tokenType: token.token_type,
       expiresIn: token.expires_in,
@@ -76,6 +77,7 @@ export async function runServerOwnedWhatsAppSignup(
     failedStage = "attempt_signup_finished";
     await dependencies.updateAttempt({
       wabaId: assets.wabaId,
+      wabaIds: assets.wabaIds,
       phoneNumberId,
       status: "signup_finished",
     });
@@ -83,6 +85,7 @@ export async function runServerOwnedWhatsAppSignup(
     failedStage = "pending_channel";
     const pendingChannelId = await dependencies.startPendingChannel({
       wabaId: assets.wabaId,
+      wabaIds: assets.wabaIds,
       phoneNumberId,
       ...(input.agentId !== undefined ? { agentId: input.agentId } : {}),
     });
@@ -101,6 +104,7 @@ export async function runServerOwnedWhatsAppSignup(
     const channelId = await dependencies.persistChannel({
       orgId: input.orgId,
       wabaId: assets.wabaId,
+      wabaIds: assets.wabaIds,
       phoneNumberId,
       ...(assets.phoneNumber.display_phone_number !== undefined
         ? { displayPhoneNumber: assets.phoneNumber.display_phone_number }
@@ -119,6 +123,7 @@ export async function runServerOwnedWhatsAppSignup(
     failedStage = "attempt_token_ready";
     await dependencies.updateAttempt({
       wabaId: assets.wabaId,
+      wabaIds: assets.wabaIds,
       phoneNumberId,
       channelId,
       status: "token_ready",

@@ -118,6 +118,7 @@ export async function completeWhatsAppSignup(
           {
             orgId: channelOrgId,
             wabaId: assets.wabaId,
+            wabaIds: assets.wabaIds,
             phoneNumberId: assets.phoneNumberId,
             connectedByUserId: userId,
             ...(assets.agentId !== undefined
