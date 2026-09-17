@@ -280,6 +280,14 @@ export const disconnect = mutation({
       status: "disconnected",
       accessToken: undefined,
       tokenExpiresAt: undefined,
+      historySyncStatus: undefined,
+      historySyncProgress: undefined,
+      historySyncPhase: undefined,
+      historySyncChunkOrder: undefined,
+      historySyncCompletedBatchCount: undefined,
+      historySyncTotalBatchCount: undefined,
+      historySyncUpdatedAt: undefined,
+      historySyncError: undefined,
       updatedAt: Date.now(),
     });
     return null;
@@ -1176,6 +1184,17 @@ async function cleanupChannelData(
   }
 
   await deleteWhatsAppHistoryStagingForChannel(ctx, channelId);
+  for (const syncType of ["smb_app_state_sync", "history"] as const) {
+    const syncRequest = await ctx.db
+      .query("whatsappSyncRequests")
+      .withIndex("by_channelId_and_syncType", (q) =>
+        q.eq("channelId", channelId).eq("syncType", syncType),
+      )
+      .unique();
+    if (syncRequest !== null) {
+      await ctx.db.delete(syncRequest._id);
+    }
+  }
 }
 
 async function disconnectChannelRow(
@@ -1188,6 +1207,14 @@ async function disconnectChannelRow(
     status: "disconnected",
     accessToken: undefined,
     tokenExpiresAt: undefined,
+    historySyncStatus: undefined,
+    historySyncProgress: undefined,
+    historySyncPhase: undefined,
+    historySyncChunkOrder: undefined,
+    historySyncCompletedBatchCount: undefined,
+    historySyncTotalBatchCount: undefined,
+    historySyncUpdatedAt: undefined,
+    historySyncError: undefined,
     lastError: undefined,
     progressStep: undefined,
     updatedAt: Date.now(),
