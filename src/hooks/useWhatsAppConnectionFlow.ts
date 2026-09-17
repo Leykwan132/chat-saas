@@ -26,7 +26,8 @@ export function useWhatsAppConnectionFlow({
 }) {
   const navigate = useNavigate();
   const posthog = usePostHog();
-  const { agentId } = useParams();
+  const { agentId: routeAgentId } = useParams();
+  const agentId = routeAgentId as Id<'agents'> | undefined;
   const completeSignup = useAction(api.whatsappEmbeddedSignup.completeSignup);
   const beginConnectionAttempt = useMutation(
     api.whatsappEmbeddedSignup.beginConnectionAttempt,
