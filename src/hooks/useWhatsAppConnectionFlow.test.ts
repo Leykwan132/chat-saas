@@ -32,7 +32,7 @@ vi.mock('convex/react', () => ({
 
 vi.mock('react-router', () => ({
   useNavigate: () => vi.fn(),
-  useParams: () => ({}),
+  useParams: () => ({ agentId: 'agent-1' }),
 }));
 
 vi.mock('@posthog/react', () => ({ usePostHog: () => undefined }));
@@ -61,4 +61,5 @@ test('cancels the started attempt when Meta returns an unknown response without 
   await Promise.resolve();
 
   expect(mocks.cancelConnectionAttempt).toHaveBeenCalledWith({ attemptId: 'attempt-1' });
+  expect(mocks.beginConnectionAttempt).toHaveBeenCalledWith({ agentId: 'agent-1' });
 });
