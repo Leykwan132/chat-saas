@@ -19,7 +19,7 @@ async function createAuthenticatedFixture(subject: string) {
       templateKey: "blank",
       fileSize: 0,
       userId: subject,
-      orgId: "personal",
+      orgId: "",
       createdAt: 1_700_000_000_000,
       updatedAt: 1_700_000_000_000,
     });
@@ -46,14 +46,17 @@ test("beginConnectionAttempt creates an attempt without client agent context", a
   expect(attempt?.phoneNumberId).toBeUndefined();
 });
 
-test("beginConnectionAttempt rejects client-supplied agent context", async () => {
-  const { authed, agentId } = await createAuthenticatedFixture("user-owner");
+test("beginConnectionAttempt persists the initiating workspace agent", async () => {
+  const { t, authed, agentId } = await createAuthenticatedFixture("user-owner");
 
-  await expect(
-    authed.mutation(api.whatsappEmbeddedSignup.beginConnectionAttempt, {
-      agentId: agentId as never,
-    }),
-  ).rejects.toThrow(/agentId/);
+  const attemptId = await authed.mutation(
+    api.whatsappEmbeddedSignup.beginConnectionAttempt,
+    { agentId },
+  );
+
+  expect(await t.run(async (ctx) => await ctx.db.get(attemptId))).toMatchObject({
+    agentId,
+  });
 });
 
 test("beginConnectionAttempt rejects a second open attempt", async () => {

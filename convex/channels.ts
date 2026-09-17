@@ -194,7 +194,9 @@ async function resolveDefaultAgentIdForChannel(
 ): Promise<Id<"agents"> | undefined> {
   const userAgent = await ctx.db
     .query("agents")
-    .withIndex("by_userId", (q) => q.eq("userId", args.connectedByUserId))
+    .withIndex("by_userId_and_orgId", (q) =>
+      q.eq("userId", args.connectedByUserId).eq("orgId", args.channelOrgId),
+    )
     .order("desc")
     .first();
   if (userAgent !== null) {

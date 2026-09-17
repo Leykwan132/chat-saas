@@ -247,7 +247,9 @@ export function useWhatsAppConnectionFlow({
     console.info('[whatsapp-connect] creating connection attempt', {
       agentId,
     });
-    connectionAttemptPromiseRef.current = beginConnectionAttempt({})
+    connectionAttemptPromiseRef.current = beginConnectionAttempt(
+      agentId === undefined ? {} : { agentId },
+    )
       .then((attemptId) => {
         console.info('[whatsapp-connect] connection attempt created', {
           attemptId,
