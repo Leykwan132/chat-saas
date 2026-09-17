@@ -25,6 +25,7 @@ export type TokenExchangeResponse = {
 
 export type WhatsAppMetaSignupAssets = {
   wabaId: string;
+  wabaIds: string[];
   phoneNumber: WhatsAppPhoneNumber;
 };
 
@@ -115,13 +116,24 @@ export function selectSingleWhatsAppBusinessAccountId(
       .flatMap((scope) => scope.target_ids ?? [])
       .filter((targetId) => targetId.length > 0) ?? [],
   );
-  if (targetIds.size !== 1) {
+  if (targetIds.size === 0) {
     console.warn("[whatsapp-connect]:invalid_waba_authorization", response.data);
     throw new Error(
       `Expected Meta to authorize exactly one WhatsApp Business Account, received ${targetIds.size}.`,
     );
   }
   return [...targetIds][0];
+}
+
+export function selectWhatsAppBusinessAccountIds(
+  response: DebugTokenResponse,
+): string[] {
+  return [...new Set(
+    response.data?.granular_scopes
+      ?.filter((scope) => scope.scope === "whatsapp_business_management")
+      .flatMap((scope) => scope.target_ids ?? [])
+      .filter((targetId) => targetId.length > 0) ?? [],
+  )];
 }
 
 export function selectSingleWhatsAppPhoneNumber(
@@ -167,6 +179,7 @@ export function createWhatsAppMetaSignupClient({
         { headers: { Authorization: `Bearer ${appId}|${appSecret}` } },
         "Token inspection",
       );
+      const wabaIds = selectWhatsAppBusinessAccountIds(debugToken);
       const wabaId = selectSingleWhatsAppBusinessAccountId(debugToken);
       const phoneUrl = new URL(`${graphBase}/${wabaId}/phone_numbers`);
       phoneUrl.searchParams.set(
@@ -181,6 +194,7 @@ export function createWhatsAppMetaSignupClient({
       );
       return {
         wabaId,
+        wabaIds,
         phoneNumber: selectSingleWhatsAppPhoneNumber(phoneNumbers),
       };
     },

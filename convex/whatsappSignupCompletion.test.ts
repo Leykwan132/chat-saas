@@ -28,6 +28,7 @@ function createCompletionFixture() {
       state.events.push(`discover:${accessToken}`);
       return {
         wabaId: "waba-123",
+        wabaIds: ["waba-123"],
         phoneNumber: {
           id: "phone-123",
           display_phone_number: "+1 555 078 3881",
@@ -86,6 +87,7 @@ test("discovers Meta assets before persisting the backend token and returns stat
   expect(state.channel).toEqual({
     orgId: "org-123",
     wabaId: "waba-123",
+    wabaIds: ["waba-123"],
     phoneNumberId: "phone-123",
     displayPhoneNumber: "+1 555 078 3881",
     displayUsername: "Wati",
