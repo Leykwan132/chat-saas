@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   createWhatsAppMetaSignupClient,
   selectFirstMetaAppCredentials,
@@ -68,6 +68,31 @@ describe("WhatsApp Meta asset selection", () => {
     expect(() => selectSingleWhatsAppBusinessAccountId(response)).toThrow(
       `Expected Meta to authorize exactly one WhatsApp Business Account, received ${count}.`,
     );
+  });
+
+  test("logs Meta granular scopes when multiple WABAs are authorized", () => {
+    const granularScopes = [
+      {
+        scope: "whatsapp_business_management",
+        target_ids: ["waba-1", "waba-2"],
+      },
+    ];
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    expect(() =>
+      selectSingleWhatsAppBusinessAccountId({
+        data: { granular_scopes: granularScopes },
+      }),
+    ).toThrow("Expected Meta to authorize exactly one WhatsApp Business Account, received 2.");
+
+    expect(warn).toHaveBeenCalledWith(
+      "[whatsapp-connect]:multiple_waba_authorized",
+      {
+        granularScopes,
+        targetIds: ["waba-1", "waba-2"],
+      },
+    );
+    warn.mockRestore();
   });
 
   test("deduplicates the same WABA across granular scopes", () => {

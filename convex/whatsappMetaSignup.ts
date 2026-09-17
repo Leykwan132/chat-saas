@@ -116,6 +116,10 @@ export function selectSingleWhatsAppBusinessAccountId(
       .filter((targetId) => targetId.length > 0) ?? [],
   );
   if (targetIds.size !== 1) {
+    console.warn("[whatsapp-connect]:multiple_waba_authorized", {
+      granularScopes: response.data?.granular_scopes ?? [],
+      targetIds: [...targetIds],
+    });
     throw new Error(
       `Expected Meta to authorize exactly one WhatsApp Business Account, received ${targetIds.size}.`,
     );
