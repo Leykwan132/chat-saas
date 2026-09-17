@@ -26,6 +26,7 @@ export async function widgetDashboardConfig(
   const branding = resolveWebWidgetBranding(
     settings,
     planState.canUseCustomIcon,
+    planState.isPartnerManaged,
   );
   return {
     channelId: settings.channelId,
@@ -45,6 +46,7 @@ export async function widgetDashboardConfig(
     iconUrl: await resolveWidgetIconUrl(ctx, settings, true),
     ...branding,
     canUseCustomIcon: true,
+    isPartnerManaged: planState.isPartnerManaged,
     ...normalizeWebWidgetExperience(settings),
     traditional: await traditionalDashboardConfig(
       ctx,

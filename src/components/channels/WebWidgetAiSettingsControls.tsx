@@ -16,6 +16,7 @@ type WebWidgetAiSettingsControlsProps = {
   canSaveAppearance: boolean;
   canSaveLeadForm: boolean;
   canUseCustomIcon: boolean;
+  isPartnerManaged: boolean;
   hidePoweredBy: boolean;
   iconUrl?: string;
   leadForm: WebWidgetLeadForm;
@@ -54,6 +55,7 @@ export function WebWidgetAiSettingsControls({
   canSaveAppearance,
   canSaveLeadForm,
   canUseCustomIcon,
+  isPartnerManaged,
   hidePoweredBy,
   iconUrl,
   leadForm,
@@ -95,6 +97,7 @@ export function WebWidgetAiSettingsControls({
               savedAgentDisplayName={savedAgentDisplayName}
               canSaveAppearance={canSaveAppearance}
               canUseCustomIcon={canUseCustomIcon}
+              isPartnerManaged={isPartnerManaged}
               canHideBranding={canHideBranding}
               hidePoweredBy={hidePoweredBy}
               iconUrl={iconUrl}
@@ -157,7 +160,7 @@ export function WebWidgetAiSettingsControls({
           leadForm={leadForm}
           suggestions={suggestions}
           suggestionsEnabled={suggestionsEnabled}
-          poweredBy={!canHideBranding || !hidePoweredBy}
+          poweredBy={!isPartnerManaged && (!canHideBranding || !hidePoweredBy)}
           theme={theme}
         />
       </div>

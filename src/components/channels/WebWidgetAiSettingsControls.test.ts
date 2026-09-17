@@ -51,6 +51,11 @@ test("AI-powered appearance keeps branding in the left column without helper cop
   expect(appearanceSource).toContain("Save appearance");
 });
 
+test("partner-managed AI-powered settings omit Kilobot branding controls", () => {
+  expect(appearanceSource).toContain("isPartnerManaged");
+  expect(appearanceSource).toContain("!isPartnerManaged ? (");
+});
+
 test("AI-powered visitor forms configure standard and custom details", () => {
   expect(leadFormSource).toContain(
     '<Badge className="bg-emerald-600 text-white hover:bg-emerald-600">',

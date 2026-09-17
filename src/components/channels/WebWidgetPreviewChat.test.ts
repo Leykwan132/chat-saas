@@ -131,7 +131,7 @@ test("dashboard preview confirms a chat reset before clearing messages", () => {
 
 test("dashboard preview places required Kilobot branding beneath its prompt", () => {
   expect(settingsControlsSource).toContain(
-    "poweredBy={!canHideBranding || !hidePoweredBy}",
+    "poweredBy={!isPartnerManaged && (!canHideBranding || !hidePoweredBy)}",
   );
   expect(previewChatSource).toContain("poweredBy");
   expect(previewChatSource).toContain("Powered by");

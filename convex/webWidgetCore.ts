@@ -2,6 +2,7 @@ import type { QueryCtx, MutationCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { deleteConversationAgentThread } from "./channelAgentThreadCleanup";
 import { getTeamStripePlanHelper } from "./plans";
+import { getPartnerOrganizationForOrgId } from "./entitlementScope";
 import { normalizeWebWidgetLayout } from "../shared/webWidgetLayouts";
 import { normalizeWebWidgetTheme } from "../shared/webWidgetThemes";
 import { normalizeWebWidgetExperience } from "../shared/webWidgetExperience";
@@ -78,13 +79,17 @@ export async function getWebWidgetPlanState(
   ctx: QueryCtx | MutationCtx,
   args: { orgId: string; userId: string },
 ) {
-  const stripeInfo = await getTeamStripePlanHelper(ctx, {
-    workosOrgId: args.orgId,
-    userId: args.userId,
-  });
+  const [stripeInfo, partnerOrganization] = await Promise.all([
+    getTeamStripePlanHelper(ctx, {
+      workosOrgId: args.orgId,
+      userId: args.userId,
+    }),
+    getPartnerOrganizationForOrgId(ctx, args.orgId),
+  ]);
   return {
     plan: stripeInfo.plan,
     canUseCustomIcon: stripeInfo.plan !== "free",
+    isPartnerManaged: partnerOrganization?.status === "active",
   };
 }
 
@@ -102,10 +107,13 @@ export async function resolveWidgetIconUrl(
 export function resolveWebWidgetBranding(
   settings: Pick<Doc<"webWidgetSettings">, "hidePoweredBy">,
   canHideBranding: boolean,
+  isPartnerManaged = false,
 ) {
-  const hidePoweredBy = canHideBranding && (settings.hidePoweredBy ?? true);
+  const hidePoweredBy =
+    isPartnerManaged ||
+    (canHideBranding && (settings.hidePoweredBy ?? true));
   return {
-    canHideBranding,
+    canHideBranding: canHideBranding && !isPartnerManaged,
     hidePoweredBy,
     poweredBy: !hidePoweredBy,
   };
@@ -129,6 +137,7 @@ export async function publicConfigForSettings(
   const branding = resolveWebWidgetBranding(
     settings,
     planState.canUseCustomIcon,
+    planState.isPartnerManaged,
   );
   const iconUrl = await resolveWidgetIconUrl(ctx, settings, true);
   const team = await ctx.db
