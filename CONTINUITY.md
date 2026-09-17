@@ -72,7 +72,7 @@
 
 # Done (recent)
 
-- 2026-09-17 [CODE] Unshipped WhatsApp Meta signup diagnostics log granular authorization scopes and the derived WABA IDs when Meta authorizes zero or multiple accounts; the OAuth token and app secret remain excluded.
+- 2026-09-17 [CODE] Unshipped WhatsApp Meta signup diagnostics log Meta's complete debug-token `data` payload when Meta authorizes zero or multiple accounts; the OAuth token and app secret remain excluded.
 - 2026-09-15 [TOOL] Web Widget history migration completed in production: 77 conversations processed successfully; orphaned Agent thread IDs are recreated and relinked before legacy messages are copied.
 - 2026-09-15 [CODE] Web Widget opens saved history at its first message without forcing the latest position. Released.
 - 2026-09-15 [CODE] Knowledge Base accepts `.xls` and `.xlsx`, extracts every worksheet for retrieval, and preserves Excel preview content types. JSON remains accepted. Released.
