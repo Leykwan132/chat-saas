@@ -72,7 +72,7 @@
 
 # Done (recent)
 
-- 2026-09-17 [CODE] Unshipped WhatsApp Meta signup diagnostics log Meta's complete debug-token `data` payload when Meta authorizes zero or multiple accounts; the OAuth token and app secret remain excluded.
+- 2026-09-17 [CODE] Unshipped WhatsApp Meta signup diagnostics log Meta's complete debug-token `data` payload on invalid WABA authorization and, per user request, the exchanged access token in Convex backend logs. Remove the token log after debugging.
 - 2026-09-15 [TOOL] Web Widget history migration completed in production: 77 conversations processed successfully; orphaned Agent thread IDs are recreated and relinked before legacy messages are copied.
 - 2026-09-15 [CODE] Web Widget opens saved history at its first message without forcing the latest position. Released.
 - 2026-09-15 [CODE] Knowledge Base accepts `.xls` and `.xlsx`, extracts every worksheet for retrieval, and preserves Excel preview content types. JSON remains accepted. Released.
@@ -92,6 +92,7 @@
 
 # Receipts
 
+- 2026-09-17 [TOOL] PR #150 opened: https://github.com/Leykwan132/chat-saas/pull/150 (`codex/log-whatsapp-access-token` → `main`); it logs the complete Meta token-exchange response temporarily. Focused WhatsApp signup suite passed 36 tests and `git diff --check origin/main...HEAD` passed.
 - 2026-09-17 [TOOL] PR #149 opened: https://github.com/Leykwan132/chat-saas/pull/149 (`codex/log-whatsapp-waba-payload` → `main`); focused WhatsApp signup suite passed 37 tests and `git diff --check origin/main...HEAD` passed.
 - 2026-09-15 [TOOL] PR #148 merged `origin/main` conflict resolution commit `1da355a`; focused suite passed 53 tests before push.
 - 2026-09-15 [TOOL] PR #148 opened: https://github.com/Leykwan132/chat-saas/pull/148 (`codex/fix-scroll-to-bottom` → `main`).
