@@ -93,6 +93,21 @@ test("disconnect deletes agent component threads linked to channel conversations
       content: "hello",
       createdAt: now,
     });
+    await ctx.db.insert("whatsappSyncRequests", {
+      channelId,
+      orgId: "",
+      wabaId: "waba-disconnect-threads",
+      phoneNumberId: "phone-disconnect-threads",
+      syncType: "history",
+      status: "completed",
+      requestId: "history-request",
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.patch(channelId, {
+      historySyncStatus: "completed",
+      historySyncProgress: 100,
+    });
     return { channelId, conversationId };
   });
 
@@ -109,6 +124,9 @@ test("disconnect deletes agent component threads linked to channel conversations
     expect(await ctx.db.query("messages").collect()).toHaveLength(0);
     const channel = await ctx.db.get(channelId);
     expect(channel?.status).toBe("disconnected");
+    expect(channel?.historySyncStatus).toBeUndefined();
+    expect(channel?.historySyncProgress).toBeUndefined();
+    expect(await ctx.db.query("whatsappSyncRequests").collect()).toHaveLength(0);
   });
 
   const thread = await withComponents(t).runInComponent(
