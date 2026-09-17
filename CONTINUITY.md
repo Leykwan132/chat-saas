@@ -72,6 +72,7 @@
 
 # Done (recent)
 
+- 2026-09-17 [CODE] Unshipped WhatsApp Meta signup diagnostics log Meta's complete debug-token `data` payload when Meta authorizes zero or multiple accounts; the OAuth token and app secret remain excluded.
 - 2026-09-15 [TOOL] Web Widget history migration completed in production: 77 conversations processed successfully; orphaned Agent thread IDs are recreated and relinked before legacy messages are copied.
 - 2026-09-15 [CODE] Web Widget opens saved history at its first message without forcing the latest position. Released.
 - 2026-09-15 [CODE] Knowledge Base accepts `.xls` and `.xlsx`, extracts every worksheet for retrieval, and preserves Excel preview content types. JSON remains accepted. Released.
@@ -91,6 +92,7 @@
 
 # Receipts
 
+- 2026-09-17 [TOOL] PR #149 opened: https://github.com/Leykwan132/chat-saas/pull/149 (`codex/log-whatsapp-waba-payload` → `main`); focused WhatsApp signup suite passed 37 tests and `git diff --check origin/main...HEAD` passed.
 - 2026-09-15 [TOOL] PR #148 merged `origin/main` conflict resolution commit `1da355a`; focused suite passed 53 tests before push.
 - 2026-09-15 [TOOL] PR #148 opened: https://github.com/Leykwan132/chat-saas/pull/148 (`codex/fix-scroll-to-bottom` → `main`).
 - 2026-09-15 [TOOL] Production migration status: `webThreadHistoryMigration:backfillWebConversationThreads` processed 77 conversations and ended with `state: success`; a 200-message guard failure was resolved by increasing the tested bound to 1,000 and resetting the idempotent migration.
