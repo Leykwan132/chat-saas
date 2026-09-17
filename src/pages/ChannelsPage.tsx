@@ -264,8 +264,7 @@ export default function ChannelsPage() {
   const showPendingWhatsApp =
     openWhatsAppAttempt != null &&
     ((isOpenWhatsAppConnectionAttempt(openWhatsAppAttempt) &&
-      openWhatsAppAttempt.status !== 'connected' &&
-      openWhatsAppAttempt.status !== 'syncing') ||
+      openWhatsAppAttempt.status !== 'connected') ||
       openWhatsAppAttempt.status === 'error');
   const openAttemptChannel = useMemo(() => {
     if (!channels || !openWhatsAppAttempt) return undefined;
