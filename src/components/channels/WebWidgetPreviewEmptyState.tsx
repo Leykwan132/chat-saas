@@ -10,16 +10,22 @@ import { cn } from "@/lib/utils";
 
 type WebWidgetPreviewEmptyStateProps = {
   subduedTextClassName: string;
+  iconUrl?: string;
 };
 
 export function WebWidgetPreviewEmptyState({
   subduedTextClassName,
+  iconUrl,
 }: WebWidgetPreviewEmptyStateProps) {
   return (
     <Empty className="h-full min-h-0 rounded-none border-0 !p-4">
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <MessageCircleDashed />
+          {iconUrl ? (
+            <img src={iconUrl} alt="" className="size-full rounded-full object-cover" />
+          ) : (
+            <MessageCircleDashed />
+          )}
         </EmptyMedia>
         <EmptyTitle className="text-[17px]">How can we help?</EmptyTitle>
         <EmptyDescription className={cn("text-sm", subduedTextClassName)}>
