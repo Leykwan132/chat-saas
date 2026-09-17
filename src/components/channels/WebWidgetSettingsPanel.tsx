@@ -31,6 +31,7 @@ export type WebWidgetSettings = {
   hidePoweredBy: boolean;
   canHideBranding: boolean;
   canUseCustomIcon: boolean;
+  isPartnerManaged: boolean;
   traditional: TraditionalWidgetSettings;
 };
 
@@ -246,6 +247,7 @@ export function WebWidgetSettingsPanel({
       canSaveAppearance={appearanceDirty && Boolean(normalizedAgentName)}
       canSaveLeadForm={leadFormDirty && leadFormValid}
       canUseCustomIcon={settings.canUseCustomIcon}
+      isPartnerManaged={settings.isPartnerManaged}
       hidePoweredBy={hidePoweredBy}
       iconUrl={settings.iconUrl}
       leadForm={leadForm}

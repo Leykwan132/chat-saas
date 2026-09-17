@@ -12,6 +12,15 @@ test('builds a mode-specific AI-powered installation snippet', () => {
 ></script>`);
 });
 
+test('uses the partner custom hostname for AI-powered installation', () => {
+  expect(
+    buildWebWidgetSnippet('pub_test', 'ai_powered', {
+      hostname: 'chat.gosolutions.sg',
+      origin: 'https://chat.gosolutions.sg',
+    }),
+  ).toContain('src="https://chat.gosolutions.sg/widget/v1.js"');
+});
+
 test('builds a mode-specific Traditional installation snippet', () => {
   expect(buildWebWidgetSnippet('pub_test', 'traditional')).toContain(
     'data-kilobot-mode="traditional"',

@@ -107,6 +107,7 @@ export function WebWidgetPreviewChat({
             <MessageScroller.Content className={contentClassName}>
               {messages.length === 0 ? (
                 <WebWidgetPreviewEmptyState
+                  iconUrl={iconUrl}
                   subduedTextClassName={subduedTextClassName}
                 />
               ) : null}

@@ -52,7 +52,7 @@ export function WebWidgetPreview({
 }: WebWidgetPreviewProps) {
   const [device, setDevice] = useState<WebWidgetPreviewDevice>("desktop");
   const [screen, setScreen] = useState<PreviewScreen>("chat");
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [hasVisitorProfile, setHasVisitorProfile] = useState(false);
   const [messages, setMessages] = useState<PreviewMessage[]>([]);
   const [draft, setDraft] = useState("");

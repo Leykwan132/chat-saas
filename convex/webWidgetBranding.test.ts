@@ -2,6 +2,7 @@
 import { convexTest } from "convex-test";
 import { beforeAll, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import { resolveWebWidgetBranding } from "./webWidgetCore";
 import schema from "./schema";
 import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema.js";
 import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
@@ -160,4 +161,13 @@ test("free plan widgets can use their own icon but cannot remove powered by bran
   });
 
   expect(config.poweredBy).toBe(true);
+});
+
+test("partner-managed AI widgets always omit Kilobot branding", () => {
+  expect(
+    resolveWebWidgetBranding({ hidePoweredBy: false }, false, true),
+  ).toMatchObject({
+    hidePoweredBy: true,
+    poweredBy: false,
+  });
 });

@@ -57,7 +57,7 @@ test("dashboard preview uses a white double-message icon on black", () => {
   expect(previewChatSource).toContain("bg-zinc-950 text-white");
 });
 
-test("dashboard preview renders the configured avatar in its closed launcher", () => {
+test("dashboard preview starts open with its configured avatar", () => {
   const preview = renderToStaticMarkup(
     createElement(WebWidgetPreview, {
       agentName: "Kilobot",
@@ -71,6 +71,7 @@ test("dashboard preview renders the configured avatar in its closed launcher", (
   );
 
   expect(preview).toContain('src="https://cdn.example.test/kilobot-avatar.png"');
+  expect(preview).toContain("How can we help?");
 });
 
 test("dashboard preview chat header uses a normal-weight title", () => {
@@ -110,6 +111,23 @@ test("dashboard preview fills and centers its empty-state content", () => {
   expect(emptyPreview).toContain("<svg");
 });
 
+test("dashboard preview uses its configured icon in the empty chat state", () => {
+  const emptyPreview = renderToStaticMarkup(
+    createElement(
+      WebWidgetPreviewEmptyState,
+      {
+        subduedTextClassName: "text-zinc-500",
+        iconUrl: "https://cdn.example.test/partner-icon.png",
+      } as never,
+    ),
+  );
+
+  expect(emptyPreview).toContain('src="https://cdn.example.test/partner-icon.png"');
+  expect(previewChatSource).toMatch(
+    /<WebWidgetPreviewEmptyState\s+iconUrl=\{iconUrl\}/,
+  );
+});
+
 test("dashboard preview opens without a panel animation", () => {
   expect(previewSource).not.toContain("web-widget-preview-card");
 });
@@ -131,7 +149,7 @@ test("dashboard preview confirms a chat reset before clearing messages", () => {
 
 test("dashboard preview places required Kilobot branding beneath its prompt", () => {
   expect(settingsControlsSource).toContain(
-    "poweredBy={!canHideBranding || !hidePoweredBy}",
+    "poweredBy={!isPartnerManaged && (!canHideBranding || !hidePoweredBy)}",
   );
   expect(previewChatSource).toContain("poweredBy");
   expect(previewChatSource).toContain("Powered by");

@@ -11,6 +11,7 @@ type WebWidgetAppearanceSectionProps = {
   savedAgentDisplayName: string;
   canSaveAppearance: boolean;
   canUseCustomIcon: boolean;
+  isPartnerManaged: boolean;
   canHideBranding: boolean;
   hidePoweredBy: boolean;
   iconUrl?: string;
@@ -33,6 +34,7 @@ export function WebWidgetAppearanceSection({
   savedAgentDisplayName,
   canSaveAppearance,
   canUseCustomIcon,
+  isPartnerManaged,
   canHideBranding,
   hidePoweredBy,
   iconUrl,
@@ -90,13 +92,15 @@ export function WebWidgetAppearanceSection({
               {savingAppearance ? "Saving" : "Save appearance"}
             </Button>
           ) : null}
-          <WebWidgetBrandingSection
-            hidePoweredBy={hidePoweredBy}
-            canHideBranding={canHideBranding}
-            saving={savingBranding}
-            onChange={onHidePoweredByChange}
-            onRequestUpgrade={onRequestUpgrade}
-          />
+          {!isPartnerManaged ? (
+            <WebWidgetBrandingSection
+              hidePoweredBy={hidePoweredBy}
+              canHideBranding={canHideBranding}
+              saving={savingBranding}
+              onChange={onHidePoweredByChange}
+              onRequestUpgrade={onRequestUpgrade}
+            />
+          ) : null}
         </div>
         <div className="grid gap-4">
           <WebWidgetThemePicker
