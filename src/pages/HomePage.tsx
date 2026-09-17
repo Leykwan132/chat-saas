@@ -1,8 +1,13 @@
 import { useAuth } from '@/partnerAuth/AppAuthProvider';
+import { Navigate } from 'react-router';
 import LandingPage from '@/pages/LandingPage';
 
 export default function HomePage() {
-  const { isLoading } = useAuth();
+  const { isLoading, surface } = useAuth();
+
+  if (surface === 'partner') {
+    return <Navigate to="/sign-in" replace />;
+  }
 
   if (isLoading) {
     return (
