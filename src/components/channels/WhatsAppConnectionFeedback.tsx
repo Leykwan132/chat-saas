@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import type { ReactNode } from 'react';
 import { SquareIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,18 +13,33 @@ import { Spinner } from '@/components/ui/spinner';
 type WhatsAppConnectingActionProps = {
   stopping: boolean;
   onStop: () => void;
+  status?: ReactNode;
 };
 
 export function WhatsAppConnectingAction({
   stopping,
   onStop,
+  status,
 }: WhatsAppConnectingActionProps) {
   return (
     <div className="flex w-full min-w-0 items-center gap-2">
-      <Spinner className="size-3.5 shrink-0 text-amber-500" />
-      <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-muted-foreground">
-        {stopping ? 'Stopping…' : 'Connecting…'}
-      </span>
+      {stopping ? (
+        <>
+          <Spinner className="size-3.5 shrink-0 text-amber-500" />
+          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-muted-foreground">
+            Stopping…
+          </span>
+        </>
+      ) : status ? (
+        <div className="min-w-0 flex-1">{status}</div>
+      ) : (
+        <>
+          <Spinner className="size-3.5 shrink-0 text-amber-500" />
+          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-muted-foreground">
+            Connecting…
+          </span>
+        </>
+      )}
       <Button
         type="button"
         variant="destructiveGhost"

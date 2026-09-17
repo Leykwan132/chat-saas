@@ -416,6 +416,10 @@ export function PendingWhatsAppConnectionCard({
     attempt.phoneNumberId ??
     attempt.wabaId ??
     'WhatsApp';
+  const syncStatus =
+    attempt.status === 'syncing' && channel !== undefined ? (
+      <WhatsAppSyncSummary channel={channel} />
+    ) : undefined;
 
   return (
     <div
@@ -438,6 +442,7 @@ export function PendingWhatsAppConnectionCard({
 
         <WhatsAppConnectingAction
           stopping={cancelling}
+          status={syncStatus}
           onStop={() => {
             setCancelling(true);
             void Promise.resolve(onCancel()).finally(() => setCancelling(false));
