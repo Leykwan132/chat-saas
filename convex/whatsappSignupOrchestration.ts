@@ -57,6 +57,7 @@ export async function runServerOwnedWhatsAppSignup(
     failedStage = "code_exchange";
     dependencies.reportStage("code_exchange_started");
     const token = await dependencies.exchangeAuthorizationCode(input.code);
+    console.log("[whatsapp-connect]:token_exchange", token);
     dependencies.reportStage("code_exchange_completed", {
       tokenType: token.token_type,
       expiresIn: token.expires_in,
