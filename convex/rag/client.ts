@@ -2,7 +2,6 @@ import { RAG } from "@convex-dev/rag";
 import { components } from "../_generated/api";
 import {
   CF_EMBEDDING_DIMENSION,
-  CF_EMBEDDING_MODEL,
   getCloudflareEmbeddingModel,
 } from "../llm/cloudflareEmbeddings";
 
@@ -16,10 +15,6 @@ let cached: RAG<KnowledgeFilters> | null = null;
 
 export function getRag(): RAG<KnowledgeFilters> {
   if (!cached) {
-    console.log("[convex-rag] embedding client init", {
-      model: CF_EMBEDDING_MODEL,
-      dimension: CF_EMBEDDING_DIMENSION,
-    });
     cached = new RAG<KnowledgeFilters>(components.rag, {
       textEmbeddingModel: getCloudflareEmbeddingModel(),
       embeddingDimension: CF_EMBEDDING_DIMENSION,

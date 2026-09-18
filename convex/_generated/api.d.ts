@@ -152,6 +152,7 @@ import type * as chat_whatsappMediaIngest from "../chat/whatsappMediaIngest.js";
 import type * as chat_workflowActionExecution from "../chat/workflowActionExecution.js";
 import type * as chat_workflowActionPlanner from "../chat/workflowActionPlanner.js";
 import type * as chat_workflowAutomationMessageMetadata from "../chat/workflowAutomationMessageMetadata.js";
+import type * as chat_workflowDecisions from "../chat/workflowDecisions.js";
 import type * as chat_workflowMediaFallback from "../chat/workflowMediaFallback.js";
 import type * as chat_workflowPrompt from "../chat/workflowPrompt.js";
 import type * as cloudflare from "../cloudflare.js";
@@ -686,6 +687,7 @@ declare const fullApi: ApiFromModules<{
   "chat/workflowActionExecution": typeof chat_workflowActionExecution;
   "chat/workflowActionPlanner": typeof chat_workflowActionPlanner;
   "chat/workflowAutomationMessageMetadata": typeof chat_workflowAutomationMessageMetadata;
+  "chat/workflowDecisions": typeof chat_workflowDecisions;
   "chat/workflowMediaFallback": typeof chat_workflowMediaFallback;
   "chat/workflowPrompt": typeof chat_workflowPrompt;
   cloudflare: typeof cloudflare;

@@ -387,7 +387,6 @@ export const addQAEntry = mutation({
       orgId,
       createdAt: Date.now(),
     });
-    console.log("[convex-rag] addQAEntry scheduled", { entryId, agentId: args.agentId, question });
     await ctx.scheduler.runAfter(0, internal.rag.qaSync.indexQaEntry, { entryId });
     return entryId;
   },
@@ -924,13 +923,6 @@ export const cfUploadComplete = internalMutation({
         ragEntryId?: string;
         fileSize: number;
       };
-      console.log("[convex-rag] uploadComplete success", {
-        entryId,
-        entryType,
-        cfItemId: cfItemId ?? null,
-        ragEntryId: ragEntryId ?? null,
-        fileSize,
-      });
       switch (entryType) {
         case "text":
           await ctx.runMutation(internal.knowledgeBase.internalCompleteTextEntry, {
@@ -954,11 +946,6 @@ export const cfUploadComplete = internalMutation({
           break;
       }
     } else {
-      console.log("[convex-rag] uploadComplete failed", {
-        entryId,
-        entryType,
-        result: args.result,
-      });
       await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
         entryId: entryId as never,
         status: "failed",

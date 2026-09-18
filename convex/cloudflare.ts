@@ -245,12 +245,6 @@ export const enqueueTextUpload = action({
     const title = args.title.trim();
     const content = args.content.trim();
     if (!title || !content) throw new Error("Title and content are required");
-    console.log("[convex-rag] enqueueTextUpload", {
-      agentId: args.agentId,
-      title,
-      contentChars: content.length,
-    });
-
     const fileSize = new Blob([title + content]).size;
     const entryId = await ctx.runMutation(internal.knowledgeBase.internalStoreTextEntry, {
       agentId: args.agentId,
@@ -295,12 +289,6 @@ export const enqueueFileUpload = action({
     const auth = await getAuthContext(ctx);
     const fileName = args.fileName.trim();
     if (!fileName) throw new Error("File name is required");
-    console.log("[convex-rag] enqueueFileUpload", {
-      agentId: args.agentId,
-      fileName,
-      byteLength: args.fileBytes.byteLength,
-      extractedChars: args.extractedText?.length ?? 0,
-    });
     const MAX_FILE_SIZE = 4 * 1024 * 1024;
     if (args.fileBytes.byteLength > MAX_FILE_SIZE) {
       throw new Error("File too big. Limit is 4 MB per file.");

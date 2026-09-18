@@ -8,15 +8,29 @@ import { WidgetBranding } from "./WidgetBranding";
 import { WidgetChatHeader } from "./WidgetChatHeader";
 import { WidgetMessageScroller } from "./WidgetMessageScroller";
 import { WidgetPromptInput } from "./WidgetPromptInput";
-import { WidgetResetDialog } from "./WidgetResetDialog";
 import { WidgetVisitorForm } from "./WidgetVisitorForm";
 import { useWidgetReplyPolling } from "./useWidgetReplyPolling";
 import { getWidgetEntryScreen } from "./widgetEntryScreen";
 import { endpoint, json } from "./widgetHttp";
+
+function hasReplyAfterLatestVisitorMessage(
+  messages: WidgetMessage[],
+  visitorMessage: string,
+) {
+  const visitorMessageIndex = messages.findLastIndex(
+    (message) =>
+      message.direction === "incoming" && message.content === visitorMessage,
+  );
+  return messages
+    .slice(visitorMessageIndex + 1)
+    .some((message) => message.direction === "outgoing");
+}
+
 export function Widget() {
   const [init, setInit] = useState<WidgetInit | null>(null);
   const [config, setConfig] = useState<WidgetConfig | null>(null);
   const [messages, setMessages] = useState<WidgetMessage[]>([]);
+  const [scrollToLatestRequest, setScrollToLatestRequest] = useState(0);
   const [screen, setScreen] = useState<WidgetScreen>("closed");
   const [profile, setProfile] = useState<WidgetVisitorProfile>({
     name: "",
@@ -26,8 +40,6 @@ export function Widget() {
   });
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
-  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
   const configRef = useRef<WidgetConfig | null>(null);
   const hasVisitorProfileRef = useRef(false);
   const openRequestedRef = useRef(false);
@@ -165,6 +177,7 @@ export function Widget() {
     if (!init || !content || isThinking) return;
     const sentAt = Date.now();
     setDraft("");
+    setScrollToLatestRequest((current) => current + 1);
     setMessages((current) => [
       ...current,
       {
@@ -190,41 +203,13 @@ export function Widget() {
         },
       );
       setMessages(result.messages);
-      if (
-        !result.messages.some(
-          (message) =>
-            message.direction === "outgoing" && message.createdAt >= sentAt,
-        )
-      ) {
-        startThinking(sentAt);
+      if (!hasReplyAfterLatestVisitorMessage(result.messages, content)) {
+        startThinking(new Set(result.messages.map((message) => message.id)));
       }
     } catch {
       setError("Your message could not be sent. Please try again.");
     }
   };
-  const reset = async () => {
-    if (!init || isResetting || messages.length === 0) return;
-    stopThinking();
-    setError("");
-    setIsResetting(true);
-    try {
-      await json(endpoint(init, "/widget/reset"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          publicKey: init.publicKey,
-          visitorId: init.visitorId,
-        }),
-      });
-      setDraft("");
-      setMessages([]);
-    } catch {
-      setError("We couldn’t reset this chat. Please try again.");
-    } finally {
-      setIsResetting(false);
-    }
-  };
-
   return (
     <div
       className={`widget-shell${init?.device === "mobile" ? " is-mobile" : ""}${widgetOpen ? " is-open" : ""}`}
@@ -246,12 +231,12 @@ export function Widget() {
               <WidgetChatHeader
                 displayName={config.agentDisplayName}
                 iconUrl={config.iconUrl}
-                disabled={isResetting || messages.length === 0}
-                onReset={() => setIsResetDialogOpen(true)}
               />
               <WidgetMessageScroller
                 isThinking={isThinking}
                 messages={messages}
+                onReplyVisible={stopThinking}
+                scrollToLatestRequest={scrollToLatestRequest}
               />
               <WidgetPromptInput
                 disabled={isThinking}
@@ -266,16 +251,6 @@ export function Widget() {
                 onSubmit={send}
               />
               {config.poweredBy ? <WidgetBranding /> : null}
-              {isResetDialogOpen ? (
-                <WidgetResetDialog
-                  disabled={isResetting}
-                  onCancel={() => setIsResetDialogOpen(false)}
-                  onConfirm={() => {
-                    setIsResetDialogOpen(false);
-                    void reset();
-                  }}
-                />
-              ) : null}
             </section>
           ) : null}
           {error ? <p className="error">{error}</p> : null}

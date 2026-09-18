@@ -10,13 +10,10 @@ import messageScrollerSource from "./WidgetMessageScroller.tsx?raw";
 import replyPollingSource from "./useWidgetReplyPolling.ts?raw";
 import widgetHostSource from "../../public/widget/ai.js?raw";
 import widgetHtmlSource from "../../widget.html?raw";
+import { WidgetChatHeader } from "./WidgetChatHeader";
 import { WidgetMessageScroller } from "./WidgetMessageScroller";
 
 const widgetStyles = readFileSync(new URL("./styles.css", import.meta.url), "utf8");
-const widgetDialogStyles = readFileSync(
-  new URL("./reset-dialog.css", import.meta.url),
-  "utf8",
-);
 const thinkingIndicatorStyles = readFileSync(
   new URL("./thinking-indicator.css", import.meta.url),
   "utf8",
@@ -49,16 +46,15 @@ test("widget uses a white double-message icon on a black fallback surface", () =
   expect(widgetSource).not.toContain(' : "●"');
 });
 
-test("widget header offers a reset control backed by the reset endpoint", () => {
-  expect(widgetHeaderSource).toContain("<RotateCcw");
-  expect(widgetHeaderSource).toContain('aria-label="Reset chat"');
-  expect(widgetSource).toContain('endpoint(init, "/widget/reset")');
-});
+test("widget chat header does not expose a reset control", () => {
+  const header = renderToStaticMarkup(
+    createElement(WidgetChatHeader, {
+      displayName: "Support",
+    }),
+  );
 
-test("widget asks for confirmation before resetting a chat", () => {
-  expect(widgetSource).toContain('from "./WidgetResetDialog"');
-  expect(widgetSource).toContain("setIsResetDialogOpen(true)");
-  expect(widgetSource).toContain("<WidgetResetDialog");
+  expect(header).not.toContain("Reset chat");
+  expect(header).not.toContain("button");
 });
 
 test("widget iframe loads and uses Geist", () => {
@@ -69,7 +65,7 @@ test("widget iframe loads and uses Geist", () => {
 test("widget places required Kilobot branding beneath the prompt input", () => {
   expect(widgetSource).toContain('from "./WidgetBranding"');
   expect(widgetSource).toContain("config.poweredBy ? <WidgetBranding /> : null");
-  expect(widgetDialogStyles).toContain(".widget-branding");
+  expect(widgetStyles).toContain(".widget-branding");
 });
 
 test("widget composer uses a compact prompt-input surface", () => {
@@ -105,15 +101,38 @@ test("widget transcript uses the Message Scroller primitive through its local ad
   expect(widgetSource).not.toContain('from "@/components/ui/message-scroller"');
 });
 
-test("widget keeps saved history at its first message when the chat opens", () => {
-  expect(messageScrollerSource).toContain("autoScroll");
-  expect(messageScrollerSource).toContain('defaultScrollPosition="start"');
-  expect(messageScrollerSource).not.toContain("useLayoutEffect");
-  expect(messageScrollerSource).not.toContain("useMessageScroller");
-  expect(messageScrollerSource).not.toContain("scrollToEnd");
-  expect(messageScrollerSource).not.toContain("<MessageScroller.Button");
-  expect(messageScrollerSource).not.toContain("scrollAnchor=");
-  expect(widgetStyles).not.toContain(".messages-latest");
+test("widget opens saved history at its latest message", () => {
+  const transcript = renderToStaticMarkup(
+    createElement(WidgetMessageScroller, {
+      onReplyVisible: () => undefined,
+      scrollToLatestRequest: 0,
+      messages: [
+        {
+          id: "saved-visitor-1",
+          direction: "incoming",
+          sender: "visitor",
+          content: "Earlier message",
+          createdAt: 1,
+        },
+      ],
+    }),
+  );
+
+  expect(transcript).toContain('data-message-id="saved-visitor-1"');
+  expect(transcript).toContain('data-scroll-anchor="false"');
+  expect(messageScrollerSource).toContain('defaultScrollPosition="end"');
+});
+
+test("widget scrolls to the latest message only after a visitor sends", () => {
+  expect(messageScrollerSource).toContain("scrollToLatestRequest");
+  expect(messageScrollerSource).toContain(
+    "type WidgetMessageScrollerAutoScrollProps = Pick<WidgetMessageScrollerProps, \"scrollToLatestRequest\">;",
+  );
+  expect(messageScrollerSource).toContain("useLayoutEffect");
+  expect(messageScrollerSource).toContain("useMessageScroller");
+  expect(messageScrollerSource).toContain("scrollToEnd({ behavior: \"auto\" })");
+  expect(widgetSource).toContain("setScrollToLatestRequest");
+  expect(widgetSource).toContain("scrollToLatestRequest={scrollToLatestRequest}");
 });
 
 test("widget transcript starts with saved conversation messages only", () => {
@@ -130,10 +149,16 @@ test("widget skips an enabled visitor form after the same visitor has a saved pr
 
 test("widget transcript shows an empty state only before the first message", () => {
   const emptyTranscript = renderToStaticMarkup(
-    createElement(WidgetMessageScroller, { messages: [] }),
+    createElement(WidgetMessageScroller, {
+      messages: [],
+      onReplyVisible: () => undefined,
+      scrollToLatestRequest: 0,
+    }),
   );
   const activeTranscript = renderToStaticMarkup(
     createElement(WidgetMessageScroller, {
+      onReplyVisible: () => undefined,
+      scrollToLatestRequest: 0,
       messages: [
         {
           id: "visitor-1",
@@ -356,8 +381,17 @@ test("widget shows a timestamp for visitor and agent messages", () => {
 
 test("widget keeps the thinking indicator active while it polls for an AI reply", () => {
   expect(widgetSource).toContain('from "./useWidgetReplyPolling"');
-  expect(widgetSource).toContain("startThinking(sentAt)");
+  expect(widgetSource).toContain("hasReplyAfterLatestVisitorMessage");
+  expect(widgetSource).toContain("startThinking(new Set(result.messages.map");
   expect(widgetSource).toContain("disabled={isThinking}");
+  expect(replyPollingSource).toContain("const conversationIdentity");
+  expect(replyPollingSource).toContain(
+    "useEffect(() => stopThinking, [conversationIdentity, stopThinking])",
+  );
+  expect(replyPollingSource).toContain("knownMessageIds");
+  expect(replyPollingSource).toContain("!knownMessageIds.has(message.id)");
+  expect(messageScrollerSource).toContain("onReplyVisible");
+  expect(messageScrollerSource).toContain('latestMessage?.direction === "outgoing"');
 });
 
 test("widget refreshes agent replies while its chat is open", () => {

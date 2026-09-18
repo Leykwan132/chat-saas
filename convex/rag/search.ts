@@ -49,23 +49,7 @@ export const internalSearchKnowledge = internalAction({
     query: v.string(),
   },
   handler: async (ctx, args): Promise<KnowledgeSearchResult[]> => {
-    console.log("[convex-rag] search", {
-      agentId: args.agentId,
-      query: args.query,
-      queryChars: args.query.length,
-    });
-
     const results = await searchRag(ctx, args.agentId, args.query);
-    console.log("[convex-rag] search rag results", {
-      count: results.length,
-      top: results.slice(0, 3).map((result) => ({
-        id: result.id,
-        type: result.type,
-        item: result.item,
-        score: result.score,
-        textChars: result.text.length,
-      })),
-    });
     return results;
   },
 });

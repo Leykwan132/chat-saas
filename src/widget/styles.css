@@ -188,25 +188,6 @@ header {
 .chat header strong {
   font-weight: 400;
 }
-.chat-reset {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  margin-left: auto;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 8px;
-  color: #b1b1bc;
-  background: transparent;
-}
-.widget.light .chat-reset {
-  color: #71717a;
-}
-.chat-reset:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
 .header-avatar {
   width: 32px;
   height: 32px;
@@ -428,6 +409,24 @@ header {
 }
 .widget.light .composer textarea {
   color: #18181b;
+}
+.chat.has-branding .composer {
+  margin-bottom: 4px;
+}
+.widget-branding {
+  margin: 0;
+  padding: 0 12px 10px;
+  color: #a1a1aa;
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+}
+.widget-branding a {
+  color: inherit;
+  text-underline-offset: 2px;
+}
+.widget.light .widget-branding {
+  color: #71717a;
 }
 .error {
   position: absolute;

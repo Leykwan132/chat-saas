@@ -1,4 +1,8 @@
-import { MessageScroller } from "@shadcn/react/message-scroller";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import {
+  MessageScroller,
+  useMessageScroller,
+} from "@shadcn/react/message-scroller";
 import { formatWidgetMessageTime } from "./formatWidgetMessageTime";
 import type { WidgetMessage } from "./types";
 import { WidgetEmptyState } from "./WidgetEmptyState";
@@ -8,18 +12,46 @@ import { WidgetThinkingIndicator } from "./WidgetThinkingIndicator";
 type WidgetMessageScrollerProps = {
   isThinking?: boolean;
   messages: WidgetMessage[];
+  onReplyVisible: () => void;
+  scrollToLatestRequest: number;
 };
+
+type WidgetMessageScrollerAutoScrollProps = Pick<WidgetMessageScrollerProps, "scrollToLatestRequest">;
+
+function WidgetMessageScrollerAutoScroll({
+  scrollToLatestRequest,
+}: WidgetMessageScrollerAutoScrollProps) {
+  const lastScrollRequest = useRef(scrollToLatestRequest);
+  const { scrollToEnd } = useMessageScroller();
+
+  useLayoutEffect(() => {
+    if (lastScrollRequest.current === scrollToLatestRequest) return;
+    lastScrollRequest.current = scrollToLatestRequest;
+    scrollToEnd({ behavior: "auto" });
+  }, [scrollToLatestRequest, scrollToEnd]);
+
+  return null;
+}
 
 export function WidgetMessageScroller({
   isThinking = false,
   messages,
+  onReplyVisible,
+  scrollToLatestRequest,
 }: WidgetMessageScrollerProps) {
   const isEmpty = messages.length === 0;
+  const latestMessage = messages.at(-1);
+
+  useEffect(() => {
+    if (isThinking && latestMessage?.direction === "outgoing") {
+      onReplyVisible();
+    }
+  }, [isThinking, latestMessage?.direction, latestMessage?.id, onReplyVisible]);
 
   return (
     <MessageScroller.Provider
       autoScroll
-      defaultScrollPosition="start"
+      defaultScrollPosition="end"
       scrollPreviousItemPeek={24}
     >
       <MessageScroller.Root className="messages">
@@ -68,6 +100,9 @@ export function WidgetMessageScroller({
           </MessageScroller.Content>
         </MessageScroller.Viewport>
       </MessageScroller.Root>
+      <WidgetMessageScrollerAutoScroll
+        scrollToLatestRequest={scrollToLatestRequest}
+      />
     </MessageScroller.Provider>
   );
 }

@@ -27,6 +27,10 @@ import { logConversationEvent } from "../conversationLogs";
 import { splitAiReplyMessages } from "./aiReplyMessages";
 import { applyBookingReplyGate } from "./applyBookingReply";
 import { ensureAvailabilityTimesInReplies } from "../appointmentBooking/availabilityPresentation";
+import {
+  generateWorkflowActionPlan,
+  workflowActionPlanReplyPromptArgs,
+} from "./workflowActionPlanner";
 
 /* ── Mutations / Queries / Actions ─────────────────────── */
 
@@ -205,10 +209,20 @@ export const generatePlaygroundResponseAsync = internalAction({
           conversationId: conv._id,
         })
       : undefined;
+    const workflowActionPlan = await generateWorkflowActionPlan(
+      ctx,
+      args.threadId,
+      { promptMessageId: args.promptMessageId },
+      workflowRuntimeContext,
+    );
     const result = await configuredAgent.streamText(
       ctx,
       { threadId: args.threadId },
-      { promptMessageId: args.promptMessageId },
+      workflowActionPlanReplyPromptArgs(
+        { promptMessageId: args.promptMessageId },
+        workflowActionPlan,
+        workflowRuntimeContext,
+      ),
       {
         saveStreamDeltas: {
           chunking: "word",

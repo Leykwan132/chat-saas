@@ -1,17 +1,13 @@
-import { MessagesSquare, RotateCcw } from "lucide-react";
+import { MessagesSquare } from "lucide-react";
 
 type WidgetChatHeaderProps = {
-  disabled: boolean;
   displayName: string;
   iconUrl?: string;
-  onReset: () => void;
 };
 
 export function WidgetChatHeader({
-  disabled,
   displayName,
   iconUrl,
-  onReset,
 }: WidgetChatHeaderProps) {
   return (
     <header>
@@ -25,16 +21,6 @@ export function WidgetChatHeader({
       <div>
         <strong>{displayName}</strong>
       </div>
-      <button
-        className="chat-reset"
-        type="button"
-        onClick={onReset}
-        disabled={disabled}
-        aria-label="Reset chat"
-        title="Reset chat"
-      >
-        <RotateCcw size={17} aria-hidden="true" />
-      </button>
     </header>
   );
 }

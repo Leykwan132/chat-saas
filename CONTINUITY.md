@@ -12,6 +12,9 @@
 - 2026-09-08 [CODE] Milestone: native Kilobot onboard (D793/I009) and same-origin password reset (D794) shipped via #117.
 - 2026-09-01 [USER] White-label Partner Programme remains unshipped on `codex/white-label-partner-portal`.
 - 2026-09-15 [TOOL] Web Widget history migration completed on both Convex development and production; production processed 77 conversations successfully.
+- 2026-09-18 [USER] Goal: workflow action matching uses OpenRouter Decisions model `typesafe/jev-1.13`; temporary diagnostic logging is removed for the PR. Unshipped.
+- 2026-09-18 [CODE] Test Your Agent runs the shared JEV workflow decision before streaming. JEV asks binary `noul` questions for every ready non-Start workflow node against recent thread state, with node-specific true/false criteria, and selects every node whose yes probability is at least 0.8. Answer keys use readable normalized node titles with deterministic duplicate suffixes. Existing backend handlers remain the only execution path for send media/text. All `[convex-rag]` informational logs are temporarily removed; errors remain. Unshipped.
+- 2026-09-18 [USER] The temporary localhost widget embed is removed from root `index.html`; the launcher harness remains unchanged.
 
 # Decisions
 
@@ -72,6 +75,7 @@
 
 # Done (recent)
 
+- 2026-09-18 [CODE] Web Widget opens saved history at its latest message and scrolls to bottom only for the visitor’s send; manual upward scrolling remains intact. Its top-right reset button and confirmation UI are removed. Thinking state survives host resize updates, detects reply completion by new message ID rather than clocks, and is forcibly cleared when the displayed latest message is outgoing. Unshipped.
 - 2026-09-17 [CODE] WhatsApp Meta temporary full debug-token and exchanged access-token logs were removed after diagnosis.
 - 2026-09-15 [TOOL] Web Widget history migration completed in production: 77 conversations processed successfully; orphaned Agent thread IDs are recreated and relinked before legacy messages are copied.
 - 2026-09-15 [CODE] Web Widget opens saved history at its first message without forcing the latest position. Released.
@@ -79,6 +83,7 @@
 - 2026-09-12 [CODE] Knowledge backfill re-embeds all text/Q&A, fetches CF files into Convex RAG, and re-researches parent websites while deleting child scrape rows. Unshipped.
 - 2026-09-12 [CODE] Knowledge Update/Delete enqueue workpools and show row progress instead of blocking the modal. Unshipped.
 - 2026-09-12 [CODE] Website markdown updates store a new unique R2 key and schedule the old object on `mediaDeletePool`. Unshipped.
+- 2026-09-18 [CODE] Workflow selection calls JEV typed `noul` decisions for every ready non-Start node. Each question has node-specific true/false criteria; every node with a yes probability of at least 0.8 is selected. Answer keys are readable normalized node titles with duplicate suffixes. Unshipped.
 
 # Working set
 
@@ -86,12 +91,29 @@
 - 2026-09-12 [CODE] `convex/webResearch/{enqueue,update,persist,worker,prompt,markdown,markdownKey}.ts`
 - 2026-09-12 [CODE] `src/components/knowledge-base/{WebSection,WebKnowledgeModal,WebEntryDetails,TextEntryDetails,QAEntryDetails,FileEntryDetails}.tsx`
 - 2026-09-12 [CODE] `src/components/knowledge-base/{FileSection,FileEntryDetails}.tsx`, `src/lib/knowledgeBaseFileText.ts`
-- 2026-09-15 [CODE] `src/widget/{WidgetMessageScroller.tsx,WidgetComposer.test.ts}`
+- 2026-09-18 [CODE] `src/widget/{Widget,WidgetChatHeader,WidgetMessageScroller,WidgetComposer.test,styles,main}.tsx`
 - 2026-09-15 [CODE] `convex/media/{r2.ts}`, `convex/mediaR2.test.ts`, `package.json`, `bun.lock`
 - 2026-09-15 [CODE] `convex/{webThreadHistoryMigration.ts,webThreadHistoryMigration.test.ts,schema.ts}`
+- 2026-09-18 [CODE] `convex/chat/{workflowActionPlanner,workflowDecisions,workflowActionPlanner.test,inbox}.ts`
 
 # Receipts
 
+- 2026-09-18 [TOOL] PR #160 build failure fixed: narrowed the auto-scroll helper to its sole `scrollToLatestRequest` prop. Widget regression suite passed 33 tests and `bunx tsc -b --pretty false` completed with exit code 0.
+- 2026-09-18 [TOOL] PR #160 opened: https://github.com/Leykwan132/chat-saas/pull/160 (`codex/jev-imp` → `main`), including JEV workflow decisions, widget stabilization, diagnostic cleanup, and removal of the temporary localhost embed.
+- 2026-09-18 [TOOL] Focused JEV, agent retry, double-save, and widget suites passed 62 tests after removing temporary diagnostics; `git diff --check` passed. Full Vitest has unrelated existing failures in calendar, WhatsApp, dashboard routing, referrals, and lead routing tests. `bun run build` exceeded the 30-second execution window without reporting a compiler error.
+- 2026-09-18 [TOOL] `bunx vitest run --exclude '.worktrees/**' src/widget/WidgetComposer.test.ts`: 33 tests passed; `git diff --check` passed after restoring post-history end scrolling and removing the reset UI.
+- 2026-09-18 [TOOL] Root cause of resize-cleared thinking: `public/widget/ai.js` sends init on resize; `useWidgetReplyPolling` previously reset on the changed init object. Focused Widget suite passed after identity-scoping that reset.
+- 2026-09-18 [TOOL] Root cause of persistent thinking/manual-scroll hijack: reply completion compared browser and server timestamps, while each background refresh retriggered an unconditional end-scroll. Focused Widget suite passed after ID-based reply completion and visitor-send-only scroll requests.
+- 2026-09-18 [TOOL] Focused Widget suite passed after changing its initial transcript position from start to end; manual scroll remains free after open/send.
+- 2026-09-18 [TOOL] Screenshot-confirmed thinking-state race is guarded in the transcript: an outgoing latest message now clears thinking. Focused Widget suite passed (33 tests).
+- 2026-09-18 [TOOL] Repaired incomplete local Bun install with `bun install --force`: restored `@cloudflare/workerd-darwin-arm64/bin/workerd`; Vite started successfully at `http://127.0.0.1:5178/`.
+- 2026-09-18 [TOOL] Test Your Agent JEV planner regression suite passed 54 tests; TypeScript build and `git diff --check` passed.
+- 2026-09-18 [TOOL] Deployed current Convex functions to the configured development deployment with `bunx convex dev --once`; Convex typecheck passed. JEV logs still require an executable workflow action node to run.
+- 2026-09-18 [TOOL] Focused JEV workflow suite passed 57 tests after score-node expansion; `bunx convex dev --once` typechecked and deployed it to development.
+- 2026-09-18 [TOOL] Numeric JEV response regression reproducing the provider score/legend/probability payload passed in the focused 57-test workflow suite; development deployment typechecked successfully.
+- 2026-09-18 [TOOL] Descriptive JEV key suite passed 58 workflow tests, including duplicate-title handling; development deployment typechecked successfully.
+- 2026-09-18 [TOOL] Binary `noul` JEV workflow suite passed 58 tests, including true/false criteria and 0.8 multi-match selection; development deployment completed.
+- 2026-09-18 [TOOL] Focused `workflowActionPlanner` Vitest suite passed 53 tests; `bunx tsc -b --pretty false` passed after Node 22 selection.
 - 2026-09-17 [TOOL] PR #150 opened: https://github.com/Leykwan132/chat-saas/pull/150 (`codex/log-whatsapp-access-token` → `main`); it logs the complete Meta token-exchange response temporarily. Focused WhatsApp signup suite passed 36 tests and `git diff --check origin/main...HEAD` passed.
 - 2026-09-17 [TOOL] PR #149 opened: https://github.com/Leykwan132/chat-saas/pull/149 (`codex/log-whatsapp-waba-payload` → `main`); focused WhatsApp signup suite passed 37 tests and `git diff --check origin/main...HEAD` passed.
 - 2026-09-15 [TOOL] PR #148 merged `origin/main` conflict resolution commit `1da355a`; focused suite passed 53 tests before push.

@@ -2,10 +2,14 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, test, vi } from "vitest";
 import type { Id } from "../_generated/dataModel";
+import type { ActionCtx } from "../_generated/server";
 import {
   buildWorkflowActionPlannerSystemPrompt,
   buildWorkflowActionPlanReplyGuidance,
+  buildWorkflowDecisionRequest,
+  generateWorkflowActionPlan,
   hasWorkflowActionMatches,
+  reconcileWorkflowDecisionAnswers,
   resolveWorkflowActionPlanMedia,
   resolveWorkflowActionPlanText,
   retryWorkflowActionPlanGeneration,
@@ -59,6 +63,42 @@ const workflowFilenamePrivacyContext = {
           mediaType: "image/jpeg",
         },
       ],
+    },
+  ],
+};
+
+const scoredWorkflowContext = {
+  ...workflowContext,
+  nodes: [
+    {
+      nodeId: "start-node-id" as Id<"workflowNodes">,
+      kind: "start",
+      title: "Message enters",
+      incomingConditions: [],
+      allowedServices: [],
+      mediaAssets: [],
+    },
+    ...workflowContext.nodes,
+    {
+      nodeId: "booking-node-id" as Id<"workflowNodes">,
+      kind: "bookAppointment",
+      title: "Book appointment",
+      incomingConditions: [
+        {
+          sourceNodeId: "start-node-id" as Id<"workflowNodes">,
+          name: "Yes",
+          detail: "If the customer wants to book one of the selected services.",
+        },
+      ],
+      allowedServices: [
+        {
+          serviceId: "test-service-id" as Id<"appointmentServices">,
+          name: "Test service",
+          durationMinutes: 30,
+          fields: [],
+        },
+      ],
+      mediaAssets: [],
     },
   ],
 };
@@ -122,18 +162,88 @@ test("validates planner output with a fixed schema", () => {
   ).toThrow();
 });
 
-test("pins structured workflow planning to a dedicated DeepSeek model", () => {
-  const plannerPath = fileURLToPath(
-    new URL("./workflowActionPlanner.ts", import.meta.url),
-  );
-  const plannerSource = readFileSync(plannerPath, "utf8");
+test("builds binary JEV decisions for every non-start ready workflow node", () => {
+  const request = buildWorkflowDecisionRequest("I want to book the Test service.", scoredWorkflowContext);
 
-  expect(plannerSource).toContain(
-    'export const WORKFLOW_ACTION_PLANNER_MODEL = "deepseek/deepseek-v4-flash";',
+  expect(request.model).toBe("typesafe/jev-1.13");
+  expect(request.state).toBe("I want to book the Test service.");
+  expect(request.questions).toMatchObject({
+    sendTypeBVideo: {
+      type: "noul",
+      criteria: {
+        true: expect.stringContaining("Send Type B video"),
+        false: expect.stringContaining("Send Type B video"),
+      },
+      instructions: expect.stringContaining("Send Type B video"),
+    },
+    sendGreeting: {
+      type: "noul",
+      criteria: {
+        true: expect.stringContaining("Send greeting"),
+        false: expect.stringContaining("Send greeting"),
+      },
+      instructions: expect.stringContaining("Send greeting"),
+    },
+    bookAppointment: {
+      type: "noul",
+      criteria: {
+        true: expect.stringContaining("Book appointment"),
+        false: expect.stringContaining("Book appointment"),
+      },
+      instructions: expect.stringContaining("Test service (30 minutes)"),
+    },
+  });
+  expect(Object.keys(request.questions)).toEqual([
+    "sendTypeBVideo",
+    "sendGreeting",
+    "bookAppointment",
+  ]);
+});
+
+test("suffixes duplicate workflow node titles in JEV question keys", () => {
+  const request = buildWorkflowDecisionRequest("Send it.", {
+    ...workflowContext,
+    nodes: workflowContext.nodes.map((node) => ({
+      ...node,
+      title: "Send item",
+    })),
+  });
+
+  expect(Object.keys(request.questions)).toEqual(["sendItem", "sendItem2"]);
+});
+
+test("runs JEV decisions when a ready workflow has only a booking node", async () => {
+  await expect(
+    generateWorkflowActionPlan(
+      {} as ActionCtx,
+      "thread-id",
+      {},
+      {
+        ...scoredWorkflowContext,
+        nodes: [scoredWorkflowContext.nodes[3]!],
+      },
+    ),
+  ).rejects.toThrow("ctx.runQuery is not a function");
+});
+
+test("selects every JEV yes probability at or above 0.8", () => {
+  const result = reconcileWorkflowDecisionAnswers(
+    {
+      sendTypeBVideo: { noul: 0.6 },
+      sendGreeting: { noul: 0.91 },
+      bookAppointment: { noul: 0.87 },
+    },
+    scoredWorkflowContext,
   );
-  expect(plannerSource).toContain(
-    "model: openRouterModel(WORKFLOW_ACTION_PLANNER_MODEL)",
-  );
+
+  expect(result).toEqual({
+    selectedNodeIds: ["message-node-id", "booking-node-id"],
+    decisions: [
+      { nodeId: "video-node-id", noul: 0.6, matched: false },
+      { nodeId: "message-node-id", noul: 0.91, matched: true },
+      { nodeId: "booking-node-id", noul: 0.87, matched: true },
+    ],
+  });
 });
 
 test("retries malformed structured output up to the configured limit", async () => {
@@ -307,6 +417,19 @@ test("final reply guidance requires the planner-detected response language", () 
   expect(guidance).toContain("No workflow media is being sent in this turn.");
 });
 
+test("final reply guidance preserves the latest customer language when JEV only decides workflows", () => {
+  const guidance = buildWorkflowActionPlanReplyGuidance(
+    {
+      workflowMatches: [],
+      mediaNodeIdsToSend: [],
+      responseLanguage: "the latest customer message's language",
+    },
+    workflowContext,
+  );
+
+  expect(guidance).toContain("Respond in the same language as the latest customer message.");
+});
+
 test("adds workflow action constraints as context without replacing the agent system prompt", () => {
   const promptArgs = workflowActionPlanReplyPromptArgs(
     { promptMessageId: "message-id" },
@@ -394,4 +517,12 @@ test("AI reply worker sends matched Send message text exactly", () => {
 
   expect(inboxSource).toContain("resolveWorkflowActionPlanText(");
   expect(inboxSource).toContain("replyMessages = [plannedWorkflowText];");
+});
+
+test("Test Your Agent runs the JEV workflow planner before streaming a reply", () => {
+  const streamingPath = fileURLToPath(new URL("./streaming.ts", import.meta.url));
+  const streamingSource = readFileSync(streamingPath, "utf8");
+
+  expect(streamingSource).toContain("generateWorkflowActionPlan(");
+  expect(streamingSource).toContain("workflowActionPlanReplyPromptArgs(");
 });

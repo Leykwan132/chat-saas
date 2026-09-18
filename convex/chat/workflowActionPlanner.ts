@@ -2,22 +2,30 @@ import { z } from "zod/v3";
 import { NoObjectGeneratedError } from "ai";
 import type { ActionCtx } from "../_generated/server";
 import { AI_GENERATION_MAX_RETRIES } from "../llm/retryPolicy";
-import { openRouterModel } from "../llm/openRouter";
-import type { buildAgent } from "./threads";
 import type { WorkflowRuntimeContextForPrompt } from "./workflowPrompt";
 import {
   getMatchedWorkflowActionNodes,
   getPlannableWorkflowActionNodes,
   reconcileWorkflowActionPlan,
 } from "./workflowActionExecution";
+import {
+  buildWorkflowDecisionRequest,
+  buildWorkflowDecisionState,
+  getWorkflowDecisionNodes,
+  reconcileWorkflowDecisionAnswers,
+  requestWorkflowDecisionAnswers,
+} from "./workflowDecisions";
+
+export {
+  buildWorkflowDecisionRequest,
+  reconcileWorkflowDecisionAnswers,
+} from "./workflowDecisions";
 
 export {
   resolveWorkflowActionPlanMedia,
   resolveWorkflowActionPlanText,
   shouldRunWorkflowActionPlanner,
 } from "./workflowActionExecution";
-
-export const WORKFLOW_ACTION_PLANNER_MODEL = "deepseek/deepseek-v4-flash";
 
 export const workflowActionPlanSchema = z.object({
   workflowMatches: z.array(
@@ -98,7 +106,9 @@ export function buildWorkflowActionPlanReplyGuidance(
 ) {
   const matchedMediaNodes = getMatchedWorkflowActionNodes(plan, context)
     .filter((node) => node.kind === "sendImage" || node.kind === "sendFile");
-  const languageLine = `- You must respond in ${plan.responseLanguage.trim()} strictly.`;
+  const languageLine = plan.responseLanguage === "the latest customer message's language"
+    ? "- Respond in the same language as the latest customer message."
+    : `- You must respond in ${plan.responseLanguage.trim()} strictly.`;
 
   if (matchedMediaNodes.length === 0) {
     return [
@@ -232,29 +242,32 @@ ${nodeSections}`;
 
 export async function generateWorkflowActionPlan(
   ctx: ActionCtx,
-  configuredAgent: ReturnType<typeof buildAgent>,
   threadId: string,
   args: AiReplyPromptArgs,
   workflowRuntimeContext: WorkflowRuntimeContextForPrompt,
 ): Promise<WorkflowActionPlan> {
-  const result = await retryWorkflowActionPlanGeneration(() =>
-    configuredAgent.generateObject(
-      ctx,
-      { threadId },
-      {
-        ...aiReplyPromptArgs(args),
-        model: openRouterModel(WORKFLOW_ACTION_PLANNER_MODEL),
-        system: buildWorkflowActionPlannerSystemPrompt(workflowRuntimeContext),
-        schema: workflowActionPlanSchema,
-      },
-      { storageOptions: { saveMessages: "none" } },
-    ),
-  );
-
-  const reconciledPlan = reconcileWorkflowActionPlan(
-    result.object,
-    workflowRuntimeContext,
-  );
-  console.log("Workflow action plan result:", reconciledPlan);
+  if (getWorkflowDecisionNodes(workflowRuntimeContext).length === 0) {
+    return {
+      workflowMatches: [],
+      mediaNodeIdsToSend: [],
+      responseLanguage: "the latest customer message's language",
+    };
+  }
+  const state = await buildWorkflowDecisionState(ctx, threadId, args.promptContent);
+  const request = buildWorkflowDecisionRequest(state, workflowRuntimeContext);
+  const result = await requestWorkflowDecisionAnswers(request);
+  const decision = reconcileWorkflowDecisionAnswers(result.answers, workflowRuntimeContext);
+  const reconciledPlan = reconcileWorkflowActionPlan({
+    workflowMatches: getPlannableWorkflowActionNodes(workflowRuntimeContext)
+      .filter((node) => decision.selectedNodeIds.includes(node.nodeId))
+      .map((node) => ({
+        matched: true as const,
+        nodeId: node.nodeId,
+        nodeKind: node.kind,
+        nodeTitle: node.title,
+      })),
+    mediaNodeIdsToSend: decision.selectedNodeIds,
+    responseLanguage: "the latest customer message's language",
+  }, workflowRuntimeContext);
   return reconciledPlan;
 }
