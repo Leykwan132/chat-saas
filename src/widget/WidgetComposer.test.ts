@@ -125,6 +125,9 @@ test("widget opens saved history at its latest message", () => {
 
 test("widget scrolls to the latest message only after a visitor sends", () => {
   expect(messageScrollerSource).toContain("scrollToLatestRequest");
+  expect(messageScrollerSource).toContain(
+    "type WidgetMessageScrollerAutoScrollProps = Pick<WidgetMessageScrollerProps, \"scrollToLatestRequest\">;",
+  );
   expect(messageScrollerSource).toContain("useLayoutEffect");
   expect(messageScrollerSource).toContain("useMessageScroller");
   expect(messageScrollerSource).toContain("scrollToEnd({ behavior: \"auto\" })");

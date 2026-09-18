@@ -16,9 +16,11 @@ type WidgetMessageScrollerProps = {
   scrollToLatestRequest: number;
 };
 
+type WidgetMessageScrollerAutoScrollProps = Pick<WidgetMessageScrollerProps, "scrollToLatestRequest">;
+
 function WidgetMessageScrollerAutoScroll({
   scrollToLatestRequest,
-}: WidgetMessageScrollerProps) {
+}: WidgetMessageScrollerAutoScrollProps) {
   const lastScrollRequest = useRef(scrollToLatestRequest);
   const { scrollToEnd } = useMessageScroller();
 

@@ -98,6 +98,7 @@
 
 # Receipts
 
+- 2026-09-18 [TOOL] PR #160 build failure fixed: narrowed the auto-scroll helper to its sole `scrollToLatestRequest` prop. Widget regression suite passed 33 tests and `bunx tsc -b --pretty false` completed with exit code 0.
 - 2026-09-18 [TOOL] PR #160 opened: https://github.com/Leykwan132/chat-saas/pull/160 (`codex/jev-imp` → `main`), including JEV workflow decisions, widget stabilization, diagnostic cleanup, and removal of the temporary localhost embed.
 - 2026-09-18 [TOOL] Focused JEV, agent retry, double-save, and widget suites passed 62 tests after removing temporary diagnostics; `git diff --check` passed. Full Vitest has unrelated existing failures in calendar, WhatsApp, dashboard routing, referrals, and lead routing tests. `bun run build` exceeded the 30-second execution window without reporting a compiler error.
 - 2026-09-18 [TOOL] `bunx vitest run --exclude '.worktrees/**' src/widget/WidgetComposer.test.ts`: 33 tests passed; `git diff --check` passed after restoring post-history end scrolling and removing the reset UI.
