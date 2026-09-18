@@ -21,6 +21,9 @@ export function useWidgetReplyPolling(
   const [isThinking, setIsThinking] = useState(false);
   const pollingIdRef = useRef(0);
   const timeoutRef = useRef<number | undefined>(undefined);
+  const conversationIdentity = init
+    ? [init.apiBase, init.publicKey, init.visitorId].join("\u0000")
+    : null;
 
   const stopThinking = useCallback(() => {
     pollingIdRef.current += 1;
@@ -44,7 +47,7 @@ export function useWidgetReplyPolling(
   }, [init, setMessages]);
 
   const startThinking = useCallback(
-    (sentAt: number) => {
+    (knownMessageIds: Set<string>) => {
       if (!init) return;
       stopThinking();
       const pollingId = pollingIdRef.current + 1;
@@ -58,7 +61,8 @@ export function useWidgetReplyPolling(
           if (
             messages.some(
               (message) =>
-                message.direction === "outgoing" && message.createdAt >= sentAt,
+                message.direction === "outgoing" &&
+                !knownMessageIds.has(message.id),
             )
           ) {
             setIsThinking(false);
@@ -78,7 +82,7 @@ export function useWidgetReplyPolling(
     [init, refreshMessages, stopThinking],
   );
 
-  useEffect(() => stopThinking, [init, stopThinking]);
+  useEffect(() => stopThinking, [conversationIdentity, stopThinking]);
 
   useEffect(() => {
     if (!init || !isChatOpen) return;

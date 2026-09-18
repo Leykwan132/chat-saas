@@ -62,19 +62,9 @@ export const cfUploadWorker = internalAction({
   handler: async (ctx, args) => {
     await assertWorkspaceCanCreateExternalState(ctx, args.orgId ?? "");
 
-    console.log("[convex-rag] uploadWorker", {
-      entryType: args.entryType,
-      entryId: args.entryId,
-      agentId: args.agentId,
-      fileName: args.fileName ?? null,
-      title: args.title ?? null,
-      extractedChars: args.extractedText?.length ?? 0,
-    });
-
     const needsVision = args.entryType === "file"
       && !args.extractedText?.trim()
       && isImageFileName(args.fileName ?? "");
-    console.log("[convex-rag] uploadWorker rag", { needsVision });
     const extractedText = needsVision
       ? await describeImageForKnowledgeBase(args.fileName!, args.fileBytes!)
       : args.extractedText;
@@ -212,11 +202,6 @@ export const cfDeleteWorker = internalAction({
     r2Key: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    console.log("[convex-rag] deleteWorker", {
-      cfItemId: args.cfItemId ?? null,
-      ragEntryId: args.ragEntryId ?? null,
-      r2Key: args.r2Key ?? null,
-    });
     if (args.cfItemId) {
       await deleteFromCFOrThrow(args.cfItemId);
     }

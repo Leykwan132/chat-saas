@@ -727,7 +727,6 @@ export const generateAiReplyWorker = internalAction({
 
       const workflowActionPlan = await generateWorkflowActionPlan(
         ctx,
-        configuredAgent,
         conv.threadId,
         args,
         workflowRuntimeContext,

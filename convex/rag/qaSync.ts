@@ -14,16 +14,8 @@ export const indexQaEntry = internalAction({
       entryId: args.entryId,
     });
     if (!entry) {
-      console.log("[convex-rag] qaSync skipped missing entry", { entryId: args.entryId });
       return null;
     }
-
-    console.log("[convex-rag] qaSync", {
-      entryId: args.entryId,
-      agentId: entry.agentId,
-      question: entry.question,
-      answerChars: entry.answer.length,
-    });
 
     await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
       entryId: args.entryId,

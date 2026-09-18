@@ -24,16 +24,6 @@ export async function addKnowledgeEntryToRag(
     throw new Error(`No indexable text for ${args.entryType} entry ${args.entryId}`);
   }
 
-  console.log("[convex-rag] add start", {
-    agentId: args.agentId,
-    entryType: args.entryType,
-    entryId: args.entryId,
-    namespace: ragNamespace(args.agentId),
-    key: ragKey(args.entryType, args.entryId),
-    title: args.title,
-    textChars: text.length,
-  });
-
   const rag = getRag();
   const { entryId, replacedEntry } = await rag.add(ctx, {
     namespace: ragNamespace(args.agentId),
@@ -44,19 +34,10 @@ export async function addKnowledgeEntryToRag(
   });
 
   if (replacedEntry) {
-    console.log("[convex-rag] add replacing", {
-      oldRagEntryId: replacedEntry.entryId,
-      newRagEntryId: entryId,
-    });
     await rag.delete(ctx, { entryId: replacedEntry.entryId });
   }
 
   const fileSize = new Blob([text]).size;
-  console.log("[convex-rag] add done", {
-    ragEntryId: entryId,
-    fileSize,
-    replaced: Boolean(replacedEntry),
-  });
   return { ragEntryId: entryId, fileSize };
 }
 
@@ -65,7 +46,6 @@ export async function deleteKnowledgeEntryFromRag(
   ragEntryId: string,
 ): Promise<void> {
   await getRag().delete(ctx, { entryId: ragEntryId as EntryId });
-  console.log("[convex-rag] delete done", { ragEntryId });
 }
 
 export function qaEntryText(question: string, answer: string) {
