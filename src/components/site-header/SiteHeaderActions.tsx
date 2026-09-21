@@ -40,7 +40,7 @@ export function SiteHeaderActions({
           <Link
             to={POST_LOGIN_REDIRECT}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-[15px] font-medium transition-all duration-300 hover:opacity-90',
+              'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[15px] font-medium transition-all duration-300 hover:opacity-90',
               isHeaderTransparent
                 ? 'bg-white text-zinc-900 hover:bg-white/90 shadow-sm'
                 : 'bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)]'
