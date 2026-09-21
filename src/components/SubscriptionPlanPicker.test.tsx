@@ -52,3 +52,32 @@ test('uses four grid columns when Enterprise is shown beside three paid plans', 
   expect(markup).toContain('xl:grid-cols-4');
   expect(markup).not.toContain('xl:grid-cols-5');
 });
+
+test('shows the Starter promotion on the public monthly pricing cards', () => {
+  const markup = renderToStaticMarkup(
+    <SubscriptionPlanPicker
+      billingInterval="monthly"
+      onBillingIntervalChange={() => undefined}
+      variant="pricing"
+      renderPlanAction={() => null}
+    />,
+  );
+
+  expect(markup).toContain('Limited-time offer');
+  expect(markup).toContain('Code: STARTER1');
+  expect(markup).toContain('>1</span>');
+});
+
+test('keeps the Starter promotion out of non-public plan pickers', () => {
+  const markup = renderToStaticMarkup(
+    <SubscriptionPlanPicker
+      billingInterval="monthly"
+      onBillingIntervalChange={() => undefined}
+      variant="account"
+      renderPlanAction={() => null}
+    />,
+  );
+
+  expect(markup).not.toContain('Limited-time offer');
+  expect(markup).not.toContain('Code: STARTER1');
+});

@@ -1,6 +1,7 @@
 import { isValidElement, type ReactNode } from 'react';
 import { expect, test } from 'vitest';
 import { HoverCard } from '@/components/ui/hover-card';
+import { isTeamMembersLabel } from '../../../shared/planCatalog';
 import { renderPricingFeatureLabel } from './pricingFeatureHover';
 import { PlanTeamMembersHoverHint } from './PlanTeamMembersHoverHint';
 
@@ -25,4 +26,8 @@ test('renders a team-member hover hint from the shared pricing renderer', () => 
   const element = renderPricingFeatureLabel('10 team members', 'growth', false);
 
   expect(isValidElement(element) && element.type).toBe(PlanTeamMembersHoverHint);
+});
+
+test('recognizes unlimited team members on the Enterprise plan', () => {
+  expect(isTeamMembersLabel('Unlimited team members')).toBe(true);
 });

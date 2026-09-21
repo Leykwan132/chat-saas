@@ -497,7 +497,7 @@ export function isTopicAnalyticsLabel(label: string): boolean {
 }
 
 export function isTeamMembersLabel(label: string): boolean {
-  return label === "Team members" || /^[\d,]+ team members$/.test(label);
+  return label === "Team members" || /^(?:Unlimited|[\d,]+) team members$/.test(label);
 }
 
 export function isBasicAnalyticsLabel(label: string): boolean {

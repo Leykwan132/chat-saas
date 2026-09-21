@@ -153,6 +153,7 @@ export function SubscriptionPlanPicker({
                 isCurrent={isCurrent}
                 highlightCurrent={highlightCurrent}
                 showPopularHighlight={showPopularHighlight}
+                showStarterPromotion={variant === 'pricing' && billingInterval === 'monthly'}
                 disabled={disabled}
                 showPricingKeyFeatures={showPricingKeyFeatures}
                 density={density}
@@ -235,6 +236,7 @@ type SubscriptionPlanCardProps = {
   isCurrent: boolean;
   highlightCurrent?: boolean;
   showPopularHighlight?: boolean;
+  showStarterPromotion?: boolean;
   disabled?: boolean;
   showPricingKeyFeatures?: boolean;
   density?: PlanPickerDensity;
@@ -249,6 +251,7 @@ function SubscriptionPlanCard({
   isCurrent,
   highlightCurrent = false,
   showPopularHighlight = false,
+  showStarterPromotion = false,
   disabled = false,
   showPricingKeyFeatures = false,
   density = 'default',
@@ -260,6 +263,10 @@ function SubscriptionPlanCard({
   const isCompact = density === 'compact';
   const isRoomyCompact = isCompact && compactSpacing === 'roomy';
   const planPriceClass = isCompact ? planPriceClassCompact : planPriceClassDefault;
+  const isStarterPromotion = showStarterPromotion && plan.id === 'starter';
+  const monthlyPrice = isStarterPromotion
+    ? '1'
+    : formatPlanPriceAmount(plan.monthlyPriceRm);
 
   return (
     <Card
@@ -316,6 +323,11 @@ function SubscriptionPlanCard({
                   Popular
                 </span>
               ) : null}
+              {isStarterPromotion ? (
+                <span className="shrink-0 inline-flex items-center justify-center rounded-full bg-amber-100 px-2 py-1 text-[8px] font-bold uppercase tracking-wide text-amber-900 leading-none dark:bg-amber-400/20 dark:text-amber-200">
+                  Limited-time offer
+                </span>
+              ) : null}
               {isCurrent ? (
                 <Badge
                   variant="secondary"
@@ -350,7 +362,7 @@ function SubscriptionPlanCard({
                       <WordRotate
                         inline
                         words={[
-                          formatPlanPriceAmount(plan.monthlyPriceRm),
+                          monthlyPrice,
                           formatPlanPriceAmount(plan.yearlyPriceRm ?? 0),
                         ]}
                         activeIndex={billingInterval === 'monthly' ? 0 : 1}
@@ -362,6 +374,11 @@ function SubscriptionPlanCard({
                     {plan.id === 'free' ? '/ forever' : billingInterval === 'monthly' ? '/ month' : '/ year'}
                   </span>
                 </div>
+                {isStarterPromotion ? (
+                  <span className="mt-2 inline-flex w-fit items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200">
+                    Code: STARTER1
+                  </span>
+                ) : null}
                 {billingInterval === 'annual' && plan.id !== 'free' && (
                   <div className={cn(
                     "flex items-baseline gap-2 text-sm text-muted-foreground leading-none font-medium",
