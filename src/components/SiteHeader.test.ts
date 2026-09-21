@@ -45,7 +45,9 @@ test('the full header offer bar copies the Starter code', () => {
   expect(siteHeaderSource).toContain('STARTER1');
   expect(siteHeaderSource).toContain('99% off for your first 3 months (Starter Plan).');
   expect(siteHeaderSource).toContain('Use code');
-  expect(siteHeaderSource).not.toContain('See more →');
+  expect(siteHeaderSource).toContain('See more →');
+  expect(siteHeaderSource).toContain('onDoubleClick');
+  expect(siteHeaderSource).toContain("navigate('/pricing')");
   expect(siteHeaderSource).not.toContain('Enjoy Starter for only RM1');
   expect(siteHeaderSource).toContain('font-normal');
   expect(siteHeaderSource).not.toContain('font-semibold">Enjoy Starter');

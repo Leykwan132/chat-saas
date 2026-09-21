@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
   const { user, signIn, signUp } = useAuth();
   const hasSession = Boolean(user);
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -58,11 +59,12 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
       <button
         type="button"
         onClick={() => void copyPromoCode()}
+        onDoubleClick={() => navigate('/pricing')}
         aria-label="Copy promotion code STARTER1"
         className="relative z-50 flex min-h-10 w-full cursor-pointer items-center justify-center border-b border-zinc-950/10 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 px-5 py-1 text-center text-xs text-zinc-950 transition-all duration-300 hover:brightness-[0.98]"
       >
         <span className="flex w-full items-center justify-center text-center leading-tight">
-          <span className="font-normal">99% off for your first 3 months (Starter Plan). Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide"><Copy className="ml-1 mr-1 size-3" />STARTER1</span></span>
+          <span className="font-normal">99% off for your first 3 months (Starter Plan). Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide"><Copy className="ml-1 mr-1 size-3" />STARTER1</span><span className="ml-2 whitespace-nowrap text-[11px] underline-offset-2 hover:underline">See more →</span></span>
         </span>
       </button>
 
