@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '@/partnerAuth/AppAuthProvider';
-import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import { SiteHeaderActions } from '@/components/site-header/SiteHeaderActions';
@@ -70,7 +69,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
         className="relative z-50 flex min-h-10 w-full cursor-pointer items-center justify-center border-b border-zinc-950/10 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 px-5 py-1 text-center text-xs text-zinc-950 transition-all duration-300 hover:brightness-[0.98]"
       >
         <span className="flex w-full items-center justify-center text-center leading-tight">
-          <span className="font-normal">Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide">STARTER1<Copy className="ml-1 size-3" /></span> for 99% off your first 3 months (Starter Plan).</span>
+          <span className="font-normal">Use code <span className="font-bold tracking-wide">STARTER1</span> for 99% off your first 3 months (Starter Plan).</span>
           <button
             type="button"
             onClick={(event) => {
@@ -78,7 +77,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
               navigate('/pricing');
             }}
             onKeyDown={(event) => event.stopPropagation()}
-            className="ml-2 whitespace-nowrap rounded-full bg-zinc-950 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-zinc-800"
+            className="ml-2 whitespace-nowrap rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-indigo-700"
           >
             Learn more →
           </button>

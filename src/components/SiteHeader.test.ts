@@ -43,14 +43,17 @@ test('public Start for free handlers do not report Google Ads conversions', () =
 
 test('the full header offer bar copies the Starter code', () => {
   expect(siteHeaderSource).toContain('STARTER1');
-  expect(siteHeaderSource).toContain('Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide">STARTER1');
+  expect(siteHeaderSource).toContain('Use code <span className="font-bold tracking-wide">STARTER1');
   expect(siteHeaderSource).not.toContain('99% off for your first 3 months (Starter Plan). Use code');
   expect(siteHeaderSource).toContain('Learn more →');
   expect(siteHeaderSource).not.toContain('onDoubleClick');
   expect(siteHeaderSource).toContain("navigate('/pricing')");
   expect(siteHeaderSource).toContain('event.stopPropagation()');
-  expect(siteHeaderSource).toContain('bg-zinc-950');
+  expect(siteHeaderSource).toContain('bg-indigo-600');
+  expect(siteHeaderSource).not.toContain('bg-zinc-950');
   expect(siteHeaderSource).not.toContain('bg-pink');
+  expect(siteHeaderSource).not.toContain("import { Copy } from 'lucide-react'");
+  expect(siteHeaderSource).not.toContain('<Copy');
   expect(siteHeaderSource).not.toContain('Enjoy Starter for only RM1');
   expect(siteHeaderSource).toContain('font-normal');
   expect(siteHeaderSource).not.toContain('font-semibold">Enjoy Starter');
@@ -63,8 +66,6 @@ test('the full header offer bar copies the Starter code', () => {
   expect(siteHeaderSource).toContain('flex w-full items-center justify-center');
   expect(siteHeaderSource).not.toContain('from-[#eb0000] via-[#95008a] to-[#3300fc]');
   expect(siteHeaderSource).toContain('text-center');
-  expect(siteHeaderSource).toContain('translate-y-[3px]');
-  expect(siteHeaderSource).toContain('ml-1 size-3');
   expect(siteHeaderSource).not.toContain('bg-white/70');
   expect(siteHeaderSource).not.toContain("'Copy code'");
   expect(siteHeaderSource).not.toContain('Early Adopter Program');
