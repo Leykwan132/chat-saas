@@ -109,6 +109,7 @@
 
 # Receipts
 
+- 2026-09-21 [TOOL] Removed the unused `Link` import from `SiteHeader.tsx`; `bunx tsc -b --pretty false`, `bun run build`, and the focused SiteHeader suite (6 tests) pass. The build still reports the existing Wrangler log-file permission warning and large-chunk warnings but exits successfully.
 - 2026-09-21 [TOOL] PR #161 opened: https://github.com/Leykwan132/chat-saas/pull/161 (`codex/fix-usage-data` → `main`) for the annual billing-period resolver, 30-day AI Agent Usage default, and completed scoped data repair.
 - 2026-09-21 [TOOL] Production scoped migration `creditPeriodRepairMigration:repairBusinessCreditPeriod` dry-ran and processed one exact `userCreditPeriods` row, then applied successfully. Readback confirmed `business`, 20,000 granted, and 39 used.
 - 2026-09-21 [TOOL] PR #162 opened: https://github.com/Leykwan132/chat-saas/pull/162 (`codex/sidebar-navigation` → `main`) for the compact agent/workspace sidebar navigation and Agent Setup Instructions label. Focused suite passed 35 tests; unshipped.

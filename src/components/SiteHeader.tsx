@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { toast } from 'sonner';
 import { POST_LOGIN_REDIRECT } from '@/constants';
