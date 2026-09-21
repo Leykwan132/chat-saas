@@ -20,7 +20,11 @@ export function StarterPromotionHoverHint() {
       <HoverCardContent align="start" className="w-72">
         <p className="font-medium">Starter promotion</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Get Starter for RM1/month for your first 3 months with code STARTER1 at checkout.
+          Get Starter for RM1/month for your first 3 months with code{' '}
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs font-semibold text-foreground">
+            STARTER1
+          </code>{' '}
+          at checkout.
         </p>
       </HoverCardContent>
     </HoverCard>
