@@ -45,9 +45,12 @@ test('the full header offer bar copies the Starter code', () => {
   expect(siteHeaderSource).toContain('STARTER1');
   expect(siteHeaderSource).toContain('99% off for your first 3 months (Starter Plan).');
   expect(siteHeaderSource).toContain('Use code');
-  expect(siteHeaderSource).toContain('See more →');
-  expect(siteHeaderSource).toContain('onDoubleClick');
+  expect(siteHeaderSource).toContain('Learn more →');
+  expect(siteHeaderSource).not.toContain('onDoubleClick');
   expect(siteHeaderSource).toContain("navigate('/pricing')");
+  expect(siteHeaderSource).toContain('event.stopPropagation()');
+  expect(siteHeaderSource).toContain('bg-zinc-950');
+  expect(siteHeaderSource).not.toContain('bg-pink');
   expect(siteHeaderSource).not.toContain('Enjoy Starter for only RM1');
   expect(siteHeaderSource).toContain('font-normal');
   expect(siteHeaderSource).not.toContain('font-semibold">Enjoy Starter');
@@ -61,7 +64,7 @@ test('the full header offer bar copies the Starter code', () => {
   expect(siteHeaderSource).not.toContain('from-[#eb0000] via-[#95008a] to-[#3300fc]');
   expect(siteHeaderSource).toContain('text-center');
   expect(siteHeaderSource).toContain('translate-y-[3px]');
-  expect(siteHeaderSource).toContain('ml-1 mr-1 size-3');
+  expect(siteHeaderSource).toContain('ml-1 size-3');
   expect(siteHeaderSource).not.toContain('bg-white/70');
   expect(siteHeaderSource).not.toContain("'Copy code'");
   expect(siteHeaderSource).not.toContain('Early Adopter Program');

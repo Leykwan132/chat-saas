@@ -56,17 +56,34 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
 
   return (
     <>
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => void copyPromoCode()}
-        onDoubleClick={() => navigate('/pricing')}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            void copyPromoCode();
+          }
+        }}
         aria-label="Copy promotion code STARTER1"
         className="relative z-50 flex min-h-10 w-full cursor-pointer items-center justify-center border-b border-zinc-950/10 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 px-5 py-1 text-center text-xs text-zinc-950 transition-all duration-300 hover:brightness-[0.98]"
       >
         <span className="flex w-full items-center justify-center text-center leading-tight">
-          <span className="font-normal">99% off for your first 3 months (Starter Plan). Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide"><Copy className="ml-1 mr-1 size-3" />STARTER1</span><span className="ml-2 whitespace-nowrap text-[11px] underline-offset-2 hover:underline">See more →</span></span>
+          <span className="font-normal">99% off for your first 3 months (Starter Plan). Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide">STARTER1<Copy className="ml-1 size-3" /></span></span>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              navigate('/pricing');
+            }}
+            onKeyDown={(event) => event.stopPropagation()}
+            className="ml-2 whitespace-nowrap rounded-full bg-zinc-950 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-zinc-800"
+          >
+            Learn more →
+          </button>
         </span>
-      </button>
+      </div>
 
       <header className={cn(
         'fixed inset-x-0 z-50 transition-all duration-300',
