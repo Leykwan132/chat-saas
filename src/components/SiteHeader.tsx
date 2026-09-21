@@ -70,7 +70,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
         className="relative z-50 flex min-h-10 w-full cursor-pointer items-center justify-center border-b border-zinc-950/10 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 px-5 py-1 text-center text-xs text-zinc-950 transition-all duration-300 hover:brightness-[0.98]"
       >
         <span className="flex w-full items-center justify-center text-center leading-tight">
-          <span className="font-normal">99% off for your first 3 months (Starter Plan). Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide">STARTER1<Copy className="ml-1 size-3" /></span></span>
+          <span className="font-normal">Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide">STARTER1<Copy className="ml-1 size-3" /></span> for 99% off your first 3 months (Starter Plan).</span>
           <button
             type="button"
             onClick={(event) => {

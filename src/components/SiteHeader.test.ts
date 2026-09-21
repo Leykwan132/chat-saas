@@ -43,8 +43,8 @@ test('public Start for free handlers do not report Google Ads conversions', () =
 
 test('the full header offer bar copies the Starter code', () => {
   expect(siteHeaderSource).toContain('STARTER1');
-  expect(siteHeaderSource).toContain('99% off for your first 3 months (Starter Plan).');
-  expect(siteHeaderSource).toContain('Use code');
+  expect(siteHeaderSource).toContain('Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide">STARTER1');
+  expect(siteHeaderSource).not.toContain('99% off for your first 3 months (Starter Plan). Use code');
   expect(siteHeaderSource).toContain('Learn more →');
   expect(siteHeaderSource).not.toContain('onDoubleClick');
   expect(siteHeaderSource).toContain("navigate('/pricing')");
