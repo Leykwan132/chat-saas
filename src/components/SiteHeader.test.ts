@@ -45,6 +45,8 @@ test('the full header offer bar copies the Starter code', () => {
   expect(siteHeaderSource).toContain('STARTER1');
   expect(siteHeaderSource).toContain('Enjoy Starter for only RM1 for your first 3 months.');
   expect(siteHeaderSource).toContain('Use code');
+  expect(siteHeaderSource).toContain('font-normal');
+  expect(siteHeaderSource).not.toContain('font-semibold">Enjoy Starter');
   expect(siteHeaderSource).toContain("toast.success('Code copied!')");
   expect(siteHeaderSource).toContain('navigator.clipboard.writeText');
   expect(siteHeaderSource).toContain('cursor-pointer');

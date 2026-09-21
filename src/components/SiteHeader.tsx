@@ -62,7 +62,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
         className="relative z-50 flex min-h-10 w-full cursor-pointer items-center justify-center border-b border-zinc-950/10 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 px-5 py-1 text-center text-xs text-zinc-950 transition-all duration-300 hover:brightness-[0.98]"
       >
         <span className="grid w-full place-items-center text-center leading-tight">
-          <span className="font-medium"><span className="font-semibold">Enjoy Starter for only RM1 for your first 3 months.</span> Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide"><Copy className="ml-1 mr-1 size-3" />STARTER1</span></span>
+          <span className="font-normal">Enjoy Starter for only RM1 for your first 3 months. Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide"><Copy className="ml-1 mr-1 size-3" />STARTER1</span></span>
         </span>
       </button>
 
