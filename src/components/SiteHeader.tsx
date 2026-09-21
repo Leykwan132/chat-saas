@@ -59,12 +59,10 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
         type="button"
         onClick={() => void copyPromoCode()}
         aria-label="Copy promotion code STARTER1"
-        className="relative z-50 flex min-h-10 w-full cursor-pointer items-center justify-center border-b border-white/20 bg-gradient-to-r from-[#eb0000] via-[#95008a] to-[#3300fc] px-4 py-1 text-center text-xs text-white transition-all duration-300 hover:brightness-[0.98] sm:px-5"
+        className="relative z-50 flex min-h-10 w-full cursor-pointer items-center justify-center border-b border-zinc-950/10 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 px-5 py-1 text-center text-xs text-zinc-950 transition-all duration-300 hover:brightness-[0.98]"
       >
-        <span className="flex w-full flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 text-center leading-tight">
-          <span className="font-semibold">Enjoy Starter for only RM1 for your first 3 months.</span>
-          <span className="font-medium">Use code</span>
-          <span className="inline-flex translate-y-[3px] items-center gap-1 font-bold tracking-wide"><Copy className="size-3" />STARTER1</span>
+        <span className="grid w-full place-items-center text-center leading-tight">
+          <span className="font-medium"><span className="font-semibold">Enjoy Starter for only RM1 for your first 3 months.</span> Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide"><Copy className="ml-1 mr-1 size-3" />STARTER1</span></span>
         </span>
       </button>
 

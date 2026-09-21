@@ -327,7 +327,7 @@ function SubscriptionPlanCard({
                 </span>
               ) : null}
               {isStarterPromotion ? (
-                <span className="shrink-0 inline-flex items-center justify-center rounded-full bg-amber-100 px-2 py-1 text-[8px] font-bold uppercase tracking-wide text-amber-900 leading-none dark:bg-amber-400/20 dark:text-amber-200">
+                <span className="shrink-0 inline-flex items-center justify-center gap-1 rounded-full bg-gradient-to-r from-[#eb0000] via-[#95008a] to-[#3300fc] px-2 py-1 text-[8px] font-bold uppercase tracking-wide text-white leading-none">
                   Limited-time offer
                   <StarterPromotionHoverHint />
                 </span>
