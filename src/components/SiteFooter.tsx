@@ -59,12 +59,6 @@ export function SiteFooter({ className }: SiteFooterProps) {
                   >
                     Pricing
                   </Link>
-                  <Link
-                    to="/leaderboard"
-                    className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
-                  >
-                    Leaderboard
-                  </Link>
                   <a
                     href={KILOBOT_DOCS_URL}
                     className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"

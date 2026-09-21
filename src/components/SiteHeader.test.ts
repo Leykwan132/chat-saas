@@ -7,9 +7,13 @@ const navigationSource = readFileSync(new URL('./site-header/SiteHeaderNavigatio
 const actionsSource = readFileSync(new URL('./site-header/SiteHeaderActions.tsx', import.meta.url), 'utf8');
 const blogLayoutSource = readFileSync(new URL('./BlogPostLayout.tsx', import.meta.url), 'utf8');
 const legalLayoutSource = readFileSync(new URL('./LegalDocumentLayout.tsx', import.meta.url), 'utf8');
+const footerSource = readFileSync(new URL('./SiteFooter.tsx', import.meta.url), 'utf8');
+const headerLinksSource = readFileSync(new URL('./site-header/siteHeaderLinks.ts', import.meta.url), 'utf8');
 
 test('site header keeps horizontal padding across desktop sizes', () => {
   expect(siteHeaderSource).toContain('px-5 sm:px-6 md:px-8 lg:px-10');
+  expect(siteHeaderSource).toContain("isScrolled ? 'top-0' : 'top-10 sm:top-10'");
+  expect(siteHeaderSource).not.toContain('top-[72px]');
   expect(siteHeaderSource).not.toContain('justify-between px-5 sm:px-6"');
   expect(siteHeaderSource).not.toContain('md:px-0');
 });
@@ -35,4 +39,44 @@ test('public Start for free handlers do not report Google Ads conversions', () =
   expect(siteHeaderSource).not.toContain('reportGoogleAdsConversion');
   expect(blogLayoutSource).not.toContain('reportGoogleAdsConversion');
   expect(legalLayoutSource).not.toContain('reportGoogleAdsConversion');
+});
+
+test('the full header offer bar copies the Starter code', () => {
+  expect(siteHeaderSource).toContain('STARTER1');
+  expect(siteHeaderSource).toContain('Use code <span className="font-bold tracking-wide">STARTER1');
+  expect(siteHeaderSource).toContain('(Starter Plan)</span>');
+  expect(siteHeaderSource).not.toContain('(Starter Plan).</span>');
+  expect(siteHeaderSource).not.toContain('99% off for your first 3 months (Starter Plan). Use code');
+  expect(siteHeaderSource).toContain('Learn more →');
+  expect(siteHeaderSource).not.toContain('onDoubleClick');
+  expect(siteHeaderSource).toContain("navigate('/pricing')");
+  expect(siteHeaderSource).toContain('event.stopPropagation()');
+  expect(siteHeaderSource).toContain('bg-indigo-600');
+  expect(siteHeaderSource).not.toContain('bg-zinc-950');
+  expect(siteHeaderSource).not.toContain('bg-pink');
+  expect(siteHeaderSource).not.toContain("import { Copy } from 'lucide-react'");
+  expect(siteHeaderSource).not.toContain('<Copy');
+  expect(siteHeaderSource).not.toContain('Enjoy Starter for only RM1');
+  expect(siteHeaderSource).toContain('font-normal');
+  expect(siteHeaderSource).not.toContain('font-semibold">Enjoy Starter');
+  expect(siteHeaderSource).toContain("toast.success('Code copied!')");
+  expect(siteHeaderSource).toContain('navigator.clipboard.writeText');
+  expect(siteHeaderSource).toContain('cursor-pointer');
+  expect(siteHeaderSource).toContain('min-h-10 w-full cursor-pointer');
+  expect(siteHeaderSource).toContain('px-5 py-1 text-center');
+  expect(siteHeaderSource).not.toContain('px-5 py-1.5 text-center');
+  expect(siteHeaderSource).toContain('flex w-full items-center justify-center');
+  expect(siteHeaderSource).not.toContain('from-[#eb0000] via-[#95008a] to-[#3300fc]');
+  expect(siteHeaderSource).toContain('text-center');
+  expect(siteHeaderSource).not.toContain('bg-white/70');
+  expect(siteHeaderSource).not.toContain("'Copy code'");
+  expect(siteHeaderSource).not.toContain('Early Adopter Program');
+  expect(siteHeaderSource).not.toContain('View pricing');
+});
+
+test('public navigation hides the leaderboard without removing its route', () => {
+  expect(headerLinksSource).not.toContain('Leaderboard');
+  expect(footerSource).not.toContain('to="/leaderboard"');
+  expect(blogLayoutSource).not.toContain('to="/leaderboard"');
+  expect(legalLayoutSource).not.toContain('to="/leaderboard"');
 });

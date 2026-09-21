@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useAuth } from '@/partnerAuth/AppAuthProvider';
-import { ArrowRight } from 'lucide-react';
+import { toast } from 'sonner';
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import { SiteHeaderActions } from '@/components/site-header/SiteHeaderActions';
 import { SiteHeaderBrand } from '@/components/site-header/SiteHeaderBrand';
@@ -13,6 +13,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
   const { user, signIn, signUp } = useAuth();
   const hasSession = Boolean(user);
   const location = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -36,6 +37,15 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
     setIsOpen(false);
   };
 
+  const copyPromoCode = async () => {
+    try {
+      await navigator.clipboard.writeText('STARTER1');
+      toast.success('Code copied!');
+    } catch {
+      toast.error('Unable to copy code');
+    }
+  };
+
   const isActive = (to: string) => {
     if (to === '/') {
       return location.pathname === '/';
@@ -45,18 +55,38 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
 
   return (
     <>
-      <div className="relative z-50 w-full h-auto py-3 sm:py-2 bg-yellow-400 text-zinc-950 text-xs font-normal select-none flex items-center justify-center transition-all duration-300 border-b border-zinc-950/10">
-        <div className="px-5 text-center leading-tight">
-          <span>Join our Early Adopter Program: <br className="sm:hidden" />Get 3 months of Growth plan free.</span>
-          <Link to="/early-adopter-program" className="underline font-semibold hover:opacity-80 inline-flex items-center gap-1.5 ml-2 whitespace-nowrap">
-            Learn more <ArrowRight className="size-3" />
-          </Link>
-        </div>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => void copyPromoCode()}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            void copyPromoCode();
+          }
+        }}
+        aria-label="Copy promotion code STARTER1"
+        className="relative z-50 flex min-h-10 w-full cursor-pointer items-center justify-center border-b border-zinc-950/10 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 px-5 py-1 text-center text-xs text-zinc-950 transition-all duration-300 hover:brightness-[0.98]"
+      >
+        <span className="flex w-full items-center justify-center text-center leading-tight">
+          <span className="font-normal">Use code <span className="font-bold tracking-wide">STARTER1</span> for 99% off your first 3 months (Starter Plan)</span>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              navigate('/pricing');
+            }}
+            onKeyDown={(event) => event.stopPropagation()}
+            className="ml-2 whitespace-nowrap rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-indigo-700"
+          >
+            Learn more →
+          </button>
+        </span>
       </div>
 
       <header className={cn(
         'fixed inset-x-0 z-50 transition-all duration-300',
-        isScrolled ? 'top-0' : 'top-[56px] sm:top-9',
+        isScrolled ? 'top-0' : 'top-10 sm:top-10',
         isHeaderTransparent
           ? 'border-transparent bg-transparent py-2'
           : 'border-b border-zinc-200 dark:border-white/[0.06] bg-white/75 dark:bg-[#060606]/75 backdrop-blur-xl py-0'

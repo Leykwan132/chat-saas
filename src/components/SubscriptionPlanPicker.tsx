@@ -22,6 +22,7 @@ import {
 } from '../../shared/planCatalog';
 import { PricingEnterpriseBanner } from '@/components/pricing/PricingEnterpriseBanner';
 import { PricingFeatureList } from '@/components/pricing/PricingFeatureList';
+import { StarterPromotionHoverHint } from '@/components/pricing/StarterPromotionHoverHint';
 import {
   pricingSectionBorderClass,
   type PlanPickerCompactSpacing,
@@ -42,6 +43,7 @@ type SubscriptionPlanPickerProps = {
   disabled?: boolean;
   showBillingToggle?: boolean;
   includeEnterprise?: boolean;
+  showStarterPromotion?: boolean;
   /** Onboarding keeps the recommended Pro styling; pricing shows progressive plan bullets. */
   variant?: 'onboarding' | 'account' | 'pricing';
   density?: PlanPickerDensity;
@@ -62,6 +64,7 @@ export function SubscriptionPlanPicker({
   disabled = false,
   showBillingToggle = true,
   includeEnterprise = false,
+  showStarterPromotion = false,
   variant = 'account',
   density = 'default',
   compactSpacing = 'default',
@@ -79,7 +82,7 @@ export function SubscriptionPlanPicker({
       ? allCards.filter((plan): plan is PlanPickerCard & { isEnterprise?: false } => !plan.isEnterprise)
       : allCards;
   const showPricingKeyFeatures = variant === 'pricing';
-  const enterpriseColumnCount = gridCards.some((plan) => plan.isEnterprise) ? 5 : 4;
+  const gridColumnCount = gridCards.length;
 
   return (
     <div
@@ -113,16 +116,28 @@ export function SubscriptionPlanPicker({
             isRoomyCompact
               ? cn(
                   'min-h-0 flex-1 gap-3 xl:gap-4',
-                  enterpriseColumnCount === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4',
+                  gridColumnCount === 5
+                    ? 'lg:grid-cols-5'
+                    : gridColumnCount === 4
+                      ? 'lg:grid-cols-4'
+                      : 'lg:grid-cols-3',
                 )
               : isCompact
               ? cn(
                   'min-h-0 flex-1 gap-2',
-                  enterpriseColumnCount === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4',
+                  gridColumnCount === 5
+                    ? 'lg:grid-cols-5'
+                    : gridColumnCount === 4
+                      ? 'lg:grid-cols-4'
+                      : 'lg:grid-cols-3',
                 )
               : cn(
                   'gap-4',
-                  enterpriseColumnCount === 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-4',
+                  gridColumnCount === 5
+                    ? 'xl:grid-cols-5'
+                    : gridColumnCount === 4
+                      ? 'xl:grid-cols-4'
+                      : 'xl:grid-cols-3',
                 ),
           )}
         >
@@ -132,7 +147,8 @@ export function SubscriptionPlanPicker({
             const showPopularHighlight =
               plan.popular &&
               !highlightCurrent &&
-              (variant === 'onboarding' || variant === 'pricing' || currentPlanId == null);
+              variant !== 'pricing' &&
+              (variant === 'onboarding' || currentPlanId == null);
             return (
               <SubscriptionPlanCard
                 key={plan.id}
@@ -141,6 +157,11 @@ export function SubscriptionPlanPicker({
                 isCurrent={isCurrent}
                 highlightCurrent={highlightCurrent}
                 showPopularHighlight={showPopularHighlight}
+                showPopularLabel={variant !== 'pricing'}
+                showStarterHighlight={
+                  showStarterPromotion && billingInterval === 'monthly' && plan.id === 'starter'
+                }
+                showStarterPromotion={showStarterPromotion && billingInterval === 'monthly'}
                 disabled={disabled}
                 showPricingKeyFeatures={showPricingKeyFeatures}
                 density={density}
@@ -223,6 +244,9 @@ type SubscriptionPlanCardProps = {
   isCurrent: boolean;
   highlightCurrent?: boolean;
   showPopularHighlight?: boolean;
+  showPopularLabel?: boolean;
+  showStarterHighlight?: boolean;
+  showStarterPromotion?: boolean;
   disabled?: boolean;
   showPricingKeyFeatures?: boolean;
   density?: PlanPickerDensity;
@@ -237,6 +261,9 @@ function SubscriptionPlanCard({
   isCurrent,
   highlightCurrent = false,
   showPopularHighlight = false,
+  showPopularLabel = true,
+  showStarterHighlight = false,
+  showStarterPromotion = false,
   disabled = false,
   showPricingKeyFeatures = false,
   density = 'default',
@@ -248,6 +275,11 @@ function SubscriptionPlanCard({
   const isCompact = density === 'compact';
   const isRoomyCompact = isCompact && compactSpacing === 'roomy';
   const planPriceClass = isCompact ? planPriceClassCompact : planPriceClassDefault;
+  const isStarterHighlight = showStarterHighlight && plan.id === 'starter';
+  const isStarterPromotion = showStarterPromotion && plan.id === 'starter';
+  const monthlyPrice = isStarterPromotion
+    ? '1'
+    : formatPlanPriceAmount(plan.monthlyPriceRm);
 
   return (
     <Card
@@ -263,7 +295,7 @@ function SubscriptionPlanCard({
         disabled && 'pointer-events-none opacity-60',
       )}
     >
-      {(highlightCurrent || showPopularHighlight) && (
+      {(highlightCurrent || showPopularHighlight || isStarterHighlight) && (
         <ShineBorder
           borderWidth={1.5}
           shineColor={['#A07CFE', '#FE8FB5', '#FFBE7B']}
@@ -299,9 +331,15 @@ function SubscriptionPlanCard({
               )}
             >
               {plan.name}
-              {plan.popular && !isCurrent ? (
+              {showPopularLabel && plan.popular && !isCurrent ? (
                 <span className="shrink-0 inline-flex items-center justify-center rounded-full bg-zinc-100 px-2 py-1 text-[8px] font-bold uppercase tracking-wide text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 leading-none">
                   Popular
+                </span>
+              ) : null}
+              {isStarterPromotion ? (
+                <span className="shrink-0 inline-flex items-center justify-center gap-1 rounded-full bg-gradient-to-r from-[#eb0000] via-[#95008a] to-[#3300fc] px-2 py-1 text-[8px] font-bold uppercase tracking-wide text-white leading-none">
+                  Limited-time offer
+                  <StarterPromotionHoverHint />
                 </span>
               ) : null}
               {isCurrent ? (
@@ -338,7 +376,7 @@ function SubscriptionPlanCard({
                       <WordRotate
                         inline
                         words={[
-                          formatPlanPriceAmount(plan.monthlyPriceRm),
+                          monthlyPrice,
                           formatPlanPriceAmount(plan.yearlyPriceRm ?? 0),
                         ]}
                         activeIndex={billingInterval === 'monthly' ? 0 : 1}
@@ -350,6 +388,14 @@ function SubscriptionPlanCard({
                     {plan.id === 'free' ? '/ forever' : billingInterval === 'monthly' ? '/ month' : '/ year'}
                   </span>
                 </div>
+                {isStarterPromotion ? (
+                  <div className={cn(
+                    'flex items-baseline gap-2 text-sm text-muted-foreground leading-none font-medium',
+                    isCompact ? 'mt-0.5' : 'mt-1.5',
+                  )}>
+                    <span>Valid for 3 months.</span>
+                  </div>
+                ) : null}
                 {billingInterval === 'annual' && plan.id !== 'free' && (
                   <div className={cn(
                     "flex items-baseline gap-2 text-sm text-muted-foreground leading-none font-medium",

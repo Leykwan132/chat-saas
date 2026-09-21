@@ -5,6 +5,7 @@ import { PlanChannelsHoverHint } from './PlanChannelsHoverHint';
 import { PlanDescriptionHoverHint } from './PlanDescriptionHoverHint';
 import { PlanKnowledgeBaseHoverHint } from './PlanKnowledgeBaseHoverHint';
 import { PlanModelsHoverHint } from './PlanModelsHoverHint';
+import { PlanTeamMembersHoverHint } from './PlanTeamMembersHoverHint';
 import {
   isAiLeadTemperatureLabel,
   isChannelLimitLabel,
@@ -12,6 +13,7 @@ import {
   isKnowledgeBaseLimitLabel,
   isPlanFeatureDescriptionHoverLabel,
   isPlanModelAccessLabel,
+  isTeamMembersLabel,
   isTopicAnalyticsLabel,
   isWhatsAppPlanFeatureLabel,
   type PlanKey,
@@ -60,6 +62,10 @@ export function renderPricingFeatureLabel(
     return <PlanAdvancedAnalyticsHoverHint label={text} className={className} />;
   }
 
+  if (isTeamMembersLabel(text)) {
+    return <PlanTeamMembersHoverHint label={text} className={className} />;
+  }
+
   return text;
 }
 
@@ -84,6 +90,10 @@ export function renderPricingComparisonRowLabel(label: string) {
 
   if (isTopicAnalyticsLabel(label)) {
     return <PlanAdvancedAnalyticsHoverHint label={label} className={className} />;
+  }
+
+  if (isTeamMembersLabel(label)) {
+    return <PlanTeamMembersHoverHint label={label} className={className} />;
   }
 
   return <span className="leading-snug">{label}</span>;

@@ -1,6 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, test } from 'vitest';
-import { SubscriptionPlanActionButton } from './SubscriptionPlanPicker';
+import {
+  SubscriptionPlanActionButton,
+  SubscriptionPlanPicker,
+} from './SubscriptionPlanPicker';
 
 describe('SubscriptionPlanActionButton', () => {
   test.each(['free', 'starter', 'growth', 'business'] as const)(
@@ -33,4 +36,54 @@ describe('SubscriptionPlanActionButton', () => {
     expect(markup).not.toContain('Change plan');
     expect(markup).toContain('disabled');
   });
+});
+
+test('uses four grid columns when Enterprise is shown beside three paid plans', () => {
+  const markup = renderToStaticMarkup(
+    <SubscriptionPlanPicker
+      billingInterval="monthly"
+      onBillingIntervalChange={() => undefined}
+      includeEnterprise
+      enterpriseLayout="column"
+      renderPlanAction={() => null}
+    />,
+  );
+
+  expect(markup).toContain('xl:grid-cols-4');
+  expect(markup).not.toContain('xl:grid-cols-5');
+});
+
+test('shows the Starter promotion on the public monthly pricing cards', () => {
+  const markup = renderToStaticMarkup(
+    <SubscriptionPlanPicker
+      billingInterval="monthly"
+      onBillingIntervalChange={() => undefined}
+      variant="pricing"
+      showStarterPromotion
+      renderPlanAction={() => null}
+    />,
+  );
+
+  expect(markup).toContain('Limited-time offer');
+  expect(markup).toContain('from-[#eb0000] via-[#95008a] to-[#3300fc]');
+  expect(markup).toContain('motion-safe:animate-shine');
+  expect(markup).not.toContain('border-2 border-[#95008a]');
+  expect(markup).not.toContain('Popular');
+  expect(markup).not.toContain('Code: STARTER1');
+  expect(markup).toContain('>1</span>');
+  expect(markup).toContain('Valid for 3 months.');
+});
+
+test('keeps the Starter promotion out unless explicitly enabled', () => {
+  const markup = renderToStaticMarkup(
+    <SubscriptionPlanPicker
+      billingInterval="monthly"
+      onBillingIntervalChange={() => undefined}
+      variant="pricing"
+      renderPlanAction={() => null}
+    />,
+  );
+
+  expect(markup).not.toContain('Limited-time offer');
+  expect(markup).not.toContain('Code: STARTER1');
 });

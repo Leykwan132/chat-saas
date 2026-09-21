@@ -7,5 +7,4 @@ export type SiteHeaderNavLink = {
 export const siteHeaderNavLinks = [
   { label: 'Home', to: '/' },
   { label: 'Pricing', to: '/pricing' },
-  { label: 'Leaderboard', to: '/leaderboard' },
 ] as const satisfies readonly SiteHeaderNavLink[];
