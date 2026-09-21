@@ -68,6 +68,7 @@ test('shows the Starter promotion on the public monthly pricing cards', () => {
   expect(markup).toContain('from-[#eb0000] via-[#95008a] to-[#3300fc]');
   expect(markup).not.toContain('Code: STARTER1');
   expect(markup).toContain('>1</span>');
+  expect(markup).toContain('Valid for 3 months.');
 });
 
 test('keeps the Starter promotion out unless explicitly enabled', () => {

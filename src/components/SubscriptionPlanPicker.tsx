@@ -378,6 +378,14 @@ function SubscriptionPlanCard({
                     {plan.id === 'free' ? '/ forever' : billingInterval === 'monthly' ? '/ month' : '/ year'}
                   </span>
                 </div>
+                {isStarterPromotion ? (
+                  <div className={cn(
+                    'flex items-baseline gap-2 text-sm text-muted-foreground leading-none font-medium',
+                    isCompact ? 'mt-0.5' : 'mt-1.5',
+                  )}>
+                    <span>Valid for 3 months.</span>
+                  </div>
+                ) : null}
                 {billingInterval === 'annual' && plan.id !== 'free' && (
                   <div className={cn(
                     "flex items-baseline gap-2 text-sm text-muted-foreground leading-none font-medium",
