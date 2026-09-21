@@ -66,7 +66,8 @@ test('shows the Starter promotion on the public monthly pricing cards', () => {
 
   expect(markup).toContain('Limited-time offer');
   expect(markup).toContain('from-[#eb0000] via-[#95008a] to-[#3300fc]');
-  expect(markup).toContain('border-2 border-[#95008a]');
+  expect(markup).toContain('motion-safe:animate-shine');
+  expect(markup).not.toContain('border-2 border-[#95008a]');
   expect(markup).not.toContain('Popular');
   expect(markup).not.toContain('Code: STARTER1');
   expect(markup).toContain('>1</span>');

@@ -287,17 +287,15 @@ function SubscriptionPlanCard({
         'relative flex h-full min-w-0 flex-col gap-0 overflow-hidden rounded-xl border py-0 shadow-none ring-0 transition-colors',
         highlightCurrent
           ? 'border-foreground/20 bg-muted/35 dark:border-foreground/25 dark:bg-muted/25'
-          : isStarterHighlight
-            ? 'border-2 border-[#95008a] bg-card'
-            : showPopularHighlight
-              ? 'border-foreground/15 bg-card dark:border-foreground/20'
-              : isEnterprise
-                ? 'border-zinc-800 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-white shadow-lg'
-                : 'border-border/70 bg-card',
+          : showPopularHighlight
+            ? 'border-foreground/15 bg-card dark:border-foreground/20'
+            : isEnterprise
+              ? 'border-zinc-800 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-white shadow-lg'
+              : 'border-border/70 bg-card',
         disabled && 'pointer-events-none opacity-60',
       )}
     >
-      {(highlightCurrent || showPopularHighlight) && (
+      {(highlightCurrent || showPopularHighlight || isStarterHighlight) && (
         <ShineBorder
           borderWidth={1.5}
           shineColor={['#A07CFE', '#FE8FB5', '#FFBE7B']}
