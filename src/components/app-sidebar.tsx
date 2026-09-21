@@ -1,6 +1,7 @@
 import { useQuery } from 'convex/react';
 import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import { PanelLeftOpen } from 'lucide-react';
+import { useLocation } from 'react-router';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
@@ -11,18 +12,13 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { usePermissions } from '../hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
-import { getNavItems, type NavItem } from './app-sidebar-nav';
-import { SidebarNavMenuItem } from './app-sidebar-nav-item';
+import { getNavItems } from './app-sidebar-nav';
 import {
   isProductFeatureEnabled,
   isAvatarUserAllowed,
@@ -35,6 +31,7 @@ import { ExpandedAppSidebarHeader } from './ExpandedAppSidebarHeader';
 import { HostBrandMark } from './HostBrandMark';
 import { useHostBrand } from '@/hooks/useHostBranding';
 import { SidebarScrollCue } from './SidebarScrollCue';
+import { AgentSidebarNavigation } from './AgentSidebarNavigation';
 
 function formatUnreadBadgeCount(count: number): string {
   return count > 99 ? '99+' : String(count);
@@ -46,6 +43,7 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
+  const { pathname } = useLocation();
   const { can, isLoading } = usePermissions();
   const { user } = useAuth();
   const hostBrand = useHostBrand();
@@ -62,17 +60,14 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
     api.conversations.getTotalUnreadForAgent,
     canReadChats ? { agentId: agent._id } : 'skip',
   );
-  const filterItems = (items: NavItem[]) => {
-    if (isLoading) return [];
-    return items.filter((item) => can(item.requiredPermission));
-  };
-
-  const topLevelItems = filterItems(navItems.topLevel);
-  const engagementItems = filterItems(navItems.engagement);
-  const bookingsItems = filterItems(navItems.bookings);
-  const toolsItems = filterItems(navItems.tools);
-  const teamItems = filterItems(navItems.team);
-  const configurationItems = filterItems(navItems.configuration);
+  const visibleSections = isLoading
+    ? []
+    : navItems
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => can(item.requiredPermission)),
+      }))
+      .filter((section) => section.items.length > 0);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -107,148 +102,12 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
 
       <div className="relative flex min-h-0 flex-1 flex-col">
       <SidebarContent className="gap-0">
-        {topLevelItems.length > 0 && (
-          <SidebarMenu className="p-[0.45rem] group-data-[collapsible=icon]:p-0">
-            {topLevelItems.map((item) => (
-              <SidebarNavMenuItem
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                tooltip={item.label}
-                icon={item.icon}
-                label={item.label}
-                badge={item.badge}
-                badgeLabel={item.badgeLabel}
-              />
-            ))}
-          </SidebarMenu>
-        )}
-
-        {configurationItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>AI Agent</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {configurationItems.map((item) => (
-                  <SidebarNavMenuItem
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    tooltip={item.label}
-                    icon={item.icon}
-                    label={item.label}
-                    badge={item.badge}
-                    badgeLabel={item.badgeLabel}
-                  />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {bookingsItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Bookings</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {bookingsItems.map((item) => (
-                  <SidebarNavMenuItem
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    tooltip={item.label}
-                    icon={item.icon}
-                    label={item.label}
-                    badge={item.badge}
-                    badgeLabel={item.badgeLabel}
-                  />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {engagementItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Engagement</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {engagementItems.map((item) => {
-                  const showUnreadBadge =
-                    item.label === 'Inbox' &&
-                    totalUnread !== undefined &&
-                    totalUnread > 0;
-                  const tooltip =
-                    showUnreadBadge
-                      ? `${item.label} (${formatUnreadBadgeCount(totalUnread)})`
-                      : item.label;
-
-                  return (
-                    <SidebarNavMenuItem
-                      key={item.to}
-                      to={item.to}
-                      end={item.end}
-                      tooltip={tooltip}
-                      icon={item.icon}
-                      label={item.label}
-                      badgeLabel={item.badgeLabel}
-                      badge={
-                        showUnreadBadge ? (
-                          <span className="ml-auto flex size-[18px] shrink-0 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold leading-none text-white">
-                            {formatUnreadBadgeCount(totalUnread)}
-                          </span>
-                        ) : undefined
-                      }
-                    />
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {teamItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Team</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {teamItems.map((item) => (
-                  <SidebarNavMenuItem
-                    key={item.to}
-                    to={item.to}
-                    end
-                    tooltip={item.label}
-                    icon={item.icon}
-                    label={item.label}
-                    badgeLabel={item.badgeLabel}
-                  />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {toolsItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Tools</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {toolsItems.map((item) => (
-                  <SidebarNavMenuItem
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    tooltip={item.badgeLabel ? `${item.label} (${item.badgeLabel})` : item.label}
-                    icon={item.icon}
-                    label={item.label}
-                    badge={item.badge}
-                    badgeLabel={item.badgeLabel}
-                  />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        <AgentSidebarNavigation
+          pathname={pathname}
+          sections={visibleSections}
+          totalUnread={totalUnread}
+          formatUnreadBadgeCount={formatUnreadBadgeCount}
+        />
       </SidebarContent>
         <SidebarScrollCue />
       </div>

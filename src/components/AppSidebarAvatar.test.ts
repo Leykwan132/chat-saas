@@ -1,16 +1,16 @@
 import { readFileSync } from 'node:fs';
-import { BellRing } from 'lucide-react';
+import { PiBellRinging } from 'react-icons/pi';
 import { describe, expect, it } from 'vitest';
 import { getNavItems } from './app-sidebar-nav';
 
 describe('Avatar navigation', () => {
-  it('places Avatar first under Tools with channel read access', () => {
-    const tools = getNavItems('agent-id', {
+  it('places Avatar under Agent with channel read access', () => {
+    const agent = getNavItems('agent-id', {
       showSavedReplies: true,
       enableAvatarFeature: true,
-    }).tools;
+    }).find((section) => section.label === 'Agent')?.items;
 
-    expect(tools[0]).toMatchObject({
+    expect(agent?.at(-1)).toMatchObject({
       to: '/dashboard/agent-id/avatar',
       label: 'Avatar',
       badgeLabel: 'Beta',
@@ -37,20 +37,20 @@ describe('Avatar navigation', () => {
     expect(source).toContain('text-muted-foreground');
   });
 
-  it('places Notifications directly above Broadcast under Tools', () => {
-    const tools = getNavItems('agent-id', {
+  it('places Notifications after Message Templates under Outreach', () => {
+    const outreach = getNavItems('agent-id', {
       showSavedReplies: true,
       enableAvatarFeature: true,
-    }).tools;
+    }).find((section) => section.label === 'Outreach')?.items;
 
-    const notificationIndex = tools.findIndex((item) => item.label === 'Notifications');
-    const broadcastIndex = tools.findIndex((item) => item.label === 'Broadcast');
+    const notificationIndex = outreach?.findIndex((item) => item.label === 'Notifications');
+    const templatesIndex = outreach?.findIndex((item) => item.label === 'Message Templates');
 
-    expect(tools[notificationIndex]).toMatchObject({
+    expect(outreach?.[notificationIndex ?? -1]).toMatchObject({
       to: '/dashboard/agent-id/notifications',
-      icon: BellRing,
+      icon: PiBellRinging,
       requiredPermission: 'agents:manage',
     });
-    expect(notificationIndex).toBe(broadcastIndex - 1);
+    expect(notificationIndex).toBe((templatesIndex ?? 0) + 1);
   });
 });

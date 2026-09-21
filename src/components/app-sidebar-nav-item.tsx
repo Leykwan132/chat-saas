@@ -9,6 +9,7 @@ import type { NavItem } from './app-sidebar-nav';
 
 type SidebarNavMenuItemProps = {
   to: string;
+  className?: string;
   end?: boolean;
   tooltip?: string;
   icon: NavItem['icon'];
@@ -19,6 +20,7 @@ type SidebarNavMenuItemProps = {
 
 export function SidebarNavMenuItem({
   to,
+  className,
   end,
   tooltip,
   icon: Icon,
@@ -40,7 +42,7 @@ export function SidebarNavMenuItem({
         }}
       >
         {({ isActive }) => (
-          <SidebarMenuButton asChild isActive={isActive} tooltip={tooltip}>
+          <SidebarMenuButton asChild className={className} isActive={isActive} tooltip={tooltip}>
             {badge || badgeLabel ? (
               <span className="flex w-full min-w-0 items-center gap-[0.45rem]">
                 <Icon />

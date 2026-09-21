@@ -17,6 +17,7 @@
 - 2026-09-18 [USER] The temporary localhost widget embed is removed from root `index.html`; the launcher harness remains unchanged.
 - 2026-09-21 [TOOL] I010 DATA REPAIRED: native user `qh7677m2kbx0mbd5tze569y3qn8bnd49` had its Sep 1 period restored from Free/300/3.5 used to Business/20,000/39 used. The 39 is reconstructed from all September `creditLogs` tied to that period; 19,961 remain. Root trigger for Sep 7 Free reset remains UNCONFIRMED between the Free-downgrade finalizer and team-deletion path.
 - 2026-09-21 [CODE] Native usage analytics now resolve Billing period from the active `userCreditPeriods` row, not Stripe’s subscription end date; this prevents annual plans from previewing their final 30 days. AI Agent Usage opens on Last 30 days.
+- 2026-09-21 [CODE] Agent and workspace sidebars share the compact Phosphor-icon treatment: the Workspace landing item uses a briefcase icon, Configuration uses a gear, Broadcast uses a broadcast icon, direct links align with primary triggers, multi-item agent sections retain indented subtabs, and rows use compact padding with matched subtle gaps. The workspace landing item is labeled Workspace, its usage item is labeled Workspace Usage, and the agent page keeps its Agent section with Configuration and Agent Usage labels. Agent Setup’s visible System Prompt label and helper copy now say Instructions in the setup screen and landing preview; the internal systemPrompt data remains unchanged. Routes and permission gates remain unchanged; unshipped.
 
 # Decisions
 

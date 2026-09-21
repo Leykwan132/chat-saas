@@ -29,7 +29,7 @@ export function AgentSetupSystemPromptPanel({
     <section className="flex min-w-0 flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="m-0 text-lg font-semibold tracking-tight text-foreground">
-          System Prompt
+          Instructions
         </h2>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -72,7 +72,7 @@ export function AgentSetupSystemPromptPanel({
         className="min-h-72 resize-y overflow-y-auto border-border bg-input/35 text-sm leading-6 field-sizing-content"
       />
       <p className="m-0 text-xs leading-5 text-muted-foreground">
-        Use the system prompt for answering style, high-level goals, and general guardrails. For reliable conditional actions like sending an image or video, booking an appointment, or triggering a handoff, set them up in{' '}
+        Use the instructions for answering style, high-level goals, and general guardrails. For reliable conditional actions like sending an image or video, booking an appointment, or triggering a handoff, set them up in{' '}
         <Link
           to={workflowHref}
           className="font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
