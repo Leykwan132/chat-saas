@@ -1,6 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, test } from 'vitest';
-import { SubscriptionPlanActionButton } from './SubscriptionPlanPicker';
+import {
+  SubscriptionPlanActionButton,
+  SubscriptionPlanPicker,
+} from './SubscriptionPlanPicker';
 
 describe('SubscriptionPlanActionButton', () => {
   test.each(['free', 'starter', 'growth', 'business'] as const)(
@@ -33,4 +36,19 @@ describe('SubscriptionPlanActionButton', () => {
     expect(markup).not.toContain('Change plan');
     expect(markup).toContain('disabled');
   });
+});
+
+test('uses four grid columns when Enterprise is shown beside three paid plans', () => {
+  const markup = renderToStaticMarkup(
+    <SubscriptionPlanPicker
+      billingInterval="monthly"
+      onBillingIntervalChange={() => undefined}
+      includeEnterprise
+      enterpriseLayout="column"
+      renderPlanAction={() => null}
+    />,
+  );
+
+  expect(markup).toContain('xl:grid-cols-4');
+  expect(markup).not.toContain('xl:grid-cols-5');
 });

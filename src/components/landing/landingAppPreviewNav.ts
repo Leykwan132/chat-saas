@@ -16,7 +16,7 @@ export const landingPreviewSidebarCta = {
 
 export const landingPreviewNavItems = [
   { key: 'overview', label: 'Overview', sectionId: 'overview' },
-  { key: 'agentSetup', label: 'Agent Setup', sectionId: 'agentSetup' },
+  { key: 'agentSetup', label: 'Configuration', sectionId: 'agentSetup' },
   { key: 'workflow', label: 'Workflow', sectionId: 'workflow' },
 ] satisfies LandingPreviewNavItem[];
 

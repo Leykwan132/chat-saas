@@ -79,7 +79,7 @@ export function SubscriptionPlanPicker({
       ? allCards.filter((plan): plan is PlanPickerCard & { isEnterprise?: false } => !plan.isEnterprise)
       : allCards;
   const showPricingKeyFeatures = variant === 'pricing';
-  const enterpriseColumnCount = gridCards.some((plan) => plan.isEnterprise) ? 5 : 4;
+  const gridColumnCount = gridCards.length;
 
   return (
     <div
@@ -113,16 +113,28 @@ export function SubscriptionPlanPicker({
             isRoomyCompact
               ? cn(
                   'min-h-0 flex-1 gap-3 xl:gap-4',
-                  enterpriseColumnCount === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4',
+                  gridColumnCount === 5
+                    ? 'lg:grid-cols-5'
+                    : gridColumnCount === 4
+                      ? 'lg:grid-cols-4'
+                      : 'lg:grid-cols-3',
                 )
               : isCompact
               ? cn(
                   'min-h-0 flex-1 gap-2',
-                  enterpriseColumnCount === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4',
+                  gridColumnCount === 5
+                    ? 'lg:grid-cols-5'
+                    : gridColumnCount === 4
+                      ? 'lg:grid-cols-4'
+                      : 'lg:grid-cols-3',
                 )
               : cn(
                   'gap-4',
-                  enterpriseColumnCount === 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-4',
+                  gridColumnCount === 5
+                    ? 'xl:grid-cols-5'
+                    : gridColumnCount === 4
+                      ? 'xl:grid-cols-4'
+                      : 'xl:grid-cols-3',
                 ),
           )}
         >

@@ -46,9 +46,6 @@ export function BlogPostLayout({
             <Link to="/pricing" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
               Pricing
             </Link>
-            <Link to="/leaderboard" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
-              Leaderboard
-            </Link>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="hidden md:block">

@@ -291,7 +291,6 @@ export function isAdvancedAnalyticsPlan(planKey: PlanKey): boolean {
 }
 
 export const COMPARISON_PLAN_ORDER: ComparisonPlanKey[] = [
-  "free",
   "starter",
   "growth",
   "business",
@@ -474,6 +473,10 @@ export const ADVANCED_ANALYTICS_HOVER_TITLE = "Advanced Analytics";
 export const ADVANCED_ANALYTICS_HOVER_DESCRIPTION =
   "AI-powered conversation insights to help you understand what customers talk about and how they feel.";
 
+export const TEAM_MEMBERS_HOVER_TITLE = "Team members";
+export const TEAM_MEMBERS_HOVER_DESCRIPTION =
+  "Members who can log in to the shared inbox to view, assign, or reply to conversations.";
+
 export function isAiLeadTemperatureLabel(label: string): boolean {
   return label === AI_LEAD_TEMPERATURE_LABEL;
 }
@@ -491,6 +494,10 @@ export function isChatSummaryLabel(label: string): boolean {
 
 export function isTopicAnalyticsLabel(label: string): boolean {
   return label === TOPIC_ANALYTICS_LABEL;
+}
+
+export function isTeamMembersLabel(label: string): boolean {
+  return label === "Team members" || /^[\d,]+ team members$/.test(label);
 }
 
 export function isBasicAnalyticsLabel(label: string): boolean {
@@ -1098,7 +1105,9 @@ function buildEnterprisePlanCard(): EnterprisePlanPickerCard {
 }
 
 export function getPlanPickerCards(options?: { includeEnterprise?: boolean }): PlanPickerCard[] {
-  const cards: PlanPickerCard[] = PLAN_ORDER.map((id) => buildSelfServePlanCard(id));
+  const cards: PlanPickerCard[] = PLAN_ORDER
+    .filter((id) => id !== "free")
+    .map((id) => buildSelfServePlanCard(id));
   if (options?.includeEnterprise) {
     cards.push(buildEnterprisePlanCard());
   }

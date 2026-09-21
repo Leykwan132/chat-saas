@@ -112,7 +112,7 @@ export function PlanComparisonTable({
 
       <div className={pricingTableShellClass}>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[84rem] border-collapse table-fixed">
+          <table className="w-full min-w-[70rem] border-collapse table-fixed">
             <colgroup>
               <col className="w-[14rem]" />
               {COMPARISON_PLAN_ORDER.map((planId) => (

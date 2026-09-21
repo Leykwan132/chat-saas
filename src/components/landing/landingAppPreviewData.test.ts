@@ -75,7 +75,7 @@ test('landing preview section lookup fails for missing mock sections', () => {
 test('landing preview routes only overview, agent setup, and workflow to mocked sections', () => {
   expect(landingPreviewNavItems.map((item) => item.label)).toEqual([
     'Overview',
-    'Agent Setup',
+    'Configuration',
     'Workflow',
   ]);
   expect(landingPreviewNavItems).toHaveLength(3);

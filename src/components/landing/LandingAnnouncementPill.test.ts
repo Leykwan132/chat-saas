@@ -28,21 +28,10 @@ test('active headline points at the supporting-ilmu post', () => {
   expect(getBlogPost('missing-post')).toBeNull();
 });
 
-test('landing pill links to the active blog post', () => {
-  const pillSource = readFileSync(
-    new URL('./LandingAnnouncementPill.tsx', import.meta.url),
-    'utf8',
-  );
+test('landing hero keeps the Starter promotion only in the top offer bar', () => {
   const heroSource = readFileSync(new URL('./LandingHero.tsx', import.meta.url), 'utf8');
-  const mainSource = readFileSync(new URL('../../main.tsx', import.meta.url), 'utf8');
 
-  expect(pillSource).toContain('ACTIVE_BLOG_HEADLINE');
-  expect(pillSource).toContain('logoUrl');
-  expect(pillSource).toContain('ArrowRight');
-  expect(pillSource).toContain('`/blog/${slug}`');
-  expect(heroSource).toContain('LandingAnnouncementPill');
-  expect(mainSource).toContain('path="/blog/:slug"');
-  expect(mainSource).toContain('BlogPostPage');
+  expect(heroSource).not.toContain('LandingAnnouncementPill');
 });
 
 test('landing hero and metadata describe Kilobot as an easy-to-start AI chatbot', () => {
@@ -91,7 +80,7 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
   )?.[1];
   const actionClasses = markup.match(/<div class="([^"]*mt-8[^"]*)">/)?.[1];
   const primaryActionClasses = markup.match(
-    /<button type="button" class="([^"]*)">Start for free<\/button>/,
+    /<button type="button" class="([^"]*)">Get Starter for RM1<\/button>/,
   )?.[1];
   const liveDemoAction = markup.match(
     /<a class="([^"]*)" href="([^"]*)" target="_blank" rel="noopener noreferrer">(.*?)<\/a>/,
@@ -132,9 +121,9 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
   );
   expect(liveDemoAction?.[1].split(' ')).not.toContain('gap-2');
   expect(liveDemoAction?.[2]).toBe(
-    'https://wa.me/601167389886?text=Hey%2C%20I%20want%20to%20learn%20more%20about%20Kilobot.',
+    'https://wa.me/601167389886?text=Hey%2C%20I%27d%20like%20to%20book%20a%20demo%20for%20Kilobot.',
   );
-  expect(liveDemoAction?.[3]).toBe('Try Live Demo');
+  expect(liveDemoAction?.[3]).toBe('Book a demo');
   expect(liveDemoAction?.[3]).not.toContain('<svg');
 });
 

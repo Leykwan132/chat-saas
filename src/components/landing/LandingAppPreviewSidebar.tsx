@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
-import { Bot, LayoutDashboard, Workflow } from 'lucide-react';
+import type { IconType } from 'react-icons';
+import { PiFlowArrow, PiGearSix, PiHouse } from 'react-icons/pi';
 import { cn } from '@/lib/utils';
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import type { LandingPreviewSectionId } from './landingAppPreviewData';
@@ -16,10 +17,10 @@ import {
 } from './landingAppPreviewSidebarStyles';
 
 const navIcons = {
-  overview: LayoutDashboard,
-  agentSetup: Bot,
-  workflow: Workflow,
-} satisfies Record<LandingPreviewNavKey, typeof Bot>;
+  overview: PiHouse,
+  agentSetup: PiGearSix,
+  workflow: PiFlowArrow,
+} satisfies Record<LandingPreviewNavKey, IconType>;
 
 const primaryNavItems = landingPreviewNavItems.filter((item) => item.key === 'overview');
 const agentNavItems = landingPreviewNavItems.filter((item) => item.key !== 'overview');
