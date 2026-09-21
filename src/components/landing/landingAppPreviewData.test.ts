@@ -152,9 +152,9 @@ test('landing preview agent setup header does not render action buttons', () => 
   expect(previewSource).not.toContain('hasSectionActions');
 });
 
-test('landing preview sidebar includes a full-version free CTA card', () => {
+test('landing preview sidebar includes a full-version CTA card', () => {
   expect(landingPreviewSidebarCta).toEqual({
-    actionLabel: 'Start for free',
+    actionLabel: 'Get Started',
     description: 'Explore the full Kilobot workspace when you are ready.',
     title: 'Explore full version',
   });

@@ -56,11 +56,14 @@ test('landing hero and metadata describe Kilobot as an easy-to-start AI chatbot'
   );
 });
 
-test('root page does not embed a customer website widget', () => {
+test('root page does not embed a local development widget', () => {
   const indexSource = readFileSync(new URL('../../../index.html', import.meta.url), 'utf8');
 
+  expect(indexSource).not.toContain('pub_7190131b74754f789d20f973b6328c82');
+  expect(indexSource).not.toContain('https://outstanding-rabbit-215.convex.site');
   expect(indexSource).not.toContain('data-kilobot-widget');
-  expect(indexSource).not.toContain('pub_db21708de03541e6bfc50e6a25d9dc52');
+  expect(indexSource).not.toContain('data-kilobot-api');
+  expect(indexSource).not.toContain('data-kilobot-mode');
 });
 
 test('landing hero is centered with stacked actions and smaller copy on mobile', () => {
@@ -80,7 +83,7 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
   )?.[1];
   const actionClasses = markup.match(/<div class="([^"]*mt-8[^"]*)">/)?.[1];
   const primaryActionClasses = markup.match(
-    /<button type="button" class="([^"]*)">Get Starter for RM1<\/button>/,
+    /<button type="button" class="([^"]*h-11[^"]*)">Get Started<\/button>/,
   )?.[1];
   const liveDemoAction = markup.match(
     /<a class="([^"]*)" href="([^"]*)" target="_blank" rel="noopener noreferrer">(.*?)<\/a>/,

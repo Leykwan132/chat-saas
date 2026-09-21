@@ -5,7 +5,7 @@ import { SectionHeading } from './LandingFeatureSections';
 const kilobotItems = [
   {
     title: 'Go Live Within 5 Minutes',
-    description: 'Go live in minutes on your own. Start with free plan.',
+    description: 'Go live in minutes on your own. Get started in minutes.',
   },
   {
     title: 'Natural, Human-Like Replies',
@@ -124,7 +124,7 @@ export function UpgradeInboxSection({ onSignUp }: { onSignUp: () => void }) {
               onClick={onSignUp}
               className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-zinc-950 shadow-sm transition-colors hover:bg-white/90 sm:w-auto sm:flex-none sm:px-6"
             >
-              Start for free
+              Get Started
             </button>
             <Link
               to="/contact?intent=demo"

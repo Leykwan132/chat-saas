@@ -56,7 +56,7 @@ export function LandingHero({
             </span>
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-3.5">
-            <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Get Starter for RM1" />
+            <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Get Started" />
             <a
               className="inline-flex h-11 w-[240px] flex-none items-center justify-center rounded-full border border-zinc-200 bg-transparent px-6 text-sm font-semibold text-zinc-950 transition-all hover:bg-zinc-50 sm:w-auto dark:border-white/20 dark:text-white dark:hover:bg-white/5"
               href="https://wa.me/601167389886?text=Hey%2C%20I%27d%20like%20to%20book%20a%20demo%20for%20Kilobot."

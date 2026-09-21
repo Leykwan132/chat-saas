@@ -67,13 +67,13 @@ export function SiteHeaderActions({
               type="button"
               onClick={onSignUp}
               className={cn(
-                'inline-flex cursor-pointer items-center gap-1.5 rounded-md px-3.5 py-2 text-[15px] font-medium transition-all duration-300',
+                'inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2 text-[15px] font-medium transition-all duration-300',
                 isHeaderTransparent
                   ? 'bg-white text-zinc-900 hover:bg-white/90 shadow-sm'
                   : 'bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)]'
               )}
             >
-              Start for free
+              Get Started
             </button>
           </>
         )}
@@ -154,7 +154,7 @@ export function SiteHeaderActions({
                   onClick={onSignUp}
                   className="flex w-full cursor-pointer py-2 text-left text-sm font-medium text-zinc-700 transition-colors hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white"
                 >
-                  Start for free
+                  Get Started
                 </button>
               </div>
             )}

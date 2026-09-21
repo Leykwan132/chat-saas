@@ -21,8 +21,10 @@ export function WidgetMessageContent({
   if (!isAssistantMessage) return <span>{content}</span>;
 
   return (
-    <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-      {content}
-    </Markdown>
+    <div className="markdown-content">
+      <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+        {content}
+      </Markdown>
+    </div>
   );
 }

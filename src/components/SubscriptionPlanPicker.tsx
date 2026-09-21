@@ -456,7 +456,7 @@ export function EnterprisePlanAction({
     <Button
       asChild
       className={cn(
-        'h-8 w-full rounded-lg border-0 bg-white text-xs font-medium text-zinc-950 shadow-sm hover:bg-zinc-100 sm:text-sm',
+        'h-11 w-full rounded-full border-0 bg-white px-6 text-xs font-medium text-zinc-950 shadow-sm hover:bg-zinc-100 sm:text-sm',
         className,
       )}
     >
@@ -486,7 +486,7 @@ export function SubscriptionPlanActionButton({
         type="button"
         variant="outline"
         disabled
-        className="h-8 w-full rounded-lg border-foreground/20 bg-background/70 text-xs font-semibold text-foreground shadow-none sm:text-sm"
+        className="h-11 w-full rounded-full border-foreground/20 bg-background/70 px-6 text-xs font-semibold text-foreground shadow-none sm:text-sm"
       >
         {label}
       </Button>
@@ -499,7 +499,7 @@ export function SubscriptionPlanActionButton({
       variant="default"
       disabled={disabled || loading}
       onClick={onClick}
-      className="h-8 w-full rounded-lg border-0 bg-zinc-950 text-xs font-medium text-white hover:bg-zinc-900 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-800 sm:text-sm"
+      className="h-11 w-full rounded-full border-0 bg-zinc-950 px-6 text-xs font-medium text-white hover:bg-zinc-900 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-800 sm:text-sm"
     >
       {loading ? <Spinner /> : label}
     </Button>

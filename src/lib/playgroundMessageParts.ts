@@ -9,13 +9,14 @@ export function playgroundAssistantTextParts(message: {
   text?: string;
   parts?: PlaygroundMessagePart[];
 }): string[] {
-  const parts = (message.parts ?? [])
+  const streamedText = (message.parts ?? [])
     .filter(
       (part): part is PlaygroundMessagePart & { text: string } =>
         part.type === "text" && Boolean(part.text?.trim()),
     )
-    .flatMap((part) => splitStreamingAiReplyMessages(part.text));
+    .map((part) => part.text)
+    .join("");
 
-  if (parts.length > 0) return parts;
+  if (streamedText) return splitStreamingAiReplyMessages(streamedText);
   return splitStreamingAiReplyMessages(message.text ?? "");
 }

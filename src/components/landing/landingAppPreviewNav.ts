@@ -11,7 +11,7 @@ export type LandingPreviewNavItem = {
 export const landingPreviewSidebarCta = {
   title: 'Explore full version',
   description: 'Explore the full Kilobot workspace when you are ready.',
-  actionLabel: 'Start for free',
+  actionLabel: 'Get Started',
 };
 
 export const landingPreviewNavItems = [
