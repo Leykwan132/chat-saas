@@ -129,6 +129,7 @@
 
 # Receipts
 
+- 2026-09-22 [TOOL] PR #164 opened from `codex/refine-public-ctas` after rebasing the requested changes onto current `origin/main`; focused suite passed 84 tests and the temporary root local-widget embed is absent.
 - 2026-09-22 [TOOL] Pricing-plan action suite passed (10 tests) after matching home CTA dimensions; `git diff --check` passed.
 - 2026-09-22 [TOOL] Site header suite passed (6 tests); `git diff --check` passed after applying the pill CTA radius.
 - 2026-09-22 [TOOL] Landing hero CTA suite passed (6 tests); `git diff --check` passed.
