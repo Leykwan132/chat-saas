@@ -22,6 +22,12 @@ import { createLandingWorkflowGraph } from './landingWorkflowMockGraph';
 const readComponentSource = (fileName: string) =>
   readFileSync(new URL(`./${fileName}`, import.meta.url), 'utf8');
 
+test('landing preview labels the agent instructions section consistently', () => {
+  const setupSource = readComponentSource('LandingAppPreviewAgentSetup.tsx');
+
+  expect(setupSource).toContain('>Instructions</h3>');
+});
+
 test('landing application preview opens on workflow by default', () => {
   const previewSource = readComponentSource('LandingAppPreview.tsx');
 

@@ -160,7 +160,7 @@ export function LandingAppPreviewAgentSetup({
       <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)_360px] gap-6">
         <div className="min-h-0">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-zinc-950">System Prompt</h3>
+            <h3 className="text-lg font-semibold text-zinc-950">Instructions</h3>
             <button type="button" className="flex h-8 items-center gap-2 rounded-full border border-zinc-200 px-3 text-xs font-medium text-zinc-700">
               <List className="size-3.5" />
               Template Library

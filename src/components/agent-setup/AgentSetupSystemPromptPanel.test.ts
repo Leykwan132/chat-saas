@@ -6,7 +6,8 @@ const sourcePath = fileURLToPath(new URL('./AgentSetupSystemPromptPanel.tsx', im
 const source = readFileSync(sourcePath, 'utf8');
 
 test('system prompt panel explains when to use workflows for reliable actions', () => {
-  expect(source).toContain('Use the system prompt for answering style, high-level goals, and general guardrails.');
+  expect(source).toContain('Instructions');
+  expect(source).toContain('Use the instructions for answering style, high-level goals, and general guardrails.');
   expect(source).toContain('For reliable conditional actions like sending an image or video, booking an appointment, or triggering a handoff, set them up in');
   expect(source).toContain('Workflow');
 });

@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { MessagesSquare, ShoppingCart } from 'lucide-react';
+import {
+  PiBroadcast,
+  PiChatCircleText,
+  PiGearSix,
+  PiShoppingCart,
+} from 'react-icons/pi';
 import { getNavItems } from './app-sidebar-nav';
 
 describe('sidebar feature flags', () => {
@@ -13,8 +18,8 @@ describe('sidebar feature flags', () => {
       enableAvatarFeature: false,
     });
 
-    expect(enabled.tools.map((item) => item.label)).toContain('Quick Replies');
-    expect(disabled.tools.map((item) => item.label)).not.toContain('Quick Replies');
+    expect(enabled.find((section) => section.label === 'Conversations')?.items.map((item) => item.label)).toContain('Quick Replies');
+    expect(disabled.find((section) => section.label === 'Conversations')?.items.map((item) => item.label)).not.toContain('Quick Replies');
   });
 
   test('includes Avatar only when enabled', () => {
@@ -27,18 +32,18 @@ describe('sidebar feature flags', () => {
       enableAvatarFeature: false,
     });
 
-    expect(enabled.tools.map((item) => item.label)).toContain('Avatar');
-    expect(disabled.tools.map((item) => item.label)).not.toContain('Avatar');
+    expect(enabled.find((section) => section.label === 'Agent')?.items.map((item) => item.label)).toContain('Avatar');
+    expect(disabled.find((section) => section.label === 'Agent')?.items.map((item) => item.label)).not.toContain('Avatar');
   });
 
-  test('places Knowledge Base directly below Agent Setup', () => {
+  test('places Knowledge Base directly below Configuration', () => {
     const labels = getNavItems('agent-id', {
       showSavedReplies: false,
       enableAvatarFeature: false,
-    }).configuration.map((item) => item.label);
+    }).find((section) => section.label === 'Agent')?.items.map((item) => item.label);
 
     expect(labels).toEqual([
-      'Agent Setup',
+      'Configuration',
       'Knowledge Base',
       'Workflow',
       'Channels',
@@ -52,10 +57,24 @@ describe('sidebar feature flags', () => {
     });
 
     expect(
-      navigation.engagement.find((item) => item.label === 'Inbox')?.icon,
-    ).toBe(MessagesSquare);
+      navigation.find((section) => section.label === 'Conversations')?.items.find((item) => item.label === 'Inbox')?.icon,
+    ).toBe(PiChatCircleText);
     expect(
-      navigation.bookings.find((item) => item.label === 'Services')?.icon,
-    ).toBe(ShoppingCart);
+      navigation.find((section) => section.label === 'Bookings')?.items.find((item) => item.label === 'Services')?.icon,
+    ).toBe(PiShoppingCart);
+  });
+
+  test('uses distinct icons for Agent Configuration and Outreach Broadcast', () => {
+    const navigation = getNavItems('agent-id', {
+      showSavedReplies: false,
+      enableAvatarFeature: false,
+    });
+
+    expect(
+      navigation.find((section) => section.label === 'Agent')?.items.find((item) => item.label === 'Configuration')?.icon,
+    ).toBe(PiGearSix);
+    expect(
+      navigation.find((section) => section.label === 'Outreach')?.items.find((item) => item.label === 'Broadcast')?.icon,
+    ).toBe(PiBroadcast);
   });
 });

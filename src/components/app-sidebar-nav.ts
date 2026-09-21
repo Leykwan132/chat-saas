@@ -1,30 +1,34 @@
 import type { ReactNode } from 'react';
+import type { IconType } from 'react-icons';
 import {
-  BarChart3,
-  BellRing,
-  BookOpen,
-  Bot,
-  Calendar,
-  Clock3,
-  LayoutDashboard,
-  FileText,
-  Megaphone,
-  MessagesSquare,
-  MessageCircleReply,
-  Plug,
-  ReplyAll,
-  ScanFace,
-  ShoppingCart,
-  Split,
-  Users,
-  Workflow,
-  type LucideIcon,
-} from 'lucide-react';
+  PiArrowsSplit,
+  PiBellRinging,
+  PiBookOpen,
+  PiBroadcast,
+  PiCalendar,
+  PiCalendarCheck,
+  PiChartBar,
+  PiChartLineUp,
+  PiChatCircleText,
+  PiChatDots,
+  PiClock,
+  PiFileText,
+  PiFlowArrow,
+  PiGearSix,
+  PiHouse,
+  PiMegaphone,
+  PiPaperPlaneTilt,
+  PiPlugs,
+  PiRobot,
+  PiShoppingCart,
+  PiUserFocus,
+  PiUsers,
+} from 'react-icons/pi';
 import { Permission, type PermissionSlug } from '../../shared/permissions';
 
 export type NavItem = {
   to: string;
-  icon: LucideIcon;
+  icon: IconType;
   label: string;
   end?: boolean;
   requiredPermission: PermissionSlug;
@@ -38,64 +42,76 @@ export type NavFeatureOptions = {
   enableCommentToInbox?: boolean;
 };
 
+export type NavSection = {
+  label: string;
+  icon: IconType;
+  items: NavItem[];
+};
+
 export function getNavItems(
   agentId: string,
   { showSavedReplies, enableAvatarFeature, enableCommentToInbox }: NavFeatureOptions,
-): {
-  topLevel: NavItem[];
-  engagement: NavItem[];
-  bookings: NavItem[];
-  tools: NavItem[];
-  team: NavItem[];
-  configuration: NavItem[];
-} {
-  return {
-    topLevel: [
-      { to: `/dashboard/${agentId}/overview`, icon: LayoutDashboard, label: 'Overview', requiredPermission: Permission.ANALYTICS_READ },
-    ],
-    engagement: [
-      { to: `/dashboard/${agentId}/inbox`, icon: MessagesSquare, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
-      { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },
-    ],
-    bookings: [
-      { to: `/dashboard/${agentId}/calendar`, icon: Calendar, label: 'Calendar', requiredPermission: Permission.CALENDAR_READ },
-      { to: `/dashboard/${agentId}/availability`, icon: Clock3, label: 'Availability', requiredPermission: Permission.AVAILABILITY_READ },
-      { to: `/dashboard/${agentId}/services`, icon: ShoppingCart, label: 'Services', end: true, requiredPermission: Permission.AUTOMATION_READ },
-    ],
-    tools: [
-      ...(enableAvatarFeature
-        ? [{
-            to: `/dashboard/${agentId}/avatar`,
-            icon: ScanFace,
-            label: 'Avatar',
-            badgeLabel: 'Beta',
-            requiredPermission: Permission.CHANNELS_READ,
-          }]
-        : []),
-      ...(enableCommentToInbox
-        ? [{ to: `/dashboard/${agentId}/comment-to-inbox`, icon: MessageCircleReply, label: 'Comment-to-Inbox', requiredPermission: Permission.AUTOMATION_READ }]
-        : []),
-      ...(showSavedReplies
-        ? [{
-            to: `/dashboard/${agentId}/quick-replies`,
-            icon: ReplyAll,
-            label: 'Quick Replies',
-            requiredPermission: Permission.CHATS_READ,
-          }]
-        : []),
-      { to: `/dashboard/${agentId}/notifications`, icon: BellRing, label: 'Notifications', requiredPermission: Permission.AGENTS_MANAGE },
-      { to: `/dashboard/${agentId}/broadcast`, icon: Megaphone, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
-      { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
-    ],
-    team: [
-      { to: `/dashboard/${agentId}/lead-assignment`, icon: Split, label: 'Routing', requiredPermission: Permission.ROUTING_READ },
-      { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics', requiredPermission: Permission.ANALYTICS_READ },
-    ],
-    configuration: [
-      { to: `/dashboard/${agentId}/agent-setup`, icon: Bot, label: 'Agent Setup', requiredPermission: Permission.AGENTS_MANAGE },
-      { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
-      { to: `/dashboard/${agentId}/workflow`, icon: Workflow, label: 'Workflow', requiredPermission: Permission.AGENTS_MANAGE },
-      { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
-    ],
-  };
+): NavSection[] {
+  return [
+    {
+      label: 'Overview',
+      icon: PiHouse,
+      items: [
+        { to: `/dashboard/${agentId}/overview`, icon: PiHouse, label: 'Overview', requiredPermission: Permission.ANALYTICS_READ },
+      ],
+    },
+    {
+      label: 'Conversations',
+      icon: PiChatDots,
+      items: [
+        { to: `/dashboard/${agentId}/inbox`, icon: PiChatCircleText, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
+        { to: `/dashboard/${agentId}/customers`, icon: PiUsers, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },
+        ...(showSavedReplies
+          ? [{ to: `/dashboard/${agentId}/quick-replies`, icon: PiChatDots, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ }]
+          : []),
+      ],
+    },
+    {
+      label: 'Agent',
+      icon: PiRobot,
+      items: [
+        { to: `/dashboard/${agentId}/agent-setup`, icon: PiGearSix, label: 'Configuration', requiredPermission: Permission.AGENTS_MANAGE },
+        { to: `/dashboard/${agentId}/knowledge-base`, icon: PiBookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
+        { to: `/dashboard/${agentId}/workflow`, icon: PiFlowArrow, label: 'Workflow', requiredPermission: Permission.AGENTS_MANAGE },
+        { to: `/dashboard/${agentId}/channels`, icon: PiPlugs, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
+        ...(enableAvatarFeature
+          ? [{ to: `/dashboard/${agentId}/avatar`, icon: PiUserFocus, label: 'Avatar', badgeLabel: 'Beta', requiredPermission: Permission.CHANNELS_READ }]
+          : []),
+      ],
+    },
+    {
+      label: 'Bookings',
+      icon: PiCalendarCheck,
+      items: [
+        { to: `/dashboard/${agentId}/calendar`, icon: PiCalendar, label: 'Calendar', requiredPermission: Permission.CALENDAR_READ },
+        { to: `/dashboard/${agentId}/availability`, icon: PiClock, label: 'Availability', requiredPermission: Permission.AVAILABILITY_READ },
+        { to: `/dashboard/${agentId}/services`, icon: PiShoppingCart, label: 'Services', end: true, requiredPermission: Permission.AUTOMATION_READ },
+        { to: `/dashboard/${agentId}/lead-assignment`, icon: PiArrowsSplit, label: 'Routing', requiredPermission: Permission.ROUTING_READ },
+      ],
+    },
+    {
+      label: 'Outreach',
+      icon: PiMegaphone,
+      items: [
+        { to: `/dashboard/${agentId}/broadcast`, icon: PiBroadcast, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
+        { to: `/dashboard/${agentId}/templates`, icon: PiFileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
+        { to: `/dashboard/${agentId}/notifications`, icon: PiBellRinging, label: 'Notifications', requiredPermission: Permission.AGENTS_MANAGE },
+        ...(enableCommentToInbox
+          ? [{ to: `/dashboard/${agentId}/comment-to-inbox`, icon: PiPaperPlaneTilt, label: 'Comment-to-Inbox', requiredPermission: Permission.AUTOMATION_READ }]
+          : []),
+      ],
+    },
+    {
+      label: 'Usage',
+      icon: PiChartLineUp,
+      items: [
+        { to: `/dashboard/${agentId}/analytics`, icon: PiChartBar, label: 'Agent Usage', requiredPermission: Permission.ANALYTICS_READ },
+      ],
+    },
+  ];
 }

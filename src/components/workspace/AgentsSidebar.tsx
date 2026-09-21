@@ -1,13 +1,15 @@
 import { Link, useLocation } from 'react-router';
 import { useQuery } from 'convex/react';
 import {
-  BarChart3,
-  Bot,
-  Gift,
-  Handshake,
-  Mail,
   PanelLeftOpen,
 } from 'lucide-react';
+import {
+  PiBriefcase,
+  PiChartBar,
+  PiEnvelope,
+  PiGift,
+  PiHandshake,
+} from 'react-icons/pi';
 import { CreditMeter } from '@/components/CreditMeter';
 import { ExpandedAppSidebarHeader } from '@/components/ExpandedAppSidebarHeader';
 import { HostBrandMark } from '@/components/HostBrandMark';
@@ -38,6 +40,8 @@ import {
 import { cn } from '@/lib/utils';
 import { Permission } from '../../../shared/permissions';
 import { whiteLabelApi } from '@/lib/whiteLabelApi';
+
+const workspaceSidebarMenuButtonClassName = 'px-[0.45rem] group-data-[collapsible=icon]:mx-[0.45rem] group-data-[collapsible=icon]:w-auto';
 
 export function AgentsSidebar() {
   const { pathname } = useLocation();
@@ -89,23 +93,23 @@ export function AgentsSidebar() {
         <ExpandedAppSidebarHeader onCollapse={toggleSidebar} brand={hostBrand} />
       )}
 
-      <SidebarContent>
-        <SidebarGroup>
+      <SidebarContent className="gap-0">
+        <SidebarGroup className="py-[0.15rem]">
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-[0.3rem]">
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isAgentsRoute} tooltip="Agents">
+                <SidebarMenuButton className={workspaceSidebarMenuButtonClassName} asChild isActive={isAgentsRoute} tooltip="Workspace">
                   <Link to="/workspace">
-                    <Bot />
-                    <span>Agents</span>
+                    <PiBriefcase />
+                    <span>Workspace</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               {can(Permission.TEAM_MANAGE) && isPartnerManagedWorkspace === false && (
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isInvitationsRoute} tooltip="Invitations">
+                  <SidebarMenuButton className={workspaceSidebarMenuButtonClassName} asChild isActive={isInvitationsRoute} tooltip="Invitations">
                     <Link to="/workspace/invitations">
-                      <Mail />
+                      <PiEnvelope />
                       <span>Invitations</span>
                     </Link>
                   </SidebarMenuButton>
@@ -117,18 +121,18 @@ export function AgentsSidebar() {
                 </SidebarMenuItem>
               )}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isUsageRoute} tooltip="Usage">
+                <SidebarMenuButton className={workspaceSidebarMenuButtonClassName} asChild isActive={isUsageRoute} tooltip="Workspace Usage">
                   <Link to="/workspace/usage">
-                    <BarChart3 />
-                    <span>Usage</span>
+                    <PiChartBar />
+                    <span>Workspace Usage</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               {partnerPortalEnabled && partner ? (
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isPartnerRoute} tooltip="Partner">
+                  <SidebarMenuButton className={workspaceSidebarMenuButtonClassName} asChild isActive={isPartnerRoute} tooltip="Partner">
                     <Link to="/workspace/partner">
-                      <Handshake />
+                      <PiHandshake />
                       <span>Partner</span>
                     </Link>
                   </SidebarMenuButton>
@@ -137,12 +141,13 @@ export function AgentsSidebar() {
               {referralProgramEnabled && isPartnerManagedWorkspace === false ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton
+                    className={workspaceSidebarMenuButtonClassName}
                     asChild
                     isActive={isReferralsRoute}
                     tooltip="Get Free Credits"
                   >
                     <Link to="/workspace/referrals">
-                      <Gift />
+                      <PiGift />
                       <span>Get Free Credits</span>
                     </Link>
                   </SidebarMenuButton>
