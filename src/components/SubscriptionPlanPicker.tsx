@@ -147,7 +147,8 @@ export function SubscriptionPlanPicker({
             const showPopularHighlight =
               plan.popular &&
               !highlightCurrent &&
-              (variant === 'onboarding' || variant === 'pricing' || currentPlanId == null);
+              variant !== 'pricing' &&
+              (variant === 'onboarding' || currentPlanId == null);
             return (
               <SubscriptionPlanCard
                 key={plan.id}
@@ -156,6 +157,10 @@ export function SubscriptionPlanPicker({
                 isCurrent={isCurrent}
                 highlightCurrent={highlightCurrent}
                 showPopularHighlight={showPopularHighlight}
+                showPopularLabel={variant !== 'pricing'}
+                showStarterHighlight={
+                  showStarterPromotion && billingInterval === 'monthly' && plan.id === 'starter'
+                }
                 showStarterPromotion={showStarterPromotion && billingInterval === 'monthly'}
                 disabled={disabled}
                 showPricingKeyFeatures={showPricingKeyFeatures}
@@ -239,6 +244,8 @@ type SubscriptionPlanCardProps = {
   isCurrent: boolean;
   highlightCurrent?: boolean;
   showPopularHighlight?: boolean;
+  showPopularLabel?: boolean;
+  showStarterHighlight?: boolean;
   showStarterPromotion?: boolean;
   disabled?: boolean;
   showPricingKeyFeatures?: boolean;
@@ -254,6 +261,8 @@ function SubscriptionPlanCard({
   isCurrent,
   highlightCurrent = false,
   showPopularHighlight = false,
+  showPopularLabel = true,
+  showStarterHighlight = false,
   showStarterPromotion = false,
   disabled = false,
   showPricingKeyFeatures = false,
@@ -266,6 +275,7 @@ function SubscriptionPlanCard({
   const isCompact = density === 'compact';
   const isRoomyCompact = isCompact && compactSpacing === 'roomy';
   const planPriceClass = isCompact ? planPriceClassCompact : planPriceClassDefault;
+  const isStarterHighlight = showStarterHighlight && plan.id === 'starter';
   const isStarterPromotion = showStarterPromotion && plan.id === 'starter';
   const monthlyPrice = isStarterPromotion
     ? '1'
@@ -277,11 +287,13 @@ function SubscriptionPlanCard({
         'relative flex h-full min-w-0 flex-col gap-0 overflow-hidden rounded-xl border py-0 shadow-none ring-0 transition-colors',
         highlightCurrent
           ? 'border-foreground/20 bg-muted/35 dark:border-foreground/25 dark:bg-muted/25'
-          : showPopularHighlight
-            ? 'border-foreground/15 bg-card dark:border-foreground/20'
-            : isEnterprise
-              ? 'border-zinc-800 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-white shadow-lg'
-              : 'border-border/70 bg-card',
+          : isStarterHighlight
+            ? 'border-2 border-[#95008a] bg-card'
+            : showPopularHighlight
+              ? 'border-foreground/15 bg-card dark:border-foreground/20'
+              : isEnterprise
+                ? 'border-zinc-800 bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-white shadow-lg'
+                : 'border-border/70 bg-card',
         disabled && 'pointer-events-none opacity-60',
       )}
     >
@@ -321,7 +333,7 @@ function SubscriptionPlanCard({
               )}
             >
               {plan.name}
-              {plan.popular && !isCurrent ? (
+              {showPopularLabel && plan.popular && !isCurrent ? (
                 <span className="shrink-0 inline-flex items-center justify-center rounded-full bg-zinc-100 px-2 py-1 text-[8px] font-bold uppercase tracking-wide text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 leading-none">
                   Popular
                 </span>
