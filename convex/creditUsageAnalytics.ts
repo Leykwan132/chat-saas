@@ -4,9 +4,9 @@ import type { PaginationOptions } from "convex/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { internalMutation, query } from "./_generated/server";
-import { resolveLatestBillingPeriod } from "./analyticsTimeRange";
 import { assertAgentAccess } from "./agentUsage";
 import { getAuthContext } from "./authUtils";
+import { snapshotUserCredit } from "./creditPeriodPool";
 import { formatCreditLogEventType } from "./creditLogs";
 import { getBillingEntityForUser, getPlanFromStripe, getPlan } from "./plans";
 import { getActiveTeamForUser, normalizeTimeZone, teamToOrgId } from "./teamHelpers";
@@ -915,13 +915,17 @@ export const getWorkspaceAndAccountUsage = query({
     }
 
     const { billingUser, isTeam, teamName } = await getBillingEntityForUser(ctx, user);
-    const stripeInfo = await getPlanFromStripe(ctx, billingUser.workosUserId);
+    const [stripeInfo, creditSnapshot] = await Promise.all([
+      getPlanFromStripe(ctx, billingUser.workosUserId),
+      snapshotUserCredit(ctx, billingUser._id),
+    ]);
+    if (creditSnapshot.period === null) {
+      throw new Error("Current user credit period not found.");
+    }
     const activeTeam = await getActiveTeamForUser(ctx, user);
     const timeZone = normalizeTimeZone(activeTeam.timeZone);
-    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
-      billingUser.stripeSubscriptionCurrentPeriodEnd,
-      timeZone,
-    );
+    const periodStartMs = creditSnapshot.period.periodStart;
+    const periodEndMs = creditSnapshot.period.periodEnd;
     const activeWorkspaceId = teamToOrgId(activeTeam);
     const rangeEndMs = Math.min(periodEndMs, Date.now());
     const accountEvents = await listUserCreditUsageEventsInRange(ctx, {
@@ -976,8 +980,7 @@ export const getWorkspaceAndAccountUsage = query({
       }
     }
 
-    const planConfig = getPlan(stripeInfo.plan);
-    const monthlyAllowance = planConfig.monthlyCredits;
+    const monthlyAllowance = creditSnapshot.monthlyGranted;
 
     return {
       workspaceId: activeWorkspaceId,

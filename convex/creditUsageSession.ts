@@ -2,9 +2,9 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import {
   resolveAnalyticsTimeRange,
-  resolveLatestBillingPeriod,
   type AnalyticsTimeRange,
 } from "./analyticsTimeRange";
+import { snapshotUserCredit } from "./creditPeriodPool";
 import { getEntitlementScope } from "./entitlementScope";
 import type { PlanKey } from "./planCatalog";
 import { getBillingEntityForUser, getPlanFromStripe } from "./plans";
@@ -60,15 +60,17 @@ export async function resolveCreditUsageSession(
   const activeTeam = await getActiveTeamForUser(ctx, scope.user);
   const timeZone = normalizeTimeZone(activeTeam.timeZone);
   const { billingUser } = await getBillingEntityForUser(ctx, scope.user);
-  const stripeInfo = await getPlanFromStripe(ctx, billingUser.workosUserId);
-  const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
-    billingUser.stripeSubscriptionCurrentPeriodEnd,
-    timeZone,
-  );
+  const [stripeInfo, creditSnapshot] = await Promise.all([
+    getPlanFromStripe(ctx, billingUser.workosUserId),
+    snapshotUserCredit(ctx, billingUser._id),
+  ]);
+  if (creditSnapshot.period === null) {
+    throw new Error("Current user credit period not found.");
+  }
   const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
     timeRange,
-    periodStartMs,
-    periodEndMs,
+    creditSnapshot.period.periodStart,
+    creditSnapshot.period.periodEnd,
   );
   return {
     kind: "native",
