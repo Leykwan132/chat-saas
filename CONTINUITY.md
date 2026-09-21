@@ -15,6 +15,8 @@
 - 2026-09-18 [USER] Goal: workflow action matching uses OpenRouter Decisions model `typesafe/jev-1.13`; temporary diagnostic logging is removed for the PR. Unshipped.
 - 2026-09-18 [CODE] Test Your Agent runs the shared JEV workflow decision before streaming. JEV asks binary `noul` questions for every ready non-Start workflow node against recent thread state, with node-specific true/false criteria, and selects every node whose yes probability is at least 0.8. Answer keys use readable normalized node titles with deterministic duplicate suffixes. Existing backend handlers remain the only execution path for send media/text. All `[convex-rag]` informational logs are temporarily removed; errors remain. Unshipped.
 - 2026-09-18 [USER] The temporary localhost widget embed is removed from root `index.html`; the launcher harness remains unchanged.
+- 2026-09-21 [TOOL] I010 DATA REPAIRED: native user `qh7677m2kbx0mbd5tze569y3qn8bnd49` had its Sep 1 period restored from Free/300/3.5 used to Business/20,000/39 used. The 39 is reconstructed from all September `creditLogs` tied to that period; 19,961 remain. Root trigger for Sep 7 Free reset remains UNCONFIRMED between the Free-downgrade finalizer and team-deletion path.
+- 2026-09-21 [CODE] Native usage analytics now resolve Billing period from the active `userCreditPeriods` row, not Stripe’s subscription end date; this prevents annual plans from previewing their final 30 days. AI Agent Usage opens on Last 30 days.
 
 # Decisions
 
@@ -98,6 +100,8 @@
 
 # Receipts
 
+- 2026-09-21 [TOOL] PR #161 opened: https://github.com/Leykwan132/chat-saas/pull/161 (`codex/fix-usage-data` → `main`) for the annual billing-period resolver, 30-day AI Agent Usage default, and completed scoped data repair.
+- 2026-09-21 [TOOL] Production scoped migration `creditPeriodRepairMigration:repairBusinessCreditPeriod` dry-ran and processed one exact `userCreditPeriods` row, then applied successfully. Readback confirmed `business`, 20,000 granted, and 39 used.
 - 2026-09-18 [TOOL] PR #160 build failure fixed: narrowed the auto-scroll helper to its sole `scrollToLatestRequest` prop. Widget regression suite passed 33 tests and `bunx tsc -b --pretty false` completed with exit code 0.
 - 2026-09-18 [TOOL] PR #160 opened: https://github.com/Leykwan132/chat-saas/pull/160 (`codex/jev-imp` → `main`), including JEV workflow decisions, widget stabilization, diagnostic cleanup, and removal of the temporary localhost embed.
 - 2026-09-18 [TOOL] Focused JEV, agent retry, double-save, and widget suites passed 62 tests after removing temporary diagnostics; `git diff --check` passed. Full Vitest has unrelated existing failures in calendar, WhatsApp, dashboard routing, referrals, and lead routing tests. `bun run build` exceeded the 30-second execution window without reporting a compiler error.

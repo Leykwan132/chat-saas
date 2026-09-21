@@ -11,7 +11,7 @@ import type { Id } from '../../../convex/_generated/dataModel';
 
 export function UsageAnalyticsContent({ agentId }: { agentId: string }) {
   const typedAgentId = agentId as Id<'agents'>;
-  const [timeRange, setTimeRange] = useState<CreditTimeRange>('period');
+  const [timeRange, setTimeRange] = useState<CreditTimeRange>('30d');
 
   return (
     <PlanFeatureGate featureKey="agent_usage" featureName="AI Agent Usage">

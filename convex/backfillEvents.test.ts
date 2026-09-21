@@ -8,11 +8,12 @@ import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/componen
 
 const modules = import.meta.glob("./**/*.ts");
 
-test("latest billing period includes the full first calendar day", async () => {
+test("native usage billing period follows the active credit period for annual subscriptions", async () => {
   const t = convexTest(schema, modules);
-  const billingPeriodDayStartAt = Date.UTC(2026, 6, 27, 16);
-  const creditUsageAt = Date.UTC(2026, 6, 28, 2, 51, 13);
-  const stripePeriodEnd = Date.UTC(2026, 7, 27, 8, 19, 1);
+  const billingPeriodDayStartAt = Date.now() - 3_600_000;
+  const billingPeriodEndAt = Date.now() + 86_400_000;
+  const stripePeriodEnd = Date.UTC(2030, 0, 1);
+  const creditUsageAt = billingPeriodDayStartAt + 1_000;
 
   // Register Stripe component
   t.registerComponent("stripe", stripeSchema, {
@@ -50,6 +51,17 @@ test("latest billing period includes the full first calendar day", async () => {
       stripeSubscriptionCurrentPeriodEnd: stripePeriodEnd,
       createdAt: Date.UTC(2026, 6, 26),
       updatedAt: creditUsageAt,
+    });
+
+    await ctx.db.insert("userCreditPeriods", {
+      userId: userDbId,
+      planKey: "business",
+      grantedCredits: 20_000,
+      usedCredits: 100,
+      periodStart: billingPeriodDayStartAt,
+      periodEnd: billingPeriodEndAt,
+      createdAt: billingPeriodDayStartAt,
+      updatedAt: billingPeriodDayStartAt,
     });
 
     // Create personal team
@@ -148,7 +160,7 @@ test("latest billing period includes the full first calendar day", async () => {
   expect(usageResult).toBeDefined();
   expect(usageResult?.workspaceName).toBe("Shared Team");
   expect(usageResult?.periodStartMs).toBe(billingPeriodDayStartAt);
-  expect(usageResult?.periodEndMs).toBe(stripePeriodEnd);
+  expect(usageResult?.periodEndMs).toBe(billingPeriodEndAt);
   expect(usageResult?.accountCreditsUsed).toBe(100);
 
   // 5. Test getWorkspaceCreditUsage
@@ -158,7 +170,7 @@ test("latest billing period includes the full first calendar day", async () => {
   });
   expect(workspaceUsageResult).toBeDefined();
   expect(workspaceUsageResult?.periodStartMs).toBe(billingPeriodDayStartAt);
-  expect(workspaceUsageResult?.periodEndMs).toBe(stripePeriodEnd);
+  expect(workspaceUsageResult?.periodEndMs).toBe(billingPeriodEndAt);
   expect(workspaceUsageResult?.totalCreditsUsed).toBe(100);
   expect(workspaceUsageResult?.modelUsage.series.length).toBe(1);
   expect(workspaceUsageResult?.modelUsage.series[0].label).toBe("Test Agent");
@@ -169,7 +181,7 @@ test("latest billing period includes the full first calendar day", async () => {
   });
   expect(accountUsageResult).toBeDefined();
   expect(accountUsageResult?.periodStartMs).toBe(billingPeriodDayStartAt);
-  expect(accountUsageResult?.periodEndMs).toBe(stripePeriodEnd);
+  expect(accountUsageResult?.periodEndMs).toBe(billingPeriodEndAt);
   expect(accountUsageResult?.totalCreditsUsed).toBe(100);
   expect(accountUsageResult?.modelUsage.series.length).toBe(1);
   expect(accountUsageResult?.modelUsage.series[0].label).toBe("Shared Team");
@@ -182,7 +194,7 @@ test("latest billing period includes the full first calendar day", async () => {
     },
   );
   expect(agentUsageResult?.periodStartMs).toBe(billingPeriodDayStartAt);
-  expect(agentUsageResult?.periodEndMs).toBe(stripePeriodEnd);
+  expect(agentUsageResult?.periodEndMs).toBe(billingPeriodEndAt);
   expect(agentUsageResult?.totalCreditsUsed).toBe(100);
 
   // 7. Test getWorkspaceCreditSpendHistory
@@ -193,8 +205,8 @@ test("latest billing period includes the full first calendar day", async () => {
   });
   expect(workspaceHistory).toBeDefined();
   expect(workspaceHistory.periodStartMs).toBe(billingPeriodDayStartAt);
-  expect(workspaceHistory.periodEndMs).toBe(stripePeriodEnd);
-  expect(workspaceHistory.page.length).toBe(1);
+  expect(workspaceHistory.periodEndMs).toBe(billingPeriodEndAt);
+  expect(workspaceHistory.page).toHaveLength(1);
   expect(workspaceHistory.page[0].credits).toBe(100);
   expect(workspaceHistory.page[0].agentName).toBe("Test Agent");
 
@@ -205,8 +217,8 @@ test("latest billing period includes the full first calendar day", async () => {
   });
   expect(accountHistory).toBeDefined();
   expect(accountHistory.periodStartMs).toBe(billingPeriodDayStartAt);
-  expect(accountHistory.periodEndMs).toBe(stripePeriodEnd);
-  expect(accountHistory.page.length).toBe(1);
+  expect(accountHistory.periodEndMs).toBe(billingPeriodEndAt);
+  expect(accountHistory.page).toHaveLength(1);
   expect(accountHistory.page[0].credits).toBe(100);
   expect(accountHistory.page[0].agentName).toBe("Test Agent");
 
@@ -219,7 +231,7 @@ test("latest billing period includes the full first calendar day", async () => {
     },
   );
   expect(agentHistory.periodStartMs).toBe(billingPeriodDayStartAt);
-  expect(agentHistory.periodEndMs).toBe(stripePeriodEnd);
+  expect(agentHistory.periodEndMs).toBe(billingPeriodEndAt);
   expect(agentHistory.page).toHaveLength(1);
   expect(agentHistory.page[0].credits).toBe(100);
 });
