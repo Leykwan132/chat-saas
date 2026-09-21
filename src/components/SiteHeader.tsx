@@ -61,8 +61,9 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
         aria-label="Copy promotion code STARTER1"
         className="relative z-50 flex min-h-10 w-full cursor-pointer items-center justify-center border-b border-zinc-950/10 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 px-5 py-1 text-center text-xs text-zinc-950 transition-all duration-300 hover:brightness-[0.98]"
       >
-        <span className="grid w-full place-items-center text-center leading-tight">
-          <span className="font-normal">Enjoy Starter for only RM1 for your first 3 months. Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide"><Copy className="ml-1 mr-1 size-3" />STARTER1</span></span>
+        <span className="flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center leading-tight">
+          <span className="font-normal">99% off for your first 3 months. Use code <span className="inline-flex translate-y-[3px] items-center font-bold tracking-wide"><Copy className="ml-1 mr-1 size-3" />STARTER1</span></span>
+          <span className="inline-flex items-center whitespace-nowrap rounded-full border border-zinc-950/20 bg-white/40 px-2 py-0.5 font-medium">See more →</span>
         </span>
       </button>
 
