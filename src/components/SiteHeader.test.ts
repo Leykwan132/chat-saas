@@ -45,7 +45,7 @@ test('the full header offer bar copies the Starter code', () => {
   expect(siteHeaderSource).toContain('STARTER1');
   expect(siteHeaderSource).toContain('99% off for your first 3 months.');
   expect(siteHeaderSource).toContain('Use code');
-  expect(siteHeaderSource).toContain('See more →');
+  expect(siteHeaderSource).not.toContain('See more →');
   expect(siteHeaderSource).not.toContain('Enjoy Starter for only RM1');
   expect(siteHeaderSource).toContain('font-normal');
   expect(siteHeaderSource).not.toContain('font-semibold">Enjoy Starter');
@@ -55,7 +55,7 @@ test('the full header offer bar copies the Starter code', () => {
   expect(siteHeaderSource).toContain('min-h-10 w-full cursor-pointer');
   expect(siteHeaderSource).toContain('px-5 py-1 text-center');
   expect(siteHeaderSource).not.toContain('px-5 py-1.5 text-center');
-  expect(siteHeaderSource).toContain('flex w-full flex-wrap items-center justify-center');
+  expect(siteHeaderSource).toContain('flex w-full items-center justify-center');
   expect(siteHeaderSource).not.toContain('from-[#eb0000] via-[#95008a] to-[#3300fc]');
   expect(siteHeaderSource).toContain('text-center');
   expect(siteHeaderSource).toContain('translate-y-[3px]');
