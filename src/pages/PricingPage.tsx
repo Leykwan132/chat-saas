@@ -100,6 +100,7 @@ export default function PricingPage() {
               variant="pricing"
               enterpriseLayout="column"
               includeEnterprise
+              showStarterPromotion
               billingInterval={billingInterval}
               onBillingIntervalChange={setBillingInterval}
               disabled={submitting}

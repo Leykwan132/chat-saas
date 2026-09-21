@@ -22,6 +22,7 @@ import {
 } from '../../shared/planCatalog';
 import { PricingEnterpriseBanner } from '@/components/pricing/PricingEnterpriseBanner';
 import { PricingFeatureList } from '@/components/pricing/PricingFeatureList';
+import { StarterPromotionHoverHint } from '@/components/pricing/StarterPromotionHoverHint';
 import {
   pricingSectionBorderClass,
   type PlanPickerCompactSpacing,
@@ -42,6 +43,7 @@ type SubscriptionPlanPickerProps = {
   disabled?: boolean;
   showBillingToggle?: boolean;
   includeEnterprise?: boolean;
+  showStarterPromotion?: boolean;
   /** Onboarding keeps the recommended Pro styling; pricing shows progressive plan bullets. */
   variant?: 'onboarding' | 'account' | 'pricing';
   density?: PlanPickerDensity;
@@ -62,6 +64,7 @@ export function SubscriptionPlanPicker({
   disabled = false,
   showBillingToggle = true,
   includeEnterprise = false,
+  showStarterPromotion = false,
   variant = 'account',
   density = 'default',
   compactSpacing = 'default',
@@ -153,7 +156,7 @@ export function SubscriptionPlanPicker({
                 isCurrent={isCurrent}
                 highlightCurrent={highlightCurrent}
                 showPopularHighlight={showPopularHighlight}
-                showStarterPromotion={variant === 'pricing' && billingInterval === 'monthly'}
+                showStarterPromotion={showStarterPromotion && billingInterval === 'monthly'}
                 disabled={disabled}
                 showPricingKeyFeatures={showPricingKeyFeatures}
                 density={density}
@@ -326,6 +329,7 @@ function SubscriptionPlanCard({
               {isStarterPromotion ? (
                 <span className="shrink-0 inline-flex items-center justify-center rounded-full bg-amber-100 px-2 py-1 text-[8px] font-bold uppercase tracking-wide text-amber-900 leading-none dark:bg-amber-400/20 dark:text-amber-200">
                   Limited-time offer
+                  <StarterPromotionHoverHint />
                 </span>
               ) : null}
               {isCurrent ? (

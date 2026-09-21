@@ -59,6 +59,7 @@ test('shows the Starter promotion on the public monthly pricing cards', () => {
       billingInterval="monthly"
       onBillingIntervalChange={() => undefined}
       variant="pricing"
+      showStarterPromotion
       renderPlanAction={() => null}
     />,
   );
@@ -68,12 +69,12 @@ test('shows the Starter promotion on the public monthly pricing cards', () => {
   expect(markup).toContain('>1</span>');
 });
 
-test('keeps the Starter promotion out of non-public plan pickers', () => {
+test('keeps the Starter promotion out unless explicitly enabled', () => {
   const markup = renderToStaticMarkup(
     <SubscriptionPlanPicker
       billingInterval="monthly"
       onBillingIntervalChange={() => undefined}
-      variant="account"
+      variant="pricing"
       renderPlanAction={() => null}
     />,
   );
