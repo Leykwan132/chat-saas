@@ -26,6 +26,21 @@
 - 2026-09-21 [CODE] The public header alone now leads with the copyable `STARTER1` offer: “Use code STARTER1 for 99% off your first 3 months (Starter Plan)” without trailing punctuation. The promo sentence uses normal weight, `STARTER1` remains emphasized without a copy icon, and an indigo `Learn more →` button navigates to `/pricing`. On public pricing cards, Growth no longer has the Popular label or animated shine; Starter carries the animated glow instead. The public monthly Starter card now shows `RM1 / month`, `Valid for 3 months.`, and a red-purple-blue Limited-time offer badge with a white info icon whose hover explains the first three months and highlights `STARTER1` as a code chip; the visible code pill is intentionally omitted, and other intervals and plan pickers retain catalog pricing. The promo bar remains yellow with the code icon aligned 3px down, uses tighter vertical padding on its mobile two-line layout, and the navbar starts at the 40px promo-bar height instead of leaving a fixed gap. Clicking the top bar confirms through a Code copied! toast, and the duplicate landing pill is removed. The pricing-page link and Ilmu landing announcement are removed. Public Leaderboard links are hidden while its route remains, and the landing CTAs now say Get Starter for RM1 and Book a demo. Unshipped.
 - 2026-09-21 [CODE] Every public pricing-card and comparison-table Team members label now opens a hover explanation that it counts members who can log in to the shared inbox to view, assign, or reply to conversations. Unshipped.
 - 2026-09-21 [CODE] The landing-page app preview sidebar now matches the current app sidebar with Phosphor House, Gear Six, and Flow Arrow icons, and the Agent Setup label is aligned to Configuration. Unshipped.
+- 2026-09-21 [USER] Goal: AI-generated replies must remain a single message rather than prompt-directed or automatically split chat bubbles.
+- 2026-09-21 [CODE] Removed the multi-message response prompt and all automatic reply splitting. Inbox, Test Your Agent streaming, and persisted generated replies now retain one normalized message. Unshipped.
+- 2026-09-21 [USER] SUPERSEDED 2026-09-22: temporary local loading of widget `pub_7190131b74754f789d20f973b6328c82` from the root app is removed.
+- 2026-09-22 [USER] Local development must use port 5173, not 5137.
+- 2026-09-22 [CODE] Root `index.html` no longer embeds the local AI-powered widget; Vite still defaults to port 5173. Unshipped.
+- 2026-09-22 [USER] Goal: compact excessive vertical spacing around numbered customer-detail fields in AI web-widget replies.
+- 2026-09-22 [CODE] Assistant Markdown resets inherited `pre-wrap` whitespace inside its message bubble, preventing blank Markdown list whitespace from expanding numbered-list rows; 8px spacing is retained only before and after list blocks, while visitor text still preserves literal newlines. Unshipped.
+- 2026-09-22 [USER] Public calls to action must not imply a free starting plan; use the two-word label “Get Started”.
+- 2026-09-22 [CODE] Public header, landing, landing preview, blog, and legal sign-up CTAs now say “Get Started”; landing comparison copy no longer promotes a free plan. Unshipped.
+- 2026-09-22 [USER] The public landing hero CTA must use “Get Started” instead of “Get Starter for RM1”.
+- 2026-09-22 [CODE] Landing hero CTA now matches the universal “Get Started” label; the separate pricing hover explanation retains its RM1 promotional detail. Unshipped.
+- 2026-09-22 [USER] The top public “Get Started” CTA must have a fully rounded pill shape.
+- 2026-09-22 [CODE] Desktop header “Get Started” now uses a fully rounded pill; the mobile menu action remains text-only. Unshipped.
+- 2026-09-22 [USER] Pricing-card CTAs must match the fully rounded public header CTA with consistent padding.
+- 2026-09-22 [CODE] Selectable, current-plan, and Enterprise pricing-card actions now match the landing hero CTA’s full pill geometry: `h-11` and `px-6`. Unshipped.
 
 # Decisions
 
@@ -86,6 +101,11 @@
 
 # Done (recent)
 
+- 2026-09-22 [CODE] Pricing-card CTAs use the landing hero’s consistent pill geometry. Unshipped.
+- 2026-09-22 [CODE] Public sign-up CTAs no longer imply a free plan. Unshipped.
+- 2026-09-22 [CODE] Web-widget numbered-list replies render with balanced detail-field spacing: a modest list boundary gap and compact rows. Unshipped.
+- 2026-09-21 [CODE] Local development now loads the supplied AI-powered widget without embedding it on public hosts. Unshipped.
+- 2026-09-21 [CODE] AI replies no longer request or create multiple chat bubbles; focused response-path tests pass. Unshipped.
 - 2026-09-18 [CODE] Web Widget opens saved history at its latest message and scrolls to bottom only for the visitor’s send; manual upward scrolling remains intact. Its top-right reset button and confirmation UI are removed. Thinking state survives host resize updates, detects reply completion by new message ID rather than clocks, and is forcibly cleared when the displayed latest message is outgoing. Unshipped.
 - 2026-09-17 [CODE] WhatsApp Meta temporary full debug-token and exchanged access-token logs were removed after diagnosis.
 - 2026-09-15 [TOOL] Web Widget history migration completed in production: 77 conversations processed successfully; orphaned Agent thread IDs are recreated and relinked before legacy messages are copied.
@@ -109,6 +129,16 @@
 
 # Receipts
 
+- 2026-09-22 [TOOL] PR #164 opened from `codex/refine-public-ctas` after rebasing the requested changes onto current `origin/main`; focused suite passed 84 tests and the temporary root local-widget embed is absent.
+- 2026-09-22 [TOOL] Pricing-plan action suite passed (10 tests) after matching home CTA dimensions; `git diff --check` passed.
+- 2026-09-22 [TOOL] Site header suite passed (6 tests); `git diff --check` passed after applying the pill CTA radius.
+- 2026-09-22 [TOOL] Landing hero CTA suite passed (6 tests); `git diff --check` passed.
+- 2026-09-22 [TOOL] Public CTA and landing-preview suites passed (25 tests); `git diff --check` passed and no production “Start for free” or “Start with free plan” text remains.
+- 2026-09-22 [TOOL] Widget composer regression suite passed (34 tests); `git diff --check` passed after isolating assistant Markdown whitespace.
+- 2026-09-22 [TOOL] Widget composer regression suite passed (35 tests); `git diff --check` passed after restoring 8px list boundary spacing.
+- 2026-09-21 [TOOL] Development Convex widget config for `pub_7190131b74754f789d20f973b6328c82` returned HTTP 200. The local-widget guard suite passed (6 tests); `git diff --check` passed.
+- 2026-09-21 [TOOL] Local widget host guard test passed (6 tests); `git diff --check` passed.
+- 2026-09-21 [TOOL] Focused AI reply response-path suite passed: `aiReplyMessages`, playground display, double-save persistence, and workflow planner (30 tests). The broad suite exceeded the execution window after unrelated `whatsappCoexistence` fixture failures for missing `wabaIds`.
 - 2026-09-21 [TOOL] Removed the unused `Link` import from `SiteHeader.tsx`; `bunx tsc -b --pretty false`, `bun run build`, and the focused SiteHeader suite (6 tests) pass. The build still reports the existing Wrangler log-file permission warning and large-chunk warnings but exits successfully.
 - 2026-09-21 [TOOL] PR #161 opened: https://github.com/Leykwan132/chat-saas/pull/161 (`codex/fix-usage-data` → `main`) for the annual billing-period resolver, 30-day AI Agent Usage default, and completed scoped data repair.
 - 2026-09-21 [TOOL] Production scoped migration `creditPeriodRepairMigration:repairBusinessCreditPeriod` dry-ran and processed one exact `userCreditPeriods` row, then applied successfully. Readback confirmed `business`, 20,000 granted, and 39 used.

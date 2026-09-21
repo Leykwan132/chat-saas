@@ -35,10 +35,15 @@ test('site header balances the brand icon with the wordmark', () => {
   expect(brandSource).not.toContain("'size-7 transition-all duration-300'");
 });
 
-test('public Start for free handlers do not report Google Ads conversions', () => {
+test('public Get Started handlers do not report Google Ads conversions', () => {
   expect(siteHeaderSource).not.toContain('reportGoogleAdsConversion');
   expect(blogLayoutSource).not.toContain('reportGoogleAdsConversion');
   expect(legalLayoutSource).not.toContain('reportGoogleAdsConversion');
+  expect(actionsSource).toContain('Get Started');
+  expect(actionsSource).not.toContain('Start for free');
+  expect(actionsSource).toContain('rounded-full px-3.5 py-2 text-[15px]');
+  expect(blogLayoutSource).toContain('Get Started');
+  expect(legalLayoutSource).toContain('Get Started');
 });
 
 test('the full header offer bar copies the Starter code', () => {

@@ -36,7 +36,6 @@ import {
   buildWorkflowRuntimeBlock,
   type WorkflowRuntimeContextForPrompt,
 } from "./workflowPrompt";
-import { aiReplyMessageBreakBlock } from "./aiReplyMessages";
 import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildToolUsageBlock } from "./toolPrompt";
 import { buildIdentityPriorityBlock } from "./identityPriorityPrompt";
@@ -918,7 +917,7 @@ ${agent.systemPrompt}${(() => {
     return styleBlock;
   })()}
 
-${toolUsageBlock}${chatResponseFormattingBlock}${aiReplyMessageBreakBlock}${toneBlock}${groundingBlock}
+${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
   ${citationBlock}${escalationBlock}${workflowBlock}${bookingBlock}`;
 
   const resolvedModel = resolveLanguageModel(agent.model);

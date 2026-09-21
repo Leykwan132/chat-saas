@@ -443,6 +443,21 @@ test("widget bullet lists use compact spacing", () => {
   );
 });
 
+test("widget assistant Markdown does not preserve blank list whitespace", () => {
+  expect(widgetStyles).toMatch(
+    /\.message-content \.markdown-content \{[^}]+white-space: normal;/,
+  );
+});
+
+test("widget assistant Markdown separates list blocks from surrounding copy", () => {
+  expect(widgetStyles).toMatch(
+    /\.message-content \.markdown-content p \+ ol,[\s\S]*?\.message-content \.markdown-content p \+ ul \{[^}]+margin-top: 8px;/,
+  );
+  expect(widgetStyles).toMatch(
+    /\.message-content \.markdown-content ol \+ p,[\s\S]*?\.message-content \.markdown-content ul \+ p \{[^}]+margin-top: 8px;/,
+  );
+});
+
 test("widget chat copy uses a compact type scale", () => {
   expect(widgetStyles).toMatch(/\.message-content \{[^}]+font-size: 14px;/);
   expect(widgetStyles).toMatch(/\.composer textarea \{[^}]+font-size: 14px;/);

@@ -38,6 +38,7 @@ export default defineConfig(({ mode }) => {
     // that domain and all its subdomains.
     server: {
       host: true,
+      port: 5173,
       allowedHosts: [".ngrok-free.dev", ".ngrok-free.app", ".ngrok.io"],
     },
   };

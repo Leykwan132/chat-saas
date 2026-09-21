@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, test } from 'vitest';
 import {
+  EnterprisePlanAction,
   SubscriptionPlanActionButton,
   SubscriptionPlanPicker,
 } from './SubscriptionPlanPicker';
@@ -19,6 +21,9 @@ describe('SubscriptionPlanActionButton', () => {
 
       expect(markup).toContain('bg-zinc-950');
       expect(markup).toContain('text-white');
+      expect(markup).toContain('rounded-full');
+      expect(markup).toContain('h-11');
+      expect(markup).toContain('px-6');
     },
   );
 
@@ -36,6 +41,33 @@ describe('SubscriptionPlanActionButton', () => {
     expect(markup).not.toContain('Change plan');
     expect(markup).toContain('disabled');
   });
+
+  test('keeps the current-plan action in the same pill geometry', () => {
+    const markup = renderToStaticMarkup(
+      <SubscriptionPlanActionButton
+        planId="growth"
+        label="Current plan"
+        isCurrentPlan
+        onClick={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain('rounded-full');
+    expect(markup).toContain('h-11');
+    expect(markup).toContain('px-6');
+  });
+});
+
+test('keeps the Enterprise action in the same pill geometry', () => {
+  const markup = renderToStaticMarkup(
+    <MemoryRouter>
+      <EnterprisePlanAction label="Contact our sales" />
+    </MemoryRouter>,
+  );
+
+  expect(markup).toContain('rounded-full');
+  expect(markup).toContain('h-11');
+  expect(markup).toContain('px-6');
 });
 
 test('uses four grid columns when Enterprise is shown beside three paid plans', () => {

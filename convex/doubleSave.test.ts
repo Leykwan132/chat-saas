@@ -40,8 +40,7 @@ vi.mock('./llm/openRouter', () => {
     mediaNodeIdsToSend: [],
     responseLanguage: 'English',
   });
-  const delimitedReply =
-    'Mock response part one\n<<<MESSAGE_BREAK>>>\nMock response part two';
+  const reply = 'Mock response';
   return {
     openRouterModel: () => {
       return mockModel({
@@ -52,7 +51,7 @@ vi.mock('./llm/openRouter', () => {
               text:
                 options?.responseFormat?.type === 'json'
                   ? workflowActionPlanJson
-                  : delimitedReply,
+                  : reply,
             },
           ],
           finishReason: { unified: 'stop', raw: 'stop' },
@@ -746,21 +745,10 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
     },
   );
 
-  // Check the messages in the agent thread
-  // There should be exactly 5 messages:
-  // 1. User message "Help me" (from ingestChannelMessage)
-  // 2. User spacer message for the first AI reply part
-  // 3. First assistant reply part
-  // 4. User spacer message for the second AI reply part
-  // 5. Second assistant reply part
-  // If the agent component had automatically saved prompt/outputs, there would be duplicates.
-  expect(agentMessages.length).toBe(5);
+  expect(agentMessages.length).toBe(3);
   expect(agentMessages[0].message.role).toBe('user');
   expect(agentMessages[0].text).toBe('Help me');
   expect(agentMessages[1].message.role).toBe('user');
   expect(agentMessages[2].message.role).toBe('assistant');
-  expect(agentMessages[2].text).toBe('Mock response part one');
-  expect(agentMessages[3].message.role).toBe('user');
-  expect(agentMessages[4].message.role).toBe('assistant');
-  expect(agentMessages[4].text).toBe('Mock response part two');
+  expect(agentMessages[2].text).toBe('Mock response');
 });
