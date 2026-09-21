@@ -39,6 +39,8 @@
 - 2026-09-22 [CODE] Landing hero CTA now matches the universal “Get Started” label; the separate pricing hover explanation retains its RM1 promotional detail. Unshipped.
 - 2026-09-22 [USER] The top public “Get Started” CTA must have a fully rounded pill shape.
 - 2026-09-22 [CODE] Desktop header “Get Started” now uses a fully rounded pill; the mobile menu action remains text-only. Unshipped.
+- 2026-09-22 [USER] The signed-in desktop Dashboard header CTA must use the same fully rounded treatment.
+- 2026-09-22 [CODE] Desktop Dashboard and Get Started header CTAs now share the same full pill geometry and padding. Unshipped.
 - 2026-09-22 [USER] Pricing-card CTAs must match the fully rounded public header CTA with consistent padding.
 - 2026-09-22 [CODE] Selectable, current-plan, and Enterprise pricing-card actions now match the landing hero CTA’s full pill geometry: `h-11` and `px-6`. Unshipped.
 
@@ -101,6 +103,7 @@
 
 # Done (recent)
 
+- 2026-09-22 [CODE] Signed-in Dashboard header CTA now matches the rounded public action. Unshipped.
 - 2026-09-22 [CODE] Pricing-card CTAs use the landing hero’s consistent pill geometry. Unshipped.
 - 2026-09-22 [CODE] Public sign-up CTAs no longer imply a free plan. Unshipped.
 - 2026-09-22 [CODE] Web-widget numbered-list replies render with balanced detail-field spacing: a modest list boundary gap and compact rows. Unshipped.
@@ -129,6 +132,7 @@
 
 # Receipts
 
+- 2026-09-22 [TOOL] Site header suite passed (6 tests); `git diff --check` passed after rounding Dashboard.
 - 2026-09-22 [TOOL] PR #164 opened from `codex/refine-public-ctas` after rebasing the requested changes onto current `origin/main`; focused suite passed 84 tests and the temporary root local-widget embed is absent.
 - 2026-09-22 [TOOL] Pricing-plan action suite passed (10 tests) after matching home CTA dimensions; `git diff --check` passed.
 - 2026-09-22 [TOOL] Site header suite passed (6 tests); `git diff --check` passed after applying the pill CTA radius.

@@ -42,6 +42,9 @@ test('public Get Started handlers do not report Google Ads conversions', () => {
   expect(actionsSource).toContain('Get Started');
   expect(actionsSource).not.toContain('Start for free');
   expect(actionsSource).toContain('rounded-full px-3.5 py-2 text-[15px]');
+  expect(actionsSource).toContain(
+    "'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[15px]",
+  );
   expect(blogLayoutSource).toContain('Get Started');
   expect(legalLayoutSource).toContain('Get Started');
 });
