@@ -12,7 +12,7 @@ export function StarterPromotionHoverHint() {
         <button
           type="button"
           aria-label="About the Starter promotion"
-          className="inline-flex size-3.5 items-center justify-center rounded-full text-amber-900/70 transition-colors hover:text-amber-900 dark:text-amber-200/70 dark:hover:text-amber-200"
+          className="inline-flex size-3.5 items-center justify-center rounded-full text-white/80 transition-colors hover:text-white"
         >
           <Info className="size-3" />
         </button>

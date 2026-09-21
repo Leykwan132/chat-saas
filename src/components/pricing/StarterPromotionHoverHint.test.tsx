@@ -1,4 +1,5 @@
 import { isValidElement, type ReactNode } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, test } from 'vitest';
 import { HoverCard } from '@/components/ui/hover-card';
 import { StarterPromotionHoverHint } from './StarterPromotionHoverHint';
@@ -17,4 +18,5 @@ test('explains the Starter promotion when the info icon is hovered', () => {
   expect(collectReactText(element)).toContain('first 3 months');
   expect(collectReactText(element)).toContain('RM1/month');
   expect(collectReactText(element)).toContain('STARTER1');
+  expect(renderToStaticMarkup(element)).toContain('text-white/80');
 });
