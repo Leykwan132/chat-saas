@@ -3,6 +3,7 @@
 # Snapshot
 
 - 2026-09-23 [CODE] A human inbox reply now persistently pauses AI replies for that conversation. WhatsApp Business, Messenger, and Instagram app outbound echoes are saved into the existing conversation thread and perform the same pause. An in-progress AI worker rechecks that status after generation, and the channel-send action rejects disabled conversations before delivery. Unshipped in PR #166.
+- 2026-09-23 [CODE] Production I/O audit: customer list/count, channel list, and agent unread total are broad reactive reads. They respectively perform per-row conversation/agent joins, full customer scans per search/filter change, per-channel full conversation scans across many app routes, and up-to-400-conversation scans from the global sidebar. `agentOverview.getSummary` additionally reads message history per conversation. No performance change implemented yet.
 - 2026-09-23 [TOOL] Full Vitest suite passed: 639 files and 2,190 tests. Stale fixtures and assertions were aligned to current behavior without changing the affected production features.
 - 2026-09-23 [CODE] The sidebar credit meter now shows the plan-name badge without the redundant generic “Plan” label; Top-ups and Referral labels are unchanged. Unshipped.
 - 2026-09-23 [CODE] Agent-sidebar parent icons now use their filled Phosphor variant when a child route is active (for Conversations, Agent, Bookings, and Outreach); single-link Overview remains unchanged. Unshipped.
