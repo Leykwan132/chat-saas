@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-23 [CODE] A human inbox reply now persistently pauses AI replies for that conversation. WhatsApp Business outbound echoes perform the same pause while being saved into the existing conversation thread. An in-progress AI worker rechecks that status after generation, and the channel-send action rejects disabled conversations before delivery. Unshipped.
+- 2026-09-23 [CODE] A human inbox reply now persistently pauses AI replies for that conversation. WhatsApp Business, Messenger, and Instagram app outbound echoes are saved into the existing conversation thread and perform the same pause. An in-progress AI worker rechecks that status after generation, and the channel-send action rejects disabled conversations before delivery. Unshipped in PR #166.
 - 2026-09-23 [TOOL] Full Vitest suite passed: 639 files and 2,190 tests. Stale fixtures and assertions were aligned to current behavior without changing the affected production features.
 - 2026-09-23 [CODE] The sidebar credit meter now shows the plan-name badge without the redundant generic “Plan” label; Top-ups and Referral labels are unchanged. Unshipped.
 - 2026-09-23 [CODE] Agent-sidebar parent icons now use their filled Phosphor variant when a child route is active (for Conversations, Agent, Bookings, and Outreach); single-link Overview remains unchanged. Unshipped.
@@ -138,6 +138,7 @@
 
 # Receipts
 
+- 2026-09-23 [TOOL] Messenger/Instagram manual-app echo regression suite passed; `bunx convex codegen`, `bunx tsc --noEmit`, and full Vitest passed: 640 files, 2,191 tests.
 - 2026-09-22 [TOOL] PR #165 opened from `codex/round-dashboard-header` after PR #164 merged before the Dashboard follow-up could be included; site header suite passed (6 tests).
 - 2026-09-22 [TOOL] Site header suite passed (6 tests); `git diff --check` passed after rounding Dashboard.
 - 2026-09-22 [TOOL] PR #164 opened from `codex/refine-public-ctas` after rebasing the requested changes onto current `origin/main`; focused suite passed 84 tests and the temporary root local-widget embed is absent.

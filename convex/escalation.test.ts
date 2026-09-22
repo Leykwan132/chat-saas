@@ -172,6 +172,102 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
   });
   expect(conv!.assignToAiAgent).toBe(false);
 
+  const [messengerChannelId, instagramChannelId] = await t.run(async (ctx) => {
+    return await Promise.all([
+      ctx.db.insert("channels", {
+        orgId,
+        service: "messenger",
+        pageId: "messenger-page-test",
+        accessToken: "token-test",
+        status: "connected",
+        connectedByUserId: workosUserId,
+        defaultAgentId: agentId,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }),
+      ctx.db.insert("channels", {
+        orgId,
+        service: "instagram",
+        igUserId: "instagram-account-test",
+        accessToken: "token-test",
+        status: "connected",
+        connectedByUserId: workosUserId,
+        defaultAgentId: agentId,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }),
+    ]);
+  });
+
+  const [messengerInbound, instagramInbound] = await Promise.all([
+    t.mutation(internal.chat.inbox.internalIngestChannelMessage, {
+      channelId: messengerChannelId,
+      externalId: "messenger-inbound-123",
+      contactAddress: "messenger-customer-test",
+      direction: "incoming",
+      content: "Need help",
+      contentType: "text",
+      timestampMs: Date.now(),
+      isHistorical: true,
+    }),
+    t.mutation(internal.chat.inbox.internalIngestChannelMessage, {
+      channelId: instagramChannelId,
+      externalId: "instagram-inbound-123",
+      contactAddress: "instagram-customer-test",
+      direction: "incoming",
+      content: "Need help",
+      contentType: "text",
+      timestampMs: Date.now(),
+      isHistorical: true,
+    }),
+  ]);
+
+  await t.mutation(internal.messengerWebhook.handleIncoming, {
+    pageId: "messenger-page-test",
+    senderPsid: "messenger-page-test",
+    recipientPsid: "messenger-customer-test",
+    externalId: "messenger-app-reply-123",
+    text: "I'll take it from here.",
+    isEcho: true,
+    timestampMs: Date.now(),
+  });
+  await t.mutation(internal.instagramWebhook.handleIncoming, {
+    recipientIgUserId: "instagram-customer-test",
+    senderIgUserId: "instagram-account-test",
+    externalId: "instagram-app-reply-123",
+    text: "I'll take it from here.",
+    timestampMs: Date.now(),
+  });
+
+  const outboundEchoes = await t.run(async (ctx) => {
+    const messengerConversation = await ctx.db.get(messengerInbound.conversationId);
+    const instagramConversation = await ctx.db.get(instagramInbound.conversationId);
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_externalId", (q) => q.eq("externalId", "messenger-app-reply-123"))
+      .collect();
+    const instagramMessages = await ctx.db
+      .query("messages")
+      .withIndex("by_externalId", (q) => q.eq("externalId", "instagram-app-reply-123"))
+      .collect();
+    return { messengerConversation, instagramConversation, messages, instagramMessages };
+  });
+
+  expect(outboundEchoes.messengerConversation!.assignToAiAgent).toBe(false);
+  expect(outboundEchoes.instagramConversation!.assignToAiAgent).toBe(false);
+  expect(outboundEchoes.messages).toMatchObject([{
+    conversationId: messengerInbound.conversationId,
+    direction: "outgoing",
+    content: "I'll take it from here.",
+    agentMessageId: expect.any(String),
+  }]);
+  expect(outboundEchoes.instagramMessages).toMatchObject([{
+    conversationId: instagramInbound.conversationId,
+    direction: "outgoing",
+    content: "I'll take it from here.",
+    agentMessageId: expect.any(String),
+  }]);
+
   await testWithAuth.mutation(api.conversations.setConversationAiEnabled, {
     conversationId,
     enabled: true,
