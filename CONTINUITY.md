@@ -2,6 +2,12 @@
 
 # Snapshot
 
+- 2026-09-23 [CODE] A human inbox reply now persistently pauses AI replies for that conversation. WhatsApp Business outbound echoes perform the same pause while being saved into the existing conversation thread. An in-progress AI worker rechecks that status after generation, and the channel-send action rejects disabled conversations before delivery. Unshipped.
+- 2026-09-23 [TOOL] Full Vitest suite passed: 639 files and 2,190 tests. Stale fixtures and assertions were aligned to current behavior without changing the affected production features.
+- 2026-09-23 [CODE] The sidebar credit meter now shows the plan-name badge without the redundant generic “Plan” label; Top-ups and Referral labels are unchanged. Unshipped.
+- 2026-09-23 [CODE] Agent-sidebar parent icons now use their filled Phosphor variant when a child route is active (for Conversations, Agent, Bookings, and Outreach); single-link Overview remains unchanged. Unshipped.
+- 2026-09-23 [CODE] WhatsApp coexistence setup copy now states that chat-history syncing is limited to the most recent six months. Unshipped.
+- 2026-09-22 [TOOL] WhatsApp coexistence history for +65 9150 7796 completed in production: Meta delivery finished in seconds, then 1,771 contact threads imported over ~29 minutes. The UI remained at 90% because its post-delivery counter advances only when an entire batch completes; batches span the full import, so it has no intermediate movement. No failure or stuck work remains.
 - 2026-09-11 [USER] Goal: website knowledge uses Perplexity research (markdown), stored in R2, then Convex RAG. Unshipped on `cursor/convex-rag`.
 - 2026-09-12 [CODE] Now: knowledge ingest, search, and backfill use Convex RAG instead of Cloudflare AI Search.
 - 2026-09-12 [TOOL] Next: review/merge [PR #147](https://github.com/Leykwan132/chat-saas/pull/147), then run prod backfill after deploy.

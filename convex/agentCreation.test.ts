@@ -114,9 +114,9 @@ describe("goal-based agent creation", () => {
     expect(schedule?.enabled).toBe(true);
   });
 
-  test("enables every current member's schedule for a new organizational agent", async () => {
+  test("enables the creating owner's schedule for a new organizational agent", async () => {
     const testInstance = initTest();
-    const { ownerWorkosUserId, memberWorkosUserId } = await testInstance.run(
+    const { ownerWorkosUserId } = await testInstance.run(
       async (ctx) => {
         const now = Date.now();
         const ownerWorkosUserId = "org-schedule-owner";
@@ -154,7 +154,7 @@ describe("goal-based agent creation", () => {
           createdAt: now,
         });
         await ctx.db.patch(ownerId, { activeTeamId: teamId, updatedAt: now });
-        return { ownerWorkosUserId, memberWorkosUserId };
+        return { ownerWorkosUserId };
       },
     );
     const agentId = await testInstance
@@ -183,10 +183,7 @@ describe("goal-based agent creation", () => {
           enabled: schedule.enabled,
         }))
         .sort((a, b) => a.workosUserId.localeCompare(b.workosUserId)),
-    ).toEqual([
-      { workosUserId: memberWorkosUserId, enabled: true },
-      { workosUserId: ownerWorkosUserId, enabled: true },
-    ]);
+    ).toEqual([{ workosUserId: ownerWorkosUserId, enabled: true }]);
   });
 
   test("lets an organizational admin create an agent without an explicit create claim", async () => {

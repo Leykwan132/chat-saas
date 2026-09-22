@@ -39,7 +39,9 @@ describe('referral feature flag surfaces', () => {
     expect(sidebarSource).toContain(
       'isProductFeatureEnabled(referralProgramState)',
     );
-    expect(sidebarSource).toContain('referralProgramEnabled ? (');
+    expect(sidebarSource).toContain(
+      'referralProgramEnabled && isPartnerManagedWorkspace === false ? (',
+    );
   });
 
   test('skips referral onboarding and never submits a code when disabled', () => {

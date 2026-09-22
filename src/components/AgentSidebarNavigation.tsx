@@ -96,7 +96,9 @@ export function AgentSidebarNavigation({
           );
         }
 
-        const SectionIcon = section.icon;
+        const SectionIcon = isSectionActive(section, pathname)
+          ? (section.activeIcon ?? section.icon)
+          : section.icon;
         const isOpen = openSections[section.label] ?? false;
 
         return (

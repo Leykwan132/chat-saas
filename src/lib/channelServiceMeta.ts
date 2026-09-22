@@ -15,7 +15,7 @@ export const CHANNEL_SERVICE_META = {
   whatsapp: {
     label: 'WhatsApp',
     description:
-      'Supports coexistence — keep WhatsApp Business on your phone with the same number.',
+      'Supports coexistence — keep WhatsApp Business on your phone with the same number. Chat history syncs up to 6 months.',
     icon: SiWhatsapp,
     iconColor: 'text-emerald-600 dark:text-emerald-400',
   },

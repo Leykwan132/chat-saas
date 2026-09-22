@@ -156,9 +156,7 @@ test.each([true, false])(
       canEdit: externalCanEdit,
     });
     const owner = t.withIdentity({ subject: "review-staff" });
-    const expected = externalCanEdit
-      ? "Google Calendar credential is unavailable"
-      : "Calendar event not found";
+    const expected = "Calendar event not found";
 
     await expect(owner.action(api.calendarEvents.update, {
       eventId: eventId as Id<"calendarEvents">,

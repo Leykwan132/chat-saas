@@ -158,6 +158,41 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
   expect(conv!.status).toBe("open");
   expect(conv!.escalation).toBeUndefined();
 
+  await t.mutation(internal.whatsappWebhook.handleMessageEcho, {
+    phoneNumberId: "phone-test",
+    to: "+60123456789",
+    externalId: "echo-123",
+    timestampMs: Date.now(),
+    content: "I can help you with your refund.",
+    contentType: "text",
+  });
+
+  conv = await t.run(async (ctx) => {
+    return await ctx.db.get(conversationId);
+  });
+  expect(conv!.assignToAiAgent).toBe(false);
+
+  await testWithAuth.mutation(api.conversations.setConversationAiEnabled, {
+    conversationId,
+    enabled: true,
+  });
+
+  await t.mutation(internal.chat.inbox.internalPersistHumanReply, {
+    conversationId,
+    content: "I can help you with your refund.",
+    authorUserId: workosUserId,
+  });
+
+  conv = await t.run(async (ctx) => {
+    return await ctx.db.get(conversationId);
+  });
+  expect(conv!.assignToAiAgent).toBe(false);
+
+  await testWithAuth.mutation(api.conversations.setConversationAiEnabled, {
+    conversationId,
+    enabled: true,
+  });
+
   // 2. Trigger Escalation
   await t.mutation(internal.chat.inbox.internalEscalateConversation, {
     conversationId,

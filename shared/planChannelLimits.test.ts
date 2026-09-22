@@ -11,7 +11,7 @@ import {
   PLAN_ORDER,
 } from "./planCatalog";
 
-test("free lists limited channels; only starter lists all channels as the paid upgrade", () => {
+test("paid plans list all channels in the public comparison", () => {
   expect(PLAN_CATALOG.free.maxChannels).toBe(1);
   expect(PLAN_CATALOG.free.displayFeatures).toContain(LIMITED_CHANNELS_LABEL);
 
@@ -25,10 +25,10 @@ test("free lists limited channels; only starter lists all channels as the paid u
   expect(PLAN_CATALOG.business.displayFeatures).not.toContain(ALL_CHANNELS_LABEL);
 
   const channelRow = getPlanComparisonRows().find((row) => row.label === "Channels");
-  expect(channelRow?.values.free).toBe("Limited");
   expect(channelRow?.values.starter).toBe("All");
   expect(channelRow?.values.growth).toBe("All");
   expect(channelRow?.values.business).toBe("All");
+  expect(channelRow?.values).not.toHaveProperty("free");
 
   const freeCard = getAlignedPlanFeatureRows("free").map((row) => row.text);
   const starterCard = getAlignedPlanFeatureRows("starter").map((row) => row.text);

@@ -24,6 +24,7 @@ const dashboardCoveredRoutes = [
   'knowledge-base/:type',
   'channels',
   'channels/:channelId/templates',
+  'comment-to-inbox',
   'customers',
   'customers/:customerId',
   'follow-ups',

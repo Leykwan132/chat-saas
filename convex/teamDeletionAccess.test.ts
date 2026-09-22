@@ -198,6 +198,7 @@ describe("team deletion access", () => {
         entryType: "text",
         title: "Title",
         content: "Content",
+        agentId: "agent_deleting",
         orgId: "org_upload_deleting",
       }),
     ).rejects.toThrow("Workspace unavailable");

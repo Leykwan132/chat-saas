@@ -226,6 +226,7 @@ export const internalPersistHumanReply = internalMutation({
     const patch: Partial<Doc<"conversations">> = {
       lastMessageAt: now,
       unreadCount: 0,
+      assignToAiAgent: false,
       updatedAt: now,
     };
     if (preview && preview.trim() !== "") {
@@ -772,6 +773,7 @@ export const generateAiReplyWorker = internalAction({
       if (
         convAfterGeneration === null ||
         convAfterGeneration.status === "closed" ||
+        !convAfterGeneration.assignToAiAgent ||
         (convAfterGeneration.status === "requires_user_input" &&
           convAfterGeneration.escalation)
       ) {

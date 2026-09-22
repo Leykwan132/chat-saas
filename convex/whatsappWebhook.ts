@@ -973,6 +973,7 @@ export const handleMessageEcho = internalMutation({
         timestampMs: args.timestampMs,
         isHistorical: false,
         humanAgentName: "WhatsApp Business app",
+        pauseAiReplies: true,
       },
     );
     if (result.skipped) return result;

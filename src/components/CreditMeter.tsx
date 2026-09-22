@@ -118,7 +118,7 @@ export function CreditMeter() {
             <div key={row.key} className="flex flex-col gap-[0.45rem]">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-[0.675rem] font-medium text-muted-foreground">
-                  {row.label}
+                  {row.key === 'plan' ? null : row.label}
                   {row.key === 'plan' && !isLoading && planAndUsage?.plan ? (
                     <Badge
                       variant="secondary"

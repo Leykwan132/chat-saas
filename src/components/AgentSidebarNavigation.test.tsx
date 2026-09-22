@@ -6,6 +6,14 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AgentSidebarNavigation } from './AgentSidebarNavigation';
 import { PiHouse } from 'react-icons/pi';
 
+function OutlineSectionIcon() {
+  return <svg data-icon="section-outline" />;
+}
+
+function FilledSectionIcon() {
+  return <svg data-icon="section-filled" />;
+}
+
 describe('AgentSidebarNavigation', () => {
   const singleOverviewSection = [{
     label: 'Overview',
@@ -71,5 +79,29 @@ describe('AgentSidebarNavigation', () => {
     expect(markup).not.toContain('data-slot="collapsible"');
     expect(markup).toContain('href="/dashboard/agent-id/overview"');
     expect(markup).toContain('px-[0.45rem]');
+  });
+
+  test('uses the filled parent icon when a child page is selected', () => {
+    const markup = renderToStaticMarkup(
+      <TooltipProvider>
+        <MemoryRouter>
+          <SidebarProvider>
+            <AgentSidebarNavigation
+              pathname="/dashboard/agent-id/secondary"
+              sections={[{
+                ...multiItemSection[0],
+                icon: OutlineSectionIcon,
+                activeIcon: FilledSectionIcon,
+              }]}
+              totalUnread={undefined}
+              formatUnreadBadgeCount={String}
+            />
+          </SidebarProvider>
+        </MemoryRouter>
+      </TooltipProvider>,
+    );
+
+    expect(markup).toContain('data-icon="section-filled"');
+    expect(markup).not.toContain('data-icon="section-outline"');
   });
 });
