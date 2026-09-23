@@ -1323,6 +1323,35 @@ export default defineSchema({
       "isChannelConnected",
       "lastMessageAt",
     ]),
+  inboxChatSearchDocuments: defineTable({
+    conversationId: v.id("conversations"),
+    orgId: v.string(),
+    userId: v.optional(v.string()),
+    assignedAgentId: v.optional(v.id("agents")),
+    isChannelConnected: v.boolean(),
+    searchText: v.string(),
+  })
+    .index("by_conversationId", ["conversationId"])
+    .searchIndex("search_text", {
+      searchField: "searchText",
+      filterFields: ["orgId", "userId", "assignedAgentId", "isChannelConnected"],
+    }),
+  inboxMessageSearchDocuments: defineTable({
+    messageId: v.id("messages"),
+    conversationId: v.id("conversations"),
+    orgId: v.string(),
+    userId: v.optional(v.string()),
+    assignedAgentId: v.optional(v.id("agents")),
+    isChannelConnected: v.boolean(),
+    content: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_messageId", ["messageId"])
+    .index("by_conversationId", ["conversationId"])
+    .searchIndex("search_content", {
+      searchField: "content",
+      filterFields: ["orgId", "userId", "assignedAgentId", "isChannelConnected"],
+    }),
   inboundMediaBatches: defineTable({
     conversationId: v.id("conversations"),
     agentId: v.id("agents"),

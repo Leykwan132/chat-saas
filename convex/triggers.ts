@@ -22,6 +22,13 @@ import {
   removeInboxConversationSummary,
   upsertInboxConversationSummary,
 } from "./inboxConversationSummary";
+import {
+  refreshInboxMessageSearchDocumentsForConversation,
+  removeInboxChatSearchDocument,
+  removeInboxMessageSearchDocument,
+  upsertInboxChatSearchDocument,
+  upsertInboxMessageSearchDocument,
+} from "./inboxSearchProjection";
 
 // 1. Initialize triggers registry
 export const triggers = new Triggers<DataModel>();
@@ -50,6 +57,25 @@ triggers.register("conversations", async (ctx, change) => {
     return;
   }
   await upsertInboxConversationSummary(ctx, change.id);
+});
+triggers.register("inboxConversationSummaries", async (ctx, change) => {
+  const conversationId = change.newDoc?.conversationId ?? change.oldDoc?.conversationId;
+  if (conversationId === undefined) {
+    return;
+  }
+  if (change.operation === "delete") {
+    await removeInboxChatSearchDocument(ctx, conversationId);
+  } else {
+    await upsertInboxChatSearchDocument(ctx, conversationId);
+  }
+  await refreshInboxMessageSearchDocumentsForConversation(ctx, conversationId);
+});
+triggers.register("messages", async (ctx, change) => {
+  if (change.operation === "delete") {
+    await removeInboxMessageSearchDocument(ctx, change.id);
+    return;
+  }
+  await upsertInboxMessageSearchDocument(ctx, change.id);
 });
 triggers.register("customers", async (ctx, change) => {
   await refreshInboxSummariesForCustomer(ctx, change.id);

@@ -23,7 +23,7 @@ An empty query retains the current newest-first, 50-item Inbox summary paginatio
 
 ## Data model
 
-`inboxConversationSummaries` gains a required `contactSearchText` field containing the contact name, phone number, email address, and contact address. A full-text search index filters this field by workspace, selected agent, and connection state.
+`inboxChatSearchDocuments` is a compact one-row-per-Inbox-summary projection. It contains the conversation ID, workspace and selected-agent scope, connection state, and the contact name, phone number, email address, and contact address in one searchable field. Its full-text index filters by workspace, selected agent, and connection state.
 
 `inboxMessageSearchDocuments` is a compact one-row-per-searchable-message projection. It contains the source `messageId`, conversation ID, workspace scope, optional assigned-agent ID, connection state, message content, and message timestamp. Its full-text index searches message content and filters by the same scope fields.
 
@@ -53,9 +53,9 @@ Convex full-text search ranks message results by relevance. The displayed date i
 
 ## Migration and reconciliation
 
-The schema first widens with the new summary field, search indexes, and projection table. New and changed writes populate both projections before historical data is backfilled.
+The schema first widens with the two projection tables and their search indexes. New and changed writes populate both projections before historical data is backfilled.
 
-A resumable migration rebuilds every Inbox summary to populate `contactSearchText`, then creates a search document for each existing eligible text message. A bounded reconciliation verifies that each qualifying message has exactly one document with current scope fields and removes documents whose message or conversation is no longer eligible.
+A resumable migration creates a chat document for every Inbox summary and a search document for each existing eligible text message. A bounded reconciliation verifies that each qualifying source row has exactly one document with current scope fields and removes documents whose message or conversation is no longer eligible.
 
 ## Validation
 
