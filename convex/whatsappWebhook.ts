@@ -402,6 +402,10 @@ export async function receive(
       if (change.field !== "messages") continue;
       const value = change.value;
       const phoneNumberId = value.metadata?.phone_number_id;
+      console.info("[whatsapp] raw message webhook event", {
+        phoneNumberId,
+        event: change,
+      });
       if (!phoneNumberId) continue;
 
       const profileByContactId = new Map<
