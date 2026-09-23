@@ -409,6 +409,7 @@ export async function receive(
             ? [{ externalId: message.id, content: message.text?.body }]
             : [],
         ),
+        rawEventJson: JSON.stringify(change),
         event: change,
       });
       if (!phoneNumberId) continue;
