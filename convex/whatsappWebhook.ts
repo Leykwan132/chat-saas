@@ -463,9 +463,9 @@ export async function receive(
             }
             continue;
           }
-          const from = message.from_user_id ?? message.from;
+          const from = message.from ?? message.from_user_id;
           if (!from) continue;
-          const profile = profileByContactId.get(from);
+          const profile = profileByContactId.get(message.from_user_id ?? from);
           if (isWhatsAppErrorMessage(message)) {
             logWhatsAppLiveErrorMessage({
               source: "messages",
