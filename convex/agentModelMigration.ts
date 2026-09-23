@@ -10,6 +10,13 @@ const RETIRED_AGENT_MODELS = new Set([
 ]);
 
 export function getRetiredModelMigrationPatch(agent: { model: string }) {
+  if (agent.model === 'openai/gpt-5.6-luna') {
+    return {
+      model: 'openai/gpt-6-luna',
+      provider: 'openrouter' as const,
+    };
+  }
+
   if (!RETIRED_AGENT_MODELS.has(agent.model)) {
     return undefined;
   }

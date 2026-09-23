@@ -62,7 +62,7 @@ test('provides the approved recommended scenarios for every model', async () => 
       'Chinese and English conversations',
     ],
     'openai/gpt-oss-120b': ['Budget-friendly reasoning', 'English-language support'],
-    'openai/gpt-5.6-luna': [
+    'openai/gpt-6-luna': [
       'Complex customer conversations',
       'Higher-quality responses',
     ],

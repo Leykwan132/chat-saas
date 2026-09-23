@@ -290,7 +290,7 @@ test('landing preview agent setup model controls use compact labels with roomier
   expect(agentSetupSource).toContain('focus:!bg-transparent');
   expect(agentSetupSource).toContain('data-[highlighted]:!bg-transparent');
   expect(agentSetupSource).toContain('previewControlOptions');
-  expect(agentSetupSource).toContain("OpenAI GPT-5.6 Luna");
+  expect(agentSetupSource).toContain("OpenAI GPT-6 Luna");
   expect(agentSetupSource).toContain("OpenAI GPT-OSS 120B");
   expect(agentSetupSource).toContain("NVIDIA Nemotron 3.5 Lightning");
   expect(agentSetupSource).toContain("Qwen3.7 Flash");

@@ -13,6 +13,13 @@ test('migrates retired Amazon and Google agents to the DeepSeek default', () => 
   }
 });
 
+test('migrates GPT-5.6 Luna agents to GPT-6 Luna', () => {
+  expect(getRetiredModelMigrationPatch({ model: 'openai/gpt-5.6-luna' })).toEqual({
+    model: 'openai/gpt-6-luna',
+    provider: 'openrouter',
+  });
+});
+
 test('does not change agents on supported models', () => {
   expect(getRetiredModelMigrationPatch({ model: 'qwen/qwen3.7-flash' })).toBeUndefined();
   expect(

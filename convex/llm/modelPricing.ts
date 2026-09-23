@@ -64,8 +64,8 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     requiredPlan: "starter",
     labels: ["advanced", "latest"],
   },
-  "openai/gpt-5.6-luna": {
-    label: "OpenAI GPT-5.6 Luna",
+  "openai/gpt-6-luna": {
+    label: "OpenAI GPT-6 Luna",
     creditCost: 2,
     enabled: true,
     provider: "openrouter",

@@ -71,7 +71,7 @@ test("Starter upgrade copy advertises current advanced models", () => {
     (feature) => feature.title === "Advanced AI Models",
   );
 
-  expect(advancedModels?.description).toContain("GPT-5.6 Luna");
+  expect(advancedModels?.description).toContain("GPT-6 Luna");
   expect(advancedModels?.description).toContain("GPT-OSS 120B");
   expect(advancedModels?.description).toContain("Nemotron");
   expect(advancedModels?.description).toContain("Qwen3.7 Flash");

@@ -144,7 +144,7 @@ test("trimmed model options are not enabled or included in plan entitlements", (
 });
 
 test.each([
-  ["openai/gpt-5.6-luna", "OpenAI GPT-5.6 Luna", "OpenAI", "openai", 2],
+  ["openai/gpt-6-luna", "OpenAI GPT-6 Luna", "OpenAI", "openai", 2],
   ["nvidia/nemotron-3.5-lightning", "NVIDIA Nemotron 3.5 Lightning", "NVIDIA", "nvidia", 1],
   ["qwen/qwen3.7-flash", "Qwen3.7 Flash", "Qwen", "qwen", 0.5],
   ["openai/gpt-oss-120b", "OpenAI GPT-OSS 120B", "OpenAI", "openai", 0.5],

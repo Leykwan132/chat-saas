@@ -45,7 +45,7 @@ export const MODEL_SCORECARDS: Record<ModelScorecardId, ModelScorecard> = {
       'Best for budget-friendly reasoning tasks. It provides capable English support at the lowest paid credit tier.',
     recommendedFor: ['Budget-friendly reasoning', 'English-language support'],
   },
-  'openai/gpt-5.6-luna': {
+  'openai/gpt-6-luna': {
     overall: 4.5,
     metrics: { quality: 4.5, speed: 3.5, reasoning: 4.5, value: 3 },
     description:
