@@ -3,8 +3,8 @@ import { Workpool } from "@convex-dev/workpool";
 import { components, internal } from "./_generated/api";
 import {
   internalAction,
-  internalMutation,
 } from "./_generated/server";
+import { internalMutation } from "./triggers";
 import type { Doc } from "./_generated/dataModel";
 import { ingestChannelMessage } from "./chat/threads";
 import { getUserByWorkosId } from "./teamHelpers";

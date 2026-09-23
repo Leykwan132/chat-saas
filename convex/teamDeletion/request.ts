@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { MutationCtx } from "../_generated/server";
-import { internalMutation } from "../_generated/server";
+import { internalMutation } from "../triggers";
 import { getTeamByWorkosOrgId } from "../teamHelpers";
 import { resetCurrentPeriodToFreePlan } from "../creditPlanReset";
 import { teamDeletionPool } from "./pool";

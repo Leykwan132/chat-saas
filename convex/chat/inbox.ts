@@ -1,11 +1,11 @@
 import { v } from "convex/values";
 import {
   query,
-  internalMutation,
   internalAction,
   internalQuery,
   type MutationCtx,
 } from "../_generated/server";
+import { internalMutation } from "../triggers";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { INBOX_IMAGE_PLACEHOLDER } from "../../shared/inboxAttachments";

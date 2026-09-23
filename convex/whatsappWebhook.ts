@@ -1,11 +1,11 @@
 import { v } from "convex/values";
 import {
   httpAction,
-  internalMutation,
   internalQuery,
   type ActionCtx,
   type MutationCtx,
 } from "./_generated/server";
+import { internalMutation } from "./triggers";
 import { internal } from "./_generated/api";
 import {
   normalizeMetaTemplateId,

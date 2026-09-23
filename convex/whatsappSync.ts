@@ -2,10 +2,10 @@ import { v } from "convex/values";
 import { maybeCompleteWhatsAppConnectionAttempt } from "./whatsappConnectionAttemptUtils";
 import {
   internalAction,
-  internalMutation,
   internalQuery,
   type MutationCtx,
 } from "./_generated/server";
+import { internalMutation } from "./triggers";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { whatsappSyncPool } from "./channelSyncPools";
