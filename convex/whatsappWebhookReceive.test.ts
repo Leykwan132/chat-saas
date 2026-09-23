@@ -117,6 +117,49 @@ test("username-only contacts persist their provider identity and opted-in userna
   });
 });
 
+test("live WhatsApp messages use the numeric address while retaining the Meta user ID", async () => {
+  const runMutation = vi.fn().mockResolvedValue(undefined);
+  const ctx = { runMutation } as unknown as Parameters<typeof receive>[0];
+  const response = await receive(ctx, JSON.stringify({
+    entry: [{
+      changes: [{
+        field: "messages",
+        value: {
+          metadata: { phone_number_id: "phone-123" },
+          contacts: [{
+            wa_id: "60129499394",
+            user_id: "MY.1681538786237414",
+            profile: { name: "Kwan" },
+          }],
+          messages: [{
+            id: "message-identity-123",
+            from: "60129499394",
+            from_user_id: "MY.1681538786237414",
+            timestamp: "1700000000",
+            type: "text",
+            text: { body: "Hello" },
+          }],
+        },
+      }],
+    }],
+  }));
+  const inboundArgs = runMutation.mock.calls
+    .map((call) => call[1])
+    .find(
+      (args) =>
+        args !== null &&
+        typeof args === "object" &&
+        "externalId" in args &&
+        args.externalId === "message-identity-123",
+    );
+
+  expect(response.status).toBe(200);
+  expect(inboundArgs).toMatchObject({
+    from: "60129499394",
+    whatsappUserId: "MY.1681538786237414",
+  });
+});
+
 test("user ID change system events update identity without ingesting a chat message", async () => {
   const runMutation = vi.fn().mockResolvedValue(undefined);
   const ctx = { runMutation } as unknown as Parameters<typeof receive>[0];
