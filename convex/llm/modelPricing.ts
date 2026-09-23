@@ -33,8 +33,8 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     inputCostMyrPerMillion: 0.2,
     outputCostMyrPerMillion: 1.2,
   },
-  "xiaomi/mimo-v2.5": {
-    label: "Xiaomi MiMo V2.5",
+  "xiaomi/mimo-v2.6-pro": {
+    label: "Xiaomi MiMo V2.6 Pro",
     creditCost: 1,
     enabled: true,
     provider: "openrouter",

@@ -56,7 +56,7 @@ test('provides the approved recommended scenarios for every model', async () => 
     ),
   ).toEqual({
     'ilmu-mini-v3.3': ['Malay-language conversations', 'Budget-friendly FAQs'],
-    'xiaomi/mimo-v2.5': ['Chinese-language conversations', 'General customer support'],
+    'xiaomi/mimo-v2.6-pro': ['Chinese-language conversations', 'General customer support'],
     'deepseek/deepseek-v4-flash': [
       'Everyday customer support',
       'Chinese and English conversations',

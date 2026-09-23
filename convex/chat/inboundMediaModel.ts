@@ -1,7 +1,7 @@
 import type { Doc } from "../_generated/dataModel";
 import type { FetchedInboundMedia } from "./inboundMediaFetch";
 
-export const INBOUND_MEDIA_MODEL = "xiaomi/mimo-v2.5";
+export const INBOUND_MEDIA_MODEL = "xiaomi/mimo-v2.6-pro";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_FIELD_LENGTH = 4_000;
 

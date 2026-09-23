@@ -24,7 +24,7 @@ export const MODEL_SCORECARDS: Record<ModelScorecardId, ModelScorecard> = {
       'Best for free Malay-first customer conversations. It also handles straightforward English support.',
     recommendedFor: ['Malay-language conversations', 'Budget-friendly FAQs'],
   },
-  'xiaomi/mimo-v2.5': {
+  'xiaomi/mimo-v2.6-pro': {
     overall: 3.5,
     metrics: { quality: 3.5, speed: 4, reasoning: 3.5, value: 4 },
     description:

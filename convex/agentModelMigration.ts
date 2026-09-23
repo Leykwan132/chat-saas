@@ -17,6 +17,13 @@ export function getRetiredModelMigrationPatch(agent: { model: string }) {
     };
   }
 
+  if (agent.model === 'xiaomi/mimo-v2.5') {
+    return {
+      model: 'xiaomi/mimo-v2.6-pro',
+      provider: 'openrouter' as const,
+    };
+  }
+
   if (!RETIRED_AGENT_MODELS.has(agent.model)) {
     return undefined;
   }

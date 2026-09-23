@@ -76,7 +76,7 @@ export const ADVANCED_PLAN_MODELS = [
   "openai/gpt-6-luna",
   "nvidia/nemotron-3.5-lightning",
   "qwen/qwen3.7-flash",
-  "xiaomi/mimo-v2.5",
+  "xiaomi/mimo-v2.6-pro",
 ] as const;
 
 export const MODEL_DISPLAY_NAMES: Record<string, string> = {
@@ -86,7 +86,7 @@ export const MODEL_DISPLAY_NAMES: Record<string, string> = {
   "openai/gpt-6-luna": "OpenAI GPT-6 Luna",
   "nvidia/nemotron-3.5-lightning": "NVIDIA Nemotron 3.5 Lightning",
   "qwen/qwen3.7-flash": "Qwen3.7 Flash",
-  "xiaomi/mimo-v2.5": "Xiaomi MiMo V2.5",
+  "xiaomi/mimo-v2.6-pro": "Xiaomi MiMo V2.6 Pro",
 };
 
 export function getPlanModelDisplayNames(planId: PlanKey): string[] {

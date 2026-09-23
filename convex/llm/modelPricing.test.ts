@@ -105,7 +105,7 @@ test("Ilmu Mini V3.3 is enabled for every plan", () => {
 
 test("models without custom metadata omit optional fields", () => {
   const model = listEnabledModels().find(
-    (entry) => entry.value === "xiaomi/mimo-v2.5",
+    (entry) => entry.value === "xiaomi/mimo-v2.6-pro",
   );
 
   expect(model).not.toHaveProperty("imageUrl");
@@ -189,14 +189,14 @@ test("GLM models are not enabled or included in plan entitlements", () => {
   expect(catalogModelIds).not.toContain("z-ai/glm-5.2");
 });
 
-test("Xiaomi MiMo V2.5 is enabled and included in paid plan entitlements", () => {
-  const model = listEnabledModels().find((entry) => entry.value === "xiaomi/mimo-v2.5");
+test("Xiaomi MiMo V2.6 Pro is enabled and included in paid plan entitlements", () => {
+  const model = listEnabledModels().find((entry) => entry.value === "xiaomi/mimo-v2.6-pro");
   const plansWithModel = Object.entries(PLAN_CATALOG)
-    .filter(([, plan]) => plan.models.includes("xiaomi/mimo-v2.5"))
+    .filter(([, plan]) => plan.models.includes("xiaomi/mimo-v2.6-pro"))
     .map(([planKey]) => planKey);
 
   expect(model).toMatchObject({
-    label: "Xiaomi MiMo V2.5",
+    label: "Xiaomi MiMo V2.6 Pro",
     chef: "Xiaomi",
     chefSlug: "xiaomi",
     requiredPlan: "starter",

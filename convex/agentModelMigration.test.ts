@@ -20,6 +20,13 @@ test('migrates GPT-5.6 Luna agents to GPT-6 Luna', () => {
   });
 });
 
+test('migrates MiMo V2.5 agents to MiMo V2.6 Pro', () => {
+  expect(getRetiredModelMigrationPatch({ model: 'xiaomi/mimo-v2.5' })).toEqual({
+    model: 'xiaomi/mimo-v2.6-pro',
+    provider: 'openrouter',
+  });
+});
+
 test('does not change agents on supported models', () => {
   expect(getRetiredModelMigrationPatch({ model: 'qwen/qwen3.7-flash' })).toBeUndefined();
   expect(
