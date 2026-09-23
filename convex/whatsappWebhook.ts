@@ -404,6 +404,11 @@ export async function receive(
       const phoneNumberId = value.metadata?.phone_number_id;
       console.info("[whatsapp] raw message webhook event", {
         phoneNumberId,
+        textMessages: (value.messages ?? []).flatMap((message) =>
+          message.type === "text"
+            ? [{ externalId: message.id, content: message.text?.body }]
+            : [],
+        ),
         event: change,
       });
       if (!phoneNumberId) continue;
