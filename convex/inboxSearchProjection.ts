@@ -34,16 +34,35 @@ export async function upsertInboxChatSearchDocument(
   ctx: SearchProjectionCtx,
   conversationId: Id<"conversations">,
 ) {
-  const summary = await getSummary(ctx, conversationId);
-  if (summary === null) {
+  const document = await buildInboxChatSearchDocument(ctx, conversationId);
+  if (document === null) {
     await removeByConversation(ctx, conversationId);
     return;
+  }
+  const existing = await ctx.db
+    .query("inboxChatSearchDocuments")
+    .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+    .unique();
+  if (existing === null) {
+    await ctx.db.insert("inboxChatSearchDocuments", document);
+    return;
+  }
+  await ctx.db.replace(existing._id, document);
+}
+
+export async function buildInboxChatSearchDocument(
+  ctx: SearchProjectionCtx,
+  conversationId: Id<"conversations">,
+) {
+  const summary = await getSummary(ctx, conversationId);
+  if (summary === null) {
+    return null;
   }
   const [customer, conversation] = await Promise.all([
     summary.customerId === undefined ? null : ctx.db.get(summary.customerId),
     ctx.db.get(conversationId),
   ]);
-  const document = {
+  return {
     conversationId,
     orgId: summary.orgId,
     ...(summary.userId === undefined ? {} : { userId: summary.userId }),
@@ -60,15 +79,6 @@ export async function upsertInboxChatSearchDocument(
       conversation?.contactAddress,
     ]),
   };
-  const existing = await ctx.db
-    .query("inboxChatSearchDocuments")
-    .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
-    .unique();
-  if (existing === null) {
-    await ctx.db.insert("inboxChatSearchDocuments", document);
-    return;
-  }
-  await ctx.db.replace(existing._id, document);
 }
 
 export async function removeInboxChatSearchDocument(
@@ -95,21 +105,39 @@ export async function upsertInboxMessageSearchDocument(
   ctx: SearchProjectionCtx,
   messageId: Id<"messages">,
 ) {
+  const document = await buildInboxMessageSearchDocument(ctx, messageId);
+  if (document === null) {
+    await removeInboxMessageSearchDocument(ctx, messageId);
+    return;
+  }
+  const existing = await ctx.db
+    .query("inboxMessageSearchDocuments")
+    .withIndex("by_messageId", (q) => q.eq("messageId", messageId))
+    .unique();
+  if (existing === null) {
+    await ctx.db.insert("inboxMessageSearchDocuments", document);
+    return;
+  }
+  await ctx.db.replace(existing._id, document);
+}
+
+export async function buildInboxMessageSearchDocument(
+  ctx: SearchProjectionCtx,
+  messageId: Id<"messages">,
+) {
   const message = await ctx.db.get(messageId);
   if (
     message === null ||
     message.contentType !== "text" ||
     message.content.trim() === ""
   ) {
-    await removeInboxMessageSearchDocument(ctx, messageId);
-    return;
+    return null;
   }
   const summary = await getSummary(ctx, message.conversationId);
   if (summary === null) {
-    await removeInboxMessageSearchDocument(ctx, messageId);
-    return;
+    return null;
   }
-  const document = {
+  return {
     messageId,
     conversationId: message.conversationId,
     orgId: summary.orgId,
@@ -121,15 +149,6 @@ export async function upsertInboxMessageSearchDocument(
     content: message.content,
     createdAt: message.createdAt,
   };
-  const existing = await ctx.db
-    .query("inboxMessageSearchDocuments")
-    .withIndex("by_messageId", (q) => q.eq("messageId", messageId))
-    .unique();
-  if (existing === null) {
-    await ctx.db.insert("inboxMessageSearchDocuments", document);
-    return;
-  }
-  await ctx.db.replace(existing._id, document);
 }
 
 export async function refreshInboxMessageSearchDocumentsForConversation(
