@@ -1269,6 +1269,60 @@ export default defineSchema({
       "assignedAgentId",
       "assignedUserId",
     ]),
+  inboxConversationSummaries: defineTable({
+    conversationId: v.id("conversations"),
+    customerId: v.optional(v.id("customers")),
+    channelId: v.id("channels"),
+    orgId: v.string(),
+    userId: v.optional(v.string()),
+    assignedAgentId: v.optional(v.id("agents")),
+    contactName: v.optional(v.string()),
+    service: serviceValidator,
+    lastMessagePreview: v.optional(v.string()),
+    lastMessageAt: v.number(),
+    unreadCount: v.number(),
+    status: v.union(
+      v.literal("open"),
+      v.literal("snoozed"),
+      v.literal("closed"),
+      v.literal("booked"),
+      v.literal("requires_user_input"),
+    ),
+    assignedUserId: v.optional(v.string()),
+    tags: v.array(v.string()),
+    leadTemperature: v.optional(
+      v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold")),
+    ),
+    isEscalated: v.boolean(),
+    hasBooking: v.boolean(),
+    isChannelConnected: v.boolean(),
+    updatedAt: v.number(),
+  })
+    .index("by_conversationId", ["conversationId"])
+    .index("by_customerId", ["customerId"])
+    .index("by_channelId", ["channelId"])
+    .index("by_orgId_and_isChannelConnected_and_lastMessageAt", [
+      "orgId",
+      "isChannelConnected",
+      "lastMessageAt",
+    ])
+    .index("by_orgId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt", [
+      "orgId",
+      "assignedAgentId",
+      "isChannelConnected",
+      "lastMessageAt",
+    ])
+    .index("by_userId_and_isChannelConnected_and_lastMessageAt", [
+      "userId",
+      "isChannelConnected",
+      "lastMessageAt",
+    ])
+    .index("by_userId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt", [
+      "userId",
+      "assignedAgentId",
+      "isChannelConnected",
+      "lastMessageAt",
+    ]),
   inboundMediaBatches: defineTable({
     conversationId: v.id("conversations"),
     agentId: v.id("agents"),
