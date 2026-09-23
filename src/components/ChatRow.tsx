@@ -35,7 +35,7 @@ export type Chat = {
   tags?: string[];
   leadTemperature?: 'Hot' | 'Warm' | 'Cold';
   hasBooking?: boolean;
-  escalation?: { question: string; context: string; escalatedAt: number };
+  isEscalated?: boolean;
 };
 
 function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {
@@ -131,12 +131,12 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
                 </span>
               )}
             </div>
-            {(chat.platform === 'avatar' || chat.leadTemperature || (chat.tags && chat.tags.length > 0) || chat.escalation || chat.hasBooking) && (
+            {(chat.platform === 'avatar' || chat.leadTemperature || (chat.tags && chat.tags.length > 0) || chat.isEscalated || chat.hasBooking) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                   {chat.hasBooking ? <BookedListLabel /> : null}
                   {chat.platform === 'avatar' ? <AvatarConversationTag compact /> : null}
-                  {chat.escalation && (
+                  {chat.isEscalated && (
                     <span
                       className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40 px-1.5 py-0.2 text-[10px] font-semibold text-amber-700 dark:text-amber-400 transition-all shadow-none"
                     >

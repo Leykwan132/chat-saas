@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation } from "../_generated/server";
+import { mutation } from "../triggers";
 import { Permission } from "../../shared/permissions";
 import { AppointmentBookingSessionStatus } from "../appointmentBookingSessionStatus";
 import { getAuthContext } from "../authUtils";

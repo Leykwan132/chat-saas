@@ -1,11 +1,10 @@
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import {
-  internalMutation,
-  mutation,
   query,
   type MutationCtx,
 } from "./_generated/server";
+import { internalMutation, mutation } from "./triggers";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { getCustomerAgentForCurrentWorkspace } from "./customerAgentScope";

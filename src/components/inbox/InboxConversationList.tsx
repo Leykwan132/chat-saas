@@ -1,4 +1,5 @@
-import { ArrowDownWideNarrow, ArrowUpWideNarrow, MessageSquare, Pin, Search } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { ArrowDownWideNarrow, ArrowUpWideNarrow, LoaderCircle, MessageSquare, Pin, Search } from 'lucide-react';
 import { ChatRow, type Chat } from '@/components/ChatRow';
 import {
   inboxColumnClassName,
@@ -40,6 +41,9 @@ type InboxConversationListProps = {
   onTogglePin: (id: Id<'conversations'>) => void;
   activeFilters?: InboxActiveFilter[];
   onRemoveActiveFilter?: (id: string) => void;
+  canLoadMore: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
 };
 
 export function InboxConversationList({
@@ -58,10 +62,29 @@ export function InboxConversationList({
   onTogglePin,
   activeFilters = [],
   onRemoveActiveFilter,
+  canLoadMore,
+  isLoadingMore,
+  onLoadMore,
 }: InboxConversationListProps) {
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const SortIcon = conversationSort === 'newest' ? ArrowDownWideNarrow : ArrowUpWideNarrow;
   const sortLabel =
     conversationSort === 'newest' ? 'Newest first' : 'Oldest first';
+
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || !canLoadMore || isLoadingMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          onLoadMore();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [canLoadMore, isLoadingMore, onLoadMore]);
 
   return (
     <div
@@ -196,6 +219,20 @@ export function InboxConversationList({
                 onTogglePin={onTogglePin}
               />
             ))}
+            {canLoadMore || isLoadingMore ? (
+              <div ref={loadMoreSentinelRef} className="flex justify-center border-t border-border px-3 py-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={isLoadingMore}
+                  onClick={onLoadMore}
+                >
+                  {isLoadingMore ? <LoaderCircle className="size-3.5 animate-spin" /> : null}
+                  {isLoadingMore ? 'Loading conversations' : 'Load more conversations'}
+                </Button>
+              </div>
+            ) : null}
           </>
         )}
       </div>

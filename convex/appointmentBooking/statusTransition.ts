@@ -3,7 +3,8 @@ import { Permission } from "../../shared/permissions";
 import { AppointmentBookingSessionStatus } from "../appointmentBookingSessionStatus";
 import { getAuthContext } from "../authUtils";
 import type { Id } from "../_generated/dataModel";
-import { mutation, type MutationCtx } from "../_generated/server";
+import type { MutationCtx } from "../_generated/server";
+import { mutation } from "../triggers";
 import { permissionsForCurrentUser } from "./access";
 import {
   cancelWorkflowRemindersForAppointment,

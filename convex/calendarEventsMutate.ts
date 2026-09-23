@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation } from "./_generated/server";
+import { internalMutation } from "./triggers";
 import type { Doc } from "./_generated/dataModel";
 import { logConversationEvent } from "./conversationLogs";
 import { normalizeTimeZone } from "./teamHelpers";

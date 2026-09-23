@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
-import { action, internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { action, internalQuery, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { mutation } from "./triggers";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
@@ -132,6 +133,61 @@ export const listLinkedForCurrentOrg = query({
   },
 });
 
+export const listInboxSummariesForCurrentOrg = query({
+  args: {
+    agentId: v.optional(v.id("agents")),
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
+    const { orgId, userId } = await getAuthContext(ctx);
+    const isPersonal = !orgId || orgId === "personal";
+    if (isPersonal && args.agentId !== undefined) {
+      return await ctx.db
+        .query("inboxConversationSummaries")
+        .withIndex(
+          "by_userId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt",
+          (q) =>
+            q
+              .eq("userId", userId)
+              .eq("assignedAgentId", args.agentId)
+              .eq("isChannelConnected", true),
+        )
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
+    if (isPersonal) {
+      return await ctx.db
+        .query("inboxConversationSummaries")
+        .withIndex("by_userId_and_isChannelConnected_and_lastMessageAt", (q) =>
+          q.eq("userId", userId).eq("isChannelConnected", true),
+        )
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
+    if (args.agentId !== undefined) {
+      return await ctx.db
+        .query("inboxConversationSummaries")
+        .withIndex(
+          "by_orgId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt",
+          (q) =>
+            q
+              .eq("orgId", orgId)
+              .eq("assignedAgentId", args.agentId)
+              .eq("isChannelConnected", true),
+        )
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
+    return await ctx.db
+      .query("inboxConversationSummaries")
+      .withIndex("by_orgId_and_isChannelConnected_and_lastMessageAt", (q) =>
+        q.eq("orgId", orgId).eq("isChannelConnected", true),
+      )
+      .order("desc")
+      .paginate(args.paginationOpts);
+  },
+});
+
 export const getTotalUnreadForAgent = query({
   args: {
     agentId: v.id("agents"),
@@ -139,18 +195,31 @@ export const getTotalUnreadForAgent = query({
   handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
 
-    const { conversations } = await getLinkedInboxConversationDocs(
-      ctx,
-      orgId,
-      userId,
-      args.agentId,
-    );
-
-    let totalUnread = 0;
-    for (const conv of conversations) {
-      totalUnread += conv.unreadCount;
-    }
-    return totalUnread;
+    const isPersonal = !orgId || orgId === "personal";
+    const summaries = isPersonal
+      ? await ctx.db
+          .query("inboxConversationSummaries")
+          .withIndex(
+            "by_userId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt",
+            (q) =>
+              q
+                .eq("userId", userId)
+                .eq("assignedAgentId", args.agentId)
+                .eq("isChannelConnected", true),
+          )
+          .collect()
+      : await ctx.db
+          .query("inboxConversationSummaries")
+          .withIndex(
+            "by_orgId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt",
+            (q) =>
+              q
+                .eq("orgId", orgId)
+                .eq("assignedAgentId", args.agentId)
+                .eq("isChannelConnected", true),
+          )
+          .collect();
+    return summaries.reduce((total, summary) => total + summary.unreadCount, 0);
   },
 });
 

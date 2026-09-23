@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
-import { internalMutation, type MutationCtx } from "../_generated/server";
+import type { MutationCtx } from "../_generated/server";
+import { internalMutation } from "../triggers";
 import {
   AppointmentBookingSessionStatus,
   isActiveAppointmentBookingSessionStatus,

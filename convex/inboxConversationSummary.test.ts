@@ -1,12 +1,14 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
+import { api } from "./_generated/api";
 import {
   refreshInboxSummariesForCalendarEvent,
   refreshInboxSummariesForCustomer,
   upsertInboxConversationSummary,
 } from "./inboxConversationSummary";
 import schema from "./schema";
+import { triggers } from "./triggers";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -187,4 +189,45 @@ test("clears the booking marker after its calendar event is cancelled", async ()
       .unique(),
   );
   expect(summary).toMatchObject({ hasBooking: false });
+});
+
+test("keeps a summary current through trigger-wrapped source writes", async () => {
+  const fixture = await createFixture();
+  await fixture.t.run(async (ctx) => {
+    const triggerCtx = triggers.wrapDB(ctx);
+    await triggerCtx.db.patch(fixture.conversationId, { unreadCount: 0 });
+    await triggerCtx.db.patch(fixture.customerId, {
+      tags: ["Current"],
+      leadTemperature: "Cold",
+    });
+    await triggerCtx.db.patch(fixture.eventId, { status: "cancelled" });
+  });
+
+  const summary = await fixture.t.run((ctx) =>
+    ctx.db
+      .query("inboxConversationSummaries")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", fixture.conversationId))
+      .unique(),
+  );
+  expect(summary).toMatchObject({
+    unreadCount: 0,
+    tags: ["Current"],
+    leadTemperature: "Cold",
+    hasBooking: false,
+  });
+});
+
+test("paginates connected summaries for the current workspace", async () => {
+  const fixture = await createFixture();
+  await fixture.t.run((ctx) => upsertInboxConversationSummary(ctx, fixture.conversationId));
+  const client = fixture.t.withIdentity({ subject: "inbox-summary-owner" });
+  await client.mutation(api.authUtils.upsertUser, {});
+
+  const page = await client.query(api.conversations.listInboxSummariesForCurrentOrg, {
+    paginationOpts: { numItems: 2, cursor: null },
+  });
+
+  expect(page.page).toEqual([
+    expect.objectContaining({ conversationId: fixture.conversationId }),
+  ]);
 });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { usePaginatedQuery } from 'convex-helpers/react';
@@ -275,17 +275,14 @@ export default function ChatsPage() {
     api.channels.getConnectedForCurrentOrg,
     typedAgentId ? { agentId: typedAgentId } : {},
   );
-  const linkedConversations = useQuery(
-    api.conversations.listLinkedForCurrentOrg,
-    connectedChannels !== undefined
-      ? typedAgentId
-        ? { agentId: typedAgentId }
-        : {}
-      : 'skip',
-  );
-  const bookingConversationIds = useQuery(
-    api.appointmentBooking.currentBooking.listActiveBookingConversationIdsForCurrentOrg,
-    connectedChannels !== undefined ? {} : 'skip',
+  const {
+    results: inboxSummaries,
+    status: inboxSummaryStatus,
+    loadMore: loadMoreInboxSummaries,
+  } = usePaginatedQuery(
+    api.conversations.listInboxSummariesForCurrentOrg,
+    typedAgentId ? { agentId: typedAgentId } : {},
+    { initialNumItems: 50 },
   );
   const currentUser = useQuery(api.users.currentUser);
 
@@ -489,15 +486,19 @@ export default function ChatsPage() {
 
 
 
-  const bookingConversationIdSet = useMemo(() => {
-    if (!bookingConversationIds) return new Set<string>();
-    return new Set(bookingConversationIds.map((id) => id as string));
-  }, [bookingConversationIds]);
+  const inboxLoadInFlightRef = useRef(false);
+
+  const handleLoadMoreInboxSummaries = useCallback(() => {
+    if (inboxSummaryStatus !== 'CanLoadMore' || inboxLoadInFlightRef.current) return;
+    inboxLoadInFlightRef.current = true;
+    void loadMoreInboxSummaries(50).finally(() => {
+      inboxLoadInFlightRef.current = false;
+    });
+  }, [inboxSummaryStatus, loadMoreInboxSummaries]);
 
   const chatItems = useMemo((): InboxChatListItem[] => {
-    if (!linkedConversations) return [];
-    return linkedConversations.map((conv) => ({
-      id: conv._id,
+    return inboxSummaries.map((conv) => ({
+      id: conv.conversationId,
       name: conv.contactName ?? 'Unknown contact',
       message: conv.lastMessagePreview && conv.lastMessagePreview.trim() !== ''
         ? conv.lastMessagePreview
@@ -511,23 +512,20 @@ export default function ChatsPage() {
       assignedUserId: conv.assignedUserId,
       tags: conv.tags ?? [],
       leadTemperature: conv.leadTemperature,
-      hasBooking: conv.status === 'booked' || bookingConversationIdSet.has(conv._id as string),
-      escalation: conv.escalation,
+      hasBooking: conv.hasBooking,
+      isEscalated: conv.isEscalated,
     }));
-  }, [linkedConversations, bookingConversationIdSet]);
+  }, [inboxSummaries]);
 
   const allExistingTags = useMemo(() => {
-    if (!linkedConversations) return [];
     const tagsSet = new Set<string>();
-    for (const conv of linkedConversations) {
-      if (conv.tags) {
-        for (const tag of conv.tags) {
-          tagsSet.add(tag);
-        }
+    for (const conv of inboxSummaries) {
+      for (const tag of conv.tags) {
+        tagsSet.add(tag);
       }
     }
     return Array.from(tagsSet).sort();
-  }, [linkedConversations]);
+  }, [inboxSummaries]);
 
   const filterCounts = useMemo(() => {
     const counts = {
@@ -554,7 +552,7 @@ export default function ChatsPage() {
       if (chat.conversationStatus === 'requires_user_input') {
         counts.escalated += 1;
       }
-      if (chat.conversationStatus === 'booked' || bookingConversationIdSet.has(chat.id as string)) {
+      if (chat.hasBooking) {
         counts.booking += 1;
       }
       counts.byPlatform[chat.platform] = (counts.byPlatform[chat.platform] ?? 0) + 1;
@@ -567,7 +565,7 @@ export default function ChatsPage() {
       }
     }
     return counts;
-  }, [chatItems, currentUser?.workosUserId, bookingConversationIdSet]);
+  }, [chatItems, currentUser?.workosUserId]);
 
   const filteredChats = useMemo(() => {
     let list = chatItems;
@@ -593,7 +591,7 @@ export default function ChatsPage() {
       list = list.filter((c) => c.conversationStatus === 'requires_user_input');
     }
     if (bookingActive) {
-      list = list.filter((c) => c.conversationStatus === 'booked' || bookingConversationIdSet.has(c.id as string));
+      list = list.filter((c) => c.hasBooking);
     }
     if (activeTags.length > 0) {
       list = list.filter(
@@ -618,7 +616,6 @@ export default function ChatsPage() {
     activeTags,
     activeLeads,
     currentUser?.workosUserId,
-    bookingConversationIdSet,
   ]);
 
   const mobileSwitcherChats = useMemo(() => {
@@ -1124,7 +1121,7 @@ export default function ChatsPage() {
     }
   };
 
-  const conversationsStillLoading = linkedConversations === undefined;
+  const conversationsStillLoading = inboxSummaryStatus === 'LoadingFirstPage';
 
   const kbTagTitles = useMemo(
     () => (textEntries ?? []).map((entry) => entry.title),
@@ -1244,6 +1241,9 @@ export default function ChatsPage() {
           onTogglePin={togglePin}
           activeFilters={activeInboxFilters}
           onRemoveActiveFilter={handleRemoveInboxFilter}
+          canLoadMore={inboxSummaryStatus === 'CanLoadMore'}
+          isLoadingMore={inboxSummaryStatus === 'LoadingMore'}
+          onLoadMore={handleLoadMoreInboxSummaries}
         />
       </div>
 
@@ -1265,6 +1265,9 @@ export default function ChatsPage() {
             onTogglePin={togglePin}
             activeFilters={activeInboxFilters}
             onRemoveActiveFilter={handleRemoveInboxFilter}
+            canLoadMore={inboxSummaryStatus === 'CanLoadMore'}
+            isLoadingMore={inboxSummaryStatus === 'LoadingMore'}
+            onLoadMore={handleLoadMoreInboxSummaries}
           />
         </div>
       ) : null}
@@ -1301,6 +1304,9 @@ export default function ChatsPage() {
                       onTogglePin={togglePin}
                       activeFilters={activeInboxFilters}
                       onRemoveActiveFilter={handleRemoveInboxFilter}
+                      canLoadMore={inboxSummaryStatus === 'CanLoadMore'}
+                      isLoadingMore={inboxSummaryStatus === 'LoadingMore'}
+                      onLoadMore={handleLoadMoreInboxSummaries}
                     />
                   </InboxMobileConversationSwitcher>
                 </div>

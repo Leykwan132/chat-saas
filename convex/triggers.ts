@@ -15,6 +15,13 @@ import {
   agentOverviewAiAssistedDailyAggregator,
   agentOverviewHumanEscalationsDailyAggregator,
 } from "./aggregates";
+import {
+  refreshInboxSummariesForCalendarEvent,
+  refreshInboxSummariesForChannel,
+  refreshInboxSummariesForCustomer,
+  removeInboxConversationSummary,
+  upsertInboxConversationSummary,
+} from "./inboxConversationSummary";
 
 // 1. Initialize triggers registry
 export const triggers = new Triggers<DataModel>();
@@ -37,6 +44,33 @@ triggers.register(
   "agentOverviewHumanEscalationFacts",
   agentOverviewHumanEscalationsDailyAggregator.idempotentTrigger(),
 );
+triggers.register("conversations", async (ctx, change) => {
+  if (change.operation === "delete") {
+    await removeInboxConversationSummary(ctx, change.id);
+    return;
+  }
+  await upsertInboxConversationSummary(ctx, change.id);
+});
+triggers.register("customers", async (ctx, change) => {
+  await refreshInboxSummariesForCustomer(ctx, change.id);
+});
+triggers.register("channels", async (ctx, change) => {
+  await refreshInboxSummariesForChannel(ctx, change.id);
+});
+triggers.register("appointmentBookingSessions", async (ctx, change) => {
+  const conversationIds = new Set(
+    [change.oldDoc?.conversationId, change.newDoc?.conversationId].filter(
+      (conversationId): conversationId is NonNullable<typeof conversationId> =>
+        conversationId !== undefined,
+    ),
+  );
+  for (const conversationId of conversationIds) {
+    await upsertInboxConversationSummary(ctx, conversationId);
+  }
+});
+triggers.register("calendarEvents", async (ctx, change) => {
+  await refreshInboxSummariesForCalendarEvent(ctx, change.id);
+});
 
 // Export trigger-wrapped mutations to automatically keep aggregates in sync
 export const mutation = customMutation(

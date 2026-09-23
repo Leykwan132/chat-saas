@@ -40,7 +40,7 @@ export async function removeInboxConversationSummary(
   }
 }
 
-export async function upsertInboxConversationSummary(
+export async function buildInboxConversationSummary(
   ctx: SummaryCtx,
   conversationId: Id<"conversations">,
 ) {
@@ -50,8 +50,7 @@ export async function upsertInboxConversationSummary(
     conversation.service === "playground" ||
     conversation.channelId === undefined
   ) {
-    await removeInboxConversationSummary(ctx, conversationId);
-    return;
+    return null;
   }
   const [channel, customer, hasBooking] = await Promise.all([
     ctx.db.get(conversation.channelId),
@@ -59,8 +58,7 @@ export async function upsertInboxConversationSummary(
     hasCurrentBooking(ctx, conversationId),
   ]);
   if (channel === null) {
-    await removeInboxConversationSummary(ctx, conversationId);
-    return;
+    return null;
   }
   const summary = {
     conversationId,
@@ -93,6 +91,18 @@ export async function upsertInboxConversationSummary(
     isChannelConnected: channel.status === "connected",
     updatedAt: conversation.updatedAt,
   };
+  return summary;
+}
+
+export async function upsertInboxConversationSummary(
+  ctx: SummaryCtx,
+  conversationId: Id<"conversations">,
+) {
+  const summary = await buildInboxConversationSummary(ctx, conversationId);
+  if (summary === null) {
+    await removeInboxConversationSummary(ctx, conversationId);
+    return;
+  }
   const existing = await ctx.db
     .query("inboxConversationSummaries")
     .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))

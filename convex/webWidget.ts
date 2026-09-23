@@ -1,11 +1,10 @@
 import { v } from "convex/values";
 import {
-  internalMutation,
   internalQuery,
   type MutationCtx,
-  mutation,
   query,
 } from "./_generated/server";
+import { internalMutation, mutation } from "./triggers";
 import { internal } from "./_generated/api";
 import {
   ensureWidgetForAgent,

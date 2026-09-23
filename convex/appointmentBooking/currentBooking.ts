@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { internalQuery, query, type QueryCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { getAuthContext } from "../authUtils";
-import { getLinkedInboxConversationDocs } from "../conversations";
 import { Permission } from "../../shared/permissions";
 import { permissionsForCurrentUser } from "./access";
 import { serviceTimeZone } from "./fields";
@@ -62,18 +61,6 @@ async function assertConversationBookingRead(
   return conv;
 }
 
-async function conversationHasActiveBooking(
-  ctx: QueryCtx,
-  conversationId: Id<"conversations">,
-) {
-  const session = await getExistingBookingSession(ctx, conversationId);
-  if (session === undefined || session.calendarEventId === undefined) {
-    return false;
-  }
-  const event = await ctx.db.get(session.calendarEventId);
-  return event !== null && event.status !== "cancelled";
-}
-
 export const listActiveBookingConversationIdsForCurrentOrg = query({
   args: {},
   handler: async (ctx) => {
@@ -86,14 +73,15 @@ export const listActiveBookingConversationIdsForCurrentOrg = query({
       throw new Error("Forbidden");
     }
 
-    const { conversations } = await getLinkedInboxConversationDocs(ctx, orgId);
-    const ids: Id<"conversations">[] = [];
-    for (const conv of conversations) {
-      if (await conversationHasActiveBooking(ctx, conv._id)) {
-        ids.push(conv._id);
-      }
-    }
-    return ids;
+    const summaries = await ctx.db
+      .query("inboxConversationSummaries")
+      .withIndex("by_orgId_and_isChannelConnected_and_lastMessageAt", (q) =>
+        q.eq("orgId", orgId).eq("isChannelConnected", true),
+      )
+      .collect();
+    return summaries
+      .filter((summary) => summary.hasBooking)
+      .map((summary) => summary.conversationId);
   },
 });
 
