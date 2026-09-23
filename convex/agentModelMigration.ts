@@ -42,6 +42,22 @@ export const migrateRetiredAgentModels = migrations.define({
   migrateOne: (_, agent) => getRetiredModelMigrationPatch(agent),
 });
 
+export const migrateQwenAgentModels = migrations.define({
+  table: 'agents',
+  batchSize: 25,
+  migrateOne: (_, agent) =>
+    agent.model === 'qwen/qwen3.7-flash'
+      ? {
+          model: 'deepseek/deepseek-v4-flash',
+          provider: 'openrouter' as const,
+        }
+      : undefined,
+});
+
 export const runMigrateRetiredAgentModels = migrations.runner(
   internal.agentModelMigration.migrateRetiredAgentModels,
+);
+
+export const runMigrateQwenAgentModels = migrations.runner(
+  internal.agentModelMigration.migrateQwenAgentModels,
 );
