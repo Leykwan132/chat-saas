@@ -84,16 +84,6 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     requiredPlan: "starter",
     labels: ["advanced", "latest"],
   },
-  "nvidia/nemotron-3.5-lightning": {
-    label: "NVIDIA Nemotron 3.5 Lightning",
-    creditCost: 1,
-    enabled: true,
-    provider: "openrouter",
-    chef: "NVIDIA",
-    chefSlug: "nvidia",
-    requiredPlan: "starter",
-    labels: ["advanced", "latest"],
-  },
   "qwen/qwen3.7-flash": {
     label: "Qwen3.7 Flash",
     creditCost: 0.5,

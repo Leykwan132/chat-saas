@@ -67,10 +67,6 @@ test('provides the approved recommended scenarios for every model', async () => 
       'Complex customer conversations',
       'Higher-quality responses',
     ],
-    'nvidia/nemotron-3.5-lightning': [
-      'Fast English-language replies',
-      'High-volume support',
-    ],
     'qwen/qwen3.7-flash': [
       'Fast Chinese-language replies',
       'Chinese and English conversations',
@@ -86,9 +82,6 @@ test('provides the intended model positioning descriptions', async () => {
     description:
       'Best for fast Chinese customer conversations. It also handles everyday English support reliably.',
   });
-  expect(getModelScorecard('nvidia/nemotron-3.5-lightning')).toMatchObject({
-    description:
-      'Best for fast English customer conversations. It prioritizes response speed while keeping reasoning balanced.',
-  });
+  expect(getModelScorecard('nvidia/nemotron-3.5-lightning')).toBeNull();
   expect(getModelScorecard('retired/model')).toBeNull();
 });

@@ -59,13 +59,6 @@ export const MODEL_SCORECARDS: Record<ModelScorecardId, ModelScorecard> = {
       'Best for conversations that need stronger overall performance. It handles English especially well and can also support Chinese.',
     recommendedFor: ['Complex customer conversations', 'Higher-quality responses'],
   },
-  'nvidia/nemotron-3.5-lightning': {
-    overall: 4,
-    metrics: { quality: 4, speed: 5, reasoning: 4, value: 4 },
-    description:
-      'Best for fast English customer conversations. It prioritizes response speed while keeping reasoning balanced.',
-    recommendedFor: ['Fast English-language replies', 'High-volume support'],
-  },
   'qwen/qwen3.7-flash': {
     overall: 4,
     metrics: { quality: 4, speed: 4.5, reasoning: 4, value: 5 },

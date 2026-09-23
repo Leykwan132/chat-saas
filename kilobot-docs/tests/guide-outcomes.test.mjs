@@ -449,7 +449,7 @@ test("Agent Setup keeps model and trigger guidance focused", () => {
   assert.ok(source.includes("| English |"));
   assert.ok(source.includes("OpenAI GPT-6 Luna"));
   assert.ok(source.includes("OpenAI GPT-OSS 120B"));
-  assert.ok(source.includes("NVIDIA Nemotron 3.5 Lightning"));
+  assert.equal(source.includes("NVIDIA Nemotron 3.5 Lightning"), false);
   assert.ok(source.includes("Qwen3.7 Flash"));
   assert.equal(source.includes("Amazon Nova Micro"), false);
   assert.ok(source.includes("Xiaomi MiMo V2.6 Pro"));

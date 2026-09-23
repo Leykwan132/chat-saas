@@ -1,10 +1,11 @@
 import { expect, test } from 'vitest';
 import { getRetiredModelMigrationPatch } from './agentModelMigration';
 
-test('migrates retired Amazon and Google agents to the DeepSeek default', () => {
+test('migrates retired agents to the DeepSeek default', () => {
   for (const model of [
     'amazon/nova-micro-v1',
     'google/gemini-3.1-flash-lite',
+    'nvidia/nemotron-3.5-lightning',
   ]) {
     expect(getRetiredModelMigrationPatch({ model })).toEqual({
       model: 'deepseek/deepseek-v4-flash',

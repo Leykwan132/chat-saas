@@ -18,11 +18,15 @@ test("enabled OpenRouter model ids never use free-tier variants", () => {
   expect(modelIds.filter((modelId) => modelId.endsWith(":free"))).toEqual([]);
 });
 
-test("retired Amazon and Google models are unavailable and excluded from plan entitlements", () => {
+test("retired models are unavailable and excluded from plan entitlements", () => {
   const enabledModelIds = listEnabledModels().map((model) => model.value);
   const planModelIds = Object.values(PLAN_CATALOG).flatMap((plan) => plan.models);
 
-  for (const modelId of ["amazon/nova-micro-v1", "google/gemini-3.1-flash-lite"]) {
+  for (const modelId of [
+    "amazon/nova-micro-v1",
+    "google/gemini-3.1-flash-lite",
+    "nvidia/nemotron-3.5-lightning",
+  ]) {
     expect(getModelPricing(modelId)).toBeNull();
     expect(enabledModelIds).not.toContain(modelId);
     expect(planModelIds).not.toContain(modelId);
@@ -145,7 +149,6 @@ test("trimmed model options are not enabled or included in plan entitlements", (
 
 test.each([
   ["openai/gpt-6-luna", "OpenAI GPT-6 Luna", "OpenAI", "openai", 2],
-  ["nvidia/nemotron-3.5-lightning", "NVIDIA Nemotron 3.5 Lightning", "NVIDIA", "nvidia", 1],
   ["qwen/qwen3.7-flash", "Qwen3.7 Flash", "Qwen", "qwen", 0.5],
   ["openai/gpt-oss-120b", "OpenAI GPT-OSS 120B", "OpenAI", "openai", 0.5],
   ["meta/muse-spark-1.3-contributor", "Meta Muse Spark 1.3 Contributor", "Meta", "meta", 1],
