@@ -828,6 +828,7 @@ export default defineSchema({
     lastError: v.optional(v.string()),
     connectedByUserId: v.string(),
     defaultAgentId: v.optional(v.id("agents")),
+    conversationCount: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

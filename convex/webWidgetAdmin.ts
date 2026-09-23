@@ -70,6 +70,7 @@ async function ensureConnectedWebChannel(
       status: "connected",
       connectedByUserId: args.userId,
       defaultAgentId: args.agentId,
+      conversationCount: 0,
       createdAt: args.now,
       updatedAt: args.now,
     });

@@ -90,18 +90,7 @@ export const listForCurrentOrg = query({
           q.eq("defaultAgentId", args.agentId),
         )
         .take(50);
-      return await Promise.all(
-        channels.map(async (channel) => {
-          const conversations = await ctx.db
-            .query("conversations")
-            .withIndex("by_channel_and_contactAddress", (q) => q.eq("channelId", channel._id))
-            .collect();
-          return {
-            ...channel,
-            conversationCount: conversations.length,
-          };
-        }),
-      );
+      return channels;
     }
     // Personal workspaces have no team/org, so channels are looked up by the
     // owner's connectedByUserId instead of by orgId. Team workspaces scope by
@@ -119,18 +108,7 @@ export const listForCurrentOrg = query({
           .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
           .collect();
 
-    return await Promise.all(
-      channels.map(async (channel) => {
-        const conversations = await ctx.db
-          .query("conversations")
-          .withIndex("by_channel_and_contactAddress", (q) => q.eq("channelId", channel._id))
-          .collect();
-        return {
-          ...channel,
-          conversationCount: conversations.length,
-        };
-      })
-    );
+    return channels;
   },
 });
 
@@ -413,6 +391,7 @@ async function upsertWhatsAppChannel(
       ...patch,
       connectedByUserId: args.connectedByUserId,
       defaultAgentId,
+      conversationCount: 0,
       createdAt: now,
     });
     logWhatsAppChannel("internalUpsertWhatsApp", "inserted connected row", {
@@ -533,6 +512,7 @@ export const internalStartPending = internalMutation({
         progressStep: "linking",
         connectedByUserId: args.connectedByUserId,
         defaultAgentId,
+        conversationCount: 0,
         createdAt: now,
         updatedAt: now,
       });
@@ -695,6 +675,7 @@ export const internalRecordError = internalMutation({
         lastError: args.error,
         connectedByUserId: args.connectedByUserId,
         ...(defaultAgentId !== undefined ? { defaultAgentId } : {}),
+        conversationCount: 0,
         createdAt: now,
         updatedAt: now,
       });
@@ -779,6 +760,7 @@ export const internalStartInstagramPending = internalMutation({
         progressStep: "exchanging",
         connectedByUserId: args.connectedByUserId,
         defaultAgentId,
+        conversationCount: 0,
         createdAt: now,
         updatedAt: now,
       });
@@ -854,6 +836,7 @@ export const internalUpsertInstagram = internalMutation({
         ...patch,
         connectedByUserId: args.connectedByUserId,
         defaultAgentId,
+        conversationCount: 0,
         createdAt: now,
       });
     }
@@ -989,6 +972,7 @@ export const internalStartMessengerPending = internalMutation({
         progressStep: "exchanging",
         connectedByUserId: args.connectedByUserId,
         defaultAgentId,
+        conversationCount: 0,
         createdAt: now,
         updatedAt: now,
       });
@@ -1058,6 +1042,7 @@ export const internalUpsertMessenger = internalMutation({
         ...patch,
         connectedByUserId: args.connectedByUserId,
         defaultAgentId,
+        conversationCount: 0,
         createdAt: now,
       });
     }

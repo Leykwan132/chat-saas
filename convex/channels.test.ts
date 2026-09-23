@@ -6,6 +6,46 @@ import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
 
+test("listForCurrentOrg does not derive conversation counts", async () => {
+  const workosUserId = "channel-metadata-owner";
+  const testClient = convexTest(schema, modules);
+  const authenticatedClient = testClient.withIdentity({ subject: workosUserId });
+  await authenticatedClient.mutation(api.authUtils.upsertUser, {});
+
+  await testClient.run(async (ctx) => {
+    const now = Date.now();
+    const channelId = await ctx.db.insert("channels", {
+      orgId: "",
+      service: "messenger",
+      pageId: "page-1",
+      status: "connected",
+      connectedByUserId: workosUserId,
+      conversationCount: 7,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("conversations", {
+      orgId: "",
+      userId: workosUserId,
+      channelId,
+      service: "messenger",
+      orgAddress: "page-1",
+      contactAddress: "contact-1",
+      status: "open",
+      assignToAiAgent: false,
+      threadId: "thread-1",
+      lastMessageAt: now,
+      unreadCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+  });
+
+  const channels = await authenticatedClient.query(api.channels.listForCurrentOrg, {});
+
+  expect(channels[0]?.conversationCount).toBe(7);
+});
+
 test("listForCurrentOrg returns only channels assigned to the requested agent", async () => {
   const workosUserId = "channel-scope-owner";
   const testClient = convexTest(schema, modules);

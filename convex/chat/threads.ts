@@ -1464,6 +1464,12 @@ async function upsertInboxConversation(
       updatedAt: now,
     });
 
+    if (channel?.conversationCount !== undefined) {
+      await ctx.db.patch(channel._id, {
+        conversationCount: channel.conversationCount + 1,
+      });
+    }
+
     if (!args.isHistorical) {
       await logConversationEvent(ctx, {
         conversationId,
