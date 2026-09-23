@@ -82,6 +82,7 @@ export async function createProjectionFixture(
   const service = overrides.service ?? "whatsapp";
   const ids = await t.run(async (ctx) => {
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId,
       service,
       phoneNumberId: "phone-projection",

@@ -81,6 +81,7 @@ test("Personal Workspace Broadcast & Template Flow", async () => {
 
     // In personal workspaces, there is no team so orgId is the empty string.
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "",
       service: "whatsapp",
       wabaId: "waba-id-personal",

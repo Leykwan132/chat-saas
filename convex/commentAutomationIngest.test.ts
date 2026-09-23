@@ -63,6 +63,7 @@ test("chooses the keyword match once and persists the customer first", async () 
       updatedAt: now,
     });
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org",
       service: "messenger",
       pageId: "page-1",

@@ -1170,6 +1170,8 @@ async function cleanupChannelData(
     await ctx.db.delete(conv._id);
   }
 
+  await ctx.db.patch(channelId, { conversationCount: 0 });
+
   await deleteWhatsAppHistoryStagingForChannel(ctx, channelId);
   for (const syncType of ["smb_app_state_sync", "history"] as const) {
     const syncRequest = await ctx.db

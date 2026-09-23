@@ -77,6 +77,7 @@ test("WhatsApp Automated Follow-up Scan & Schedule Flow", async () => {
   // 2. Setup mock Channel
   const channelId = await t.run(async (ctx) => {
     return await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-123",
       service: "whatsapp",
       phoneNumberId: "phone-id-123",

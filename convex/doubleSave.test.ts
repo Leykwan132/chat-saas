@@ -238,6 +238,7 @@ test('Incoming message is saved exactly once to the agent thread', async () => {
   // 2. Setup mock Channel
   const channelId = await t.run(async (ctx) => {
     return await ctx.db.insert('channels', {
+      conversationCount: 0,
       orgId: 'org-123',
       service: 'whatsapp',
       phoneNumberId: 'phone-id-123',
@@ -467,6 +468,7 @@ test('internalIngestHistoricalChannelMessage ingests without enqueuing AI reply 
   });
   const channelId = await t.run(async (ctx) => {
     return await ctx.db.insert('channels', {
+      conversationCount: 0,
       orgId: 'org-123',
       service: 'whatsapp',
       phoneNumberId: 'phone-id-123',
@@ -677,6 +679,7 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
 
   const channelId = await t.run(async (ctx) => {
     return await ctx.db.insert('channels', {
+      conversationCount: 0,
       orgId: 'org-123',
       service: 'whatsapp',
       phoneNumberId: 'phone-id-123',

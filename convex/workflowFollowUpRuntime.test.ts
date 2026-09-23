@@ -43,6 +43,7 @@ test('maintains one follow-up timer, updates its baseline, and cancels on reply'
       updatedAt: now,
     });
     const channelId = await ctx.db.insert('channels', {
+      conversationCount: 0,
       orgId: 'org',
       service: 'whatsapp',
       phoneNumberId: 'phone-number',

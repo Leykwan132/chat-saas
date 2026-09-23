@@ -120,6 +120,7 @@ test('records a successful reminder in the channel ledger and Action History', a
       updatedAt: now,
     });
     const channelId = await ctx.db.insert('channels', {
+      conversationCount: 0,
       orgId: 'org',
       service: 'whatsapp',
       phoneNumberId: 'phone-number',

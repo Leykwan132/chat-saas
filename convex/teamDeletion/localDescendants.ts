@@ -1,5 +1,6 @@
 import type { Id, TableNames } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { decrementChannelConversationCount } from "../channelConversationCounts";
 import { deleteSubscriptionsForAgent } from "../telegramNotifications/subscriptionAccess";
 
 const PAGE_SIZE = 50;
@@ -101,6 +102,7 @@ async function deleteConversationPage(
     )
     .take(PAGE_SIZE);
   if (await deleteRows(ctx, bookings)) return true;
+  await decrementChannelConversationCount(ctx, conversation.channelId);
   await ctx.db.delete(conversation._id);
   return true;
 }

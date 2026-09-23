@@ -30,6 +30,7 @@ async function insertAnalyticsFixture(
   return await t.run(async (ctx) => {
     const now = 1_700_000_000_000;
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-123",
       service: "whatsapp",
       phoneNumberId: "phone-123",

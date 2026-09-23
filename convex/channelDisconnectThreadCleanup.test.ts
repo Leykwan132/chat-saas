@@ -58,6 +58,7 @@ test("disconnect deletes agent component threads linked to channel conversations
     await ctx.db.patch(userDbId, { activeTeamId: teamId });
 
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "",
       service: "whatsapp",
       wabaId: "waba-disconnect-threads",

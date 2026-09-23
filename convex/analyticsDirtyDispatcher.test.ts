@@ -14,6 +14,7 @@ test("dispatcher leases 25 due rows and self-drains remainder", async () => {
   const futureAttemptAt = now + 60_000;
   const futureRequestId = await convex.run(async (ctx) => {
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-dispatch",
       service: "whatsapp",
       phoneNumberId: "phone-dispatch",

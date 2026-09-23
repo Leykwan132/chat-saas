@@ -115,6 +115,7 @@ test("Instagram Login saves the selected agent and remains visible after empty b
 test("Instagram Login reconnect replaces a disconnected account's old agent assignment", async () => {
   const { t, selectedAgentId, newestAgentId } = await setup();
   const existingId = await t.run(async (ctx) => ctx.db.insert("channels", {
+    conversationCount: 0,
     service: "instagram", igUserId: "ig-1", orgId: "", connectedByUserId: "owner",
     defaultAgentId: newestAgentId, status: "disconnected", createdAt: 1, updatedAt: 1,
   }));
@@ -130,6 +131,7 @@ test("Instagram Login reconnect replaces a disconnected account's old agent assi
 test("a rejected duplicate Instagram Login connect preserves the working connection", async () => {
   const { t, selectedAgentId, newestAgentId } = await setup();
   const channelId = await t.run(async (ctx) => ctx.db.insert("channels", {
+    conversationCount: 0,
     service: "instagram", igUserId: "ig-1", orgId: "", connectedByUserId: "owner",
     defaultAgentId: newestAgentId, status: "connected", accessToken: "existing-token",
     createdAt: 1, updatedAt: 1,

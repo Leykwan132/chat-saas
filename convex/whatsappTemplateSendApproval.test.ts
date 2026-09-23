@@ -10,6 +10,7 @@ async function setup(status?: 'submitting' | 'submitted' | 'in_review' | 'approv
   const t = convexTest(schema, modules);
   const channelId = await t.run(async (ctx) => {
     const channelId = await ctx.db.insert('channels', {
+      conversationCount: 0,
       orgId: 'org-send',
       service: 'whatsapp',
       status: 'connected',

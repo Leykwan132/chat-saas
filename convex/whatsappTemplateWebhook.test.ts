@@ -12,6 +12,7 @@ async function setup(status: 'submitting' | 'approved' | 'failed' = 'submitting'
     const ids = [];
     for (let index = 0; index < 2; index += 1) {
       const channelId = await ctx.db.insert('channels', {
+        conversationCount: 0,
         orgId: `org-${index}`,
         service: 'whatsapp',
         status: 'connected',

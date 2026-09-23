@@ -25,6 +25,7 @@ async function setup() {
     });
     await ctx.db.patch(userId, { activeTeamId: teamId });
     return await ctx.db.insert('channels', {
+      conversationCount: 0,
       orgId: '',
       service: 'whatsapp',
       status: 'connected',
