@@ -67,21 +67,13 @@ test('provides the approved recommended scenarios for every model', async () => 
       'Complex customer conversations',
       'Higher-quality responses',
     ],
-    'qwen/qwen3.7-flash': [
-      'Fast Chinese-language replies',
-      'Chinese and English conversations',
-    ],
   });
 });
 
 test('provides the intended model positioning descriptions', async () => {
   const { getModelScorecard } = await vi.importActual<ScorecardModule>('./modelScorecards');
 
-  expect(getModelScorecard('qwen/qwen3.7-flash')).toMatchObject({
-    overall: 4,
-    description:
-      'Best for fast Chinese customer conversations. It also handles everyday English support reliably.',
-  });
+  expect(getModelScorecard('qwen/qwen3.7-flash')).toBeNull();
   expect(getModelScorecard('nvidia/nemotron-3.5-lightning')).toBeNull();
   expect(getModelScorecard('retired/model')).toBeNull();
 });

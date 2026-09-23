@@ -26,6 +26,7 @@ test("retired models are unavailable and excluded from plan entitlements", () =>
     "amazon/nova-micro-v1",
     "google/gemini-3.1-flash-lite",
     "nvidia/nemotron-3.5-lightning",
+    "qwen/qwen3.7-flash",
   ]) {
     expect(getModelPricing(modelId)).toBeNull();
     expect(enabledModelIds).not.toContain(modelId);
@@ -117,15 +118,6 @@ test("models without custom metadata omit optional fields", () => {
   expect(model).not.toHaveProperty("outputCostMyrPerMillion");
 });
 
-test("Qwen3.7 Flash delegates branding to its provider slug", () => {
-  const model = listEnabledModels().find(
-    (entry) => entry.value === "qwen/qwen3.7-flash",
-  );
-
-  expect(model).not.toHaveProperty("imageUrl");
-  expect(model?.chefSlug).toBe("qwen");
-});
-
 test("trimmed model options are not enabled or included in plan entitlements", () => {
   const removedModelIds = [
     "nvidia/nemotron-3-super-120b-a12b",
@@ -149,7 +141,6 @@ test("trimmed model options are not enabled or included in plan entitlements", (
 
 test.each([
   ["openai/gpt-6-luna", "OpenAI GPT-6 Luna", "OpenAI", "openai", 2],
-  ["qwen/qwen3.7-flash", "Qwen3.7 Flash", "Qwen", "qwen", 0.5],
   ["openai/gpt-oss-120b", "OpenAI GPT-OSS 120B", "OpenAI", "openai", 0.5],
   ["meta/muse-spark-1.3-contributor", "Meta Muse Spark 1.3 Contributor", "Meta", "meta", 1],
 ])("%s is enabled for every paid plan", (modelId, label, chef, chefSlug, creditCost) => {

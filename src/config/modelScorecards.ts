@@ -59,13 +59,6 @@ export const MODEL_SCORECARDS: Record<ModelScorecardId, ModelScorecard> = {
       'Best for conversations that need stronger overall performance. It handles English especially well and can also support Chinese.',
     recommendedFor: ['Complex customer conversations', 'Higher-quality responses'],
   },
-  'qwen/qwen3.7-flash': {
-    overall: 4,
-    metrics: { quality: 4, speed: 4.5, reasoning: 4, value: 5 },
-    description:
-      'Best for fast Chinese customer conversations. It also handles everyday English support reliably.',
-    recommendedFor: ['Fast Chinese-language replies', 'Chinese and English conversations'],
-  },
 };
 
 export function getModelScorecard(modelId: string): ModelScorecard | null {

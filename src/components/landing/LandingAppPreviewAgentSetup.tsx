@@ -68,7 +68,6 @@ const previewControlOptions: Record<ModelControlKey, PreviewControlOption[]> = {
     setupOption('DeepSeek V4 Flash', 'Fast default model for sales replies.'),
     setupOption('OpenAI GPT-OSS 120B', 'Budget-friendly reasoning for everyday support and agent workflows.'),
     setupOption('OpenAI GPT-6 Luna', 'Slightly stronger performance when conversations need more reasoning.'),
-    setupOption('Qwen3.7 Flash', 'Fast Chinese conversations and visual customer questions.'),
   ],
   responseLength: RESPONSE_LENGTH_OPTIONS.map(styleOption),
   emojiUse: EMOJI_USE_OPTIONS.map(styleOption),

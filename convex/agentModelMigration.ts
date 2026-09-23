@@ -8,6 +8,7 @@ const RETIRED_AGENT_MODELS = new Set([
   'amazon/nova-micro-v1',
   'google/gemini-3.1-flash-lite',
   'nvidia/nemotron-3.5-lightning',
+  'qwen/qwen3.7-flash',
 ]);
 
 export function getRetiredModelMigrationPatch(agent: { model: string }) {

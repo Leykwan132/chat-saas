@@ -84,16 +84,6 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     requiredPlan: "starter",
     labels: ["advanced", "latest"],
   },
-  "qwen/qwen3.7-flash": {
-    label: "Qwen3.7 Flash",
-    creditCost: 0.5,
-    enabled: true,
-    provider: "openrouter",
-    chef: "Qwen",
-    chefSlug: "qwen",
-    requiredPlan: "starter",
-    labels: ["advanced", "latest"],
-  },
 };
 
 export const DEFAULT_OPENROUTER_MODEL = "deepseek/deepseek-v4-flash";

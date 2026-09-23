@@ -22,7 +22,7 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
     features: [
       {
         title: 'Advanced AI Models',
-        description: 'Access DeepSeek, GPT-OSS 120B, GPT-6 Luna, Nemotron, and Qwen3.7 Flash.',
+        description: 'Access DeepSeek, GPT-OSS 120B, GPT-6 Luna, MiMo V2.6 Pro, and Meta Muse Spark.',
       },
       {
         title: '2,000 Monthly Credits',

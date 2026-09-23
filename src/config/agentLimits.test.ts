@@ -73,7 +73,9 @@ test("Starter upgrade copy advertises current advanced models", () => {
 
   expect(advancedModels?.description).toContain("GPT-6 Luna");
   expect(advancedModels?.description).toContain("GPT-OSS 120B");
-  expect(advancedModels?.description).toContain("Nemotron");
-  expect(advancedModels?.description).toContain("Qwen3.7 Flash");
+  expect(advancedModels?.description).toContain("MiMo V2.6 Pro");
+  expect(advancedModels?.description).toContain("Meta Muse Spark");
+  expect(advancedModels?.description).not.toContain("Nemotron");
+  expect(advancedModels?.description).not.toContain("Qwen3.7 Flash");
   expect(advancedModels?.description).not.toContain("Gemini");
 });

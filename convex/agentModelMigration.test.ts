@@ -6,6 +6,7 @@ test('migrates retired agents to the DeepSeek default', () => {
     'amazon/nova-micro-v1',
     'google/gemini-3.1-flash-lite',
     'nvidia/nemotron-3.5-lightning',
+    'qwen/qwen3.7-flash',
   ]) {
     expect(getRetiredModelMigrationPatch({ model })).toEqual({
       model: 'deepseek/deepseek-v4-flash',
@@ -29,7 +30,7 @@ test('migrates MiMo V2.5 agents to MiMo V2.6 Pro', () => {
 });
 
 test('does not change agents on supported models', () => {
-  expect(getRetiredModelMigrationPatch({ model: 'qwen/qwen3.7-flash' })).toBeUndefined();
+  expect(getRetiredModelMigrationPatch({ model: 'openai/gpt-6-luna' })).toBeUndefined();
   expect(
     getRetiredModelMigrationPatch({ model: 'deepseek/deepseek-v4-flash' }),
   ).toBeUndefined();
