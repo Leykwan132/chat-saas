@@ -16,14 +16,20 @@ The summary is a derived read model. `conversations`, `customers`, channels, boo
 
 ## Synchronization
 
-Every source mutation that changes a list-visible field also updates the associated summary in the same transaction:
+Summary consistency is enforced centrally, not by a checklist of call sites. The existing trigger-wrapped mutation infrastructure registers atomic triggers for `conversations`, `customers`, `channels`, `appointmentBookingSessions`, and `calendarEvents`. Each trigger invokes one summary builder that derives the current row from the source record and writes, updates, or deletes the corresponding summary.
+
+Every public and internal mutation that can write those tables must use the trigger-wrapped mutation exports. An ESLint restriction prevents tracked-table writers from importing raw Convex mutation wrappers. Trigger errors abort the source mutation, so a conversation, customer, booking, or channel change cannot commit without its summary update.
+
+The triggers cover these state changes:
 
 - Conversation creation, message activity, status, assignment, unread count, or escalation changes update the conversation summary.
 - Customer tag or lead-temperature changes update summaries linked to that customer.
 - Booking lifecycle changes update the matching conversation summary.
 - Channel connection-state changes update summaries for that channel.
 
-New writes begin dual-writing before historical records are backfilled. A resumable `@convex-dev/migrations` backfill creates missing summary rows and is dry-run and verified before production use. The reader remains on the old path until the backfill has completed successfully.
+The summary table has a `conversationId` index and the summary builder uses it to upsert exactly one row per source conversation. A private reconciliation check compares source conversations to summaries, detects missing, duplicate, or stale rows, and supports bounded repair outside the Inbox hot path. It runs after the migration and is retained for operational verification.
+
+New writes begin trigger synchronization before historical records are backfilled. A resumable `@convex-dev/migrations` backfill creates missing summary rows and is dry-run and verified before production use. Migration writes explicitly use the same summary builder because migrations do not automatically run application triggers. The reader remains on the old path until the backfill and reconciliation check have both completed successfully.
 
 ## Inbox Query and Load More
 
@@ -39,4 +45,4 @@ The agent unread total becomes a narrow aggregate or maintained summary-derived 
 
 ## Verification
 
-Focused tests will cover summary construction and synchronization for conversation, customer, booking, escalation, and channel-state changes; migration inputs and idempotence; paginated scope and sort behavior; and the Inbox load-more sentinel/button states. Run the focused suite, Convex code generation, TypeScript build, and `git diff --check`. Record production migration dry-run, completion, and post-rollout Convex I/O measurements before claiming the expected reduction.
+Focused tests will cover summary construction and synchronization for conversation, customer, booking, escalation, calendar-event, and channel-state changes; source-write rollback when synchronization fails; raw-wrapper import restrictions; migration inputs and idempotence; reconciliation detection and repair; paginated scope and sort behavior; and the Inbox load-more sentinel/button states. Run the focused suite, Convex code generation, TypeScript build, and `git diff --check`. Record production migration dry-run, reconciliation success, completion, and post-rollout Convex I/O measurements before claiming the expected reduction.
