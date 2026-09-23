@@ -1306,7 +1306,7 @@ export default defineSchema({
       "isChannelConnected",
       "lastMessageAt",
     ])
-    .index("by_orgId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt", [
+    .index("by_orgId_assignedAgentId_connected_lastMessageAt", [
       "orgId",
       "assignedAgentId",
       "isChannelConnected",
@@ -1317,7 +1317,7 @@ export default defineSchema({
       "isChannelConnected",
       "lastMessageAt",
     ])
-    .index("by_userId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt", [
+    .index("by_userId_assignedAgentId_connected_lastMessageAt", [
       "userId",
       "assignedAgentId",
       "isChannelConnected",

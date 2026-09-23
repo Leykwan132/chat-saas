@@ -145,7 +145,7 @@ export const listInboxSummariesForCurrentOrg = query({
       return await ctx.db
         .query("inboxConversationSummaries")
         .withIndex(
-          "by_userId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt",
+          "by_userId_assignedAgentId_connected_lastMessageAt",
           (q) =>
             q
               .eq("userId", userId)
@@ -168,7 +168,7 @@ export const listInboxSummariesForCurrentOrg = query({
       return await ctx.db
         .query("inboxConversationSummaries")
         .withIndex(
-          "by_orgId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt",
+          "by_orgId_assignedAgentId_connected_lastMessageAt",
           (q) =>
             q
               .eq("orgId", orgId)
@@ -200,7 +200,7 @@ export const getTotalUnreadForAgent = query({
       ? await ctx.db
           .query("inboxConversationSummaries")
           .withIndex(
-            "by_userId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt",
+            "by_userId_assignedAgentId_connected_lastMessageAt",
             (q) =>
               q
                 .eq("userId", userId)
@@ -211,7 +211,7 @@ export const getTotalUnreadForAgent = query({
       : await ctx.db
           .query("inboxConversationSummaries")
           .withIndex(
-            "by_orgId_and_assignedAgentId_and_isChannelConnected_and_lastMessageAt",
+            "by_orgId_assignedAgentId_connected_lastMessageAt",
             (q) =>
               q
                 .eq("orgId", orgId)
