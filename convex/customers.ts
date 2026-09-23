@@ -14,6 +14,7 @@ import { customerSearchText } from "./customerSearch";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 import { customerRecipientLabel } from "./customerRecipientPresentation";
 import { customerPhonePresentation } from "../shared/customerPhonePresentation";
+import { customerTagWorkspaceKey, ensureCustomerTags } from "./customerTags";
 
 const customerServiceValidator = v.union(
   v.literal("whatsapp"),
@@ -403,12 +404,13 @@ export const addManually = mutation({
       throw new Error("Customer name is required");
     }
     const now = Date.now();
-    const tags = args.tags ?? [];
+    const tags = (args.tags ?? []).map((tag) => tag.trim()).filter(Boolean);
     const email = args.email?.trim() || undefined;
     const phone = args.phone?.trim() || undefined;
     for (const tag of tags) {
       assertNotLeadTemperatureTag(tag);
     }
+    await ensureCustomerTags(ctx.db, customerTagWorkspaceKey(resolvedOrgId, userId), tags);
     return await ctx.db.insert("customers", {
       orgId: resolvedOrgId,
       userId,
@@ -419,7 +421,7 @@ export const addManually = mutation({
       email,
       phone,
       searchText: customerSearchText({ name, email, phone, contactAddress: "" }),
-      tags: tags.map((t) => t.trim()).filter(Boolean),
+      tags,
       leadTemperature: args.leadTemperature,
       source: "manual",
       firstSeenAt: now,
@@ -493,7 +495,9 @@ export const update = mutation({
       for (const tag of args.tags) {
         assertNotLeadTemperatureTag(tag);
       }
-      patch.tags = args.tags.map((t) => t.trim()).filter(Boolean);
+      const tags = args.tags.map((tag) => tag.trim()).filter(Boolean);
+      patch.tags = tags;
+      await ensureCustomerTags(ctx.db, customerTagWorkspaceKey(resolvedOrgId, userId), tags);
     }
     if (args.notes !== undefined) patch.notes = args.notes;
     if (args.leadTemperature !== undefined) {
@@ -732,6 +736,7 @@ export const addCustomerTag = mutation({
     if (current.includes(normalized)) {
       return;
     }
+    await ensureCustomerTags(ctx.db, customerTagWorkspaceKey(resolvedOrgId, userId), [normalized]);
     await ctx.db.patch(args.customerId, {
       tags: [...current, normalized],
       updatedAt: Date.now(),

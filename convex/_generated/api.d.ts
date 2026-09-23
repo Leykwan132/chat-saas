@@ -189,6 +189,8 @@ import type * as customerImportPool from "../customerImportPool.js";
 import type * as customerRecipientPresentation from "../customerRecipientPresentation.js";
 import type * as customerSearch from "../customerSearch.js";
 import type * as customerSearchMigration from "../customerSearchMigration.js";
+import type * as customerTagMigration from "../customerTagMigration.js";
+import type * as customerTags from "../customerTags.js";
 import type * as customers from "../customers.js";
 import type * as devReset from "../devReset.js";
 import type * as entitlementScope from "../entitlementScope.js";
@@ -725,6 +727,8 @@ declare const fullApi: ApiFromModules<{
   customerRecipientPresentation: typeof customerRecipientPresentation;
   customerSearch: typeof customerSearch;
   customerSearchMigration: typeof customerSearchMigration;
+  customerTagMigration: typeof customerTagMigration;
+  customerTags: typeof customerTags;
   customers: typeof customers;
   devReset: typeof devReset;
   entitlementScope: typeof entitlementScope;

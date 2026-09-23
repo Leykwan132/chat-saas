@@ -1188,6 +1188,11 @@ export default defineSchema({
       "agentId",
       "lastSeenAt",
     ]),
+  customerTags: defineTable({
+    workspaceKey: v.string(),
+    tag: v.string(),
+  })
+    .index("by_workspaceKey_and_tag", ["workspaceKey", "tag"]),
   // Unified conversation table. service: "playground" rows are AI-playground
   // threads; the rest are channel-backed inbox conversations.
   conversations: defineTable({
