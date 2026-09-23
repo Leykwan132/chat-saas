@@ -46,7 +46,10 @@ test('footer groups public legal links under Security & Legal', () => {
     createElement(
       MemoryRouter,
       null,
-      createElement(AppAuthProvider, { value: appAuthValue }, createElement(SiteFooter)),
+      createElement(AppAuthProvider, {
+        value: appAuthValue,
+        children: createElement(SiteFooter),
+      }),
     ),
   );
 
