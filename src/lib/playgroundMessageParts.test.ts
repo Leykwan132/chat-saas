@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { playgroundAssistantTextParts } from "./playgroundMessageParts";
 
 describe("playgroundAssistantTextParts", () => {
-  it("keeps merged assistant text parts separate", () => {
+  it("merges assistant text parts into one reply", () => {
     expect(
       playgroundAssistantTextParts({
         text: "First Second Third",
@@ -12,7 +12,7 @@ describe("playgroundAssistantTextParts", () => {
           { type: "text", text: "Third" },
         ],
       }),
-    ).toEqual(["First", "Second", "Third"]);
+    ).toEqual(["FirstSecondThird"]);
   });
 
   it("falls back to the combined message text", () => {

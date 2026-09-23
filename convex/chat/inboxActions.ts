@@ -694,6 +694,17 @@ export const internalSendAiReplyMessages = internalAction({
         mediaExternalIds: [],
       };
     }
+    if (!ctxData.conversation.assignToAiAgent) {
+      return {
+        ok: false,
+        error: "AI replies are disabled for this conversation",
+        policy: "generic",
+        mediaSent: false,
+        sentTextCount: 0,
+        textExternalIds: [],
+        mediaExternalIds: [],
+      };
+    }
 
     const contents = normalizeAiReplyMessages(args.contents);
     const mediaItems = args.mediaItems ?? args.mediaUrls.map((url) => ({ url }));

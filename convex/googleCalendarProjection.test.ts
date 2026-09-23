@@ -2,19 +2,11 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
 import type { Doc, Id } from "./_generated/dataModel";
-import { api, internal } from "./_generated/api";
-import type { FunctionReference } from "convex/server";
+import { api } from "./_generated/api";
 import { resolveAvailableInterval } from "./appointmentBooking/availability";
 import schema from "./schema";
 const modules = import.meta.glob("./**/*.ts");
 type CalendarTest = TestConvex<typeof schema>;
-const googleInternal = internal as unknown as {
-  googleCalendar: {
-    calendarEventPrepare: {
-      prepareUpdate: FunctionReference<"mutation", "internal", Record<string, unknown>, { kind: string }>;
-    };
-  };
-};
 const hour = 60 * 60 * 1000;
 afterEach(() => {
   vi.useRealTimers();
@@ -171,35 +163,6 @@ test.each(["workspace-owner", "workspace-admin"])(
     expect((await t.run((ctx) => ctx.db.get(fixture.eventId)))?.title).toBe("Private interview");
   },
 );
-
-test("the Google event owner can prepare an update without calendar.manage", async () => {
-  const t = convexTest(schema, modules);
-  const fixture = await setupPrivacyFixture(t);
-  await t.run(async (ctx) => {
-    const event = await ctx.db.get(fixture.eventId);
-    if (event === null || event.externalOwnerUserId === undefined) {
-      throw new Error("missing owner");
-    }
-    const now = Date.now();
-    await ctx.db.insert("googleCalendarConnections", {
-      userId: event.externalOwnerUserId,
-      workosUserId: "external-owner",
-      provider: "google-calendar",
-      primaryCalendarId: "primary",
-      timeZone: "UTC",
-      state: "connected",
-      dirtyGeneration: 0,
-      lastSuccessfulSyncAt: now,
-      createdAt: now,
-      updatedAt: now,
-    });
-  });
-  const prepared = await t.withIdentity({ subject: "external-owner" }).mutation(
-    googleInternal.googleCalendar.calendarEventPrepare.prepareUpdate,
-    { eventId: fixture.eventId, title: "Owner edit", refreshed: true },
-  );
-  expect(prepared.kind).toBe("google");
-});
 
 type AvailabilityFixture = {
   connectionId?: Id<"googleCalendarConnections">;

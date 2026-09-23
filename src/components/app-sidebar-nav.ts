@@ -7,19 +7,23 @@ import {
   PiBroadcast,
   PiCalendar,
   PiCalendarCheck,
+  PiCalendarCheckFill,
   PiChartBar,
   PiChartLineUp,
   PiChatCircleText,
   PiChatDots,
+  PiChatDotsFill,
   PiClock,
   PiFileText,
   PiFlowArrow,
   PiGearSix,
   PiHouse,
   PiMegaphone,
+  PiMegaphoneFill,
   PiPaperPlaneTilt,
   PiPlugs,
   PiRobot,
+  PiRobotFill,
   PiShoppingCart,
   PiUserFocus,
   PiUsers,
@@ -45,6 +49,7 @@ export type NavFeatureOptions = {
 export type NavSection = {
   label: string;
   icon: IconType;
+  activeIcon?: IconType;
   items: NavItem[];
 };
 
@@ -63,6 +68,7 @@ export function getNavItems(
     {
       label: 'Conversations',
       icon: PiChatDots,
+      activeIcon: PiChatDotsFill,
       items: [
         { to: `/dashboard/${agentId}/inbox`, icon: PiChatCircleText, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
         { to: `/dashboard/${agentId}/customers`, icon: PiUsers, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },
@@ -74,6 +80,7 @@ export function getNavItems(
     {
       label: 'Agent',
       icon: PiRobot,
+      activeIcon: PiRobotFill,
       items: [
         { to: `/dashboard/${agentId}/agent-setup`, icon: PiGearSix, label: 'Configuration', requiredPermission: Permission.AGENTS_MANAGE },
         { to: `/dashboard/${agentId}/knowledge-base`, icon: PiBookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
@@ -87,6 +94,7 @@ export function getNavItems(
     {
       label: 'Bookings',
       icon: PiCalendarCheck,
+      activeIcon: PiCalendarCheckFill,
       items: [
         { to: `/dashboard/${agentId}/calendar`, icon: PiCalendar, label: 'Calendar', requiredPermission: Permission.CALENDAR_READ },
         { to: `/dashboard/${agentId}/availability`, icon: PiClock, label: 'Availability', requiredPermission: Permission.AVAILABILITY_READ },
@@ -97,6 +105,7 @@ export function getNavItems(
     {
       label: 'Outreach',
       icon: PiMegaphone,
+      activeIcon: PiMegaphoneFill,
       items: [
         { to: `/dashboard/${agentId}/broadcast`, icon: PiBroadcast, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
         { to: `/dashboard/${agentId}/templates`, icon: PiFileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },

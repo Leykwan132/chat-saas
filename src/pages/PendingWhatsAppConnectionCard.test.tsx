@@ -31,7 +31,7 @@ test('pending WhatsApp card keeps the standard card appearance', () => {
   expect(markup).not.toContain('border-dashed');
   expect(markup).not.toContain('bg-amber-500/5');
   expect(markup).toContain(
-    'Supports coexistence — keep WhatsApp Business on your phone with the same number.',
+    'Supports coexistence — keep WhatsApp Business on your phone with the same number. Chat history syncs up to 6 months.',
   );
   expect(markup).not.toContain('Waiting for WhatsApp setup');
 });

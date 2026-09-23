@@ -43,12 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type Customer = Doc<'customers'> & {
-  assignedUserId?: string;
-  assignedAgentId?: string;
-  assignedAgentName?: string;
-  assignToAiAgent?: boolean;
-};
+type Customer = Doc<'customers'>;
 
 function getTagColorClass(tag: string): { bg: string; text: string; dot: string } {
   let hash = 0;
@@ -132,20 +127,18 @@ export default function CustomersPage() {
     });
   };
 
-  const teamUsers = useQuery(api.users.getUsers, {});
   const totalCustomersCount = useQuery(
     api.customers.countFilteredForCurrentOrg,
     { search, selectedFilters }
   );
 
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const ITEMS_PER_PAGE = itemsPerPage;
+  const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
   const { results: customers, status, loadMore } = usePaginatedQuery(
     api.customers.listForCurrentOrg,
     { agentId: agentId as Id<'agents'> },
-    { initialNumItems: 50 },
+    { initialNumItems: 10 },
   );
 
   useEffect(() => {
@@ -489,7 +482,7 @@ export default function CustomersPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr className="bg-zinc-50 dark:bg-zinc-900/50">
-                  {['Customer', 'Assignee', 'Phone', 'Source', 'Tags', 'Last Active'].map((h) => (
+                  {['Customer', 'Source', 'Tags', 'Phone', 'Last Active'].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -538,36 +531,6 @@ export default function CustomersPage() {
                             ) : null}
                           </div>
                         </div>
-                      </td>
-                      <td style={{ padding: '13px 20px' }}>
-                        {customer.assignedUserId ? (
-                          (() => {
-                            const u = teamUsers?.find((m) => m.workosUserId === customer.assignedUserId);
-                            const label = u
-                              ? [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email
-                              : 'Teammate';
-                            return (
-                              <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
-                                <User className="size-3.5 text-[#6366f1] shrink-0" />
-                                <span className="truncate max-w-[120px]" title={label}>{label}</span>
-                              </div>
-                            );
-                          })()
-                        ) : (
-                          <span className="text-muted-foreground/60 text-xs font-normal">Unassigned</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '13px 20px' }}>
-                        {phone ? (
-                          <span
-                            className="font-mono text-xs text-muted-foreground"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {phone}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground/60">—</span>
-                        )}
                       </td>
                       <td style={{ padding: '13px 20px' }}>
                         <Badge variant="outline">
@@ -627,6 +590,18 @@ export default function CustomersPage() {
                           )}
                         </div>
                       </td>
+                      <td style={{ padding: '13px 20px' }}>
+                        {phone ? (
+                          <span
+                            className="font-mono text-xs text-muted-foreground"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {phone}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/60">—</span>
+                        )}
+                      </td>
                       <td style={{ padding: '13px 20px', color: 'var(--color-foreground-muted)' }}>
                         {formatRelative(customer.lastSeenAt)}
                       </td>
@@ -635,7 +610,7 @@ export default function CustomersPage() {
                 })}
                 {pageCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: 'var(--color-foreground-muted)' }}>
+                    <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: 'var(--color-foreground-muted)' }}>
                       No customers match your filters.
                     </td>
                   </tr>
@@ -645,29 +620,6 @@ export default function CustomersPage() {
 
             {/* Pagination Controls */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border px-6 py-4 bg-zinc-50/50 dark:bg-zinc-900/10 min-h-[58px]">
-              {/* Rows per page */}
-              <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
-                <span>Rows per page</span>
-                <Select
-                  value={String(itemsPerPage)}
-                  onValueChange={(val) => {
-                    const newSize = Number(val);
-                    setItemsPerPage(newSize);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-[70px] bg-background text-xs rounded-lg">
-                    <SelectValue placeholder={String(itemsPerPage)} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Pagination Numbers */}
               <div className="flex justify-center">
                 <Pagination>

@@ -197,12 +197,21 @@ export const handleIncoming = internalMutation({
       .unique();
     if (existingMsg !== null) return;
 
-    const channel = await ctx.db
+    const recipientChannel = await ctx.db
       .query("channels")
       .withIndex("by_igUserId", (q) =>
         q.eq("igUserId", args.recipientIgUserId),
       )
       .unique();
+    const senderChannel = recipientChannel === null
+      ? await ctx.db
+          .query("channels")
+          .withIndex("by_igUserId", (q) =>
+            q.eq("igUserId", args.senderIgUserId),
+          )
+          .unique()
+      : null;
+    const channel = recipientChannel ?? senderChannel;
     if (channel === null) {
       console.warn(
         `Instagram webhook for unknown ig_user_id=${args.recipientIgUserId}; skipping`,
@@ -210,26 +219,27 @@ export const handleIncoming = internalMutation({
       return;
     }
 
-    // Is the sender us (echoed outgoing) or the customer?
     const isOutgoing =
       channel.igUserId !== undefined &&
       args.senderIgUserId === channel.igUserId;
-    if (isOutgoing) return;
+    const contactAddress = isOutgoing
+      ? args.recipientIgUserId
+      : args.senderIgUserId;
 
-    const contactAddress = args.senderIgUserId;
-
-    const existingConversation = await ctx.db
-      .query("conversations")
-      .withIndex("by_channel_and_contactAddress", (q) =>
-        q.eq("channelId", channel._id).eq("contactAddress", contactAddress),
-      )
-      .unique();
-    if (existingConversation === null) {
-      await instagramSyncPool.enqueueAction(
-        ctx,
-        internal.instagramSync.hydrateConversationByParticipant,
-        { channelId: channel._id, participantUserId: contactAddress },
-      );
+    if (!isOutgoing) {
+      const existingConversation = await ctx.db
+        .query("conversations")
+        .withIndex("by_channel_and_contactAddress", (q) =>
+          q.eq("channelId", channel._id).eq("contactAddress", contactAddress),
+        )
+        .unique();
+      if (existingConversation === null) {
+        await instagramSyncPool.enqueueAction(
+          ctx,
+          internal.instagramSync.hydrateConversationByParticipant,
+          { channelId: channel._id, participantUserId: contactAddress },
+        );
+      }
     }
 
     const content = args.text ?? "";
@@ -245,16 +255,19 @@ export const handleIncoming = internalMutation({
         channelId: channel._id,
         externalId: args.externalId,
         contactAddress,
-        direction: "incoming",
+        direction: isOutgoing ? "outgoing" : "incoming",
         content,
         contentType,
         timestampMs: args.timestampMs,
         isHistorical: false,
         images: args.images,
         files: args.files,
+        humanAgentName: isOutgoing ? "Instagram app" : undefined,
+        pauseAiReplies: isOutgoing,
       },
     );
     if (result.skipped) return result;
+    if (isOutgoing) return result;
 
     await markConversationAnalyticsDirty(ctx, {
       conversationId: result.conversationId,

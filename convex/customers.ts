@@ -14,6 +14,7 @@ import { customerSearchText } from "./customerSearch";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 import { customerRecipientLabel } from "./customerRecipientPresentation";
 import { customerPhonePresentation } from "../shared/customerPhonePresentation";
+import { customerTagWorkspaceKey, ensureCustomerTags } from "./customerTags";
 
 const customerServiceValidator = v.union(
   v.literal("whatsapp"),
@@ -301,41 +302,7 @@ export const listForCurrentOrg = query({
         .paginate(args.paginationOpts);
     }
 
-    const page = await Promise.all(
-      result.page.map(async (customer) => {
-        let assignedUserId: string | undefined = undefined;
-        let assignedAgentId: string | undefined = undefined;
-        let assignedAgentName: string | undefined = undefined;
-        let assignToAiAgent: boolean | undefined = undefined;
-
-        if (customer.lastConversationId) {
-          const conv = await ctx.db.get(customer.lastConversationId);
-          if (conv) {
-            assignedUserId = conv.assignedUserId;
-            assignedAgentId = conv.assignedAgentId;
-            assignToAiAgent = conv.assignToAiAgent;
-            if (conv.assignedAgentId) {
-              const agent = await ctx.db.get(conv.assignedAgentId);
-              if (agent) {
-                assignedAgentName = agent.name;
-              }
-            }
-          }
-        }
-        return {
-          ...customer,
-          assignedUserId,
-          assignedAgentId,
-          assignedAgentName,
-          assignToAiAgent,
-        };
-      })
-    );
-
-    return {
-      ...result,
-      page,
-    };
+    return result;
   },
 });
 
@@ -403,12 +370,13 @@ export const addManually = mutation({
       throw new Error("Customer name is required");
     }
     const now = Date.now();
-    const tags = args.tags ?? [];
+    const tags = (args.tags ?? []).map((tag) => tag.trim()).filter(Boolean);
     const email = args.email?.trim() || undefined;
     const phone = args.phone?.trim() || undefined;
     for (const tag of tags) {
       assertNotLeadTemperatureTag(tag);
     }
+    await ensureCustomerTags(ctx.db, customerTagWorkspaceKey(resolvedOrgId, userId), tags);
     return await ctx.db.insert("customers", {
       orgId: resolvedOrgId,
       userId,
@@ -419,7 +387,7 @@ export const addManually = mutation({
       email,
       phone,
       searchText: customerSearchText({ name, email, phone, contactAddress: "" }),
-      tags: tags.map((t) => t.trim()).filter(Boolean),
+      tags,
       leadTemperature: args.leadTemperature,
       source: "manual",
       firstSeenAt: now,
@@ -493,7 +461,9 @@ export const update = mutation({
       for (const tag of args.tags) {
         assertNotLeadTemperatureTag(tag);
       }
-      patch.tags = args.tags.map((t) => t.trim()).filter(Boolean);
+      const tags = args.tags.map((tag) => tag.trim()).filter(Boolean);
+      patch.tags = tags;
+      await ensureCustomerTags(ctx.db, customerTagWorkspaceKey(resolvedOrgId, userId), tags);
     }
     if (args.notes !== undefined) patch.notes = args.notes;
     if (args.leadTemperature !== undefined) {
@@ -732,6 +702,7 @@ export const addCustomerTag = mutation({
     if (current.includes(normalized)) {
       return;
     }
+    await ensureCustomerTags(ctx.db, customerTagWorkspaceKey(resolvedOrgId, userId), [normalized]);
     await ctx.db.patch(args.customerId, {
       tags: [...current, normalized],
       updatedAt: Date.now(),

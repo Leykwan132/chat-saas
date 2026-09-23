@@ -10,6 +10,7 @@ import { internal } from "./_generated/api";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { getCustomerAgentForCurrentWorkspace } from "./customerAgentScope";
 import { customerSearchText } from "./customerSearch";
+import { customerTagWorkspaceKey, ensureCustomerTags } from "./customerTags";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
 
 // ─── Workpool instance ─────────────────────────────────────
@@ -142,6 +143,7 @@ export const importBatchWorker = internalMutation({
     await ctx.db.patch(args.batchId, { status: "processing" });
 
     const orgId = job.orgId;
+    await ensureCustomerTags(ctx.db, customerTagWorkspaceKey(orgId, job.createdBy), job.tags);
     if (job.agentId === undefined) {
       throw new Error("Customer import job is missing an agent");
     }

@@ -1063,6 +1063,7 @@ export const ingestChannelMessageArgs = {
   assignedAgentId: v.optional(v.id("agents")),
   authorUserId: v.optional(v.string()),
   humanAgentName: v.optional(v.string()),
+  pauseAiReplies: v.optional(v.boolean()),
   metaConversationId: v.optional(v.string()),
   images: v.optional(
     v.array(
@@ -1106,6 +1107,7 @@ export type IngestChannelMessageArgs = {
   assignedAgentId?: Id<"agents">;
   authorUserId?: string;
   humanAgentName?: string;
+  pauseAiReplies?: boolean;
   metaConversationId?: string;
   images?: Array<{ url: string; mimeType: string }>;
   files?: Array<{ url: string; mimeType: string }>;
@@ -1207,6 +1209,7 @@ export async function ingestChannelMessage(
     preview,
     isIncoming: args.direction === "incoming",
     assignedAgentId: args.assignedAgentId,
+    pauseAiReplies: args.pauseAiReplies,
     metaConversationId: args.metaConversationId,
     isHistorical: args.isHistorical,
   });
@@ -1366,6 +1369,7 @@ async function upsertInboxConversation(
     preview: string;
     isIncoming: boolean;
     assignedAgentId?: Id<"agents">;
+    pauseAiReplies?: boolean;
     metaConversationId?: string;
     isHistorical?: boolean;
   },
@@ -1428,12 +1432,12 @@ async function upsertInboxConversation(
       }
     }
 
-    let assignToAiAgent = true;
+    let assignToAiAgent = !args.pauseAiReplies;
     if (routingAgentId !== undefined) {
       const settings = await getOrCreateLeadAssignmentSettings(ctx, routingAgentId);
-      assignToAiAgent = settings.aiEnabledOnInbound;
+      assignToAiAgent = args.pauseAiReplies ? false : settings.aiEnabledOnInbound;
       if (settings.aiWhenOutsideSchedule && !(await isAnyoneOnSchedule(ctx, routingAgentId, now))) {
-        assignToAiAgent = true;
+        assignToAiAgent = !args.pauseAiReplies;
       }
     }
 
@@ -1519,6 +1523,9 @@ async function upsertInboxConversation(
   if (args.metaConversationId && !existing.metaConversationId) {
     patch.metaConversationId = args.metaConversationId;
   }
+  if (args.pauseAiReplies) {
+    patch.assignToAiAgent = false;
+  }
   await ctx.db.patch(existing._id, patch);
 
   return {
@@ -1526,7 +1533,7 @@ async function upsertInboxConversation(
     threadId: existing.threadId,
     isNew: false,
     assignedAgentId: existing.assignedAgentId ?? args.assignedAgentId,
-    assignToAiAgent: existing.assignToAiAgent,
+    assignToAiAgent: args.pauseAiReplies ? false : existing.assignToAiAgent,
   };
 }
 

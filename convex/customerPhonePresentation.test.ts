@@ -29,3 +29,12 @@ test("presents a legacy numeric WhatsApp contact address", () => {
     }),
   ).toBe("60123456789");
 });
+
+test("does not present a Messenger PSID as a phone number", () => {
+  expect(
+    customerPhonePresentation({
+      contactAddress: "26041164678903849",
+      service: "messenger",
+    }),
+  ).toBeNull();
+});

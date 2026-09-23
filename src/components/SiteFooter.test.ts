@@ -3,6 +3,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
 import { expect, test, vi } from 'vitest';
+import { AppAuthProvider, type AppAuthContextValue } from '@/partnerAuth/AppAuthProvider';
 import { SiteFooter } from './SiteFooter';
 
 vi.mock('@workos-inc/authkit-react', () => ({
@@ -10,6 +11,16 @@ vi.mock('@workos-inc/authkit-react', () => ({
 }));
 
 const siteFooterSource = readFileSync(new URL('./SiteFooter.tsx', import.meta.url), 'utf8');
+const appAuthValue: AppAuthContextValue = {
+  isLoading: false,
+  user: null,
+  surface: 'kilobot',
+  getAccessToken: async () => null,
+  signIn: async () => undefined,
+  signUp: async () => undefined,
+  signOut: async () => undefined,
+  switchToOrganization: async () => undefined,
+};
 
 test('footer contact page links scroll the page to the top', () => {
   expect(siteFooterSource).toContain('const scrollToPageTop = () =>');
@@ -32,7 +43,14 @@ test('footer labels the terms link accurately', () => {
 
 test('footer groups public legal links under Security & Legal', () => {
   const footer = renderToStaticMarkup(
-    createElement(MemoryRouter, null, createElement(SiteFooter)),
+    createElement(
+      MemoryRouter,
+      null,
+      createElement(AppAuthProvider, {
+        value: appAuthValue,
+        children: createElement(SiteFooter),
+      }),
+    ),
   );
 
   expect(footer).toContain('Security &amp; Legal');

@@ -66,7 +66,6 @@ test("pricing presents AI Lead Temperature before Advanced Analytics", () => {
     {
       label: "AI Lead Temperature",
       values: {
-        free: false,
         starter: true,
         growth: true,
         business: true,

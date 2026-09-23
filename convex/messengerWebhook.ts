@@ -195,6 +195,7 @@ export async function receive(
       }
 
       const webhookAttachments = message.attachments ?? [];
+      const pageId = message.is_echo === true ? senderId : recipientId;
       const imageAttachments = webhookAttachments
         .filter((a): a is WebhookAttachment & { payload: { url: string } } =>
           a.type === "image" && typeof a.payload?.url === "string",
@@ -207,8 +208,9 @@ export async function receive(
 
       try {
         await ctx.runMutation(internal.messengerWebhook.handleIncoming, {
-          pageId: recipientId,
+          pageId,
           senderPsid: senderId,
+          recipientPsid: recipientId,
           externalId: message.mid,
           text: message.text,
           isEcho: message.is_echo === true,
@@ -220,7 +222,7 @@ export async function receive(
           files: audioAttachments.length > 0 ? audioAttachments : undefined,
         });
         logMessengerWebhook("receive:message-persisted", {
-          pageId: recipientId,
+          pageId,
           senderPsid: senderId,
           externalId: message.mid,
         });
@@ -242,6 +244,7 @@ export const handleIncoming = internalMutation({
   args: {
     pageId: v.string(),
     senderPsid: v.string(),
+    recipientPsid: v.string(),
     externalId: v.string(),
     text: v.optional(v.string()),
     isEcho: v.boolean(),
@@ -289,43 +292,27 @@ export const handleIncoming = internalMutation({
       return;
     }
 
-    // Page sends to a user → `is_echo: true` on the event for our own sends.
-    // The senderPsid in an echo is the Page id itself.
     const isOutgoing = args.isEcho || args.senderPsid === args.pageId;
-    const contactAddress = isOutgoing ? args.senderPsid : args.senderPsid;
-    // For echo events the recipient holds the customer PSID. The Messenger
-    // platform does not expose `recipient` to mutations here, but is_echo
-    // events still arrive with sender = Page, recipient = customer. We
-    // accept that for incoming-only ingestion the contactAddress is the
-    // sender; on echoes the senderPsid IS the page so we cannot recover
-    // the customer PSID without the recipient field. In practice we drop
-    // echo events here and rely on outgoing rows being inserted by the
-    // sending action.
-    if (isOutgoing) {
-      logMessengerWebhook("handleIncoming:echo-skip", {
-        pageId: args.pageId,
-        senderPsid: args.senderPsid,
-        externalId: args.externalId,
-      });
-      return;
-    }
+    const contactAddress = isOutgoing ? args.recipientPsid : args.senderPsid;
 
-    const existingConversation = await ctx.db
-      .query("conversations")
-      .withIndex("by_channel_and_contactAddress", (q) =>
-        q.eq("channelId", channel._id).eq("contactAddress", contactAddress),
-      )
-      .unique();
-    if (existingConversation === null) {
-      logMessengerWebhook("handleIncoming:enqueue-hydrate", {
-        channelId: channel._id,
-        contactAddress,
-      });
-      await messengerSyncPool.enqueueAction(
-        ctx,
-        internal.messengerSync.hydrateConversationByParticipant,
-        { channelId: channel._id, participantUserId: contactAddress },
-      );
+    if (!isOutgoing) {
+      const existingConversation = await ctx.db
+        .query("conversations")
+        .withIndex("by_channel_and_contactAddress", (q) =>
+          q.eq("channelId", channel._id).eq("contactAddress", contactAddress),
+        )
+        .unique();
+      if (existingConversation === null) {
+        logMessengerWebhook("handleIncoming:enqueue-hydrate", {
+          channelId: channel._id,
+          contactAddress,
+        });
+        await messengerSyncPool.enqueueAction(
+          ctx,
+          internal.messengerSync.hydrateConversationByParticipant,
+          { channelId: channel._id, participantUserId: contactAddress },
+        );
+      }
     }
 
     const content = args.text ?? "";
@@ -341,16 +328,19 @@ export const handleIncoming = internalMutation({
         channelId: channel._id,
         externalId: args.externalId,
         contactAddress,
-        direction: "incoming",
+        direction: isOutgoing ? "outgoing" : "incoming",
         content,
         contentType,
         timestampMs: args.timestampMs,
         isHistorical: false,
         images: args.images,
         files: args.files,
+        humanAgentName: isOutgoing ? "Messenger app" : undefined,
+        pauseAiReplies: isOutgoing,
       },
     );
     if (result.skipped) return result;
+    if (isOutgoing) return result;
 
     await ctx.runMutation(
       internal.commentAutomationDelivery.recordCustomerResponse,

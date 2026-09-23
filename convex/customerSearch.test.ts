@@ -69,6 +69,86 @@ test("manual customer creation writes the search projection atomically", async (
   expect(listed.page.map((row) => row._id)).toContain(customerId);
 });
 
+test("customer list omits assignment details from the latest conversation", async () => {
+  const t = convexTest(schema, modules);
+  const workosUserId = "customer-list-owner";
+  const { agentId, customerId } = await t.run(async (ctx) => {
+    const now = Date.now();
+    const userId = await ctx.db.insert("users", {
+      workosUserId,
+      email: "owner@example.com",
+      createdAt: now,
+      updatedAt: now,
+    });
+    const teamId = await ctx.db.insert("teams", {
+      type: "personal",
+      name: "Personal",
+      ownerId: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.patch(userId, { activeTeamId: teamId, updatedAt: now });
+    const agentId = await ctx.db.insert("agents", {
+      name: "Customer Agent",
+      provider: "openrouter",
+      model: "test/model",
+      systemPrompt: "Test",
+      templateKey: "blank",
+      fileSize: 0,
+      userId: workosUserId,
+      orgId: "",
+      createdAt: now,
+      updatedAt: now,
+    });
+    const customerId = await ctx.db.insert("customers", {
+      orgId: "",
+      userId: workosUserId,
+      agentId,
+      service: "whatsapp",
+      contactAddress: "+60123456789",
+      name: "Customer without assignee",
+      tags: [],
+      source: "whatsapp",
+      firstSeenAt: now,
+      lastSeenAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+    const conversationId = await ctx.db.insert("conversations", {
+      orgId: "",
+      userId: workosUserId,
+      service: "whatsapp",
+      orgAddress: "business",
+      contactAddress: "+60123456789",
+      customerId,
+      status: "open",
+      assignedAgentId: agentId,
+      assignedUserId: "human-owner",
+      assignToAiAgent: false,
+      threadId: "customer-list-thread",
+      lastMessageAt: now,
+      unreadCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.patch(customerId, { lastConversationId: conversationId });
+    return { agentId, customerId };
+  });
+  const authed = t.withIdentity({ subject: workosUserId });
+
+  const listed = await authed.query(api.customers.listForCurrentOrg, {
+    agentId,
+    paginationOpts: { numItems: 10, cursor: null },
+  });
+  const customer = listed.page.find((row) => row._id === customerId);
+
+  expect(customer).toMatchObject({ name: "Customer without assignee" });
+  expect(customer).not.toHaveProperty("assignedUserId");
+  expect(customer).not.toHaveProperty("assignedAgentId");
+  expect(customer).not.toHaveProperty("assignedAgentName");
+  expect(customer).not.toHaveProperty("assignToAiAgent");
+});
+
 test("CSV imports retain the agent and personal owner scope", async () => {
   const t = convexTest(schema, modules);
   const workosUserId = "customer-import-writer";

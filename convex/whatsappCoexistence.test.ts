@@ -80,6 +80,7 @@ test("account_update before channel exists is stored but does not drive connecti
   const channelId = await t.mutation(internal.channels.internalUpsertWhatsApp, {
     orgId: "org-123",
     wabaId: "waba-early",
+    wabaIds: ["waba-early"],
     phoneNumberId: "phone-early",
     displayPhoneNumber: "15550783882",
     accessToken: "token-early",
@@ -195,6 +196,7 @@ test("completeSignup token persistence marks channel connected without account_u
   const channelId = await t.mutation(internal.channels.internalUpsertWhatsApp, {
     orgId: "org-123",
     wabaId: "waba-pending",
+    wabaIds: ["waba-pending"],
     phoneNumberId: "phone-pending",
     accessToken: "token-pending",
     connectedByUserId: "user-123",

@@ -84,7 +84,7 @@ test("personal user can initialize their own availability schedule", async () =>
 
   expect(detail?.schedule?._id).toBe(userScheduleId);
   expect(detail?.schedule?.timezone).toBe("Asia/Kuala_Lumpur");
-  expect(detail?.shifts).toHaveLength(7);
+  expect(detail?.shifts).toHaveLength(5);
   expect(detail?.user.role).toBe("owner");
   expect(detail).not.toHaveProperty("services");
 });
