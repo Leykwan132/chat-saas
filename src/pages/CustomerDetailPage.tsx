@@ -86,11 +86,7 @@ export default function CustomerDetailPage() {
   const teamUsers = useQuery(api.users.getUsers, {});
   const activeTeam = useQuery(api.teams.getActiveTeam);
 
-  // Fetch loaded customers page to extract all existing organization tags
-  const customersResult = useQuery(
-    api.customers.listForCurrentOrg,
-    { paginationOpts: { numItems: 100, cursor: null } }
-  );
+  const allExistingTags = useQuery(api.customerTags.listForCurrentOrg, {});
 
   const addTag = useMutation(api.customers.addCustomerTag);
   const removeTag = useMutation(api.customers.removeCustomerTag);
@@ -186,7 +182,7 @@ export default function CustomerDetailPage() {
     }
   };
 
-  const isLoading = customer === undefined || teamUsers === undefined || customersResult === undefined || activeTeam === undefined;
+  const isLoading = customer === undefined || teamUsers === undefined || allExistingTags === undefined || activeTeam === undefined;
 
   const label = customer ? serviceLabel(customer.service) : 'Manual';
   const SourceIcon = sourceBadgeInfo[label].icon;
@@ -195,19 +191,6 @@ export default function CustomerDetailPage() {
     if (!customer?.assignedUserId || !teamUsers) return null;
     return teamUsers.find((u) => u.workosUserId === customer.assignedUserId);
   }, [customer?.assignedUserId, teamUsers]);
-
-  const allExistingTags = useMemo(() => {
-    if (!customersResult) return [];
-    const tagsSet = new Set<string>();
-    for (const c of customersResult.page) {
-      if (c.tags) {
-        for (const tag of c.tags) {
-          tagsSet.add(tag);
-        }
-      }
-    }
-    return Array.from(tagsSet).sort();
-  }, [customersResult]);
 
   const handleAddTag = async (tag: string) => {
     if (!typedCustomerId) return;
