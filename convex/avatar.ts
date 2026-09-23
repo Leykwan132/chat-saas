@@ -55,6 +55,7 @@ export const ensureForAgent = mutation({
       status: 'connected',
       connectedByUserId: userId,
       defaultAgentId: agent._id,
+      conversationCount: 0,
       createdAt: now,
       updatedAt: now,
     });

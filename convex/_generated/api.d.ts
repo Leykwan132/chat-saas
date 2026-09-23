@@ -120,6 +120,7 @@ import type * as calendarEventsHelpers from "../calendarEventsHelpers.js";
 import type * as calendarEventsMutate from "../calendarEventsMutate.js";
 import type * as calendarFormatUtils from "../calendarFormatUtils.js";
 import type * as channelAgentThreadCleanup from "../channelAgentThreadCleanup.js";
+import type * as channelConversationCountMigration from "../channelConversationCountMigration.js";
 import type * as channelSyncPools from "../channelSyncPools.js";
 import type * as channels from "../channels.js";
 import type * as chat_aiReplyMedia from "../chat/aiReplyMedia.js";
@@ -658,6 +659,7 @@ declare const fullApi: ApiFromModules<{
   calendarEventsMutate: typeof calendarEventsMutate;
   calendarFormatUtils: typeof calendarFormatUtils;
   channelAgentThreadCleanup: typeof channelAgentThreadCleanup;
+  channelConversationCountMigration: typeof channelConversationCountMigration;
   channelSyncPools: typeof channelSyncPools;
   channels: typeof channels;
   "chat/aiReplyMedia": typeof chat_aiReplyMedia;
