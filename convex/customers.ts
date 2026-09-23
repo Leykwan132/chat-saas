@@ -302,41 +302,7 @@ export const listForCurrentOrg = query({
         .paginate(args.paginationOpts);
     }
 
-    const page = await Promise.all(
-      result.page.map(async (customer) => {
-        let assignedUserId: string | undefined = undefined;
-        let assignedAgentId: string | undefined = undefined;
-        let assignedAgentName: string | undefined = undefined;
-        let assignToAiAgent: boolean | undefined = undefined;
-
-        if (customer.lastConversationId) {
-          const conv = await ctx.db.get(customer.lastConversationId);
-          if (conv) {
-            assignedUserId = conv.assignedUserId;
-            assignedAgentId = conv.assignedAgentId;
-            assignToAiAgent = conv.assignToAiAgent;
-            if (conv.assignedAgentId) {
-              const agent = await ctx.db.get(conv.assignedAgentId);
-              if (agent) {
-                assignedAgentName = agent.name;
-              }
-            }
-          }
-        }
-        return {
-          ...customer,
-          assignedUserId,
-          assignedAgentId,
-          assignedAgentName,
-          assignToAiAgent,
-        };
-      })
-    );
-
-    return {
-      ...result,
-      page,
-    };
+    return result;
   },
 });
 
