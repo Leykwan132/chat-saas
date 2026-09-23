@@ -31,7 +31,13 @@ function summaryMatches(
   >,
 ) {
   const { _id, _creationTime, ...storedFields } = stored;
-  return JSON.stringify(storedFields) === JSON.stringify(expected);
+  const canonicalize = (summary: Record<string, unknown>) =>
+    JSON.stringify(
+      Object.fromEntries(
+        Object.entries(summary).sort(([left], [right]) => left.localeCompare(right)),
+      ),
+    );
+  return canonicalize(storedFields) === canonicalize(expected);
 }
 
 export async function reconcileInboxConversationSummaryPage(

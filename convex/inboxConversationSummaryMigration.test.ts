@@ -55,4 +55,9 @@ test("reconciliation reports and repairs a stale summary", async () => {
     reconcileInboxConversationSummaryPage(ctx, { cursor: null, numItems: 10 }, true),
   );
   expect(repair).toMatchObject({ stale: 1, repaired: 1 });
+
+  const verified = await t.run((ctx) =>
+    reconcileInboxConversationSummaryPage(ctx, { cursor: null, numItems: 10 }, false),
+  );
+  expect(verified).toMatchObject({ stale: 0, repaired: 0 });
 });
