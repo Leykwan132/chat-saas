@@ -1204,6 +1204,7 @@ export async function ingestChannelMessage(
     orgAddress,
     contactAddress: args.contactAddress,
     contactName: args.contactName,
+    whatsappUserId: args.whatsappUserId,
     customerId,
     lastMessageAt: args.timestampMs,
     preview,
@@ -1364,6 +1365,7 @@ async function upsertInboxConversation(
     orgAddress: string;
     contactAddress: string;
     contactName?: string;
+    whatsappUserId?: string;
     customerId: Id<"customers">;
     lastMessageAt: number;
     preview: string;
@@ -1389,7 +1391,21 @@ async function upsertInboxConversation(
     )
     .order("desc")
     .first();
-  const existing = selectReusableInboxConversation(latest, args.service);
+  const latestForWhatsAppUserId = args.whatsappUserId
+    ? await ctx.db
+        .query("conversations")
+        .withIndex("by_channel_and_contactAddress", (q) =>
+          q
+            .eq("channelId", args.channelId)
+            .eq("contactAddress", args.whatsappUserId!),
+        )
+        .order("desc")
+        .first()
+    : null;
+  const existing = selectReusableInboxConversation(
+    latest ?? latestForWhatsAppUserId,
+    args.service,
+  );
 
   const now = Date.now();
   const channel = await ctx.db.get(args.channelId);
