@@ -77,6 +77,7 @@ export const ADVANCED_PLAN_MODELS = [
   "nvidia/nemotron-3.5-lightning",
   "qwen/qwen3.7-flash",
   "xiaomi/mimo-v2.6-pro",
+  "meta/muse-spark-1.3-contributor",
 ] as const;
 
 export const MODEL_DISPLAY_NAMES: Record<string, string> = {
@@ -87,6 +88,7 @@ export const MODEL_DISPLAY_NAMES: Record<string, string> = {
   "nvidia/nemotron-3.5-lightning": "NVIDIA Nemotron 3.5 Lightning",
   "qwen/qwen3.7-flash": "Qwen3.7 Flash",
   "xiaomi/mimo-v2.6-pro": "Xiaomi MiMo V2.6 Pro",
+  "meta/muse-spark-1.3-contributor": "Meta Muse Spark 1.3 Contributor",
 };
 
 export function getPlanModelDisplayNames(planId: PlanKey): string[] {

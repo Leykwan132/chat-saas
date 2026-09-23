@@ -148,6 +148,7 @@ test.each([
   ["nvidia/nemotron-3.5-lightning", "NVIDIA Nemotron 3.5 Lightning", "NVIDIA", "nvidia", 1],
   ["qwen/qwen3.7-flash", "Qwen3.7 Flash", "Qwen", "qwen", 0.5],
   ["openai/gpt-oss-120b", "OpenAI GPT-OSS 120B", "OpenAI", "openai", 0.5],
+  ["meta/muse-spark-1.3-contributor", "Meta Muse Spark 1.3 Contributor", "Meta", "meta", 1],
 ])("%s is enabled for every paid plan", (modelId, label, chef, chefSlug, creditCost) => {
   const model = listEnabledModels().find((entry) => entry.value === modelId);
 

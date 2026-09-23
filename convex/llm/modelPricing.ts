@@ -43,6 +43,16 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     requiredPlan: "starter",
     labels: ["advanced", "latest"],
   },
+  "meta/muse-spark-1.3-contributor": {
+    label: "Meta Muse Spark 1.3 Contributor",
+    creditCost: 1,
+    enabled: true,
+    provider: "openrouter",
+    chef: "Meta",
+    chefSlug: "meta",
+    requiredPlan: "starter",
+    labels: ["advanced", "latest"],
+  },
   "deepseek/deepseek-v4-flash": {
     label: "DeepSeek V4 Flash",
     creditCost: 1,

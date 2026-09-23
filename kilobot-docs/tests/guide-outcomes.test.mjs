@@ -453,6 +453,7 @@ test("Agent Setup keeps model and trigger guidance focused", () => {
   assert.ok(source.includes("Qwen3.7 Flash"));
   assert.equal(source.includes("Amazon Nova Micro"), false);
   assert.ok(source.includes("Xiaomi MiMo V2.6 Pro"));
+  assert.ok(source.includes("Meta Muse Spark 1.3 Contributor"));
   assert.ok(source.includes("## Triggers"));
   assert.ok(source.includes("| Automatically |"));
   assert.ok(source.includes("| Manual |"));

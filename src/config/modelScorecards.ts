@@ -31,6 +31,13 @@ export const MODEL_SCORECARDS: Record<ModelScorecardId, ModelScorecard> = {
       'Best for general-purpose Chinese customer conversations. It also supports everyday English interactions.',
     recommendedFor: ['Chinese-language conversations', 'General customer support'],
   },
+  'meta/muse-spark-1.3-contributor': {
+    overall: 4,
+    metrics: { quality: 4, speed: 4, reasoning: 4, value: 4 },
+    description:
+      'Best for creative customer conversations. It also supports collaborative drafting for everyday support workflows.',
+    recommendedFor: ['Creative customer conversations', 'Collaborative drafting'],
+  },
   'deepseek/deepseek-v4-flash': {
     overall: 4,
     metrics: { quality: 4, speed: 4, reasoning: 4, value: 4 },
