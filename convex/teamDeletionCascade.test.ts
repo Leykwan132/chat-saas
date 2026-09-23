@@ -99,6 +99,7 @@ test("deletes team data and preserves account and unrelated workspace data", asy
       endMinutes: 1020,
     });
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org_delete",
       service: "web",
       status: "disconnected",

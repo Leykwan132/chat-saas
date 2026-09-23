@@ -46,6 +46,7 @@ test("public config and AI messages use the requested snippet mode", async () =>
       updatedAt: now,
     });
     const webChannelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "",
       service: "web",
       status: "connected",
@@ -55,6 +56,7 @@ test("public config and AI messages use the requested snippet mode", async () =>
       updatedAt: now,
     });
     await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "",
       service: "whatsapp",
       phoneNumberId: "phone-widget-modes",

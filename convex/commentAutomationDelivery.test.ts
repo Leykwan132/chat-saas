@@ -43,6 +43,7 @@ test("counts a successful private reply and one later customer response", async 
   const fixture = await t.run(async (ctx) => {
     const now = 1_788_758_518_000;
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org",
       service: "messenger",
       pageId: "page-1",

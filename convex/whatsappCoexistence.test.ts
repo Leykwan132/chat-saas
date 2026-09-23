@@ -9,6 +9,7 @@ const modules = import.meta.glob("./**/*.ts");
 async function insertWhatsAppChannel(t: ReturnType<typeof convexTest>) {
   return await t.run(async (ctx) => {
     return await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-123",
       service: "whatsapp",
       wabaId: "waba-123",
@@ -108,6 +109,7 @@ test("linked connection attempt moves to connected when partner app is installed
   const t = convexTest(schema, modules);
   const channelId = await t.run(async (ctx) => {
     const insertedChannelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-123",
       service: "whatsapp",
       wabaId: "waba-linked",
@@ -152,6 +154,7 @@ test("partner app installed does not downgrade syncing connection attempt", asyn
   const t = convexTest(schema, modules);
   await t.run(async (ctx) => {
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-123",
       service: "whatsapp",
       wabaId: "waba-syncing",
@@ -210,6 +213,7 @@ test("failure account_update marks linked channel and attempt as error", async (
   const t = convexTest(schema, modules);
   const channelId = await t.run(async (ctx) => {
     const insertedChannelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-123",
       service: "whatsapp",
       wabaId: "waba-pending",

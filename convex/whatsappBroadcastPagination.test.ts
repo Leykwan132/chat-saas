@@ -37,6 +37,7 @@ test('paginates broadcast schedules newest first without overlap', async () => {
       updatedAt: now,
     });
     const channelId = await ctx.db.insert('channels', {
+      conversationCount: 0,
       orgId: '',
       service: 'whatsapp',
       wabaId: 'broadcast-pagination-waba',

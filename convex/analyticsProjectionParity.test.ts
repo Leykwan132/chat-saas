@@ -21,6 +21,7 @@ async function createConversation(
 ) {
   return await t.run(async (ctx) => {
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: input.orgId,
       service: input.service,
       phoneNumberId:

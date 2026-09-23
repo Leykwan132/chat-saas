@@ -66,7 +66,6 @@ const CONNECTABLE_SERVICES: SupportedChannelService[] = [
 ];
 
 type ChannelDoc = Doc<'channels'>;
-type ChannelWithConversationCount = ChannelDoc & { conversationCount?: number };
 type WhatsAppConnectionAttemptDoc = Doc<'whatsappConnectionAttempts'>;
 
 const STATUS_META: Record<
@@ -579,9 +578,7 @@ function ConnectedChannelCard({
                 <WhatsAppSyncSummary channel={channel} />
               ) : (
                 <SavedConversationStatus
-                  conversationCount={
-                    (channel as ChannelWithConversationCount).conversationCount ?? 0
-                  }
+                  conversationCount={channel.conversationCount}
                 />
               )
             ) : channel.status === 'error' && channel.lastError ? (

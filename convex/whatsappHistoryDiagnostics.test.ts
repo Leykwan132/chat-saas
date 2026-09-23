@@ -130,6 +130,7 @@ test("history staging logs Meta error details before saving the placeholder", as
   const t = convexTest(schema, modules);
   const channelId = await t.run(async (ctx) =>
     ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-123",
       service: "whatsapp",
       wabaId: "waba-123",

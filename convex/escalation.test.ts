@@ -122,6 +122,7 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
   // Setup mock Channel
   const channelId = await t.run(async (ctx) => {
     return await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId,
       service: "whatsapp",
       phoneNumberId: "phone-test",
@@ -175,6 +176,7 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
   const [messengerChannelId, instagramChannelId] = await t.run(async (ctx) => {
     return await Promise.all([
       ctx.db.insert("channels", {
+        conversationCount: 0,
         orgId,
         service: "messenger",
         pageId: "messenger-page-test",
@@ -186,6 +188,7 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
         updatedAt: Date.now(),
       }),
       ctx.db.insert("channels", {
+        conversationCount: 0,
         orgId,
         service: "instagram",
         igUserId: "instagram-account-test",
@@ -460,6 +463,7 @@ test("escalates without sending a customer message when escalationMessage is uns
 
   const channelId = await t.run(async (ctx) => {
     return await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId,
       service: "whatsapp",
       phoneNumberId: "phone-test-no-msg",

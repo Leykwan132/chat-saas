@@ -44,6 +44,7 @@ test("PARTNER_APP_UNINSTALLED deletes all data associated with WABA ID", async (
   const { channelId, convId } = await t.run(async (ctx) => {
     // 1. Insert a channel
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-123",
       service: "whatsapp",
       wabaId,
@@ -289,6 +290,7 @@ test("PARTNER_REMOVED deletes all data associated with WABA ID", async () => {
 
   const { channelId, convId } = await t.run(async (ctx) => {
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-123",
       service: "whatsapp",
       wabaId,
@@ -360,6 +362,7 @@ test("disconnect clears WhatsApp history staging", async () => {
     await ctx.db.patch(userDbId, { activeTeamId: teamId });
 
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "",
       service: "whatsapp",
       wabaId: "waba-disconnect-staging",

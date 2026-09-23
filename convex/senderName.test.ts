@@ -99,6 +99,7 @@ test("Sender name resolution for channel, human, and AI providers", async () => 
   // Setup mock Channel
   const channelId = await t.run(async (ctx) => {
     return await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "",
       service: "whatsapp",
       phoneNumberId: "phone-id-123",

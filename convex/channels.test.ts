@@ -80,6 +80,7 @@ test("listForCurrentOrg returns only channels assigned to the requested agent", 
         updatedAt: now,
       });
       const firstChannelId = await ctx.db.insert("channels", {
+        conversationCount: 0,
         orgId: "",
         service: "whatsapp",
         phoneNumberId: "first-phone",
@@ -90,6 +91,7 @@ test("listForCurrentOrg returns only channels assigned to the requested agent", 
         updatedAt: now,
       });
       const secondChannelId = await ctx.db.insert("channels", {
+        conversationCount: 0,
         orgId: "",
         service: "instagram",
         igUserId: "second-instagram",

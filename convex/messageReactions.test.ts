@@ -25,6 +25,7 @@ test("reaction persistence patches target message row", async () => {
 
   const { conversationId, messageId } = await t.run(async (ctx) => {
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-123",
       service: "whatsapp",
       phoneNumberId: "phone-123",
@@ -92,6 +93,7 @@ test("WhatsApp reaction webhook updates target message without creating a new me
 
   const { messageId } = await t.run(async (ctx) => {
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org-123",
       service: "whatsapp",
       phoneNumberId: "phone-123",

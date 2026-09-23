@@ -56,6 +56,7 @@ test('schedules one idempotent reminder run and persists its Workpool ID', async
       updatedAt: now,
     });
     const channelId = await ctx.db.insert('channels', {
+      conversationCount: 0,
       orgId: '',
       service: 'whatsapp',
       phoneNumberId: 'phone-number',

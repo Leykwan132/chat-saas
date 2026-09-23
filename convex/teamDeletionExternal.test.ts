@@ -192,6 +192,7 @@ test("channel credentials remain until explicit provider cleanup succeeds", asyn
       updatedAt: now,
     });
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "org_delete",
       service: "whatsapp",
       status: "connected",

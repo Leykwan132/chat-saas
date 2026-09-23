@@ -905,8 +905,15 @@ export const deleteCustomer = mutation({
       .query("conversations")
       .withIndex("by_customerId", (q) => q.eq("customerId", args.customerId))
       .collect();
+    const conversationsByChannel = new Map<Id<"channels">, number>();
 
     for (const conv of conversations) {
+      if (conv.channelId !== undefined) {
+        conversationsByChannel.set(
+          conv.channelId,
+          (conversationsByChannel.get(conv.channelId) ?? 0) + 1,
+        );
+      }
       // 1a. Delete messages in this conversation
       const messages = await ctx.db
         .query("messages")
@@ -958,6 +965,17 @@ export const deleteCustomer = mutation({
 
       // Finally, delete the conversation document
       await ctx.db.delete(conv._id);
+    }
+
+    for (const [channelId, deletedCount] of conversationsByChannel) {
+      const channel = await ctx.db.get(channelId);
+      if (channel === null) continue;
+      if (channel.conversationCount < deletedCount) {
+        throw new Error("Channel conversation count is lower than its customer conversations");
+      }
+      await ctx.db.patch(channelId, {
+        conversationCount: channel.conversationCount - deletedCount,
+      });
     }
 
     // 2. Delete customer document

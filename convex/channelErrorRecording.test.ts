@@ -37,6 +37,7 @@ test("records an unscoped Messenger error against the connecting agent channel",
         updatedAt: now,
       });
       const connectingChannelId = await ctx.db.insert("channels", {
+        conversationCount: 0,
         orgId: "team-1",
         service: "messenger",
         pageId: "page-connecting",
@@ -47,6 +48,7 @@ test("records an unscoped Messenger error against the connecting agent channel",
         updatedAt: now,
       });
       const otherChannelId = await ctx.db.insert("channels", {
+        conversationCount: 0,
         orgId: "team-1",
         service: "messenger",
         pageId: "page-other",

@@ -10,6 +10,7 @@ async function seed(metaTemplateId?: string) {
   const t = convexTest(schema, modules);
   const { channelId, templateId } = await t.run(async (ctx) => {
     const channelId = await ctx.db.insert('channels', {
+      conversationCount: 0,
       orgId: 'org-update',
       service: 'whatsapp',
       status: 'connected',

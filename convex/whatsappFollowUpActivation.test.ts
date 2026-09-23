@@ -44,6 +44,7 @@ async function setupFollowUpFixture() {
       updatedAt: now,
     });
     const channelId = await ctx.db.insert('channels', {
+      conversationCount: 0,
       orgId,
       service: 'whatsapp',
       phoneNumberId: 'phone-id',

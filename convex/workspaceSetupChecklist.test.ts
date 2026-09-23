@@ -154,6 +154,7 @@ test("getWorkspaceSetupChecklist infers selected agent progress", async () => {
       createdAt: now,
     });
     const channelId = await ctx.db.insert("channels", {
+      conversationCount: 0,
       orgId: "",
       service: "web",
       status: "connected",

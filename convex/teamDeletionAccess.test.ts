@@ -73,6 +73,7 @@ describe("team deletion access", () => {
         updatedAt: now,
       });
       return await ctx.db.insert("channels", {
+        conversationCount: 0,
         orgId: "org_deleting",
         service: "web",
         status: "connected",
@@ -149,6 +150,7 @@ describe("team deletion access", () => {
         updatedAt: now,
       });
       const channelId = await ctx.db.insert("channels", {
+        conversationCount: 0,
         orgId: "org_widget_deleting",
         service: "web",
         status: "connected",
