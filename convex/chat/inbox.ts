@@ -701,6 +701,7 @@ export const generateAiReplyWorker = internalAction({
     promptContent: v.optional(v.string()),
     promptMessageId: v.optional(v.string()),
     inboundExternalId: v.optional(v.string()),
+    sourceMessageUpdatedAt: v.optional(v.number()),
     avatarSourceEventId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -721,6 +722,17 @@ export const generateAiReplyWorker = internalAction({
     if (
       !(await ctx.runQuery(internal.teamDeletion.access.canProcess, {
         orgId: conv.orgId,
+      }))
+    ) {
+      return;
+    }
+    if (
+      args.promptMessageId !== undefined &&
+      args.sourceMessageUpdatedAt !== undefined &&
+      !(await ctx.runQuery(internal.chat.inbox.internalIsInboundMessageCurrent, {
+        conversationId: args.conversationId,
+        agentMessageId: args.promptMessageId,
+        sourceMessageUpdatedAt: args.sourceMessageUpdatedAt,
       }))
     ) {
       return;
@@ -880,6 +892,17 @@ export const generateAiReplyWorker = internalAction({
       if (
         !(await ctx.runQuery(internal.teamDeletion.access.canProcess, {
           orgId: conv.orgId,
+        }))
+      ) {
+        return;
+      }
+      if (
+        args.promptMessageId !== undefined &&
+        args.sourceMessageUpdatedAt !== undefined &&
+        !(await ctx.runQuery(internal.chat.inbox.internalIsInboundMessageCurrent, {
+          conversationId: args.conversationId,
+          agentMessageId: args.promptMessageId,
+          sourceMessageUpdatedAt: args.sourceMessageUpdatedAt,
         }))
       ) {
         return;
@@ -1068,6 +1091,28 @@ export const internalGetConversation = internalQuery({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.conversationId);
+  },
+});
+
+export const internalIsInboundMessageCurrent = internalQuery({
+  args: {
+    conversationId: v.id("conversations"),
+    agentMessageId: v.string(),
+    sourceMessageUpdatedAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const message = await ctx.db
+      .query("messages")
+      .withIndex("by_agentMessageId", (q) => q.eq("agentMessageId", args.agentMessageId))
+      .order("desc")
+      .first();
+    return (
+      message !== null &&
+      message.conversationId === args.conversationId &&
+      message.direction === "incoming" &&
+      message.revokedAt === undefined &&
+      (message.editedAt ?? message.createdAt) === args.sourceMessageUpdatedAt
+    );
   },
 });
 

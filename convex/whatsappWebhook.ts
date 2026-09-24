@@ -19,6 +19,10 @@ import {
 import { resolveWhatsAppImageFiles } from "./chat/inboxImageIngest";
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
 import { recordPendingOutboundReceipt } from "./chat/pendingOutboundReceipt";
+import {
+  REVOKED_INBOUND_MESSAGE_TEXT,
+  replaceIncomingMessage,
+} from "./chat/inboundMessageReplacement";
 import { whatsappSyncPool } from "./channelSyncPools";
 import {
   isOpenWhatsAppConnectionAttempt,
@@ -483,6 +487,43 @@ export async function receive(
               profileName: profile?.name,
               targetExternalId: message.reaction.message_id,
               emoji: message.reaction.emoji,
+            });
+            continue;
+          }
+
+          if (message.type === "edit") {
+            const originalExternalId = message.edit?.original_message_id;
+            const content = message.edit?.message?.text?.body;
+            if (!originalExternalId || content === undefined) {
+              console.warn("WhatsApp edit webhook was malformed", {
+                phoneNumberId,
+                externalId: message.id,
+              });
+              continue;
+            }
+            await ctx.runMutation(internal.whatsappWebhook.handleMessageEdit, {
+              phoneNumberId,
+              originalExternalId,
+              eventExternalId: message.id,
+              content,
+              timestampMs: parseTimestamp(message.timestamp),
+            });
+            continue;
+          }
+
+          if (message.type === "revoke") {
+            const originalExternalId = message.revoke?.original_message_id;
+            if (!originalExternalId) {
+              console.warn("WhatsApp revoke webhook was malformed", {
+                phoneNumberId,
+                externalId: message.id,
+              });
+              continue;
+            }
+            await ctx.runMutation(internal.whatsappWebhook.handleMessageRevoke, {
+              phoneNumberId,
+              originalExternalId,
+              timestampMs: parseTimestamp(message.timestamp),
             });
             continue;
           }
@@ -1175,6 +1216,7 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
               ),
               promptMessageId: result.agentMessageId,
               inboundExternalId: args.externalId,
+              sourceMessageUpdatedAt: args.timestampMs,
             },
           );
         }
@@ -1240,6 +1282,75 @@ export const handleStatus = internalMutation({
         failureReason: args.failureReason,
       });
     }
+  },
+});
+
+export const handleMessageEdit = internalMutation({
+  args: {
+    phoneNumberId: v.string(),
+    originalExternalId: v.string(),
+    eventExternalId: v.string(),
+    content: v.string(),
+    timestampMs: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const channels = await ctx.db
+      .query("channels")
+      .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
+      .take(10);
+    const channel = channels.find((candidate) => candidate.status === "connected") ?? channels[0];
+    if (channel === undefined) return { updated: false };
+
+    const replacement = await replaceIncomingMessage(ctx, {
+        channelId: channel._id,
+        originalExternalId: args.originalExternalId,
+        eventExternalId: args.eventExternalId,
+        content: args.content,
+        timestampMs: args.timestampMs,
+        state: "edited",
+      });
+    for (const source of replacement.aiSources) {
+      const conversation = await ctx.db.get(source.conversationId);
+      if (conversation?.assignToAiAgent && conversation.assignedAgentId !== undefined) {
+        await inboxAiReplyPool.enqueueAction(
+          ctx,
+          internal.chat.inbox.generateAiReplyWorker,
+          {
+            conversationId: source.conversationId,
+            promptContent: args.content,
+            promptMessageId: source.agentMessageId,
+            inboundExternalId: args.originalExternalId,
+            sourceMessageUpdatedAt: args.timestampMs,
+          },
+        );
+      }
+    }
+    return { updated: replacement.updated };
+  },
+});
+
+export const handleMessageRevoke = internalMutation({
+  args: {
+    phoneNumberId: v.string(),
+    originalExternalId: v.string(),
+    timestampMs: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const channels = await ctx.db
+      .query("channels")
+      .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
+      .take(10);
+    const channel = channels.find((candidate) => candidate.status === "connected") ?? channels[0];
+    if (channel === undefined) return { updated: false };
+    return {
+      updated: (await replaceIncomingMessage(ctx, {
+        channelId: channel._id,
+        originalExternalId: args.originalExternalId,
+        content: REVOKED_INBOUND_MESSAGE_TEXT,
+        timestampMs: args.timestampMs,
+        state: "revoked",
+      })).updated,
+    };
   },
 });
 
@@ -1465,6 +1576,11 @@ type WhatsAppIncomingMessage = {
   audio?: WhatsAppMediaPayload & { voice?: boolean };
   document?: WhatsAppMediaPayload & { filename?: string };
   reaction?: { message_id?: string; emoji?: string };
+  edit?: {
+    original_message_id?: string;
+    message?: { type?: string; text?: { body?: string } };
+  };
+  revoke?: { original_message_id?: string };
   button?: { text?: string };
   interactive?: {
     button_reply?: { id?: string; title?: string };
