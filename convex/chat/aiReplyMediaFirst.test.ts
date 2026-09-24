@@ -24,13 +24,13 @@ test("multi-message AI replies send media before any text parts", () => {
   );
 });
 
-test("AI reply worker queues text before channel delivery", () => {
+test("AI reply worker persists text after channel delivery", () => {
   const worker = inboxSource.slice(
-    inboxSource.indexOf("const queuedTextReply"),
+    inboxSource.indexOf("export const generateAiReplyWorker"),
     inboxSource.indexOf("export const internalGetSendContext"),
   );
 
-  expect(worker.indexOf("internal.chat.inbox.internalPersistAiReplyMessages")).toBeLessThan(
-    worker.indexOf("internal.chat.inboxActions.internalSendAiReplyMessages"),
+  expect(worker.indexOf("internal.chat.inboxActions.internalSendAiReplyMessages")).toBeLessThan(
+    worker.indexOf("internal.chat.inbox.internalPersistAiReplyMessages"),
   );
 });
