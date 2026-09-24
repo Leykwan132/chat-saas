@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { usePaginatedQuery } from 'convex-helpers/react';
@@ -321,11 +321,20 @@ export default function ChatsPage() {
   }, [filterSidebarOpen]);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const deferredSearchQuery = useDeferredValue(searchQuery.trim());
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  useEffect(() => {
+    const nextQuery = searchQuery.trim();
+    if (nextQuery === '') {
+      setDebouncedSearchQuery('');
+      return;
+    }
+    const timeoutId = window.setTimeout(() => setDebouncedSearchQuery(nextQuery), 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [searchQuery]);
   const chatMatches = useQuery(
     api.inboxSearch.searchChatsForCurrentOrg,
-    deferredSearchQuery && typedAgentId
-      ? { agentId: typedAgentId, searchQuery: deferredSearchQuery }
+    debouncedSearchQuery && typedAgentId
+      ? { agentId: typedAgentId, searchQuery: debouncedSearchQuery }
       : 'skip',
   );
   const {
@@ -334,8 +343,8 @@ export default function ChatsPage() {
     loadMore: loadMoreMessageMatches,
   } = usePaginatedQuery(
     api.inboxSearch.searchMessagesForCurrentOrg,
-    deferredSearchQuery && typedAgentId
-      ? { agentId: typedAgentId, searchQuery: deferredSearchQuery }
+    debouncedSearchQuery && typedAgentId
+      ? { agentId: typedAgentId, searchQuery: debouncedSearchQuery }
       : 'skip',
     { initialNumItems: 20 },
   );
@@ -515,9 +524,9 @@ export default function ChatsPage() {
     });
   }, [inboxSummaryStatus, loadMoreInboxSummaries]);
 
-  const inboxSearchResults = deferredSearchQuery ? (
+  const inboxSearchResults = debouncedSearchQuery ? (
     <InboxSearchResults
-      searchQuery={deferredSearchQuery}
+      searchQuery={debouncedSearchQuery}
       chats={chatMatches}
       messages={messageMatches}
       messageStatus={messageSearchStatus}
