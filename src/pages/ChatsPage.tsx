@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { usePaginatedQuery } from 'convex-helpers/react';
@@ -73,6 +73,7 @@ import {
   InboxConversationList,
   type InboxConversationSort,
 } from '@/components/inbox/InboxConversationList';
+import { InboxSearchResults } from '@/components/inbox/InboxSearchResults';
 import { InboxMobileConversationSwitcher } from '@/components/inbox/InboxMobileConversationSwitcher';
 import { InboxMobileDetailsSheet } from '@/components/inbox/InboxMobileDetailsSheet';
 import { InboxDemoPreview } from '@/components/inbox/InboxDemoPreview';
@@ -320,6 +321,24 @@ export default function ChatsPage() {
   }, [filterSidebarOpen]);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery.trim());
+  const chatMatches = useQuery(
+    api.inboxSearch.searchChatsForCurrentOrg,
+    deferredSearchQuery && typedAgentId
+      ? { agentId: typedAgentId, searchQuery: deferredSearchQuery }
+      : 'skip',
+  );
+  const {
+    results: messageMatches,
+    status: messageSearchStatus,
+    loadMore: loadMoreMessageMatches,
+  } = usePaginatedQuery(
+    api.inboxSearch.searchMessagesForCurrentOrg,
+    deferredSearchQuery && typedAgentId
+      ? { agentId: typedAgentId, searchQuery: deferredSearchQuery }
+      : 'skip',
+    { initialNumItems: 20 },
+  );
   const [conversationSort, setConversationSort] =
     useState<InboxConversationSort>('newest');
   const [draftReply, setDraftReply] = useState('');
@@ -495,6 +514,17 @@ export default function ChatsPage() {
       inboxLoadInFlightRef.current = false;
     });
   }, [inboxSummaryStatus, loadMoreInboxSummaries]);
+
+  const inboxSearchResults = deferredSearchQuery ? (
+    <InboxSearchResults
+      searchQuery={deferredSearchQuery}
+      chats={chatMatches}
+      messages={messageMatches}
+      messageStatus={messageSearchStatus}
+      onLoadMore={() => loadMoreMessageMatches(20)}
+      onSelect={setSelectedConversationId}
+    />
+  ) : undefined;
 
   const chatItems = useMemo((): InboxChatListItem[] => {
     return inboxSummaries.map((conv) => ({
@@ -1244,6 +1274,7 @@ export default function ChatsPage() {
           canLoadMore={inboxSummaryStatus === 'CanLoadMore'}
           isLoadingMore={inboxSummaryStatus === 'LoadingMore'}
           onLoadMore={handleLoadMoreInboxSummaries}
+          searchResults={inboxSearchResults}
         />
       </div>
 
@@ -1268,6 +1299,7 @@ export default function ChatsPage() {
             canLoadMore={inboxSummaryStatus === 'CanLoadMore'}
             isLoadingMore={inboxSummaryStatus === 'LoadingMore'}
             onLoadMore={handleLoadMoreInboxSummaries}
+            searchResults={inboxSearchResults}
           />
         </div>
       ) : null}
@@ -1307,6 +1339,7 @@ export default function ChatsPage() {
                       canLoadMore={inboxSummaryStatus === 'CanLoadMore'}
                       isLoadingMore={inboxSummaryStatus === 'LoadingMore'}
                       onLoadMore={handleLoadMoreInboxSummaries}
+                      searchResults={inboxSearchResults}
                     />
                   </InboxMobileConversationSwitcher>
                 </div>

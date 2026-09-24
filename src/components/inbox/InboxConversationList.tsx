@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { ArrowDownWideNarrow, ArrowUpWideNarrow, LoaderCircle, MessageSquare, Pin, Search } from 'lucide-react';
 import { ChatRow, type Chat } from '@/components/ChatRow';
 import {
@@ -44,6 +44,7 @@ type InboxConversationListProps = {
   canLoadMore: boolean;
   isLoadingMore: boolean;
   onLoadMore: () => void;
+  searchResults?: ReactNode;
 };
 
 export function InboxConversationList({
@@ -65,6 +66,7 @@ export function InboxConversationList({
   canLoadMore,
   isLoadingMore,
   onLoadMore,
+  searchResults,
 }: InboxConversationListProps) {
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const SortIcon = conversationSort === 'newest' ? ArrowDownWideNarrow : ArrowUpWideNarrow;
@@ -155,7 +157,7 @@ export function InboxConversationList({
       ) : null}
 
       <div className={cn(inboxColumnScrollClassName, 'no-scrollbar relative')}>
-        {loading ? (
+        {searchResults ?? (loading ? (
           <InboxConversationListSkeleton />
         ) : filteredChats.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center text-sm text-muted-foreground">
@@ -234,7 +236,7 @@ export function InboxConversationList({
               </div>
             ) : null}
           </>
-        )}
+        ))}
       </div>
     </div>
   );
