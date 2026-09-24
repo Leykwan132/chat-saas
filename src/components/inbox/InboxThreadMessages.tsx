@@ -389,7 +389,7 @@ function InboxMessageBody({
 
   const messageContent = isRevoked ? (
     <div className="flex w-fit max-w-full items-center gap-2 rounded-[2px_16px_16px_16px] border border-border bg-muted px-3 py-1.5 text-sm italic text-muted-foreground">
-      <ProhibitIcon aria-hidden="true" size={32} />
+      <ProhibitIcon aria-hidden="true" size={16} className="shrink-0" />
       <span>This message was deleted</span>
     </div>
   ) : (
