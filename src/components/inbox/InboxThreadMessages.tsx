@@ -371,6 +371,7 @@ function InboxMessageBody({
     .map((asset) => asset.audioTranscript!);
   const isAudioPlaceholder = isInboxAudioPlaceholder(text);
   const isImagePlaceholder = isInboxImagePlaceholder(text);
+  const isRevoked = message.revokedAt !== undefined;
   const isCommentAutomation = message.workflowAutomationSource === 'commentAutomation';
   const showText =
     text.length > 0 &&
@@ -385,7 +386,11 @@ function InboxMessageBody({
     );
   }
 
-  const messageContent = (
+  const messageContent = isRevoked ? (
+    <div className="w-fit max-w-full rounded-[2px_16px_16px_16px] border border-border bg-muted px-3 py-1.5 text-sm italic text-muted-foreground">
+      This message was deleted
+    </div>
+  ) : (
     <>
       {audioFiles.map((file, index) => (
         <div key={file.id} className="w-[320px] max-w-full">
@@ -743,7 +748,7 @@ export function InboxThreadMessages({
                         />
                       </div>
                       <span className="pl-0.5 text-xs text-muted-foreground">
-                        {formatMessageTime(m._creationTime)}{m.editedAt ? ' · Edited' : ''}
+                        {formatMessageTime(m._creationTime)}{m.revokedAt ? ' · Deleted' : m.editedAt ? ' · Edited' : ''}
                       </span>
                     </div>
                   ) : (

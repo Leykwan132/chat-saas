@@ -211,6 +211,53 @@ test("WhatsApp edits update the original message without creating a new inbound 
   expect(inboundArgs).toBeUndefined();
 });
 
+test("WhatsApp revokes update the original message without creating a new inbound message", async () => {
+  const runMutation = vi.fn().mockResolvedValue(undefined);
+  const ctx = { runMutation } as unknown as Parameters<typeof receive>[0];
+  const response = await receive(ctx, JSON.stringify({
+    entry: [{
+      changes: [{
+        field: "messages",
+        value: {
+          metadata: { phone_number_id: "phone-123" },
+          messages: [{
+            id: "revoke-event-123",
+            from: "60129499394",
+            timestamp: "1700000005",
+            type: "revoke",
+            revoke: { original_message_id: "original-message-123" },
+          }],
+        },
+      }],
+    }],
+  }));
+
+  const revokeArgs = runMutation.mock.calls
+    .map((call) => call[1])
+    .find(
+      (args) =>
+        args !== null &&
+        typeof args === "object" &&
+        "originalExternalId" in args,
+    );
+  const inboundArgs = runMutation.mock.calls
+    .map((call) => call[1])
+    .find(
+      (args) =>
+        args !== null &&
+        typeof args === "object" &&
+        "externalId" in args &&
+        args.externalId === "revoke-event-123",
+    );
+
+  expect(response.status).toBe(200);
+  expect(revokeArgs).toMatchObject({
+    phoneNumberId: "phone-123",
+    originalExternalId: "original-message-123",
+  });
+  expect(inboundArgs).toBeUndefined();
+});
+
 test("user ID change system events update identity without ingesting a chat message", async () => {
   const runMutation = vi.fn().mockResolvedValue(undefined);
   const ctx = { runMutation } as unknown as Parameters<typeof receive>[0];

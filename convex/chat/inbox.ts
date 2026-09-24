@@ -725,6 +725,15 @@ export const generateAiReplyWorker = internalAction({
     ) {
       return;
     }
+    if (
+      args.promptMessageId !== undefined &&
+      (await ctx.runQuery(internal.chat.inbox.internalIsInboundMessageRevoked, {
+        conversationId: args.conversationId,
+        agentMessageId: args.promptMessageId,
+      }))
+    ) {
+      return;
+    }
 
     const agent = await ctx.runQuery(internal.agents.internalGet, {
       agentId: conv.assignedAgentId,
@@ -880,6 +889,15 @@ export const generateAiReplyWorker = internalAction({
       if (
         !(await ctx.runQuery(internal.teamDeletion.access.canProcess, {
           orgId: conv.orgId,
+        }))
+      ) {
+        return;
+      }
+      if (
+        args.promptMessageId !== undefined &&
+        (await ctx.runQuery(internal.chat.inbox.internalIsInboundMessageRevoked, {
+          conversationId: args.conversationId,
+          agentMessageId: args.promptMessageId,
         }))
       ) {
         return;
@@ -1068,6 +1086,26 @@ export const internalGetConversation = internalQuery({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.conversationId);
+  },
+});
+
+export const internalIsInboundMessageRevoked = internalQuery({
+  args: {
+    conversationId: v.id("conversations"),
+    agentMessageId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const message = await ctx.db
+      .query("messages")
+      .withIndex("by_agentMessageId", (q) => q.eq("agentMessageId", args.agentMessageId))
+      .order("desc")
+      .first();
+    return (
+      message !== null &&
+      message.conversationId === args.conversationId &&
+      message.direction === "incoming" &&
+      message.revokedAt !== undefined
+    );
   },
 });
 

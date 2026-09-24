@@ -6,7 +6,7 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { internalMutation } from "./triggers";
-import { components, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 import {
   normalizeMetaTemplateId,
   normalizeWhatsAppTemplateCategory,
@@ -19,6 +19,10 @@ import {
 import { resolveWhatsAppImageFiles } from "./chat/inboxImageIngest";
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
 import { recordPendingOutboundReceipt } from "./chat/pendingOutboundReceipt";
+import {
+  REVOKED_INBOUND_MESSAGE_TEXT,
+  replaceIncomingMessage,
+} from "./chat/inboundMessageReplacement";
 import { whatsappSyncPool } from "./channelSyncPools";
 import {
   isOpenWhatsAppConnectionAttempt,
@@ -501,6 +505,23 @@ export async function receive(
               phoneNumberId,
               originalExternalId,
               content,
+              timestampMs: parseTimestamp(message.timestamp),
+            });
+            continue;
+          }
+
+          if (message.type === "revoke") {
+            const originalExternalId = message.revoke?.original_message_id;
+            if (!originalExternalId) {
+              console.warn("WhatsApp revoke webhook was malformed", {
+                phoneNumberId,
+                externalId: message.id,
+              });
+              continue;
+            }
+            await ctx.runMutation(internal.whatsappWebhook.handleMessageRevoke, {
+              phoneNumberId,
+              originalExternalId,
               timestampMs: parseTimestamp(message.timestamp),
             });
             continue;
@@ -1277,54 +1298,40 @@ export const handleMessageEdit = internalMutation({
     const channel = channels.find((candidate) => candidate.status === "connected") ?? channels[0];
     if (channel === undefined) return { updated: false };
 
-    const messages = (await ctx.db
-      .query("messages")
-      .withIndex("by_externalId", (q) => q.eq("externalId", args.originalExternalId))
-      .take(20))
-      .filter(
-        (message) =>
-          message.channelId === channel._id &&
-          message.direction === "incoming" &&
-          message.contentType === "text",
-      );
-    if (messages.length === 0) return { updated: false };
-
-    for (const message of messages) {
-      await ctx.db.patch(message._id, {
+    return {
+      updated: await replaceIncomingMessage(ctx, {
+        channelId: channel._id,
+        originalExternalId: args.originalExternalId,
         content: args.content,
-        editedAt: args.timestampMs,
-      });
-    }
+        timestampMs: args.timestampMs,
+        state: "edited",
+      }),
+    };
+  },
+});
 
-    const agentMessageIds = new Set(
-      messages.flatMap((message) => message.agentMessageId ? [message.agentMessageId] : []),
-    );
-    for (const messageId of agentMessageIds) {
-      await ctx.runMutation(components.agent.messages.updateMessage, {
-        messageId,
-        patch: {
-          message: { role: "user", content: args.content },
-          status: "success",
-        },
-      });
-    }
-
-    const conversationIds = new Set(messages.map((message) => message.conversationId));
-    for (const conversationId of conversationIds) {
-      const conversation = await ctx.db.get(conversationId);
-      const latestMessage = messages.find(
-        (message) => message.conversationId === conversationId && message.createdAt === conversation?.lastMessageAt,
-      );
-      if (conversation !== null && latestMessage !== undefined) {
-        await ctx.db.patch(conversation._id, {
-          lastMessagePreview: args.content.slice(0, 140),
-          lastMessageSentByAi: false,
-          updatedAt: args.timestampMs,
-        });
-      }
-    }
-
-    return { updated: true };
+export const handleMessageRevoke = internalMutation({
+  args: {
+    phoneNumberId: v.string(),
+    originalExternalId: v.string(),
+    timestampMs: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const channels = await ctx.db
+      .query("channels")
+      .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
+      .take(10);
+    const channel = channels.find((candidate) => candidate.status === "connected") ?? channels[0];
+    if (channel === undefined) return { updated: false };
+    return {
+      updated: await replaceIncomingMessage(ctx, {
+        channelId: channel._id,
+        originalExternalId: args.originalExternalId,
+        content: REVOKED_INBOUND_MESSAGE_TEXT,
+        timestampMs: args.timestampMs,
+        state: "revoked",
+      }),
+    };
   },
 });
 
@@ -1554,6 +1561,7 @@ type WhatsAppIncomingMessage = {
     original_message_id?: string;
     message?: { type?: string; text?: { body?: string } };
   };
+  revoke?: { original_message_id?: string };
   button?: { text?: string };
   interactive?: {
     button_reply?: { id?: string; title?: string };

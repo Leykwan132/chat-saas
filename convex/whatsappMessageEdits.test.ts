@@ -6,7 +6,7 @@ import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
 
-test("WhatsApp edit replaces the original incoming message and current Inbox preview", async () => {
+test("WhatsApp edit and revoke replace the original incoming message and current Inbox preview", async () => {
   const t = convexTest(schema, modules);
   const { conversationId, messageId, now } = await t.run(async (ctx) => {
     const now = 1_700_000_000_000;
@@ -78,6 +78,28 @@ test("WhatsApp edit replaces the original incoming message and current Inbox pre
   expect(rows.conversation).toMatchObject({
     lastMessageAt: now,
     lastMessagePreview: "Updated message",
+    unreadCount: 1,
+  });
+
+  const revokeResult = await t.mutation(internal.whatsappWebhook.handleMessageRevoke, {
+    phoneNumberId: "phone-123",
+    originalExternalId: "original-message-123",
+    timestampMs: now + 10_000,
+  });
+  const revoked = await t.run(async (ctx) => ({
+    message: await ctx.db.get(messageId),
+    conversation: await ctx.db.get(conversationId),
+  }));
+
+  expect(revokeResult).toEqual({ updated: true });
+  expect(revoked.message).toMatchObject({
+    content: "This message was deleted",
+    revokedAt: now + 10_000,
+    createdAt: now,
+  });
+  expect(revoked.conversation).toMatchObject({
+    lastMessageAt: now,
+    lastMessagePreview: "This message was deleted",
     unreadCount: 1,
   });
 });
