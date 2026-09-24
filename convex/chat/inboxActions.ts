@@ -597,6 +597,7 @@ async function sendAiReplyContent(
 ): Promise<AiReplySendResult> {
   const options = {
     allowHumanAgentTag: args.allowHumanAgentTag ?? false,
+    isAiGenerated: true,
     whatsappCustomer: customer ?? undefined,
   };
   const content = normalizeCustomerFacingResponseFormatting(args.content);
