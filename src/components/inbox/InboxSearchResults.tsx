@@ -1,7 +1,7 @@
-import { LoaderCircle, MessageSquare, Search } from 'lucide-react';
+import { LoaderCircle, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InboxSearchHighlight } from '@/components/inbox/inboxSearchHighlight';
-import type { Id } from '../../../../convex/_generated/dataModel';
+import type { Id } from '../../../convex/_generated/dataModel';
 
 type SearchRow = {
   conversationId: Id<'conversations'>;

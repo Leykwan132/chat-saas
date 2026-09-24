@@ -521,10 +521,14 @@ export default function ChatsPage() {
   const handleLoadMoreInboxSummaries = useCallback(() => {
     if (inboxSummaryStatus !== 'CanLoadMore' || inboxLoadInFlightRef.current) return;
     inboxLoadInFlightRef.current = true;
-    void loadMoreInboxSummaries(50).finally(() => {
-      inboxLoadInFlightRef.current = false;
-    });
+    loadMoreInboxSummaries(50);
   }, [inboxSummaryStatus, loadMoreInboxSummaries]);
+
+  useEffect(() => {
+    if (inboxSummaryStatus !== 'CanLoadMore') {
+      inboxLoadInFlightRef.current = false;
+    }
+  }, [inboxSummaryStatus]);
 
   const inboxSearchResults = debouncedSearchQuery ? (
     <InboxSearchResults

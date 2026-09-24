@@ -41,11 +41,7 @@ export const INBOX_DEMO_CONVERSATIONS: Chat[] = [
     platform: 'instagram',
     requiresAction: true,
     conversationStatus: 'requires_user_input',
-    escalation: {
-      question: 'Can I move my appointment to Friday?',
-      context: 'The customer needs help changing an existing booking.',
-      escalatedAt: Date.now() - 18 * 60 * 1000,
-    },
+    isEscalated: true,
   },
   {
     id: demoConversationId('demo-aisha-rahman'),
