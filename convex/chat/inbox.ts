@@ -386,9 +386,22 @@ export const internalPersistAiReplyMessages = internalMutation({
       console.warn("[inbox] persist AI reply skipped: empty after normalize", {
         conversationId: conv._id,
         inputCount: args.messages.length,
+        inputPreview: args.messages.map((message) => message.content.slice(0, 120)),
       });
       return null;
     }
+    console.info("[inbox] persist AI reply entering loop", {
+      conversationId: conv._id,
+      threadId: args.threadId,
+      inputCount: args.messages.length,
+      count: messages.length,
+      status: args.status ?? "sent",
+      messages: messages.map((message) => ({
+        contentLength: message.content.length,
+        head: message.content.slice(0, 120),
+        hasExternalId: message.externalId !== undefined,
+      })),
+    });
 
     const channel = conv.channelId ? await ctx.db.get(conv.channelId) : null;
     const orgAddress =
