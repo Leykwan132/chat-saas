@@ -18,7 +18,6 @@ import {
 } from "./chat/inboxAudioIngest";
 import { resolveWhatsAppImageFiles } from "./chat/inboxImageIngest";
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
-import { recordPendingOutboundReceipt } from "./chat/pendingOutboundReceipt";
 import {
   REVOKED_INBOUND_MESSAGE_TEXT,
   replaceIncomingMessage,
@@ -1280,15 +1279,11 @@ export const handleStatus = internalMutation({
       channelId: channel?._id,
       failureReason: args.failureReason,
     });
-    if (message === null && channel !== null && result.updated === 0) {
-      await recordPendingOutboundReceipt(ctx, {
-        externalId: args.externalId,
-        channelId: channel._id,
-        status: args.status,
-        timestampMs: args.timestampMs,
-        failureReason: args.failureReason,
-      });
-    }
+    console.info("[whatsapp] status update applied", {
+      externalId: args.externalId,
+      status: args.status,
+      updated: result.updated,
+    });
   },
 });
 

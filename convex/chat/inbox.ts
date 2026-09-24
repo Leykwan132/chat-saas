@@ -12,7 +12,6 @@ import { INBOX_IMAGE_PLACEHOLDER } from "../../shared/inboxAttachments";
 import { components } from "../_generated/api";
 import { syncStreams, vStreamArgs } from "@convex-dev/agent";
 import { messageDocsToInboxUIMessages, listMessages, getChannelName } from "./inboxMessageMapping";
-import { ORPHAN_AFTER_MS } from "./queuedOutboundReconciliation";
 import { paginationOptsValidator } from "convex/server";
 import { getAuthContext } from "../authUtils";
 import {
@@ -48,7 +47,6 @@ import { canProcessWorkspaceActivity } from "../teamDeletion/access";
 import { notifyHumanEscalation } from "../telegramNotifications/events";
 import { splitAiReplyMessages } from "./aiReplyMessages";
 import { applyBookingReplyGate } from "./applyBookingReply";
-import { applyPendingOutboundReceipt } from "./pendingOutboundReceipt";
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
@@ -359,7 +357,8 @@ export const internalPersistAiReplyMessages = internalMutation({
     llmModel: v.optional(v.string()),
     creditsCharged: v.optional(v.number()),
     sourceEventId: v.optional(v.string()),
-    deliveryStatus: v.optional(v.literal("queued")),
+    status: v.optional(v.union(v.literal("sent"), v.literal("failed"))),
+    failureReason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const conv = await ctx.db.get(args.conversationId);
@@ -380,7 +379,6 @@ export const internalPersistAiReplyMessages = internalMutation({
     const startedAt = Date.now();
     let lastAgentMessageId = "";
     let lastMessageId: Id<"messages"> | null = null;
-    const messageIds: Id<"messages">[] = [];
 
     for (const [index, message] of messages.entries()) {
       const sentAt = startedAt + index;
@@ -413,27 +411,32 @@ export const internalPersistAiReplyMessages = internalMutation({
         sourceEventId: args.sourceEventId,
         llmModel: args.llmModel,
         creditsCharged,
-        status: args.deliveryStatus ?? "sent",
+        status: args.status ?? "sent",
+        ...(args.status === "failed" && args.failureReason
+          ? { failureReason: args.failureReason }
+          : {}),
         createdAt: sentAt,
       });
-      messageIds.push(lastMessageId);
     }
+
+    console.info("[inbox] persisted AI reply messages after channel send", {
+      conversationId: conv._id,
+      count: messages.length,
+      status: args.status ?? "sent",
+      allHaveExternalId: messages.every((message) => message.externalId !== undefined),
+    });
 
     const lastContent = messages.at(-1)?.content ?? "";
     const lastMessageAt = startedAt + messages.length - 1;
-    if (args.deliveryStatus === "queued") {
+
+    if (args.status === "failed") {
       await ctx.db.patch(conv._id, {
         lastMessageAt,
         lastMessagePreview: lastContent.slice(0, 140),
         lastMessageSentByAi: true,
         updatedAt: lastMessageAt,
       });
-      await ctx.scheduler.runAfter(
-        ORPHAN_AFTER_MS,
-        internal.chat.queuedOutboundReconciliation.verifyQueuedFinalized,
-        { messageIds },
-      );
-      return { agentMessageId: lastAgentMessageId, messageIds };
+      return replyPersistResult(lastAgentMessageId, false, undefined);
     }
 
     if (conv.assignedAgentId !== undefined) {
@@ -460,87 +463,8 @@ export const internalPersistAiReplyMessages = internalMutation({
       await handleWorkflowFollowUpOutbound(ctx, lastMessageId);
     }
 
-    return {
-      ...replyPersistResult(
-        lastAgentMessageId,
-        markedRead,
-        markedRead ? await latestIncomingExternalId(ctx, conv._id) : undefined,
-      ),
-      messageIds,
-    };
-  },
-});
-
-export const internalFinalizeAiReplyMessages = internalMutation({
-  args: {
-    conversationId: v.id("conversations"),
-    messageIds: v.array(v.id("messages")),
-    externalIds: v.array(v.union(v.string(), v.null())),
-    status: v.union(v.literal("sent"), v.literal("failed")),
-    failureReason: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const conv = await ctx.db.get(args.conversationId);
-    if (conv === null) return null;
-
-    const messages = await Promise.all(args.messageIds.map((messageId) => ctx.db.get(messageId)));
-    const outboundMessages = messages.filter(
-      (message): message is Doc<"messages"> =>
-        message !== null &&
-        message.conversationId === conv._id &&
-        message.direction === "outgoing",
-    );
-    if (outboundMessages.length !== args.messageIds.length) {
-      throw new Error("AI reply messages do not belong to this conversation");
-    }
-
-    const now = Date.now();
-    for (const [index, message] of outboundMessages.entries()) {
-      const externalId = args.externalIds[index];
-      await ctx.db.patch(message._id, {
-        status: args.status,
-        statusUpdatedAt: now,
-        ...(externalId ? { externalId } : {}),
-        ...(args.status === "failed" && args.failureReason
-          ? { failureReason: args.failureReason }
-          : {}),
-      });
-      if (args.status === "sent" && externalId && message.channelId !== undefined) {
-        await applyPendingOutboundReceipt(ctx, {
-          externalId,
-          channelId: message.channelId,
-        });
-      }
-    }
-
-    if (args.status === "failed") return null;
-
-    if (conv.assignedAgentId !== undefined) {
-      await recordAiAssistedConversationAggregate(ctx, {
-        conversation: conv,
-        agentId: conv.assignedAgentId,
-        timestamp: now,
-      });
-    }
-
-    const lastMessage = outboundMessages.at(-1);
-    if (lastMessage === undefined) return null;
-    const markedRead = conv.unreadCount > 0;
-    await ctx.db.patch(conv._id, {
-      lastMessageAt: lastMessage.createdAt,
-      lastMessagePreview: lastMessage.content.slice(0, 140),
-      lastMessageSentByAi: true,
-      unreadCount: 0,
-      updatedAt: now,
-    });
-    await markConversationAnalyticsDirty(ctx, {
-      conversationId: conv._id,
-      earliestDirtyMessageAt: lastMessage.createdAt,
-    });
-    await handleWorkflowFollowUpOutbound(ctx, lastMessage._id);
-
     return replyPersistResult(
-      lastMessage.agentMessageId ?? "",
+      lastAgentMessageId,
       markedRead,
       markedRead ? await latestIncomingExternalId(ctx, conv._id) : undefined,
     );
@@ -937,31 +861,9 @@ export const generateAiReplyWorker = internalAction({
         return;
       }
 
-      const queuedTextReply: {
-        agentMessageId: string;
-        messageIds: Id<"messages">[];
-      } | null =
-        replyMessages.length > 0
-          ? await ctx.runMutation(internal.chat.inbox.internalPersistAiReplyMessages, {
-              conversationId: conv._id,
-              threadId: conv.threadId,
-              messages: replyMessages.map((content) => ({ content })),
-              llmModel: usage.llmModel,
-              creditsCharged: usage.creditsCharged,
-              sourceEventId: args.avatarSourceEventId,
-              deliveryStatus: "queued",
-            })
-          : null;
-      if (replyMessages.length > 0 && queuedTextReply === null) {
-        console.error("AI reply skipped: queued persistence failed", {
-          conversationId: args.conversationId,
-        });
-        return;
-      }
-
       await turnTypingOff();
 
-      let sendResult: {
+      const sendResult: {
         ok: boolean;
         error?: string;
         policy?: string;
@@ -969,26 +871,26 @@ export const generateAiReplyWorker = internalAction({
         sentTextCount: number;
         textExternalIds: Array<string | null>;
         mediaExternalIds: string[];
-      };
-      try {
-        sendResult = await ctx.runAction(
-          internal.chat.inboxActions.internalSendAiReplyMessages,
-          {
-            conversationId: conv._id,
-            contents: replyMessages,
-            mediaUrls: allMediaUrls,
-            mediaItems: channelMediaItems,
-            allowHumanAgentTag: false,
-          },
-        );
-      } catch (error) {
+      } | null = await ctx.runAction(
+        internal.chat.inboxActions.internalSendAiReplyMessages,
+        {
+          conversationId: conv._id,
+          contents: replyMessages,
+          mediaUrls: allMediaUrls,
+          mediaItems: channelMediaItems,
+          allowHumanAgentTag: false,
+        },
+      ).catch(async (error) => {
         const failureReason =
           error instanceof Error ? error.message : "Channel delivery failed";
-        if (queuedTextReply !== null) {
-          await ctx.runMutation(internal.chat.inbox.internalFinalizeAiReplyMessages, {
+        if (replyMessages.length > 0) {
+          await ctx.runMutation(internal.chat.inbox.internalPersistAiReplyMessages, {
             conversationId: conv._id,
-            messageIds: queuedTextReply.messageIds,
-            externalIds: queuedTextReply.messageIds.map(() => null),
+            threadId: conv.threadId,
+            messages: replyMessages.map((content) => ({ content })),
+            llmModel: usage.llmModel,
+            creditsCharged: usage.creditsCharged,
+            sourceEventId: args.avatarSourceEventId,
             status: "failed",
             failureReason,
           });
@@ -997,8 +899,9 @@ export const generateAiReplyWorker = internalAction({
           conversationId: conv._id,
           service: conv.service,
         });
-        return;
-      }
+        return null;
+      });
+      if (sendResult === null) return;
 
       const enqueueMetaMarkSeenIfRead = async (
         persistResult: {
@@ -1034,20 +937,27 @@ export const generateAiReplyWorker = internalAction({
         await enqueueMetaMarkSeenIfRead(persistResult);
       }
 
-      if (queuedTextReply !== null) {
+      const sentMessages = replyMessages
+        .slice(0, sendResult.sentTextCount)
+        .map((content, index) => ({
+          content,
+          ...(sendResult.textExternalIds[index]
+            ? { externalId: sendResult.textExternalIds[index] as string }
+            : {}),
+        }));
+      if (sentMessages.length > 0) {
         const persistResult: {
           markedRead: boolean;
           latestInboundExternalId?: string;
         } | null = await ctx.runMutation(
-          internal.chat.inbox.internalFinalizeAiReplyMessages,
+          internal.chat.inbox.internalPersistAiReplyMessages,
           {
             conversationId: conv._id,
-            messageIds: queuedTextReply.messageIds,
-            externalIds: queuedTextReply.messageIds.map(
-              (_, index) => sendResult.textExternalIds[index] ?? null,
-            ),
-            status: sendResult.ok ? "sent" : "failed",
-            ...(sendResult.ok ? {} : { failureReason: sendResult.error ?? "Channel delivery failed" }),
+            threadId: conv.threadId,
+            messages: sentMessages,
+            llmModel: usage.llmModel,
+            creditsCharged: usage.creditsCharged,
+            sourceEventId: args.avatarSourceEventId,
           },
         );
         await enqueueMetaMarkSeenIfRead(persistResult);

@@ -3,7 +3,6 @@ import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { applyPendingOutboundReceipt } from "./chat/pendingOutboundReceipt";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -128,55 +127,6 @@ test("WhatsApp read status updates duplicate outgoing rows by external id", asyn
     source: "whatsapp_status",
     providerMessageId: "wamid.outbound",
   });
-});
-
-test("WhatsApp read status received before the outbound record is finalized is applied", async () => {
-  const t = convexTest(schema, modules);
-  const { channelId, conversationId, now } = await insertFixture(t, "whatsapp");
-
-  await t.mutation(internal.whatsappWebhook.handleStatus, {
-    phoneNumberId: "phone-123",
-    externalId: "wamid.race",
-    status: "read",
-    timestampMs: now + 5000,
-  });
-
-  const messageId = await t.run(async (ctx) => {
-    return await ctx.db.insert("messages", {
-      orgId: "org-123",
-      conversationId,
-      channelId,
-      service: "whatsapp",
-      orgAddress: "phone-123",
-      contactAddress: "+60123456789",
-      direction: "outgoing",
-      contentType: "text",
-      content: "Hello",
-      status: "sent",
-      createdAt: now + 1,
-      externalId: "wamid.race",
-    });
-  });
-
-  await t.run(async (ctx) => {
-    await applyPendingOutboundReceipt(ctx, {
-      externalId: "wamid.race",
-      channelId,
-    });
-  });
-
-  const result = await t.run(async (ctx) => ({
-    message: await ctx.db.get(messageId),
-    pending: await ctx.db
-      .query("pendingOutboundReceiptEvents")
-      .withIndex("by_externalId_and_channelId", (q) =>
-        q.eq("externalId", "wamid.race").eq("channelId", channelId),
-      )
-      .unique(),
-  }));
-  expect(result.message?.status).toBe("read");
-  expect(result.message?.readAt).toBe(now + 5000);
-  expect(result.pending).toBeNull();
 });
 
 test("Instagram seen receipt marks matching message and earlier outgoing messages", async () => {

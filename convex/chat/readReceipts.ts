@@ -104,6 +104,13 @@ export async function applyOutboundStatusByExternalId(
     });
     if (patched) updated += 1;
   }
+  if (updated === 0) {
+    console.warn("[receipts] status update matched no message row", {
+      externalId: args.externalId,
+      status: args.status,
+      source: args.source,
+    });
+  }
   return { updated };
 }
 
