@@ -1,4 +1,5 @@
 import { AlertCircle, Check, CheckCheck, Loader2, Send, SmilePlus } from 'lucide-react';
+import { PiProhibit as ProhibitIcon } from 'react-icons/pi';
 import { isFileUIPart } from 'ai';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -387,8 +388,9 @@ function InboxMessageBody({
   }
 
   const messageContent = isRevoked ? (
-    <div className="w-fit max-w-full rounded-[2px_16px_16px_16px] border border-border bg-muted px-3 py-1.5 text-sm italic text-muted-foreground">
-      This message was deleted
+    <div className="flex w-fit max-w-full items-center gap-2 rounded-[2px_16px_16px_16px] border border-border bg-muted px-3 py-1.5 text-sm italic text-muted-foreground">
+      <ProhibitIcon aria-hidden="true" size={32} />
+      <span>This message was deleted</span>
     </div>
   ) : (
     <>
