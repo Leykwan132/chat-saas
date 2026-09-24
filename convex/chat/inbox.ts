@@ -12,6 +12,7 @@ import { INBOX_IMAGE_PLACEHOLDER } from "../../shared/inboxAttachments";
 import { components } from "../_generated/api";
 import { syncStreams, vStreamArgs } from "@convex-dev/agent";
 import { messageDocsToInboxUIMessages, listMessages, getChannelName } from "./inboxMessageMapping";
+import { ORPHAN_AFTER_MS } from "./queuedOutboundReconciliation";
 import { paginationOptsValidator } from "convex/server";
 import { getAuthContext } from "../authUtils";
 import {
@@ -427,6 +428,11 @@ export const internalPersistAiReplyMessages = internalMutation({
         lastMessageSentByAi: true,
         updatedAt: lastMessageAt,
       });
+      await ctx.scheduler.runAfter(
+        ORPHAN_AFTER_MS,
+        internal.chat.queuedOutboundReconciliation.verifyQueuedFinalized,
+        { messageIds },
+      );
       return { agentMessageId: lastAgentMessageId, messageIds };
     }
 

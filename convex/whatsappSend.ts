@@ -98,6 +98,12 @@ export const sendText = action({
     }
 
     const externalId = body?.messages?.[0]?.id;
+    if (externalId === undefined) {
+      console.warn("[whatsapp] send returned no provider message id", {
+        conversationId: args.conversationId,
+        channelId: channel._id,
+      });
+    }
     await ctx.runMutation(internal.whatsappSend.internalRecordOutgoing, {
       conversationId: args.conversationId,
       channelId: channel._id,

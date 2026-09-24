@@ -1263,7 +1263,14 @@ export const handleStatus = internalMutation({
       }
     }
 
-    if (args.phoneNumberId !== undefined && channel === null) return;
+    if (args.phoneNumberId !== undefined && channel === null) {
+      console.warn("[whatsapp] status update dropped: unknown channel", {
+        phoneNumberId: args.phoneNumberId,
+        externalId: args.externalId,
+        status: args.status,
+      });
+      return;
+    }
 
     const result = await applyOutboundStatusByExternalId(ctx, {
       externalId: args.externalId,
