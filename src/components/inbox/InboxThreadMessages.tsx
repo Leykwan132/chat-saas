@@ -743,7 +743,7 @@ export function InboxThreadMessages({
                         />
                       </div>
                       <span className="pl-0.5 text-xs text-muted-foreground">
-                        {formatMessageTime(m._creationTime)}
+                        {formatMessageTime(m._creationTime)}{m.editedAt ? ' · Edited' : ''}
                       </span>
                     </div>
                   ) : (

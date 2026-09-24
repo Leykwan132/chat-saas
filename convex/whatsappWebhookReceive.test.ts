@@ -160,6 +160,57 @@ test("live WhatsApp messages use the numeric address while retaining the Meta us
   });
 });
 
+test("WhatsApp edits update the original message without creating a new inbound message", async () => {
+  const runMutation = vi.fn().mockResolvedValue(undefined);
+  const ctx = { runMutation } as unknown as Parameters<typeof receive>[0];
+  const response = await receive(ctx, JSON.stringify({
+    entry: [{
+      changes: [{
+        field: "messages",
+        value: {
+          metadata: { phone_number_id: "phone-123" },
+          messages: [{
+            id: "edit-event-123",
+            from: "60129499394",
+            timestamp: "1700000005",
+            type: "edit",
+            edit: {
+              original_message_id: "original-message-123",
+              message: { type: "text", text: { body: "Updated message" } },
+            },
+          }],
+        },
+      }],
+    }],
+  }));
+
+  const editArgs = runMutation.mock.calls
+    .map((call) => call[1])
+    .find(
+      (args) =>
+        args !== null &&
+        typeof args === "object" &&
+        "originalExternalId" in args,
+    );
+  const inboundArgs = runMutation.mock.calls
+    .map((call) => call[1])
+    .find(
+      (args) =>
+        args !== null &&
+        typeof args === "object" &&
+        "externalId" in args &&
+        args.externalId === "edit-event-123",
+    );
+
+  expect(response.status).toBe(200);
+  expect(editArgs).toMatchObject({
+    phoneNumberId: "phone-123",
+    originalExternalId: "original-message-123",
+    content: "Updated message",
+  });
+  expect(inboundArgs).toBeUndefined();
+});
+
 test("user ID change system events update identity without ingesting a chat message", async () => {
   const runMutation = vi.fn().mockResolvedValue(undefined);
   const ctx = { runMutation } as unknown as Parameters<typeof receive>[0];

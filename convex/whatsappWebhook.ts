@@ -6,7 +6,7 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { internalMutation } from "./triggers";
-import { internal } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import {
   normalizeMetaTemplateId,
   normalizeWhatsAppTemplateCategory,
@@ -483,6 +483,25 @@ export async function receive(
               profileName: profile?.name,
               targetExternalId: message.reaction.message_id,
               emoji: message.reaction.emoji,
+            });
+            continue;
+          }
+
+          if (message.type === "edit") {
+            const originalExternalId = message.edit?.original_message_id;
+            const content = message.edit?.message?.text?.body;
+            if (!originalExternalId || content === undefined) {
+              console.warn("WhatsApp edit webhook was malformed", {
+                phoneNumberId,
+                externalId: message.id,
+              });
+              continue;
+            }
+            await ctx.runMutation(internal.whatsappWebhook.handleMessageEdit, {
+              phoneNumberId,
+              originalExternalId,
+              content,
+              timestampMs: parseTimestamp(message.timestamp),
             });
             continue;
           }
@@ -1243,6 +1262,72 @@ export const handleStatus = internalMutation({
   },
 });
 
+export const handleMessageEdit = internalMutation({
+  args: {
+    phoneNumberId: v.string(),
+    originalExternalId: v.string(),
+    content: v.string(),
+    timestampMs: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const channels = await ctx.db
+      .query("channels")
+      .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
+      .take(10);
+    const channel = channels.find((candidate) => candidate.status === "connected") ?? channels[0];
+    if (channel === undefined) return { updated: false };
+
+    const messages = (await ctx.db
+      .query("messages")
+      .withIndex("by_externalId", (q) => q.eq("externalId", args.originalExternalId))
+      .take(20))
+      .filter(
+        (message) =>
+          message.channelId === channel._id &&
+          message.direction === "incoming" &&
+          message.contentType === "text",
+      );
+    if (messages.length === 0) return { updated: false };
+
+    for (const message of messages) {
+      await ctx.db.patch(message._id, {
+        content: args.content,
+        editedAt: args.timestampMs,
+      });
+    }
+
+    const agentMessageIds = new Set(
+      messages.flatMap((message) => message.agentMessageId ? [message.agentMessageId] : []),
+    );
+    for (const messageId of agentMessageIds) {
+      await ctx.runMutation(components.agent.messages.updateMessage, {
+        messageId,
+        patch: {
+          message: { role: "user", content: args.content },
+          status: "success",
+        },
+      });
+    }
+
+    const conversationIds = new Set(messages.map((message) => message.conversationId));
+    for (const conversationId of conversationIds) {
+      const conversation = await ctx.db.get(conversationId);
+      const latestMessage = messages.find(
+        (message) => message.conversationId === conversationId && message.createdAt === conversation?.lastMessageAt,
+      );
+      if (conversation !== null && latestMessage !== undefined) {
+        await ctx.db.patch(conversation._id, {
+          lastMessagePreview: args.content.slice(0, 140),
+          lastMessageSentByAi: false,
+          updatedAt: args.timestampMs,
+        });
+      }
+    }
+
+    return { updated: true };
+  },
+});
+
 export const handleReaction = internalMutation({
   args: {
     phoneNumberId: v.string(),
@@ -1465,6 +1550,10 @@ type WhatsAppIncomingMessage = {
   audio?: WhatsAppMediaPayload & { voice?: boolean };
   document?: WhatsAppMediaPayload & { filename?: string };
   reaction?: { message_id?: string; emoji?: string };
+  edit?: {
+    original_message_id?: string;
+    message?: { type?: string; text?: { body?: string } };
+  };
   button?: { text?: string };
   interactive?: {
     button_reply?: { id?: string; title?: string };

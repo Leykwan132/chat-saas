@@ -81,6 +81,7 @@ export type InboxUIMessage = UIMessage & {
   channelStatus?: Doc<"messages">["status"];
   channelStatusUpdatedAt?: number;
   readAt?: number;
+  editedAt?: number;
   failureReason?: string;
   reactions?: InboxMessageReaction[];
   isBroadcast?: boolean;
@@ -308,6 +309,7 @@ export async function messageDocsToInboxUIMessages(
                 channelStatus: ledger.status,
                 channelStatusUpdatedAt: ledger.statusUpdatedAt,
                 readAt: ledger.readAt,
+                editedAt: ledger.editedAt,
                 failureReason: ledger.failureReason,
                 reactions: ledger.reactions,
               }
