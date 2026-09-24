@@ -355,6 +355,7 @@ export const internalPersistAiReplyMessages = internalMutation({
     llmModel: v.optional(v.string()),
     creditsCharged: v.optional(v.number()),
     sourceEventId: v.optional(v.string()),
+    deliveryStatus: v.optional(v.literal("queued")),
   },
   handler: async (ctx, args) => {
     const conv = await ctx.db.get(args.conversationId);
@@ -375,6 +376,7 @@ export const internalPersistAiReplyMessages = internalMutation({
     const startedAt = Date.now();
     let lastAgentMessageId = "";
     let lastMessageId: Id<"messages"> | null = null;
+    const messageIds: Id<"messages">[] = [];
 
     for (const [index, message] of messages.entries()) {
       const sentAt = startedAt + index;
@@ -407,9 +409,14 @@ export const internalPersistAiReplyMessages = internalMutation({
         sourceEventId: args.sourceEventId,
         llmModel: args.llmModel,
         creditsCharged,
-        status: "sent",
+        status: args.deliveryStatus ?? "sent",
         createdAt: sentAt,
       });
+      messageIds.push(lastMessageId);
+    }
+
+    if (args.deliveryStatus === "queued") {
+      return { agentMessageId: lastAgentMessageId, messageIds };
     }
 
     if (conv.assignedAgentId !== undefined) {
@@ -436,8 +443,80 @@ export const internalPersistAiReplyMessages = internalMutation({
       await handleWorkflowFollowUpOutbound(ctx, lastMessageId);
     }
 
+    return {
+      ...replyPersistResult(
+        lastAgentMessageId,
+        markedRead,
+        markedRead ? await latestIncomingExternalId(ctx, conv._id) : undefined,
+      ),
+      messageIds,
+    };
+  },
+});
+
+export const internalFinalizeAiReplyMessages = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+    messageIds: v.array(v.id("messages")),
+    externalIds: v.array(v.union(v.string(), v.null())),
+    status: v.union(v.literal("sent"), v.literal("failed")),
+    failureReason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null) return null;
+
+    const messages = await Promise.all(args.messageIds.map((messageId) => ctx.db.get(messageId)));
+    const outboundMessages = messages.filter(
+      (message): message is Doc<"messages"> =>
+        message !== null &&
+        message.conversationId === conv._id &&
+        message.direction === "outgoing",
+    );
+    if (outboundMessages.length !== args.messageIds.length) {
+      throw new Error("AI reply messages do not belong to this conversation");
+    }
+
+    const now = Date.now();
+    for (const [index, message] of outboundMessages.entries()) {
+      const externalId = args.externalIds[index];
+      await ctx.db.patch(message._id, {
+        status: args.status,
+        statusUpdatedAt: now,
+        ...(externalId ? { externalId } : {}),
+        ...(args.status === "failed" && args.failureReason
+          ? { failureReason: args.failureReason }
+          : {}),
+      });
+    }
+
+    if (args.status === "failed") return null;
+
+    if (conv.assignedAgentId !== undefined) {
+      await recordAiAssistedConversationAggregate(ctx, {
+        conversation: conv,
+        agentId: conv.assignedAgentId,
+        timestamp: now,
+      });
+    }
+
+    const lastMessage = outboundMessages.at(-1);
+    if (lastMessage === undefined) return null;
+    const markedRead = conv.unreadCount > 0;
+    await ctx.db.patch(conv._id, {
+      lastMessageAt: lastMessage.createdAt,
+      lastMessagePreview: lastMessage.content.slice(0, 140),
+      unreadCount: 0,
+      updatedAt: now,
+    });
+    await markConversationAnalyticsDirty(ctx, {
+      conversationId: conv._id,
+      earliestDirtyMessageAt: lastMessage.createdAt,
+    });
+    await handleWorkflowFollowUpOutbound(ctx, lastMessage._id);
+
     return replyPersistResult(
-      lastAgentMessageId,
+      lastMessage.agentMessageId ?? "",
       markedRead,
       markedRead ? await latestIncomingExternalId(ctx, conv._id) : undefined,
     );
@@ -810,9 +889,31 @@ export const generateAiReplyWorker = internalAction({
         return;
       }
 
+      const queuedTextReply: {
+        agentMessageId: string;
+        messageIds: Id<"messages">[];
+      } | null =
+        replyMessages.length > 0
+          ? await ctx.runMutation(internal.chat.inbox.internalPersistAiReplyMessages, {
+              conversationId: conv._id,
+              threadId: conv.threadId,
+              messages: replyMessages.map((content) => ({ content })),
+              llmModel: usage.llmModel,
+              creditsCharged: usage.creditsCharged,
+              sourceEventId: args.avatarSourceEventId,
+              deliveryStatus: "queued",
+            })
+          : null;
+      if (replyMessages.length > 0 && queuedTextReply === null) {
+        console.error("AI reply skipped: queued persistence failed", {
+          conversationId: args.conversationId,
+        });
+        return;
+      }
+
       await turnTypingOff();
 
-      const sendResult: {
+      let sendResult: {
         ok: boolean;
         error?: string;
         policy?: string;
@@ -820,16 +921,36 @@ export const generateAiReplyWorker = internalAction({
         sentTextCount: number;
         textExternalIds: Array<string | null>;
         mediaExternalIds: string[];
-      } = await ctx.runAction(
-        internal.chat.inboxActions.internalSendAiReplyMessages,
-        {
+      };
+      try {
+        sendResult = await ctx.runAction(
+          internal.chat.inboxActions.internalSendAiReplyMessages,
+          {
+            conversationId: conv._id,
+            contents: replyMessages,
+            mediaUrls: allMediaUrls,
+            mediaItems: channelMediaItems,
+            allowHumanAgentTag: false,
+          },
+        );
+      } catch (error) {
+        const failureReason =
+          error instanceof Error ? error.message : "Channel delivery failed";
+        if (queuedTextReply !== null) {
+          await ctx.runMutation(internal.chat.inbox.internalFinalizeAiReplyMessages, {
+            conversationId: conv._id,
+            messageIds: queuedTextReply.messageIds,
+            externalIds: queuedTextReply.messageIds.map(() => null),
+            status: "failed",
+            failureReason,
+          });
+        }
+        console.error("AI reply not sent to channel:", failureReason, {
           conversationId: conv._id,
-          contents: replyMessages,
-          mediaUrls: allMediaUrls,
-          mediaItems: channelMediaItems,
-          allowHumanAgentTag: false,
-        },
-      );
+          service: conv.service,
+        });
+        return;
+      }
 
       const enqueueMetaMarkSeenIfRead = async (
         persistResult: {
@@ -865,27 +986,20 @@ export const generateAiReplyWorker = internalAction({
         await enqueueMetaMarkSeenIfRead(persistResult);
       }
 
-      const sentMessages = replyMessages
-        .slice(0, sendResult.sentTextCount)
-        .map((content, index) => ({
-          content,
-          ...(sendResult.textExternalIds[index]
-            ? { externalId: sendResult.textExternalIds[index] as string }
-            : {}),
-        }));
-      if (sentMessages.length > 0) {
+      if (queuedTextReply !== null) {
         const persistResult: {
           markedRead: boolean;
           latestInboundExternalId?: string;
         } | null = await ctx.runMutation(
-          internal.chat.inbox.internalPersistAiReplyMessages,
+          internal.chat.inbox.internalFinalizeAiReplyMessages,
           {
             conversationId: conv._id,
-            threadId: conv.threadId,
-            messages: sentMessages,
-            llmModel: usage.llmModel,
-            creditsCharged: usage.creditsCharged,
-            sourceEventId: args.avatarSourceEventId,
+            messageIds: queuedTextReply.messageIds,
+            externalIds: queuedTextReply.messageIds.map(
+              (_, index) => sendResult.textExternalIds[index] ?? null,
+            ),
+            status: sendResult.ok ? "sent" : "failed",
+            ...(sendResult.ok ? {} : { failureReason: sendResult.error ?? "Channel delivery failed" }),
           },
         );
         await enqueueMetaMarkSeenIfRead(persistResult);
