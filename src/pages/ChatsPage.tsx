@@ -673,7 +673,8 @@ export default function ChatsPage() {
   }, [filteredChats, mobileConversationSearchQuery]);
 
   useEffect(() => {
-    if (mobileConversationSwitcherOpen || debouncedSearchQuery) return;
+    if (mobileConversationSwitcherOpen) return;
+    if (debouncedSearchQuery) return;
     if (
       selectedConversationId &&
       !filteredChats.some((c: any) => c.id === selectedConversationId)
