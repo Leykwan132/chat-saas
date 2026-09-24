@@ -41,11 +41,11 @@ function collectText(node: ReactNode): string {
 
 test('shows the model scorecard in a read-only rating HoverCard', async () => {
   const { ModelScoreHoverCard } = await vi.importActual<HoverCardModule>('./ModelScoreHoverCard');
-  const child = createElement('button', null, 'Qwen3.7 Flash');
+  const child = createElement('button', null, 'OpenAI GPT-6 Luna');
   const element = ModelScoreHoverCard({
-    modelId: 'qwen/qwen3.7-flash',
-    modelLabel: 'Qwen3.7 Flash',
-    chefSlug: 'qwen',
+    modelId: 'openai/gpt-6-luna',
+    modelLabel: 'OpenAI GPT-6 Luna',
+    chefSlug: 'openai',
     children: child,
   });
   const descendants = collectElements(element);
@@ -116,7 +116,7 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(element.type).toBe(HoverCard);
   expect(rating?.props).toMatchObject({
     style: { width: 88 },
-    value: 4,
+    value: 4.5,
     readOnly: true,
     itemStyles: {
       itemShapes: StickerStar,
@@ -124,11 +124,11 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
       inactiveFillColor: '#ffedd5',
     },
   });
-  expect(modelLogo?.props).toMatchObject({ provider: 'qwen', className: 'size-4' });
-  expect(text).toContain('Qwen3.7 Flash');
+  expect(modelLogo?.props).toMatchObject({ provider: 'openai', className: 'size-4' });
+  expect(text).toContain('OpenAI GPT-6 Luna');
   expect(text).not.toContain('Kilobot rating');
   expect(text).toContain(
-    'Best for fast Chinese customer conversations. It also handles everyday English support reliably.',
+    'Best for conversations that need stronger overall performance. It handles English especially well and can also support Chinese.',
   );
   expect(text).not.toContain('Languages');
   expect(ratingIndex).toBeGreaterThan(-1);
@@ -137,8 +137,8 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(recommendationsIndex).toBeGreaterThan(descriptionIndex);
   expect(metricsIndex).toBeGreaterThan(recommendationsIndex);
   expect(ratingRow?.props.className).toContain('items-center');
-  expect(collectText(ratingRow)).toContain('4.0');
-  expect(collectText(ratingRow)).not.toContain('4.0 / 5');
+  expect(collectText(ratingRow)).toContain('4.5');
+  expect(collectText(ratingRow)).not.toContain('4.5 / 5');
   expect(text).toContain('Quality');
   expect(text).toContain('Speed');
   expect(text).toContain('Reasoning');
@@ -155,8 +155,8 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(recommendationLabel?.props.className).toContain('text-xs');
   expect(recommendationLabel?.props.className).not.toContain('uppercase');
   expect(recommendationLabel?.props.className).not.toContain('tracking-wide');
-  expect(text).toContain('Fast Chinese-language replies');
-  expect(text).toContain('Chinese and English conversations');
+  expect(text).toContain('Complex customer conversations');
+  expect(text).toContain('Higher-quality responses');
   expect(recommendationRows).toHaveLength(2);
   expect(recommendationRows[0]?.props.className).not.toContain('bg-');
   expect(recommendationCheckWrappers).toHaveLength(2);

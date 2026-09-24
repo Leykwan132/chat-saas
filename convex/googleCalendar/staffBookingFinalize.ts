@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation } from "../_generated/server";
+import { internalMutation } from "../triggers";
 import { handleBookingCreated } from "../appointmentBooking/bookingEvents";
 import { logConversationEvent } from "../conversationLogs";
 import { removeParticipantAvailabilityIntervals } from "../calendarAvailabilityIntervals";

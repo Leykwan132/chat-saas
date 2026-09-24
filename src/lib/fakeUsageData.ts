@@ -85,8 +85,8 @@ const FAKE_MODELS: UsageSeries[] = [
     },
   },
   {
-    key: 'gpt-5-6-luna',
-    label: 'OpenAI GPT-5.6 Luna',
+    key: 'gpt-6-luna',
+    label: 'OpenAI GPT-6 Luna',
     theme: {
       light: 'oklch(0.58 0.15 55)',
       dark: 'oklch(0.78 0.13 55)',

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id, TableNames } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
-import { internalMutation } from "../_generated/server";
+import { internalMutation } from "../triggers";
 import { TEAM_DELETION_MANIFEST } from "./manifest";
 import { deleteDescendantPage } from "./localDescendants";
 import { deleteWhiteLabelPartnerOrganizationPage } from "./whiteLabelCleanup";

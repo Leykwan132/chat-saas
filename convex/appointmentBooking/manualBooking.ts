@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { action, mutation, query } from "../_generated/server";
+import { action, query } from "../_generated/server";
+import { mutation } from "../triggers";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { generateSlots, resolveAvailableInterval } from "./availability";

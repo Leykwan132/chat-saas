@@ -1,10 +1,9 @@
 import { v } from 'convex/values';
 import {
-  internalMutation,
   internalQuery,
-  mutation,
   query,
 } from './_generated/server';
+import { internalMutation, mutation } from './triggers';
 import {
   dashboardAvatarConfiguration,
   generateAvatarPublicKey,

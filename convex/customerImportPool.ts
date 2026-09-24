@@ -2,10 +2,9 @@ import { v } from "convex/values";
 import { Workpool } from "@convex-dev/workpool";
 import { components } from "./_generated/api";
 import {
-  internalMutation,
-  mutation,
   query,
 } from "./_generated/server";
+import { internalMutation, mutation } from "./triggers";
 import { internal } from "./_generated/api";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { getCustomerAgentForCurrentWorkspace } from "./customerAgentScope";

@@ -18,11 +18,16 @@ test("enabled OpenRouter model ids never use free-tier variants", () => {
   expect(modelIds.filter((modelId) => modelId.endsWith(":free"))).toEqual([]);
 });
 
-test("retired Amazon and Google models are unavailable and excluded from plan entitlements", () => {
+test("retired models are unavailable and excluded from plan entitlements", () => {
   const enabledModelIds = listEnabledModels().map((model) => model.value);
   const planModelIds = Object.values(PLAN_CATALOG).flatMap((plan) => plan.models);
 
-  for (const modelId of ["amazon/nova-micro-v1", "google/gemini-3.1-flash-lite"]) {
+  for (const modelId of [
+    "amazon/nova-micro-v1",
+    "google/gemini-3.1-flash-lite",
+    "nvidia/nemotron-3.5-lightning",
+    "qwen/qwen3.7-flash",
+  ]) {
     expect(getModelPricing(modelId)).toBeNull();
     expect(enabledModelIds).not.toContain(modelId);
     expect(planModelIds).not.toContain(modelId);
@@ -105,21 +110,12 @@ test("Ilmu Mini V3.3 is enabled for every plan", () => {
 
 test("models without custom metadata omit optional fields", () => {
   const model = listEnabledModels().find(
-    (entry) => entry.value === "xiaomi/mimo-v2.5",
+    (entry) => entry.value === "xiaomi/mimo-v2.6-pro",
   );
 
   expect(model).not.toHaveProperty("imageUrl");
   expect(model).not.toHaveProperty("inputCostMyrPerMillion");
   expect(model).not.toHaveProperty("outputCostMyrPerMillion");
-});
-
-test("Qwen3.7 Flash delegates branding to its provider slug", () => {
-  const model = listEnabledModels().find(
-    (entry) => entry.value === "qwen/qwen3.7-flash",
-  );
-
-  expect(model).not.toHaveProperty("imageUrl");
-  expect(model?.chefSlug).toBe("qwen");
 });
 
 test("trimmed model options are not enabled or included in plan entitlements", () => {
@@ -144,10 +140,9 @@ test("trimmed model options are not enabled or included in plan entitlements", (
 });
 
 test.each([
-  ["openai/gpt-5.6-luna", "OpenAI GPT-5.6 Luna", "OpenAI", "openai", 2],
-  ["nvidia/nemotron-3.5-lightning", "NVIDIA Nemotron 3.5 Lightning", "NVIDIA", "nvidia", 1],
-  ["qwen/qwen3.7-flash", "Qwen3.7 Flash", "Qwen", "qwen", 0.5],
+  ["openai/gpt-6-luna", "OpenAI GPT-6 Luna", "OpenAI", "openai", 2],
   ["openai/gpt-oss-120b", "OpenAI GPT-OSS 120B", "OpenAI", "openai", 0.5],
+  ["meta/muse-spark-1.3-contributor", "Meta Muse Spark 1.3 Contributor", "Meta", "meta", 1],
 ])("%s is enabled for every paid plan", (modelId, label, chef, chefSlug, creditCost) => {
   const model = listEnabledModels().find((entry) => entry.value === modelId);
 
@@ -189,14 +184,14 @@ test("GLM models are not enabled or included in plan entitlements", () => {
   expect(catalogModelIds).not.toContain("z-ai/glm-5.2");
 });
 
-test("Xiaomi MiMo V2.5 is enabled and included in paid plan entitlements", () => {
-  const model = listEnabledModels().find((entry) => entry.value === "xiaomi/mimo-v2.5");
+test("Xiaomi MiMo V2.6 Pro is enabled and included in paid plan entitlements", () => {
+  const model = listEnabledModels().find((entry) => entry.value === "xiaomi/mimo-v2.6-pro");
   const plansWithModel = Object.entries(PLAN_CATALOG)
-    .filter(([, plan]) => plan.models.includes("xiaomi/mimo-v2.5"))
+    .filter(([, plan]) => plan.models.includes("xiaomi/mimo-v2.6-pro"))
     .map(([planKey]) => planKey);
 
   expect(model).toMatchObject({
-    label: "Xiaomi MiMo V2.5",
+    label: "Xiaomi MiMo V2.6 Pro",
     chef: "Xiaomi",
     chefSlug: "xiaomi",
     requiredPlan: "starter",

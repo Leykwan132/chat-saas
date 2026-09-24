@@ -73,20 +73,18 @@ export const ADVANCED_PLAN_MODELS = [
   "ilmu-mini-v3.3",
   "deepseek/deepseek-v4-flash",
   "openai/gpt-oss-120b",
-  "openai/gpt-5.6-luna",
-  "nvidia/nemotron-3.5-lightning",
-  "qwen/qwen3.7-flash",
-  "xiaomi/mimo-v2.5",
+  "openai/gpt-6-luna",
+  "xiaomi/mimo-v2.6-pro",
+  "meta/muse-spark-1.3-contributor",
 ] as const;
 
 export const MODEL_DISPLAY_NAMES: Record<string, string> = {
   "ilmu-mini-v3.3": "Ilmu Mini V3.3",
   "deepseek/deepseek-v4-flash": "DeepSeek V4 Flash",
   "openai/gpt-oss-120b": "OpenAI GPT-OSS 120B",
-  "openai/gpt-5.6-luna": "OpenAI GPT-5.6 Luna",
-  "nvidia/nemotron-3.5-lightning": "NVIDIA Nemotron 3.5 Lightning",
-  "qwen/qwen3.7-flash": "Qwen3.7 Flash",
-  "xiaomi/mimo-v2.5": "Xiaomi MiMo V2.5",
+  "openai/gpt-6-luna": "OpenAI GPT-6 Luna",
+  "xiaomi/mimo-v2.6-pro": "Xiaomi MiMo V2.6 Pro",
+  "meta/muse-spark-1.3-contributor": "Meta Muse Spark 1.3 Contributor",
 };
 
 export function getPlanModelDisplayNames(planId: PlanKey): string[] {

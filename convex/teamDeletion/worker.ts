@@ -4,9 +4,9 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import {
   internalAction,
-  internalMutation,
   internalQuery,
 } from "../_generated/server";
+import { internalMutation } from "../triggers";
 import {
   deleteExternalPage,
   deleteTrackedExternalResourcePage,

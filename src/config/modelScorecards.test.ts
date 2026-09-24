@@ -56,23 +56,16 @@ test('provides the approved recommended scenarios for every model', async () => 
     ),
   ).toEqual({
     'ilmu-mini-v3.3': ['Malay-language conversations', 'Budget-friendly FAQs'],
-    'xiaomi/mimo-v2.5': ['Chinese-language conversations', 'General customer support'],
+    'xiaomi/mimo-v2.6-pro': ['Chinese-language conversations', 'General customer support'],
+    'meta/muse-spark-1.3-contributor': ['Creative customer conversations', 'Collaborative drafting'],
     'deepseek/deepseek-v4-flash': [
       'Everyday customer support',
       'Chinese and English conversations',
     ],
     'openai/gpt-oss-120b': ['Budget-friendly reasoning', 'English-language support'],
-    'openai/gpt-5.6-luna': [
+    'openai/gpt-6-luna': [
       'Complex customer conversations',
       'Higher-quality responses',
-    ],
-    'nvidia/nemotron-3.5-lightning': [
-      'Fast English-language replies',
-      'High-volume support',
-    ],
-    'qwen/qwen3.7-flash': [
-      'Fast Chinese-language replies',
-      'Chinese and English conversations',
     ],
   });
 });
@@ -80,14 +73,7 @@ test('provides the approved recommended scenarios for every model', async () => 
 test('provides the intended model positioning descriptions', async () => {
   const { getModelScorecard } = await vi.importActual<ScorecardModule>('./modelScorecards');
 
-  expect(getModelScorecard('qwen/qwen3.7-flash')).toMatchObject({
-    overall: 4,
-    description:
-      'Best for fast Chinese customer conversations. It also handles everyday English support reliably.',
-  });
-  expect(getModelScorecard('nvidia/nemotron-3.5-lightning')).toMatchObject({
-    description:
-      'Best for fast English customer conversations. It prioritizes response speed while keeping reasoning balanced.',
-  });
+  expect(getModelScorecard('qwen/qwen3.7-flash')).toBeNull();
+  expect(getModelScorecard('nvidia/nemotron-3.5-lightning')).toBeNull();
   expect(getModelScorecard('retired/model')).toBeNull();
 });

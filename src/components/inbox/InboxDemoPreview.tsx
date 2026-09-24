@@ -81,6 +81,9 @@ export function InboxDemoPreview() {
                 return next;
               })
             }
+            canLoadMore={false}
+            isLoadingMore={false}
+            onLoadMore={() => undefined}
           />
         </InboxMobileConversationSwitcher>
         <div className="ml-auto flex items-center gap-1.5 px-0 py-0">

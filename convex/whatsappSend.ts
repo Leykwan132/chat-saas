@@ -1,9 +1,9 @@
 import { v } from "convex/values";
 import {
   action,
-  internalMutation,
   internalQuery,
 } from "./_generated/server";
+import { internalMutation } from "./triggers";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";

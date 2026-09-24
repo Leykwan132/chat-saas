@@ -25,12 +25,12 @@ function findModelSelectorItem(node: ReactNode) {
   ) as ReactElement<{ onSelect: () => void }> | undefined;
 }
 
-const qwenOption: ModelPickerOption = {
-  value: 'qwen/qwen3.7-flash',
-  label: 'Qwen3.7 Flash',
-  creditCost: 0.5,
-  chef: 'Qwen',
-  chefSlug: 'qwen',
+const gptOption: ModelPickerOption = {
+  value: 'openai/gpt-6-luna',
+  label: 'OpenAI GPT-6 Luna',
+  creditCost: 2,
+  chef: 'OpenAI',
+  chefSlug: 'openai',
   isPopular: false,
   labels: ['advanced', 'latest'],
   accessible: true,
@@ -45,7 +45,7 @@ test('forwards model identity and preserves direct selection', async () => {
   if (module.ModelPickerItemView === undefined) return;
 
   const element = module.ModelPickerItemView({
-    option: qwenOption,
+    option: gptOption,
     selected: false,
     onSelect,
     onUpgrade,
@@ -54,12 +54,12 @@ test('forwards model identity and preserves direct selection', async () => {
 
   expect(element.type).toBe(ModelScoreHoverCard);
   expect(element.props).toMatchObject({
-    modelId: 'qwen/qwen3.7-flash',
-    modelLabel: 'Qwen3.7 Flash',
-    chefSlug: 'qwen',
+    modelId: 'openai/gpt-6-luna',
+    modelLabel: 'OpenAI GPT-6 Luna',
+    chefSlug: 'openai',
   });
   item?.props.onSelect();
-  expect(onSelect).toHaveBeenCalledWith('qwen/qwen3.7-flash');
+  expect(onSelect).toHaveBeenCalledWith('openai/gpt-6-luna');
   expect(onUpgrade).not.toHaveBeenCalled();
 });
 
@@ -72,7 +72,7 @@ test('preserves the upgrade action for inaccessible models', async () => {
   if (module.ModelPickerItemView === undefined) return;
 
   const element = module.ModelPickerItemView({
-    option: { ...qwenOption, accessible: false },
+    option: { ...gptOption, accessible: false },
     selected: false,
     onSelect,
     onUpgrade,

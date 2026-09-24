@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { internalMutation, type ActionCtx } from "./_generated/server";
+import type { ActionCtx } from "./_generated/server";
+import { internalMutation } from "./triggers";
 import { internal } from "./_generated/api";
 import { instagramSyncPool } from "./channelSyncPools";
 import {

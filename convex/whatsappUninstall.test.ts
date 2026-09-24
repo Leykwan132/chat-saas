@@ -5,6 +5,7 @@ import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import { withComponents } from "./testUtils";
 import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema.js";
+import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -19,9 +20,16 @@ const agentModules = {
     import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
 };
 
+const aggregateModules = {
+  public: () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
+  "_generated/server": () =>
+    import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+};
+
 function initTest() {
   const t = convexTest(schema, modules);
   t.registerComponent("agent", agentSchema, agentModules);
+  t.registerComponent("analyticsMetrics", aggregateSchema, aggregateModules);
   return t;
 }
 
@@ -118,20 +126,7 @@ test("PARTNER_APP_UNINSTALLED deletes all data associated with WABA ID", async (
       updatedAt: Date.now(),
     });
 
-    // 6. Insert metric entries
-    await ctx.db.insert("analyticsMetricEntries", {
-      namespace: "usage",
-      sortKey: Date.now(),
-      value: 1,
-      metric: "conversationCount",
-      orgId: "org-123",
-      sourceConversationId: convId,
-      sourceKey: "key-123",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-
-    // 7. Insert sync request
+    // 6. Insert sync request
     await ctx.db.insert("whatsappSyncRequests", {
       channelId,
       orgId: "org-123",
@@ -196,6 +191,10 @@ test("PARTNER_APP_UNINSTALLED deletes all data associated with WABA ID", async (
     });
 
     return { channelId, convId };
+  });
+
+  await t.mutation(internal.analytics.syncConversationAnalytics, {
+    conversationId: convId,
   });
 
   // Verify setup exists before uninstalling
