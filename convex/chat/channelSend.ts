@@ -70,6 +70,7 @@ export type ChannelSendResult =
 export type SendTextToChannelOptions = {
   /** When true, Messenger/Instagram may use HUMAN_AGENT tag outside the 24h window. */
   allowHumanAgentTag?: boolean;
+  isAiGenerated?: boolean;
   whatsappCustomer?: Pick<
     Doc<"customers">,
     "contactAddress" | "phone" | "whatsappUserId"
@@ -303,6 +304,7 @@ export async function sendMediaToChannel(
       channel,
       trimmed,
       options.whatsappCustomer,
+      options.isAiGenerated,
     );
     if (!textResult.ok) {
       logMediaSendResultError(
@@ -360,7 +362,12 @@ export async function sendTextToChannel(
     case "avatar":
       return { ok: true, externalId: undefined };
     case "whatsapp":
-      return sendWhatsApp(channel, trimmed, options?.whatsappCustomer);
+      return sendWhatsApp(
+        channel,
+        trimmed,
+        options?.whatsappCustomer,
+        options?.isAiGenerated,
+      );
     case "instagram":
       return sendInstagram(conversation, channel, trimmed, options);
     case "messenger":
@@ -637,6 +644,7 @@ async function sendWhatsApp(
   channel: Doc<"channels">,
   trimmed: string,
   customer: SendTextToChannelOptions["whatsappCustomer"],
+  isAiGenerated: boolean | undefined,
 ): Promise<ChannelSendResult> {
   if (channel.status !== "connected" || !channel.phoneNumberId) {
     return { ok: false, error: "WhatsApp channel is not connected", policy: "generic" };
@@ -667,6 +675,7 @@ async function sendWhatsApp(
       ...buildWhatsAppRecipient(customer),
       type: "text",
       text: { body: trimmed },
+      ...(isAiGenerated ? { ai_disclosure: { type: "GEN_AI_CONTENT" } } : {}),
     }),
   });
 
