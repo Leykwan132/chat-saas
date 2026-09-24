@@ -62,7 +62,7 @@ export const removeInboundPlaceholderMessages = migrations.define({
       return;
     }
     if (message.agentMessageId !== undefined) {
-      await ctx.runMutation(components.agent.messages.deleteMessages, {
+      await ctx.runMutation(components.agent.messages.deleteByIds, {
         messageIds: [message.agentMessageId],
       });
     }
