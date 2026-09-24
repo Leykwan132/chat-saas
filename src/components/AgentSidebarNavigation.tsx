@@ -78,6 +78,7 @@ export function AgentSidebarNavigation({
         end={item.end}
         tooltip={unread?.tooltip ?? (item.badgeLabel ? `${item.label} (${item.badgeLabel})` : item.label)}
         icon={item.icon}
+        activeIcon={item.activeIcon}
         label={item.label}
         badge={unread?.badge ?? item.badge}
         badgeLabel={item.badgeLabel}
