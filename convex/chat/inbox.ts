@@ -1042,7 +1042,6 @@ export const generateAiReplyWorker = internalAction({
             ? { externalId: sendResult.textExternalIds[index] as string }
             : {}),
         }));
-
       if (sentMessages.length > 0) {
         console.info("[inbox] ai reply worker persisting sent messages", {
           conversationId: conv._id,
