@@ -20,6 +20,8 @@ export type InboxUIMessage = UIMessage & {
   channelStatus?: 'queued' | 'sent' | 'delivered' | 'read' | 'failed';
   channelStatusUpdatedAt?: number;
   readAt?: number;
+  editedAt?: number;
+  revokedAt?: number;
   failureReason?: string;
   reactions?: InboxMessageReaction[];
   isBroadcast?: boolean;
