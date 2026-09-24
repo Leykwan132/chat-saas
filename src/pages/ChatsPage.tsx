@@ -290,6 +290,8 @@ export default function ChatsPage() {
   const [selectedConversationId, setSelectedConversationId] = useState<
     Id<'conversations'> | null
   >(null);
+  const [pendingMessageFocusId, setPendingMessageFocusId] = useState<Id<'messages'> | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<Id<'messages'> | null>(null);
   const [mobileConversationSwitcherOpen, setMobileConversationSwitcherOpen] = useState(false);
   const [mobileConversationSearchQuery, setMobileConversationSearchQuery] = useState('');
   const [platformFilter, setPlatformFilter] = useState<'all' | ConversationPlatform>('all');
@@ -531,7 +533,10 @@ export default function ChatsPage() {
       messages={messageMatches}
       messageStatus={messageSearchStatus}
       onLoadMore={() => loadMoreMessageMatches(20)}
-      onSelect={setSelectedConversationId}
+      onSelect={(conversationId, messageId) => {
+        setSelectedConversationId(conversationId);
+        setPendingMessageFocusId(messageId ?? null);
+      }}
     />
   ) : undefined;
 
@@ -889,6 +894,30 @@ export default function ChatsPage() {
       setPendingEscalationFocusId(null);
     }
   }, [loadMoreThreadMessages, pendingEscalationFocusId, threadMessagesStatus, visibleThreadMessages]);
+
+  useEffect(() => {
+    if (!pendingMessageFocusId) return;
+    const message = document.getElementById(`inbox-message-${pendingMessageFocusId}`);
+    if (message) {
+      message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedMessageId(pendingMessageFocusId);
+      setPendingMessageFocusId(null);
+      return;
+    }
+    if (threadMessagesStatus === 'CanLoadMore') {
+      void loadMoreThreadMessages(80);
+      return;
+    }
+    if (threadMessagesStatus !== 'LoadingMore' && threadMessagesStatus !== 'LoadingFirstPage') {
+      setPendingMessageFocusId(null);
+    }
+  }, [loadMoreThreadMessages, pendingMessageFocusId, threadMessagesStatus, visibleThreadMessages]);
+
+  useEffect(() => {
+    if (!highlightedMessageId) return;
+    const timeoutId = window.setTimeout(() => setHighlightedMessageId(null), 2_000);
+    return () => window.clearTimeout(timeoutId);
+  }, [highlightedMessageId]);
 
 
 
@@ -1452,6 +1481,7 @@ export default function ChatsPage() {
                       emptyDescription="When customers message you, the thread appears here."
                       onReact={handleReactToMessage}
                       onRemoveReaction={handleRemoveReactionFromMessage}
+                      highlightedLedgerMessageId={highlightedMessageId}
                     />
                   )}
                 </Conversation>

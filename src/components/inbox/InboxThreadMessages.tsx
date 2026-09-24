@@ -148,6 +148,7 @@ export type InboxThreadMessagesProps = {
   escalationMarkers?: InboxEscalationMarker[];
   onReact?: (message: InboxUIMessage, emoji: string) => void | Promise<void>;
   onRemoveReaction?: (message: InboxUIMessage) => void | Promise<void>;
+  highlightedLedgerMessageId?: string | null;
 };
 
 function DayDivider({ label }: { label: string }) {
@@ -553,6 +554,7 @@ function ReactionDialog({
   selected,
   onOpenChange,
   onRemoveReaction,
+  highlightedLedgerMessageId = null,
 }: {
   selected: SelectedReaction | null;
   onOpenChange: (open: boolean) => void;
@@ -711,6 +713,10 @@ export function InboxThreadMessages({
             const isPending = m.status === 'pending';
 
             return (
+              <div
+                id={m.ledgerMessageId ? `inbox-message-${m.ledgerMessageId}` : undefined}
+                className={cn(m.ledgerMessageId === highlightedLedgerMessageId && 'rounded-lg bg-amber-100/70 dark:bg-amber-900/20')}
+              >
               <Message from={inboxMessageFrom(m.role)} key={m.key} className="w-full">
                 <MessageContent
                   className={cn('max-w-[78%]', !isCustomer && 'ml-auto')}
@@ -770,6 +776,7 @@ export function InboxThreadMessages({
                   )}
                 </MessageContent>
               </Message>
+              </div>
             );
           })
         )}

@@ -14,7 +14,7 @@ type SearchRow = {
   lastMessageAt: number;
 };
 
-type MessageSearchRow = SearchRow & { matchedMessage: string; matchedMessageAt: number };
+type MessageSearchRow = SearchRow & { matchedMessageId: Id<'messages'>; matchedMessage: string; matchedMessageAt: number };
 
 function relativeTime(timestamp: number) {
   const days = Math.floor((Date.now() - timestamp) / 86_400_000);
@@ -25,7 +25,7 @@ function ResultRow({ row, query, message, onSelect }: {
   row: SearchRow;
   query: string;
   message: string;
-  onSelect: (conversationId: Id<'conversations'>) => void;
+  onSelect: (conversationId: Id<'conversations'>, messageId?: Id<'messages'>) => void;
 }) {
   return (
     <button
@@ -61,7 +61,7 @@ export function InboxSearchResults({
   messages: MessageSearchRow[];
   messageStatus: 'LoadingFirstPage' | 'CanLoadMore' | 'LoadingMore' | 'Exhausted';
   onLoadMore: () => void;
-  onSelect: (conversationId: Id<'conversations'>) => void;
+  onSelect: (conversationId: Id<'conversations'>, messageId?: Id<'messages'>) => void;
 }) {
   const isLoading = chats === undefined || messageStatus === 'LoadingFirstPage';
   if (isLoading) return <div className="flex justify-center p-8"><LoaderCircle className="size-5 animate-spin" /></div>;
@@ -70,7 +70,7 @@ export function InboxSearchResults({
   }
   return <>
     {chats.length > 0 ? <><div className="border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Chats</div>{chats.map((row) => <ResultRow key={row.conversationId} row={row} query={searchQuery} message={row.contactName ?? ''} onSelect={onSelect} />)}</> : null}
-    {messages.length > 0 ? <><div className="border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Matched Messages</div>{messages.map((row) => <ResultRow key={`${row.conversationId}-${row.matchedMessageAt}`} row={{ ...row, lastMessageAt: row.matchedMessageAt }} query={searchQuery} message={row.matchedMessage} onSelect={onSelect} />)}</> : null}
+    {messages.length > 0 ? <><div className="border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Matched Messages</div>{messages.map((row) => <ResultRow key={row.matchedMessageId} row={{ ...row, lastMessageAt: row.matchedMessageAt }} query={searchQuery} message={row.matchedMessage} onSelect={(conversationId) => onSelect(conversationId, row.matchedMessageId)} />)}</> : null}
     {messageStatus === 'CanLoadMore' || messageStatus === 'LoadingMore' ? <div className="flex justify-center border-t border-border p-3"><Button variant="ghost" size="sm" disabled={messageStatus === 'LoadingMore'} onClick={onLoadMore}>{messageStatus === 'LoadingMore' ? <LoaderCircle className="size-3.5 animate-spin" /> : null}{messageStatus === 'LoadingMore' ? 'Loading messages' : 'Load more messages'}</Button></div> : null}
   </>;
 }

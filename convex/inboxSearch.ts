@@ -125,6 +125,7 @@ export const searchMessagesForCurrentOrg = query({
           ? null
           : {
               ...summary,
+              matchedMessageId: document.messageId,
               matchedMessage: document.content,
               matchedMessageAt: document.createdAt,
             };
