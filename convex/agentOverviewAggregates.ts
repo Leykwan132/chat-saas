@@ -55,13 +55,15 @@ async function resolveConversationTimeZone(
   return normalizeTimeZone(undefined);
 }
 
-export async function recordAiAssistedConversationFact(
+type AiAssistedConversationFactArgs = {
+  conversation: Doc<"conversations">;
+  agentId: Id<"agents">;
+  timestamp: number;
+};
+
+async function insertAiAssistedConversationFact(
   ctx: MutationCtx,
-  args: {
-    conversation: Doc<"conversations">;
-    agentId: Id<"agents">;
-    timestamp: number;
-  },
+  args: AiAssistedConversationFactArgs,
 ) {
   if (args.conversation.service === "playground") return;
   const timeZone = await resolveConversationTimeZone(ctx, args.conversation);
@@ -81,8 +83,7 @@ export async function recordAiAssistedConversationFact(
     return;
   }
 
-  const triggerCtx = triggers.wrapDB(ctx);
-  await triggerCtx.db.insert("agentOverviewDailyConversationFacts", {
+  await ctx.db.insert("agentOverviewDailyConversationFacts", {
     agentId: args.agentId,
     conversationId: args.conversation._id,
     orgId: args.conversation.orgId,
@@ -90,6 +91,20 @@ export async function recordAiAssistedConversationFact(
     date,
     createdAt: args.timestamp,
   });
+}
+
+export async function recordAiAssistedConversationFact(
+  ctx: MutationCtx,
+  args: AiAssistedConversationFactArgs,
+) {
+  await insertAiAssistedConversationFact(triggers.wrapDB(ctx), args);
+}
+
+export async function recordAiAssistedConversationAggregate(
+  ctx: MutationCtx,
+  args: AiAssistedConversationFactArgs,
+) {
+  await insertAiAssistedConversationFact(ctx, args);
 }
 
 export async function recordHumanEscalationFact(
@@ -128,7 +143,6 @@ export async function recordHumanEscalationFact(
   });
 }
 
-export const recordAiAssistedConversationAggregate = recordAiAssistedConversationFact;
 
 function dateBounds(date: string) {
   return { lower: { key: date, inclusive: true }, upper: { key: date, inclusive: true } };
