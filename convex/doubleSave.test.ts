@@ -761,4 +761,8 @@ test("AI reply worker retains the generated reply when channel delivery fails", 
   expect(outboundMessage?.content).toBe('Mock response');
   expect(outboundMessage?.status).toBe('failed');
   expect(outboundMessage?.failureReason).toBe('WhatsApp unavailable');
+
+  const conversation = await t.run(async (ctx) => await ctx.db.get(result.conversationId));
+  expect(conversation?.lastMessagePreview).toBe('Mock response');
+  expect(conversation?.lastMessageSentByAi).toBe(true);
 });

@@ -18,6 +18,7 @@ import {
 } from "./chat/inboxAudioIngest";
 import { resolveWhatsAppImageFiles } from "./chat/inboxImageIngest";
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
+import { recordPendingOutboundReceipt } from "./chat/pendingOutboundReceipt";
 import { whatsappSyncPool } from "./channelSyncPools";
 import {
   isOpenWhatsAppConnectionAttempt,
@@ -1222,7 +1223,7 @@ export const handleStatus = internalMutation({
 
     if (args.phoneNumberId !== undefined && channel === null) return;
 
-    await applyOutboundStatusByExternalId(ctx, {
+    const result = await applyOutboundStatusByExternalId(ctx, {
       externalId: args.externalId,
       status: args.status,
       source: "whatsapp_status",
@@ -1230,6 +1231,15 @@ export const handleStatus = internalMutation({
       channelId: channel?._id,
       failureReason: args.failureReason,
     });
+    if (message === null && channel !== null && result.updated === 0) {
+      await recordPendingOutboundReceipt(ctx, {
+        externalId: args.externalId,
+        channelId: channel._id,
+        status: args.status,
+        timestampMs: args.timestampMs,
+        failureReason: args.failureReason,
+      });
+    }
   },
 });
 

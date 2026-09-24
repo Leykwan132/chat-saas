@@ -554,6 +554,7 @@ export default function ChatsPage() {
       time: formatRelative(conv.lastMessageAt),
       lastMessageAt: conv.lastMessageAt,
       unread: conv.unreadCount,
+      lastMessageSentByAi: conv.lastMessageSentByAi ?? false,
       platform: conv.service as ConversationPlatform,
       requiresAction: conv.unreadCount > 0,
       conversationStatus: conv.status,

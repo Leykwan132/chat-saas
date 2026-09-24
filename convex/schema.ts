@@ -1235,6 +1235,7 @@ export default defineSchema({
     /** Last inbound (customer) message time — used for Meta messaging window checks. */
     lastCustomerMessageAt: v.optional(v.number()),
     lastMessagePreview: v.optional(v.string()),
+    lastMessageSentByAi: v.optional(v.boolean()),
     unreadCount: v.number(),
     /** Set after AI lead labeling runs during initial Meta conversation sync. */
     syncLeadLabeledAt: v.optional(v.number()),
@@ -1279,6 +1280,7 @@ export default defineSchema({
     contactName: v.optional(v.string()),
     service: serviceValidator,
     lastMessagePreview: v.optional(v.string()),
+    lastMessageSentByAi: v.optional(v.boolean()),
     lastMessageAt: v.number(),
     unreadCount: v.number(),
     status: v.union(
@@ -1479,6 +1481,21 @@ export default defineSchema({
     .index("by_externalId", ["externalId"])
     .index("by_orgId", ["orgId"])
     .index("by_orgId_and_createdAt", ["orgId", "createdAt"]),
+  pendingOutboundReceiptEvents: defineTable({
+    externalId: v.string(),
+    channelId: v.id("channels"),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("sent"),
+      v.literal("delivered"),
+      v.literal("read"),
+      v.literal("failed"),
+    ),
+    timestampMs: v.optional(v.number()),
+    failureReason: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_externalId_and_channelId", ["externalId", "channelId"]),
   agentOverviewDailyConversationFacts: defineTable({
     agentId: v.id("agents"),
     conversationId: v.id("conversations"),

@@ -36,6 +36,7 @@ export type Chat = {
   leadTemperature?: 'Hot' | 'Warm' | 'Cold';
   hasBooking?: boolean;
   isEscalated?: boolean;
+  lastMessageSentByAi?: boolean;
 };
 
 function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {
@@ -123,6 +124,9 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
                 {(chat.message === 'Audio' || chat.message?.toLowerCase() === 'audio' || chat.message?.startsWith('<audio>')) && (
                   <Volume2 size={12} className="shrink-0 text-muted-foreground" style={{ display: 'inline-block' }} />
                 )}
+                {chat.lastMessageSentByAi ? (
+                  <span className="rounded bg-muted px-1 py-0.5 text-[9px] font-semibold text-muted-foreground">AI</span>
+                ) : null}
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{chat.message}</span>
               </p>
               {chat.unread > 0 && (

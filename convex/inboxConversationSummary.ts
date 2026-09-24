@@ -76,6 +76,9 @@ export async function buildInboxConversationSummary(
     ...(conversation.lastMessagePreview === undefined
       ? {}
       : { lastMessagePreview: conversation.lastMessagePreview }),
+    ...(conversation.lastMessageSentByAi === undefined
+      ? {}
+      : { lastMessageSentByAi: conversation.lastMessageSentByAi }),
     lastMessageAt: conversation.lastMessageAt,
     unreadCount: conversation.unreadCount,
     status: conversation.status,
