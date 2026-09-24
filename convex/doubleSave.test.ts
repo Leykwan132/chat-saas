@@ -107,15 +107,7 @@ vi.mock('./chat/inboxActions', () => {
         allowHumanAgentTag: v.optional(v.boolean()),
       },
       handler: async (_ctx, args) => {
-        return {
-          ok: true,
-          mediaSent: (args.mediaItems?.length ?? args.mediaUrls.length) > 0,
-          sentTextCount: args.contents.length,
-          textExternalIds: args.contents.map(
-            (_, index) => `mock-external-id-${index}`,
-          ),
-          mediaExternalIds: [],
-        };
+        throw new Error('WhatsApp unavailable');
       },
     }),
     internalSendMetaTypingOn: internalAction({
@@ -557,7 +549,7 @@ test('internalIngestHistoricalChannelMessage ingests without enqueuing AI reply 
   expect(dup.skipped).toBe(true);
 });
 
-test("AI reply worker executes correctly with promptMessageId and saveMessages='none'", async () => {
+test("AI reply worker retains the generated reply when channel delivery fails", async () => {
   const t = convexTest(schema, modules);
 
   // Register Stripe component
@@ -754,4 +746,19 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   expect(agentMessages[1].message.role).toBe('user');
   expect(agentMessages[2].message.role).toBe('assistant');
   expect(agentMessages[2].text).toBe('Mock response');
+
+  const outboundMessage = await t.run(async (ctx) => {
+    return await ctx.db
+      .query('messages')
+      .withIndex('by_conversationId_and_createdAt', (q) =>
+        q.eq('conversationId', result.conversationId),
+      )
+      .order('desc')
+      .first();
+  });
+
+  expect(outboundMessage?.direction).toBe('outgoing');
+  expect(outboundMessage?.content).toBe('Mock response');
+  expect(outboundMessage?.status).toBe('failed');
+  expect(outboundMessage?.failureReason).toBe('WhatsApp unavailable');
 });
