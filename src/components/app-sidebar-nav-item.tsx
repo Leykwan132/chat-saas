@@ -13,6 +13,7 @@ type SidebarNavMenuItemProps = {
   end?: boolean;
   tooltip?: string;
   icon: NavItem['icon'];
+  activeIcon?: NavItem['activeIcon'];
   label: string;
   badge?: ReactNode;
   badgeLabel?: string;
@@ -24,6 +25,7 @@ export function SidebarNavMenuItem({
   end,
   tooltip,
   icon: Icon,
+  activeIcon: ActiveIcon,
   label,
   badge,
   badgeLabel,
@@ -45,7 +47,7 @@ export function SidebarNavMenuItem({
           <SidebarMenuButton asChild className={className} isActive={isActive} tooltip={tooltip}>
             {badge || badgeLabel ? (
               <span className="flex w-full min-w-0 items-center gap-[0.45rem]">
-                <Icon />
+                {isActive && ActiveIcon ? <ActiveIcon /> : <Icon />}
                 <span className="flex min-w-0 flex-1 items-center gap-1.5">
                   <span className="truncate">{label}</span>
                   {badge}
@@ -58,7 +60,7 @@ export function SidebarNavMenuItem({
               </span>
             ) : (
               <span>
-                <Icon />
+                {isActive && ActiveIcon ? <ActiveIcon /> : <Icon />}
                 <span>{label}</span>
               </span>
             )}

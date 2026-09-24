@@ -9,6 +9,7 @@ import {
   PiCalendarCheck,
   PiCalendarCheckFill,
   PiChartBar,
+  PiChartBarFill,
   PiChartLineUp,
   PiChatCircleText,
   PiChatDots,
@@ -18,6 +19,7 @@ import {
   PiFlowArrow,
   PiGearSix,
   PiHouse,
+  PiHouseFill,
   PiMegaphone,
   PiMegaphoneFill,
   PiPaperPlaneTilt,
@@ -33,6 +35,7 @@ import { Permission, type PermissionSlug } from '../../shared/permissions';
 export type NavItem = {
   to: string;
   icon: IconType;
+  activeIcon?: IconType;
   label: string;
   end?: boolean;
   requiredPermission: PermissionSlug;
@@ -62,7 +65,7 @@ export function getNavItems(
       label: 'Overview',
       icon: PiHouse,
       items: [
-        { to: `/dashboard/${agentId}/overview`, icon: PiHouse, label: 'Overview', requiredPermission: Permission.ANALYTICS_READ },
+        { to: `/dashboard/${agentId}/overview`, icon: PiHouse, activeIcon: PiHouseFill, label: 'Overview', requiredPermission: Permission.ANALYTICS_READ },
       ],
     },
     {
@@ -119,7 +122,7 @@ export function getNavItems(
       label: 'Usage',
       icon: PiChartLineUp,
       items: [
-        { to: `/dashboard/${agentId}/analytics`, icon: PiChartBar, label: 'Agent Usage', requiredPermission: Permission.ANALYTICS_READ },
+        { to: `/dashboard/${agentId}/analytics`, icon: PiChartBar, activeIcon: PiChartBarFill, label: 'Agent Usage', requiredPermission: Permission.ANALYTICS_READ },
       ],
     },
   ];
