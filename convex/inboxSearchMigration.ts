@@ -3,7 +3,8 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
 import type { DataModel, Doc } from "./_generated/dataModel";
-import { mutation, type MutationCtx } from "./triggers";
+import type { MutationCtx } from "./_generated/server";
+import { mutation } from "./triggers";
 import {
   buildInboxChatSearchDocument,
   buildInboxMessageSearchDocument,
