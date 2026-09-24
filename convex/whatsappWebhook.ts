@@ -504,6 +504,7 @@ export async function receive(
             await ctx.runMutation(internal.whatsappWebhook.handleMessageEdit, {
               phoneNumberId,
               originalExternalId,
+              eventExternalId: message.id,
               content,
               timestampMs: parseTimestamp(message.timestamp),
             });
@@ -1215,6 +1216,7 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
               ),
               promptMessageId: result.agentMessageId,
               inboundExternalId: args.externalId,
+              sourceMessageUpdatedAt: args.timestampMs,
             },
           );
         }
@@ -1287,6 +1289,7 @@ export const handleMessageEdit = internalMutation({
   args: {
     phoneNumberId: v.string(),
     originalExternalId: v.string(),
+    eventExternalId: v.string(),
     content: v.string(),
     timestampMs: v.number(),
   },
@@ -1298,15 +1301,31 @@ export const handleMessageEdit = internalMutation({
     const channel = channels.find((candidate) => candidate.status === "connected") ?? channels[0];
     if (channel === undefined) return { updated: false };
 
-    return {
-      updated: await replaceIncomingMessage(ctx, {
+    const replacement = await replaceIncomingMessage(ctx, {
         channelId: channel._id,
         originalExternalId: args.originalExternalId,
+        eventExternalId: args.eventExternalId,
         content: args.content,
         timestampMs: args.timestampMs,
         state: "edited",
-      }),
-    };
+      });
+    for (const source of replacement.aiSources) {
+      const conversation = await ctx.db.get(source.conversationId);
+      if (conversation?.assignToAiAgent && conversation.assignedAgentId !== undefined) {
+        await inboxAiReplyPool.enqueueAction(
+          ctx,
+          internal.chat.inbox.generateAiReplyWorker,
+          {
+            conversationId: source.conversationId,
+            promptContent: args.content,
+            promptMessageId: source.agentMessageId,
+            inboundExternalId: args.originalExternalId,
+            sourceMessageUpdatedAt: args.timestampMs,
+          },
+        );
+      }
+    }
+    return { updated: replacement.updated };
   },
 });
 
@@ -1324,13 +1343,13 @@ export const handleMessageRevoke = internalMutation({
     const channel = channels.find((candidate) => candidate.status === "connected") ?? channels[0];
     if (channel === undefined) return { updated: false };
     return {
-      updated: await replaceIncomingMessage(ctx, {
+      updated: (await replaceIncomingMessage(ctx, {
         channelId: channel._id,
         originalExternalId: args.originalExternalId,
         content: REVOKED_INBOUND_MESSAGE_TEXT,
         timestampMs: args.timestampMs,
         state: "revoked",
-      }),
+      })).updated,
     };
   },
 });

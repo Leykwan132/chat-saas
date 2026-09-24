@@ -4,6 +4,11 @@ import type { MutationCtx } from "../_generated/server";
 
 export const REVOKED_INBOUND_MESSAGE_TEXT = "This message was deleted";
 
+type InboundMessageReplacement = {
+  updated: boolean;
+  aiSources: Array<{ conversationId: Id<"conversations">; agentMessageId: string }>;
+};
+
 export async function replaceIncomingMessage(
   ctx: MutationCtx,
   args: {
@@ -12,8 +17,9 @@ export async function replaceIncomingMessage(
     content: string;
     timestampMs: number;
     state: "edited" | "revoked";
+    eventExternalId?: string;
   },
-) {
+): Promise<InboundMessageReplacement> {
   const messages = (await ctx.db
     .query("messages")
     .withIndex("by_externalId", (q) => q.eq("externalId", args.originalExternalId))
@@ -25,13 +31,20 @@ export async function replaceIncomingMessage(
         message.contentType === "text" &&
         (args.state === "revoked" || message.revokedAt === undefined),
     );
-  if (messages.length === 0) return false;
+  if (messages.length === 0) return { updated: false, aiSources: [] };
+  if (
+    args.state === "edited" &&
+    args.eventExternalId !== undefined &&
+    messages.every((message) => message.lastEditEventId === args.eventExternalId)
+  ) {
+    return { updated: false, aiSources: [] };
+  }
 
   for (const message of messages) {
     await ctx.db.patch(message._id, {
       content: args.content,
       ...(args.state === "edited"
-        ? { editedAt: args.timestampMs }
+        ? { editedAt: args.timestampMs, lastEditEventId: args.eventExternalId }
         : { revokedAt: args.timestampMs }),
     });
   }
@@ -63,5 +76,14 @@ export async function replaceIncomingMessage(
       });
     }
   }
-  return true;
+  return {
+    updated: true,
+    aiSources:
+      args.state === "edited"
+        ? [...agentMessageIds].map((agentMessageId) => {
+            const message = messages.find((item) => item.agentMessageId === agentMessageId)!;
+            return { conversationId: message.conversationId, agentMessageId };
+          })
+        : [],
+  };
 }

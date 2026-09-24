@@ -701,6 +701,7 @@ export const generateAiReplyWorker = internalAction({
     promptContent: v.optional(v.string()),
     promptMessageId: v.optional(v.string()),
     inboundExternalId: v.optional(v.string()),
+    sourceMessageUpdatedAt: v.optional(v.number()),
     avatarSourceEventId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -727,9 +728,11 @@ export const generateAiReplyWorker = internalAction({
     }
     if (
       args.promptMessageId !== undefined &&
-      (await ctx.runQuery(internal.chat.inbox.internalIsInboundMessageRevoked, {
+      args.sourceMessageUpdatedAt !== undefined &&
+      !(await ctx.runQuery(internal.chat.inbox.internalIsInboundMessageCurrent, {
         conversationId: args.conversationId,
         agentMessageId: args.promptMessageId,
+        sourceMessageUpdatedAt: args.sourceMessageUpdatedAt,
       }))
     ) {
       return;
@@ -895,9 +898,11 @@ export const generateAiReplyWorker = internalAction({
       }
       if (
         args.promptMessageId !== undefined &&
-        (await ctx.runQuery(internal.chat.inbox.internalIsInboundMessageRevoked, {
+        args.sourceMessageUpdatedAt !== undefined &&
+        !(await ctx.runQuery(internal.chat.inbox.internalIsInboundMessageCurrent, {
           conversationId: args.conversationId,
           agentMessageId: args.promptMessageId,
+          sourceMessageUpdatedAt: args.sourceMessageUpdatedAt,
         }))
       ) {
         return;
@@ -1089,10 +1094,11 @@ export const internalGetConversation = internalQuery({
   },
 });
 
-export const internalIsInboundMessageRevoked = internalQuery({
+export const internalIsInboundMessageCurrent = internalQuery({
   args: {
     conversationId: v.id("conversations"),
     agentMessageId: v.string(),
+    sourceMessageUpdatedAt: v.number(),
   },
   handler: async (ctx, args) => {
     const message = await ctx.db
@@ -1104,7 +1110,8 @@ export const internalIsInboundMessageRevoked = internalQuery({
       message !== null &&
       message.conversationId === args.conversationId &&
       message.direction === "incoming" &&
-      message.revokedAt !== undefined
+      message.revokedAt === undefined &&
+      (message.editedAt ?? message.createdAt) === args.sourceMessageUpdatedAt
     );
   },
 });

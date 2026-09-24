@@ -206,6 +206,7 @@ test("WhatsApp edits update the original message without creating a new inbound 
   expect(editArgs).toMatchObject({
     phoneNumberId: "phone-123",
     originalExternalId: "original-message-123",
+    eventExternalId: "edit-event-123",
     content: "Updated message",
   });
   expect(inboundArgs).toBeUndefined();

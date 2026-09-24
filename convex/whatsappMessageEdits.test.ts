@@ -56,6 +56,7 @@ test("WhatsApp edit and revoke replace the original incoming message and current
   const result = await t.mutation(internal.whatsappWebhook.handleMessageEdit, {
     phoneNumberId: "phone-123",
     originalExternalId: "original-message-123",
+    eventExternalId: "edit-event-123",
     content: "Updated message",
     timestampMs: now + 5000,
   });

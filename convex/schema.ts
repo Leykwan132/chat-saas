@@ -1438,6 +1438,7 @@ export default defineSchema({
     statusUpdatedAt: v.optional(v.number()),
     readAt: v.optional(v.number()),
     editedAt: v.optional(v.number()),
+    lastEditEventId: v.optional(v.string()),
     revokedAt: v.optional(v.number()),
     receiptMetadata: v.optional(
       v.object({
