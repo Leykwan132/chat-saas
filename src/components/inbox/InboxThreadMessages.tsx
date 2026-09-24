@@ -554,7 +554,6 @@ function ReactionDialog({
   selected,
   onOpenChange,
   onRemoveReaction,
-  highlightedLedgerMessageId = null,
 }: {
   selected: SelectedReaction | null;
   onOpenChange: (open: boolean) => void;
@@ -616,6 +615,7 @@ export function InboxThreadMessages({
   escalationMarkers = [],
   onReact,
   onRemoveReaction,
+  highlightedLedgerMessageId = null,
 }: InboxThreadMessagesProps) {
   const threadItems = useMemo(
     () => buildInboxThreadItems(messages, escalationMarkers),
