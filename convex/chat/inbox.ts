@@ -362,8 +362,19 @@ export const internalPersistAiReplyMessages = internalMutation({
   },
   handler: async (ctx, args) => {
     const conv = await ctx.db.get(args.conversationId);
-    if (conv === null) return null;
-    if (!(await canProcessWorkspaceActivity(ctx, conv.orgId))) return null;
+    if (conv === null) {
+      console.warn("[inbox] persist AI reply skipped: conversation not found", {
+        conversationId: args.conversationId,
+      });
+      return null;
+    }
+    if (!(await canProcessWorkspaceActivity(ctx, conv.orgId))) {
+      console.warn("[inbox] persist AI reply skipped: workspace inactive", {
+        conversationId: conv._id,
+        orgId: conv.orgId,
+      });
+      return null;
+    }
 
     const messages = args.messages
       .map((message) => ({
@@ -371,7 +382,13 @@ export const internalPersistAiReplyMessages = internalMutation({
         content: normalizeCustomerFacingResponseFormatting(message.content).trim(),
       }))
       .filter((message) => message.content.length > 0);
-    if (messages.length === 0) return null;
+    if (messages.length === 0) {
+      console.warn("[inbox] persist AI reply skipped: empty after normalize", {
+        conversationId: conv._id,
+        inputCount: args.messages.length,
+      });
+      return null;
+    }
 
     const channel = conv.channelId ? await ctx.db.get(conv.channelId) : null;
     const orgAddress =
@@ -387,35 +404,59 @@ export const internalPersistAiReplyMessages = internalMutation({
         args.llmModel !== undefined
           ? { llmModel: args.llmModel, creditsCharged: creditsCharged ?? 0 }
           : undefined;
-      lastAgentMessageId = await saveAiReply(
-        ctx,
-        args.threadId,
-        message.content,
-        conv.assignedAgentId,
-        sentAt,
-        { messageMetadata },
-      );
-      lastMessageId = await ctx.db.insert("messages", {
-        orgId: conv.orgId,
+      console.info("[inbox] persisting AI reply message", {
         conversationId: conv._id,
-        channelId: conv.channelId,
-        service: conv.service,
-        externalId: message.externalId,
-        orgAddress,
-        contactAddress: conv.contactAddress,
-        direction: "outgoing",
-        agentId: conv.assignedAgentId,
-        contentType: "text",
-        content: message.content,
+        threadId: args.threadId,
+        index,
+        total: messages.length,
+        contentLength: message.content.length,
+        hasExternalId: message.externalId !== undefined,
+      });
+      try {
+        lastAgentMessageId = await saveAiReply(
+          ctx,
+          args.threadId,
+          message.content,
+          conv.assignedAgentId,
+          sentAt,
+          { messageMetadata },
+        );
+        lastMessageId = await ctx.db.insert("messages", {
+          orgId: conv.orgId,
+          conversationId: conv._id,
+          channelId: conv.channelId,
+          service: conv.service,
+          externalId: message.externalId,
+          orgAddress,
+          contactAddress: conv.contactAddress,
+          direction: "outgoing",
+          agentId: conv.assignedAgentId,
+          contentType: "text",
+          content: message.content,
+          agentMessageId: lastAgentMessageId,
+          sourceEventId: args.sourceEventId,
+          llmModel: args.llmModel,
+          creditsCharged,
+          status: args.status ?? "sent",
+          ...(args.status === "failed" && args.failureReason
+            ? { failureReason: args.failureReason }
+            : {}),
+          createdAt: sentAt,
+        });
+      } catch (err) {
+        console.error("[inbox] persist AI reply message failed", {
+          conversationId: conv._id,
+          index,
+          total: messages.length,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        throw err;
+      }
+      console.info("[inbox] persisted AI reply message", {
+        conversationId: conv._id,
+        index,
         agentMessageId: lastAgentMessageId,
-        sourceEventId: args.sourceEventId,
-        llmModel: args.llmModel,
-        creditsCharged,
-        status: args.status ?? "sent",
-        ...(args.status === "failed" && args.failureReason
-          ? { failureReason: args.failureReason }
-          : {}),
-        createdAt: sentAt,
+        messageId: lastMessageId,
       });
     }
 
@@ -647,6 +688,13 @@ export const generateAiReplyWorker = internalAction({
       !conv.assignToAiAgent ||
       !conv.assignedAgentId
     ) {
+      console.info("[inbox] ai reply worker skipped: conversation gate", {
+        conversationId: args.conversationId,
+        found: conv !== null,
+        status: conv?.status,
+        assignToAiAgent: conv?.assignToAiAgent,
+        hasAssignee: conv?.assignedAgentId !== undefined,
+      });
       return;
     }
     if (
@@ -654,6 +702,10 @@ export const generateAiReplyWorker = internalAction({
         orgId: conv.orgId,
       }))
     ) {
+      console.info("[inbox] ai reply worker skipped: workspace inactive", {
+        conversationId: conv._id,
+        orgId: conv.orgId,
+      });
       return;
     }
     if (
@@ -665,13 +717,23 @@ export const generateAiReplyWorker = internalAction({
         sourceMessageUpdatedAt: args.sourceMessageUpdatedAt,
       }))
     ) {
+      console.info("[inbox] ai reply worker skipped: stale prompt", {
+        conversationId: conv._id,
+        promptMessageId: args.promptMessageId,
+      });
       return;
     }
 
     const agent = await ctx.runQuery(internal.agents.internalGet, {
       agentId: conv.assignedAgentId,
     });
-    if (!agent) return;
+    if (!agent) {
+      console.info("[inbox] ai reply worker skipped: agent not found", {
+        conversationId: conv._id,
+        assignedAgentId: conv.assignedAgentId,
+      });
+      return;
+    }
 
     const stripeInfo = await ctx.runQuery(internal.plans.getTeamStripePlan, {
       workosOrgId: agent.orgId,
@@ -817,6 +879,13 @@ export const generateAiReplyWorker = internalAction({
         (convAfterGeneration.status === "requires_user_input" &&
           convAfterGeneration.escalation)
       ) {
+        console.info("[inbox] ai reply worker stopped after generation: conversation gate", {
+          conversationId: conv._id,
+          found: convAfterGeneration !== null,
+          status: convAfterGeneration?.status,
+          assignToAiAgent: convAfterGeneration?.assignToAiAgent,
+          replyCount: replyMessages.length,
+        });
         return;
       }
       if (
@@ -824,6 +893,10 @@ export const generateAiReplyWorker = internalAction({
           orgId: conv.orgId,
         }))
       ) {
+        console.info("[inbox] ai reply worker stopped after generation: workspace inactive", {
+          conversationId: conv._id,
+          replyCount: replyMessages.length,
+        });
         return;
       }
       if (
@@ -835,6 +908,10 @@ export const generateAiReplyWorker = internalAction({
           sourceMessageUpdatedAt: args.sourceMessageUpdatedAt,
         }))
       ) {
+        console.info("[inbox] ai reply worker stopped after generation: stale prompt", {
+          conversationId: conv._id,
+          replyCount: replyMessages.length,
+        });
         return;
       }
 
@@ -842,7 +919,18 @@ export const generateAiReplyWorker = internalAction({
       const channelMediaItems = toChannelMediaItems(allMediaItems);
 
       const allMediaUrls = allMediaItems.map((item) => item.url);
-      if (replyMessages.length === 0 && allMediaItems.length === 0) return;
+      if (replyMessages.length === 0 && allMediaItems.length === 0) {
+        console.info("[inbox] ai reply worker stopped after generation: nothing to send", {
+          conversationId: conv._id,
+        });
+        return;
+      }
+      console.info("[inbox] ai reply worker generated reply", {
+        conversationId: conv._id,
+        service: conv.service,
+        replyCount: replyMessages.length,
+        mediaCount: allMediaItems.length,
+      });
 
       let usage: { llmModel: string; creditsCharged: number };
       try {
@@ -902,6 +990,15 @@ export const generateAiReplyWorker = internalAction({
         return null;
       });
       if (sendResult === null) return;
+      console.info("[inbox] ai reply worker channel send resolved", {
+        conversationId: conv._id,
+        ok: sendResult.ok,
+        sentTextCount: sendResult.sentTextCount,
+        mediaSent: sendResult.mediaSent,
+        textExternalIds: sendResult.textExternalIds,
+        mediaExternalIds: sendResult.mediaExternalIds,
+        error: sendResult.error,
+      });
 
       const enqueueMetaMarkSeenIfRead = async (
         persistResult: {
@@ -945,7 +1042,13 @@ export const generateAiReplyWorker = internalAction({
             ? { externalId: sendResult.textExternalIds[index] as string }
             : {}),
         }));
+
       if (sentMessages.length > 0) {
+        console.info("[inbox] ai reply worker persisting sent messages", {
+          conversationId: conv._id,
+          count: sentMessages.length,
+          allHaveExternalId: sentMessages.every((message) => message.externalId !== undefined),
+        });
         const persistResult: {
           markedRead: boolean;
           latestInboundExternalId?: string;
@@ -960,7 +1063,19 @@ export const generateAiReplyWorker = internalAction({
             sourceEventId: args.avatarSourceEventId,
           },
         );
+        console.info("[inbox] ai reply worker persisted sent messages", {
+          conversationId: conv._id,
+          count: sentMessages.length,
+          persisted: persistResult !== null,
+        });
         await enqueueMetaMarkSeenIfRead(persistResult);
+      } else {
+        console.warn("[inbox] ai reply worker skipping persist: no sent messages", {
+          conversationId: conv._id,
+          replyCount: replyMessages.length,
+          sendOk: sendResult.ok,
+          sentTextCount: sendResult.sentTextCount,
+        });
       }
 
       if (!sendResult.ok) {
