@@ -195,7 +195,10 @@ test("keeps a summary current through trigger-wrapped source writes", async () =
   const fixture = await createFixture();
   await fixture.t.run(async (ctx) => {
     const triggerCtx = triggers.wrapDB(ctx);
-    await triggerCtx.db.patch(fixture.conversationId, { unreadCount: 0 });
+    await triggerCtx.db.patch(fixture.conversationId, {
+      unreadCount: 0,
+      lastMessageSentByAi: true,
+    });
     await triggerCtx.db.patch(fixture.customerId, {
       tags: ["Current"],
       leadTemperature: "Cold",
@@ -211,6 +214,7 @@ test("keeps a summary current through trigger-wrapped source writes", async () =
   );
   expect(summary).toMatchObject({
     unreadCount: 0,
+    lastMessageSentByAi: true,
     tags: ["Current"],
     leadTemperature: "Cold",
     hasBooking: false,

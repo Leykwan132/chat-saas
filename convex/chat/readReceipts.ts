@@ -29,7 +29,7 @@ function isRankedStatus(
   return status !== undefined && status !== "failed";
 }
 
-function shouldApplyStatus(
+export function shouldApplyChannelMessageStatus(
   current: ChannelMessageStatus | undefined,
   next: ChannelMessageStatus,
 ): boolean {
@@ -45,7 +45,7 @@ async function patchReceiptStatus(
   options: ReceiptUpdateOptions,
 ): Promise<boolean> {
   if (row.direction !== "outgoing") return false;
-  if (!shouldApplyStatus(row.status, options.status)) return false;
+  if (!shouldApplyChannelMessageStatus(row.status, options.status)) return false;
 
   const effectiveTimestamp = options.timestampMs ?? Date.now();
   const patch: Record<string, unknown> = {

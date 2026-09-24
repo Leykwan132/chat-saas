@@ -47,6 +47,7 @@ import { canProcessWorkspaceActivity } from "../teamDeletion/access";
 import { notifyHumanEscalation } from "../telegramNotifications/events";
 import { splitAiReplyMessages } from "./aiReplyMessages";
 import { applyBookingReplyGate } from "./applyBookingReply";
+import { applyPendingOutboundReceipt } from "./pendingOutboundReceipt";
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
@@ -225,6 +226,7 @@ export const internalPersistHumanReply = internalMutation({
     const markedRead = conv.unreadCount > 0;
     const patch: Partial<Doc<"conversations">> = {
       lastMessageAt: now,
+      lastMessageSentByAi: false,
       unreadCount: 0,
       assignToAiAgent: false,
       updatedAt: now,
@@ -320,6 +322,7 @@ export const internalPersistAiReply = internalMutation({
     const markedRead = conv.unreadCount > 0;
     const patch: Partial<Doc<"conversations">> = {
       lastMessageAt: now,
+      lastMessageSentByAi: true,
       unreadCount: 0,
       updatedAt: now,
     };
@@ -415,7 +418,15 @@ export const internalPersistAiReplyMessages = internalMutation({
       messageIds.push(lastMessageId);
     }
 
+    const lastContent = messages.at(-1)?.content ?? "";
+    const lastMessageAt = startedAt + messages.length - 1;
     if (args.deliveryStatus === "queued") {
+      await ctx.db.patch(conv._id, {
+        lastMessageAt,
+        lastMessagePreview: lastContent.slice(0, 140),
+        lastMessageSentByAi: true,
+        updatedAt: lastMessageAt,
+      });
       return { agentMessageId: lastAgentMessageId, messageIds };
     }
 
@@ -428,12 +439,12 @@ export const internalPersistAiReplyMessages = internalMutation({
     }
 
     const markedRead = conv.unreadCount > 0;
-    const lastContent = messages.at(-1)?.content ?? "";
     await ctx.db.patch(conv._id, {
-      lastMessageAt: startedAt + messages.length - 1,
+      lastMessageAt,
       lastMessagePreview: lastContent.slice(0, 140),
+      lastMessageSentByAi: true,
       unreadCount: 0,
-      updatedAt: startedAt + messages.length - 1,
+      updatedAt: lastMessageAt,
     });
     await markConversationAnalyticsDirty(ctx, {
       conversationId: conv._id,
@@ -488,6 +499,12 @@ export const internalFinalizeAiReplyMessages = internalMutation({
           ? { failureReason: args.failureReason }
           : {}),
       });
+      if (args.status === "sent" && externalId && message.channelId !== undefined) {
+        await applyPendingOutboundReceipt(ctx, {
+          externalId,
+          channelId: message.channelId,
+        });
+      }
     }
 
     if (args.status === "failed") return null;
@@ -506,6 +523,7 @@ export const internalFinalizeAiReplyMessages = internalMutation({
     await ctx.db.patch(conv._id, {
       lastMessageAt: lastMessage.createdAt,
       lastMessagePreview: lastMessage.content.slice(0, 140),
+      lastMessageSentByAi: true,
       unreadCount: 0,
       updatedAt: now,
     });
@@ -593,6 +611,7 @@ export const internalPersistAiMediaReply = internalMutation({
     await ctx.db.patch(conv._id, {
       lastMessageAt: now,
       lastMessagePreview: "📎 Media",
+      lastMessageSentByAi: true,
       unreadCount: 0,
       updatedAt: now,
     });

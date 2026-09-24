@@ -1473,6 +1473,7 @@ async function upsertInboxConversation(
       threadId,
       lastMessageAt: args.lastMessageAt,
       lastMessagePreview: args.preview && args.preview.trim() !== "" ? args.preview : undefined,
+      lastMessageSentByAi: false,
       lastCustomerMessageAt: args.isIncoming ? args.lastMessageAt : undefined,
       unreadCount: args.isHistorical ? 0 : (args.isIncoming ? 1 : 0),
       metaConversationId: args.metaConversationId,
@@ -1530,6 +1531,7 @@ async function upsertInboxConversation(
   }
   if (args.isIncoming) {
     patch.lastCustomerMessageAt = args.lastMessageAt;
+    patch.lastMessageSentByAi = false;
   }
   if (!existing.contactName && resolvedContactName) {
     patch.contactName = resolvedContactName;
