@@ -34,6 +34,8 @@ For `billable: true` and `category: "service"`, the updater reads and validates 
 
 The existing ledger-to-Inbox mapping exposes the message service and persisted pricing metadata on `InboxUIMessage`. A small presentation helper supplies `Free` for outgoing WhatsApp rows without pricing metadata or when Meta marks them non-billable, and `Service (RM<snapshot>)` when Meta marks a service message billable. The outgoing timestamp row renders the label after the time without changing delivery-receipt icons or message content. It does not show a pricing label for non-WhatsApp messages.
 
+Every displayed WhatsApp pricing label has a compact information icon immediately after it. On hover or keyboard focus, its tooltip says: “Starting 1 October, Meta includes 1,000 free WhatsApp service messages each month. After that, service messages are charged. Add a payment method in Meta Business Manager to keep sending WhatsApp messages with Kilobot.” The tooltip is explanatory only; it does not create a payment flow or change whether a message is billed.
+
 ## Errors and Idempotency
 
 Invalid or absent pricing fields are treated as absent pricing data; the ordinary delivery status still applies. A billable service receipt without a valid MYR environment rate fails visibly, avoiding an unpriced billing record. Replayed webhook statuses are idempotent: they update the same message and do not create another record or accumulate a counter.
@@ -45,3 +47,4 @@ Invalid or absent pricing fields are treated as absent pricing data; the ordinar
 - Billable service pricing snapshots the required MYR rate without changing Meta's billable decision.
 - Ledger-to-Inbox mapping exposes persisted pricing metadata.
 - Timestamp-label presentation covers legacy WhatsApp rows without pricing, webhook-confirmed free pricing, billable service pricing, and non-WhatsApp rows.
+- The information icon is present only with a WhatsApp pricing label, and exposes the payment-context tooltip on hover and keyboard focus.
