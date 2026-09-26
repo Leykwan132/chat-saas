@@ -422,3 +422,70 @@ test("unsupported Meta messages are logged but not ingested", async () => {
   expect(response.status).toBe(200);
   expect(runMutation).not.toHaveBeenCalled();
 });
+
+test("forwards complete Meta status pricing and ignores incomplete pricing", async () => {
+  const runMutation = vi.fn().mockResolvedValue(undefined);
+  const ctx = { runMutation } as unknown as Parameters<typeof receive>[0];
+  const payload = JSON.stringify({
+    entry: [
+      {
+        changes: [
+          {
+            field: "messages",
+            value: {
+              metadata: { phone_number_id: "phone-123" },
+              statuses: [
+                {
+                  id: "wamid.complete-pricing",
+                  status: "sent",
+                  timestamp: "1790438560",
+                  pricing: {
+                    billable: false,
+                    pricing_model: "PMP",
+                    type: "free_customer_service",
+                    category: "service",
+                  },
+                },
+                {
+                  id: "wamid.incomplete-pricing",
+                  status: "sent",
+                  timestamp: "1790438561",
+                  pricing: {
+                    billable: true,
+                    pricing_model: "PMP",
+                    type: "regular",
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  const response = await receive(ctx, payload);
+  const statusArgs = runMutation.mock.calls.map((call) => call[1]);
+
+  expect(response.status).toBe(200);
+  expect(statusArgs).toContainEqual({
+    phoneNumberId: "phone-123",
+    externalId: "wamid.complete-pricing",
+    status: "sent",
+    timestampMs: 1_790_438_560_000,
+    failureReason: undefined,
+    pricing: {
+      billable: false,
+      pricingModel: "PMP",
+      type: "free_customer_service",
+      category: "service",
+    },
+  });
+  expect(statusArgs).toContainEqual({
+    phoneNumberId: "phone-123",
+    externalId: "wamid.incomplete-pricing",
+    status: "sent",
+    timestampMs: 1_790_438_561_000,
+    failureReason: undefined,
+  });
+});
