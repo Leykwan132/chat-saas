@@ -19,6 +19,10 @@ import {
 import { resolveWhatsAppImageFiles } from "./chat/inboxImageIngest";
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
 import {
+  createWhatsAppPricingSnapshot,
+  type MetaWhatsAppPricing,
+} from "./whatsappPricing";
+import {
   REVOKED_INBOUND_MESSAGE_TEXT,
   replaceIncomingMessage,
 } from "./chat/inboundMessageReplacement";
@@ -75,6 +79,36 @@ const stateSyncContactValidator = v.object({
   ),
   timestampMs: v.optional(v.number()),
 });
+
+const metaWhatsAppPricingValidator = v.object({
+  billable: v.boolean(),
+  pricingModel: v.string(),
+  type: v.string(),
+  category: v.string(),
+});
+
+function parseMetaWhatsAppPricing(
+  pricing: WhatsAppValue["statuses"][number]["pricing"] | undefined,
+): MetaWhatsAppPricing | undefined {
+  if (
+    pricing === undefined ||
+    typeof pricing.billable !== "boolean" ||
+    typeof pricing.pricing_model !== "string" ||
+    !pricing.pricing_model ||
+    typeof pricing.type !== "string" ||
+    !pricing.type ||
+    typeof pricing.category !== "string" ||
+    !pricing.category
+  ) {
+    return undefined;
+  }
+  return {
+    billable: pricing.billable,
+    pricingModel: pricing.pricing_model,
+    type: pricing.type,
+    category: pricing.category,
+  };
+}
 
 // GET /webhook/whatsapp — Meta verification handshake. We must echo
 // `hub.challenge` plain when `hub.verify_token` matches the secret we
@@ -617,12 +651,14 @@ export async function receive(
 
       for (const status of value.statuses ?? []) {
         try {
+          const pricing = parseMetaWhatsAppPricing(status.pricing);
           await ctx.runMutation(internal.whatsappWebhook.handleStatus, {
             phoneNumberId,
             externalId: status.id,
             status: mapStatus(status.status),
             timestampMs: parseOptionalTimestamp(status.timestamp),
             failureReason: status.errors?.[0]?.title,
+            ...(pricing !== undefined ? { pricing } : {}),
           });
         } catch (err) {
           console.error("Failed to apply WhatsApp status update", err);
@@ -1235,6 +1271,7 @@ export const handleStatus = internalMutation({
     status: messageStatusValidator,
     timestampMs: v.optional(v.number()),
     failureReason: v.optional(v.string()),
+    pricing: v.optional(metaWhatsAppPricingValidator),
   },
   handler: async (ctx, args) => {
     const message = await ctx.db
@@ -1278,6 +1315,14 @@ export const handleStatus = internalMutation({
       timestampMs: args.timestampMs,
       channelId: channel?._id,
       failureReason: args.failureReason,
+      ...(args.pricing !== undefined
+        ? {
+            pricing: createWhatsAppPricingSnapshot(
+              args.pricing,
+              args.timestampMs ?? Date.now(),
+            ),
+          }
+        : {}),
     });
     console.info("[whatsapp] status update applied", {
       externalId: args.externalId,
@@ -1562,6 +1607,12 @@ type WhatsAppChangeValue = {
     timestamp?: string;
     recipient_id?: string;
     errors?: Array<{ code?: number; title?: string; message?: string }>;
+    pricing?: {
+      billable?: boolean;
+      pricing_model?: string;
+      type?: string;
+      category?: string;
+    };
   }>;
 };
 

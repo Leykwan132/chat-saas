@@ -88,6 +88,8 @@ export type InboxUIMessage = UIMessage & {
   isBroadcast?: boolean;
   broadcastPresentation?: BroadcastPresentation;
   workflowAutomationSource?: WorkflowAutomationSource;
+  service?: Doc<"messages">["service"];
+  receiptPricing?: NonNullable<Doc<"messages">["receiptMetadata"]>["pricing"];
 };
 
 export function isInboxOrderSpacerDoc(doc: MessageDoc): boolean {
@@ -314,6 +316,8 @@ export async function messageDocsToInboxUIMessages(
                 revokedAt: ledger.revokedAt,
                 failureReason: ledger.failureReason,
                 reactions: ledger.reactions,
+                service: ledger.service,
+                receiptPricing: ledger.receiptMetadata?.pricing,
               }
             : {}),
           ...(agentName !== undefined ? { agentName } : {}),

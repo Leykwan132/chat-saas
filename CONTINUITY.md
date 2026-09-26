@@ -2,6 +2,8 @@
 
 # Snapshot
 
+- 2026-09-27 [USER] Goal: persist Meta WhatsApp outbound webhook pricing on each message and distinguish free versus billable service messages beside the Inbox time. Meta webhook `pricing.billable` is the sole billing authority; no local monthly allowance or counter. A required MYR service-rate environment value supplies only the shown price. Existing outgoing WhatsApp messages without pricing metadata display as Free. Every WhatsApp pricing label has an info hover explaining Meta's 1 Oct 1,000-free-service-message allowance and Meta payment-method requirement for continued WhatsApp sending through Kilobot. Design approved; implementation plan ready for review. UNCONFIRMED: actual `WHATSAPP_SERVICE_MESSAGE_PRICE_MYR` deployment value. Unshipped.
+- 2026-09-27 [CODE] WhatsApp status receipts now store complete Meta pricing on the matched outgoing `messages.receiptMetadata.pricing` row. Inbox outgoing WhatsApp timestamps show Free for legacy/missing or non-billable pricing, and Service with its immutable MYR snapshot when billable. The 1 October Meta-policy explainer is keyboard-focusable. Commits `2021f28`, `d92bd5d`, and `ec4b69c`; unshipped. UNCONFIRMED: the exact production `WHATSAPP_SERVICE_MESSAGE_PRICE_MYR` value has not been supplied, so no environment was changed.
 - 2026-09-23 [USER] Goal: replace the selectable OpenRouter model `openai/gpt-5.6-luna` with `openai/gpt-6-luna`; persisted GPT-5.6 Luna agent selections migrate in place to GPT-6 Luna. The existing two-credit price is retained. Unshipped.
 - 2026-09-23 [USER] Goal: replace the high-I/O inbox conversation list with a compact, atomically maintained conversation-summary projection, a reconciliation path, and cursor pagination. Unshipped in isolated worktree `inbox-summary-pagination`.
 - 2026-09-23 [CODE] Inbox summary projection and cursor-pagination implementation is committed as `b80a061` and `21f00a9`: source writes update the compact row atomically through triggers; an explicit bounded reconciliation repairs dashboard/import drift; the Inbox loads 50 rows and continues via automatic and manual load-more. Unshipped.
@@ -151,6 +153,25 @@
 - 2026-09-18 [CODE] `convex/chat/{workflowActionPlanner,workflowDecisions,workflowActionPlanner.test,inbox}.ts`
 
 # Receipts
+
+- 2026-09-27 [TOOL] WhatsApp pricing verification passed: `bunx tsc --noEmit`, 26 focused tests, and the full supported Vitest suite with test-only Stripe values. `bun test` remains unsuitable because Bun lacks Vite's `import.meta.glob` and no Stripe test variables were set; it failed with 232 tests and 151 setup errors before a usable full-suite result.
+
+- 2026-09-25 [TOOL] PR #181 opened from isolated branch `codex/whatsapp-ai-disclosure`, cherry-picking only `e62158a` onto main for Meta AI disclosure payloads.
+
+- 2026-09-25 [CODE] PR #180 follow-up: AI-generated WhatsApp text requests include Meta `ai_disclosure: { type: "GEN_AI_CONTENT" }`; human, broadcast, template, and media requests remain unchanged. `bunx tsc --noEmit` passed; commit `e62158a` pushed.
+
+- 2026-09-25 [TOOL] PR #180 merged `origin/main` as `5ee7265`; retained AI-reply persistence diagnostics during the sole conflict. `bunx tsc --noEmit`, focused aggregate test (3 tests), and diff check passed.
+
+- 2026-09-25 [CODE] PR #180 fixes the AI-reply persistence deadlock: `internalPersistAiReplyMessages` no longer nests `triggers.wrapDB` while recording AI-assisted conversation facts. Focused aggregate test (3 tests) and `bunx tsc --noEmit` passed.
+
+- 2026-09-24 [CODE] PR #178 repurposed per [USER]: sweeper/pending/finalize removed (-535/+69); worker persists after send with returned IDs, throw path saves `failed` rows, debug logs on persist/receipt-miss/ID-less send. Suites green (40 tests).
+- 2026-09-24 [CODE] PR #178 opened from `fix/queued-receipt-sweep`: queued persists schedule a 10-minute finalize verification, orphans flip to `failed` with reason, manual sweep clears existing stuck rows/stale parked receipts, loud logs on ID-less sends and dropped statuses. Suites green (15 + 22 tests).
+- 2026-09-24 [CODE] Clarified `wamid` semantics: unique per send, not per conversation; receipt-vs-row mismatch means different bubbles compared, duplicate sends, or app-sent messages. Match check pending [USER].
+- 2026-09-24 [CODE] Unset-`externalId` audit: every WhatsApp write path on current code stores the provider ID except web/avatar (by design), failed sends, transient queued rows, and Meta-200-empty-body. Age/status columns distinguish the buckets; dashboard filter check pending [USER].
+- 2026-09-24 [CODE] Prod `messages` scan shows `externalId` unset on most rows with one `wamid` present; cause split into by-design gaps (web/avatar never have provider IDs) vs finalize gaps (queued WhatsApp rows). Filter check pending [USER].
+- 2026-09-24 [CODE] WhatsApp read/delivered receipts investigated: send→wamid finalize, status-by-externalId patch, and thread join by agentMessageId are all wired on `fix/deleted-icon-size`; likely break is ledger-row/externalId mismatch or silent drop in `handleStatus`. Prod data check pending [USER].
+- 2026-09-24 [TOOL] Receipt chain verified green with the exact prod event (queued→finalize wamid→handleStatus read→status/readAt/agentMessageId all correct); scratch repro deleted. Fall-off is in prod state, not current logic [USER].
+- 2026-09-24 [CODE] PR #177 opened from `fix/deleted-icon-size`: deleted-message prohibit icon shrunk from 32px to 16px in `InboxThreadMessages.tsx`.
 
 - 2026-09-23 [TOOL] Messenger/Instagram manual-app echo regression suite passed; `bunx convex codegen`, `bunx tsc --noEmit`, and full Vitest passed: 640 files, 2,191 tests.
 - 2026-09-22 [TOOL] PR #165 opened from `codex/round-dashboard-header` after PR #164 merged before the Dashboard follow-up could be included; site header suite passed (6 tests).

@@ -1,5 +1,6 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import type { WhatsAppPricingSnapshot } from "../whatsappPricing";
 
 export type ChannelMessageStatus = NonNullable<Doc<"messages">["status"]>;
 export type ReadReceiptSource =
@@ -14,6 +15,7 @@ type ReceiptUpdateOptions = {
   providerMessageId?: string;
   watermark?: number;
   failureReason?: string;
+  pricing?: WhatsAppPricingSnapshot;
 };
 
 const STATUS_RANK: Record<Exclude<ChannelMessageStatus, "failed">, number> = {
@@ -45,28 +47,41 @@ async function patchReceiptStatus(
   options: ReceiptUpdateOptions,
 ): Promise<boolean> {
   if (row.direction !== "outgoing") return false;
-  if (!shouldApplyChannelMessageStatus(row.status, options.status)) return false;
+  const shouldUpdateStatus = shouldApplyChannelMessageStatus(row.status, options.status);
+  if (!shouldUpdateStatus && options.pricing === undefined) return false;
 
   const effectiveTimestamp = options.timestampMs ?? Date.now();
-  const patch: Record<string, unknown> = {
-    status: options.status,
-    statusUpdatedAt: effectiveTimestamp,
-    receiptMetadata: {
-      source: options.source,
-      ...(options.providerMessageId !== undefined
-        ? { providerMessageId: options.providerMessageId }
-        : {}),
-      ...(options.timestampMs !== undefined
-        ? { providerTimestamp: options.timestampMs }
-        : {}),
-      ...(options.watermark !== undefined ? { watermark: options.watermark } : {}),
-    },
-  };
+  const patch: Record<string, unknown> = shouldUpdateStatus
+    ? {
+        status: options.status,
+        statusUpdatedAt: effectiveTimestamp,
+        receiptMetadata: {
+          source: options.source,
+          ...(options.providerMessageId !== undefined
+            ? { providerMessageId: options.providerMessageId }
+            : {}),
+          ...(options.timestampMs !== undefined
+            ? { providerTimestamp: options.timestampMs }
+            : {}),
+          ...(options.watermark !== undefined ? { watermark: options.watermark } : {}),
+          ...(options.pricing !== undefined
+            ? { pricing: options.pricing }
+            : row.receiptMetadata?.pricing !== undefined
+              ? { pricing: row.receiptMetadata.pricing }
+              : {}),
+        },
+      }
+    : {
+        receiptMetadata: {
+          ...row.receiptMetadata,
+          pricing: options.pricing,
+        },
+      };
 
-  if (options.status === "read") {
+  if (shouldUpdateStatus && options.status === "read") {
     patch.readAt = effectiveTimestamp;
   }
-  if (options.status === "failed" && options.failureReason) {
+  if (shouldUpdateStatus && options.status === "failed" && options.failureReason) {
     patch.failureReason = options.failureReason;
   }
 
@@ -83,6 +98,7 @@ export async function applyOutboundStatusByExternalId(
     timestampMs?: number;
     channelId?: Id<"channels">;
     failureReason?: string;
+    pricing?: WhatsAppPricingSnapshot;
   },
 ): Promise<{ updated: number }> {
   const rows = await ctx.db
@@ -101,6 +117,7 @@ export async function applyOutboundStatusByExternalId(
       timestampMs: args.timestampMs,
       providerMessageId: args.externalId,
       failureReason: args.failureReason,
+      pricing: args.pricing,
     });
     if (patched) updated += 1;
   }
