@@ -1,11 +1,22 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { expect, test } from "vitest";
+import { afterEach, expect, test } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
+
+const originalServicePriceMyr = process.env.WHATSAPP_SERVICE_MESSAGE_PRICE_MYR;
+
+afterEach(() => {
+  if (originalServicePriceMyr === undefined) {
+    delete process.env.WHATSAPP_SERVICE_MESSAGE_PRICE_MYR;
+  } else {
+    process.env.WHATSAPP_SERVICE_MESSAGE_PRICE_MYR = originalServicePriceMyr;
+  }
+});
 
 type Service = "whatsapp" | "instagram" | "messenger";
 
@@ -126,6 +137,94 @@ test("WhatsApp read status updates duplicate outgoing rows by external id", asyn
   expect(rows.first?.receiptMetadata).toMatchObject({
     source: "whatsapp_status",
     providerMessageId: "wamid.outbound",
+  });
+});
+
+test("stores Meta free pricing on the matching WhatsApp message", async () => {
+  const t = convexTest(schema, modules);
+  const { channelId, conversationId, now } = await insertFixture(t, "whatsapp");
+  const messageId = await insertMessage(t, {
+    conversationId,
+    channelId,
+    service: "whatsapp",
+    externalId: "wamid.free",
+    createdAt: now,
+  });
+
+  await t.run(async (ctx) =>
+    await applyOutboundStatusByExternalId(ctx, {
+      channelId,
+      externalId: "wamid.free",
+      status: "sent",
+      source: "whatsapp_status",
+      timestampMs: now + 1,
+      pricing: {
+        billable: false,
+        pricingModel: "PMP",
+        type: "free_customer_service",
+        category: "service",
+        recordedAt: now + 1,
+      },
+    }),
+  );
+
+  const message = await t.run(async (ctx) => await ctx.db.get(messageId));
+  expect(message?.receiptMetadata?.pricing).toEqual({
+    billable: false,
+    pricingModel: "PMP",
+    type: "free_customer_service",
+    category: "service",
+    recordedAt: now + 1,
+  });
+});
+
+test("preserves a billed service price when later receipts omit pricing", async () => {
+  process.env.WHATSAPP_SERVICE_MESSAGE_PRICE_MYR = "0.00321";
+  const t = convexTest(schema, modules);
+  const { channelId, conversationId, now } = await insertFixture(t, "whatsapp");
+  const messageId = await insertMessage(t, {
+    conversationId,
+    channelId,
+    service: "whatsapp",
+    externalId: "wamid.billed",
+    createdAt: now,
+  });
+
+  await t.run(async (ctx) =>
+    await applyOutboundStatusByExternalId(ctx, {
+      channelId,
+      externalId: "wamid.billed",
+      status: "sent",
+      source: "whatsapp_status",
+      timestampMs: now + 1,
+      pricing: {
+        billable: true,
+        pricingModel: "PMP",
+        type: "regular",
+        category: "service",
+        servicePriceMyr: "0.00321",
+        recordedAt: now + 1,
+      },
+    }),
+  );
+  await t.run(async (ctx) =>
+    await applyOutboundStatusByExternalId(ctx, {
+      channelId,
+      externalId: "wamid.billed",
+      status: "read",
+      source: "whatsapp_status",
+      timestampMs: now + 2,
+    }),
+  );
+
+  const message = await t.run(async (ctx) => await ctx.db.get(messageId));
+  expect(message?.receiptMetadata?.pricing).toEqual({
+    billable: true,
+    pricingModel: "PMP",
+    type: "regular",
+    category: "service",
+    servicePriceMyr: "0.00321",
+    recordedAt: now + 1,
   });
 });
 
