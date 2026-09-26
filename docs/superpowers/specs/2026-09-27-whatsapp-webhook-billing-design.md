@@ -11,7 +11,7 @@ Record Meta's authoritative WhatsApp delivery-pricing result on every matching o
 - The complete provider pricing result is retained with the existing outbound receipt metadata for the matching ledger message.
 - A billable service message snapshots the required `WHATSAPP_SERVICE_MESSAGE_PRICE_MYR` value as its MYR display rate when the webhook is processed.
 - Inbox timestamps show `Free` for a non-billable priced outbound message and `Service (RM<rate>)` for a billable service message.
-- Messages without a Meta pricing status retain their current timestamp presentation.
+- Existing outgoing WhatsApp messages without pricing metadata display as `Free`; other channel types retain their current timestamp presentation.
 
 ## Data Model
 
@@ -32,7 +32,7 @@ For `billable: true` and `category: "service"`, the updater reads and validates 
 
 ## Inbox Presentation
 
-The existing ledger-to-Inbox mapping exposes the persisted pricing metadata on `InboxUIMessage`. A small presentation helper supplies no label when pricing is absent, `Free` when Meta marks it non-billable, and `Service (RM<snapshot>)` when Meta marks a service message billable. The outgoing timestamp row renders the label after the time without changing delivery-receipt icons or message content.
+The existing ledger-to-Inbox mapping exposes the message service and persisted pricing metadata on `InboxUIMessage`. A small presentation helper supplies `Free` for outgoing WhatsApp rows without pricing metadata or when Meta marks them non-billable, and `Service (RM<snapshot>)` when Meta marks a service message billable. The outgoing timestamp row renders the label after the time without changing delivery-receipt icons or message content. It does not show a pricing label for non-WhatsApp messages.
 
 ## Errors and Idempotency
 
@@ -44,4 +44,4 @@ Invalid or absent pricing fields are treated as absent pricing data; the ordinar
 - Receipt persistence stores free pricing and preserves it across later delivery/read statuses.
 - Billable service pricing snapshots the required MYR rate without changing Meta's billable decision.
 - Ledger-to-Inbox mapping exposes persisted pricing metadata.
-- Timestamp-label presentation covers absent, free, and billable-service pricing.
+- Timestamp-label presentation covers legacy WhatsApp rows without pricing, webhook-confirmed free pricing, billable service pricing, and non-WhatsApp rows.

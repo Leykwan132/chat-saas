@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-27 [USER] Goal: persist Meta WhatsApp outbound webhook pricing on each message and distinguish free versus billable service messages beside the Inbox time. Meta webhook `pricing.billable` is the sole billing authority; no local monthly allowance or counter. A required MYR service-rate environment value supplies only the shown price. Unshipped.
+- 2026-09-27 [USER] Goal: persist Meta WhatsApp outbound webhook pricing on each message and distinguish free versus billable service messages beside the Inbox time. Meta webhook `pricing.billable` is the sole billing authority; no local monthly allowance or counter. A required MYR service-rate environment value supplies only the shown price. Existing outgoing WhatsApp messages without pricing metadata display as Free. Unshipped.
 - 2026-09-23 [USER] Goal: replace the selectable OpenRouter model `openai/gpt-5.6-luna` with `openai/gpt-6-luna`; persisted GPT-5.6 Luna agent selections migrate in place to GPT-6 Luna. The existing two-credit price is retained. Unshipped.
 - 2026-09-23 [USER] Goal: replace the high-I/O inbox conversation list with a compact, atomically maintained conversation-summary projection, a reconciliation path, and cursor pagination. Unshipped in isolated worktree `inbox-summary-pagination`.
 - 2026-09-23 [CODE] Inbox summary projection and cursor-pagination implementation is committed as `b80a061` and `21f00a9`: source writes update the compact row atomically through triggers; an explicit bounded reconciliation repairs dashboard/import drift; the Inbox loads 50 rows and continues via automatic and manual load-more. Unshipped.
