@@ -3,6 +3,7 @@
 # Snapshot
 
 - 2026-09-27 [USER] Goal: persist Meta WhatsApp outbound webhook pricing on each message and distinguish free versus billable service messages beside the Inbox time. Meta webhook `pricing.billable` is the sole billing authority; no local monthly allowance or counter. A required MYR service-rate environment value supplies only the shown price. Existing outgoing WhatsApp messages without pricing metadata display as Free. Every WhatsApp pricing label has an info hover explaining Meta's 1 Oct 1,000-free-service-message allowance and Meta payment-method requirement for continued WhatsApp sending through Kilobot. Design approved; implementation plan ready for review. UNCONFIRMED: actual `WHATSAPP_SERVICE_MESSAGE_PRICE_MYR` deployment value. Unshipped.
+- 2026-09-27 [CODE] WhatsApp status receipts now store complete Meta pricing on the matched outgoing `messages.receiptMetadata.pricing` row. Inbox outgoing WhatsApp timestamps show Free for legacy/missing or non-billable pricing, and Service with its immutable MYR snapshot when billable. The 1 October Meta-policy explainer is keyboard-focusable. Commits `2021f28`, `d92bd5d`, and `ec4b69c`; unshipped. UNCONFIRMED: the exact production `WHATSAPP_SERVICE_MESSAGE_PRICE_MYR` value has not been supplied, so no environment was changed.
 - 2026-09-23 [USER] Goal: replace the selectable OpenRouter model `openai/gpt-5.6-luna` with `openai/gpt-6-luna`; persisted GPT-5.6 Luna agent selections migrate in place to GPT-6 Luna. The existing two-credit price is retained. Unshipped.
 - 2026-09-23 [USER] Goal: replace the high-I/O inbox conversation list with a compact, atomically maintained conversation-summary projection, a reconciliation path, and cursor pagination. Unshipped in isolated worktree `inbox-summary-pagination`.
 - 2026-09-23 [CODE] Inbox summary projection and cursor-pagination implementation is committed as `b80a061` and `21f00a9`: source writes update the compact row atomically through triggers; an explicit bounded reconciliation repairs dashboard/import drift; the Inbox loads 50 rows and continues via automatic and manual load-more. Unshipped.
@@ -152,6 +153,8 @@
 - 2026-09-18 [CODE] `convex/chat/{workflowActionPlanner,workflowDecisions,workflowActionPlanner.test,inbox}.ts`
 
 # Receipts
+
+- 2026-09-27 [TOOL] WhatsApp pricing verification passed: `bunx tsc --noEmit`, 26 focused tests, and the full supported Vitest suite with test-only Stripe values. `bun test` remains unsuitable because Bun lacks Vite's `import.meta.glob` and no Stripe test variables were set; it failed with 232 tests and 151 setup errors before a usable full-suite result.
 
 - 2026-09-25 [TOOL] PR #181 opened from isolated branch `codex/whatsapp-ai-disclosure`, cherry-picking only `e62158a` onto main for Meta AI disclosure payloads.
 
