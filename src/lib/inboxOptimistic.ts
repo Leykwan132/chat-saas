@@ -2,6 +2,7 @@ import type { UIMessage } from '@convex-dev/agent/react';
 import type { InboxMessageReaction } from '../../shared/messageReactions';
 import type { BroadcastPresentation } from '../../shared/broadcastMessage';
 import type { WorkflowAutomationSource } from '../../shared/workflowAutomationMessage';
+import type { Doc } from '../../convex/_generated/dataModel';
 import {
   getInboxAudioAttachments,
   getInboxImageAttachments,
@@ -27,6 +28,8 @@ export type InboxUIMessage = UIMessage & {
   isBroadcast?: boolean;
   broadcastPresentation?: BroadcastPresentation;
   workflowAutomationSource?: WorkflowAutomationSource;
+  service?: Doc<'messages'>['service'];
+  receiptPricing?: NonNullable<Doc<'messages'>['receiptMetadata']>['pricing'];
 };
 
 export function hasVisibleInboxContent(message: InboxUIMessage): boolean {

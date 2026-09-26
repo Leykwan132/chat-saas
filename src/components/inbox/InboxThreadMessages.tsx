@@ -70,6 +70,7 @@ import { InboxAudioTranscript } from './InboxAudioTranscript';
 import { InboxBroadcastMessage } from './InboxBroadcastMessage';
 import { InboxWorkflowAutomationMessage } from './InboxWorkflowAutomationMessage';
 import { InboxEscalationDivider } from './InboxEscalationDivider';
+import { WhatsAppPricingLabel } from './WhatsAppPricingLabel';
 
 function getInboxMessageFileParts(
   message: InboxUIMessage,
@@ -778,6 +779,10 @@ export function InboxThreadMessages({
                       <span className="flex items-center justify-end gap-0.5 pr-0.5 text-xs text-muted-foreground">
                         <OutgoingReceiptIcon message={m} isPending={isPending} />
                         <span>{formatMessageTime(m._creationTime)}</span>
+                        <WhatsAppPricingLabel
+                          service={m.service}
+                          pricing={m.receiptPricing}
+                        />
                       </span>
                     </div>
                   )}
