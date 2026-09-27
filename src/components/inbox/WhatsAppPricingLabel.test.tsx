@@ -31,6 +31,13 @@ test('shows Free for legacy outgoing WhatsApp messages', () => {
   );
 });
 
+test('uses a tiny filled circle to separate the time from the pricing label', () => {
+  const markup = renderLabel({ service: 'whatsapp' });
+
+  expect(markup).toContain('lucide-circle');
+  expect(markup).toContain('size-1 fill-current');
+});
+
 test('shows Service without a rate for billed WhatsApp service messages', () => {
   const markup = renderLabel({
     service: 'whatsapp',
