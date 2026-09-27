@@ -1,4 +1,4 @@
-import { Info } from 'lucide-react';
+import { Circle, Info } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -36,6 +36,7 @@ export function WhatsAppPricingLabel({
 
   return (
     <span className="inline-flex items-center gap-0.5">
+      <Circle className="size-1 fill-current" aria-hidden="true" />
       <span>{label}</span>
       <Tooltip>
         <TooltipTrigger asChild>
