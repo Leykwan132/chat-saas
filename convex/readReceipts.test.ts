@@ -1,22 +1,12 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { afterEach, expect, test } from "vitest";
+import { expect, test } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
-
-const originalServicePriceMyr = process.env.WHATSAPP_SERVICE_MESSAGE_PRICE_MYR;
-
-afterEach(() => {
-  if (originalServicePriceMyr === undefined) {
-    delete process.env.WHATSAPP_SERVICE_MESSAGE_PRICE_MYR;
-  } else {
-    process.env.WHATSAPP_SERVICE_MESSAGE_PRICE_MYR = originalServicePriceMyr;
-  }
-});
 
 type Service = "whatsapp" | "instagram" | "messenger";
 
@@ -178,8 +168,7 @@ test("stores Meta free pricing on the matching WhatsApp message", async () => {
   });
 });
 
-test("preserves a billed service price when later receipts omit pricing", async () => {
-  process.env.WHATSAPP_SERVICE_MESSAGE_PRICE_MYR = "0.00321";
+test("preserves billed service metadata when later receipts omit pricing", async () => {
   const t = convexTest(schema, modules);
   const { channelId, conversationId, now } = await insertFixture(t, "whatsapp");
   const messageId = await insertMessage(t, {
@@ -202,7 +191,6 @@ test("preserves a billed service price when later receipts omit pricing", async 
         pricingModel: "PMP",
         type: "regular",
         category: "service",
-        servicePriceMyr: "0.00321",
         recordedAt: now + 1,
       },
     }),
@@ -223,7 +211,6 @@ test("preserves a billed service price when later receipts omit pricing", async 
     pricingModel: "PMP",
     type: "regular",
     category: "service",
-    servicePriceMyr: "0.00321",
     recordedAt: now + 1,
   });
 });

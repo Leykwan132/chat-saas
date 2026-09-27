@@ -88,7 +88,7 @@ const metaWhatsAppPricingValidator = v.object({
 });
 
 function parseMetaWhatsAppPricing(
-  pricing: WhatsAppValue["statuses"][number]["pricing"] | undefined,
+  pricing: NonNullable<WhatsAppChangeValue["statuses"]>[number]["pricing"] | undefined,
 ): MetaWhatsAppPricing | undefined {
   if (
     pricing === undefined ||

@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import { readFileSync } from "node:fs";
 import { afterEach, expect, test, vi } from "vitest";
 import { receive } from "./whatsappWebhook";
 
@@ -488,4 +489,12 @@ test("forwards complete Meta status pricing and ignores incomplete pricing", asy
     timestampMs: 1_790_438_561_000,
     failureReason: undefined,
   });
+});
+
+test("types optional Meta status arrays before reading their pricing", () => {
+  const source = readFileSync(new URL("./whatsappWebhook.ts", import.meta.url), "utf8");
+
+  expect(source).toContain(
+    'NonNullable<WhatsAppChangeValue["statuses"]>[number]["pricing"]',
+  );
 });

@@ -10,12 +10,14 @@ export type WhatsAppReceiptPricing = {
   pricingModel: string;
   type: string;
   category: string;
-  servicePriceMyr?: string;
   recordedAt: number;
 };
 
 export const WHATSAPP_SERVICE_PRICING_TOOLTIP =
-  'Starting 1 October, Meta includes 1,000 free WhatsApp service messages each month. After that, service messages are charged. Add a payment method in Meta Business Manager to keep sending WhatsApp messages with Kilobot.';
+  'WhatsApp charges service messages based on your customer\'s market.';
+
+export const WHATSAPP_SERVICE_PRICING_RATE_CARD_URL =
+  'https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing#rate-cards-effective-october-1-2026';
 
 export function WhatsAppPricingLabel({
   service,
@@ -28,9 +30,8 @@ export function WhatsAppPricingLabel({
 
   const label =
     pricing?.billable &&
-    pricing.category === 'service' &&
-    pricing.servicePriceMyr !== undefined
-      ? `Service (RM${pricing.servicePriceMyr})`
+    pricing.category === 'service'
+      ? 'Service'
       : 'Free';
 
   return (
@@ -47,7 +48,15 @@ export function WhatsAppPricingLabel({
           </button>
         </TooltipTrigger>
         <TooltipContent className="max-w-72 leading-relaxed">
-          {WHATSAPP_SERVICE_PRICING_TOOLTIP}
+          <span>{WHATSAPP_SERVICE_PRICING_TOOLTIP}</span>{' '}
+          <a
+            href={WHATSAPP_SERVICE_PRICING_RATE_CARD_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2"
+          >
+            View Meta's rate card.
+          </a>
         </TooltipContent>
       </Tooltip>
     </span>

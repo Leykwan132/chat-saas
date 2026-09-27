@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, test } from 'vitest';
 import {
   WhatsAppPricingLabel,
+  WHATSAPP_SERVICE_PRICING_RATE_CARD_URL,
   WHATSAPP_SERVICE_PRICING_TOOLTIP,
 } from './WhatsAppPricingLabel';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -23,11 +24,14 @@ test('shows Free for legacy outgoing WhatsApp messages', () => {
   expect(markup).toContain('Free');
   expect(markup).toContain('aria-label="About WhatsApp service pricing"');
   expect(WHATSAPP_SERVICE_PRICING_TOOLTIP).toBe(
-    'Starting 1 October, Meta includes 1,000 free WhatsApp service messages each month. After that, service messages are charged. Add a payment method in Meta Business Manager to keep sending WhatsApp messages with Kilobot.',
+    'WhatsApp charges service messages based on your customer\'s market.',
+  );
+  expect(WHATSAPP_SERVICE_PRICING_RATE_CARD_URL).toBe(
+    'https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing#rate-cards-effective-october-1-2026',
   );
 });
 
-test('shows the stored MYR rate for billed WhatsApp service messages', () => {
+test('shows Service without a rate for billed WhatsApp service messages', () => {
   const markup = renderLabel({
     service: 'whatsapp',
     pricing: {
@@ -35,12 +39,12 @@ test('shows the stored MYR rate for billed WhatsApp service messages', () => {
       pricingModel: 'PMP',
       type: 'regular',
       category: 'service',
-      servicePriceMyr: '0.00321',
       recordedAt: 1_790_438_560_000,
     },
   });
 
-  expect(markup).toContain('Service (RM0.00321)');
+  expect(markup).toContain('Service');
+  expect(markup).not.toContain('RM');
 });
 
 test('does not show a WhatsApp pricing label for Instagram messages', () => {

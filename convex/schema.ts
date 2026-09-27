@@ -1456,7 +1456,6 @@ export default defineSchema({
             pricingModel: v.string(),
             type: v.string(),
             category: v.string(),
-            servicePriceMyr: v.optional(v.string()),
             recordedAt: v.number(),
           }),
         ),

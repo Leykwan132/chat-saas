@@ -14,7 +14,7 @@
 
 - Use Node.js 22 for every command: `source ~/.nvm/nvm.sh && nvm use 22`.
 - Meta's `pricing.billable` is the only billing authority; do not create a monthly counter or infer billability.
-- Use required `WHATSAPP_SERVICE_MESSAGE_PRICE_MYR` only to snapshot a billable service-message display price; never provide a default rate.
+- Do not derive or display a local rate because the customer's market is not known.
 - Store the display rate as an exact decimal string, not a floating-point value.
 - Existing outgoing WhatsApp messages without pricing metadata display as Free; non-WhatsApp messages have no pricing label.
 - Keep production code self-explanatory, without comments, and split code so no code file exceeds 300 LOC.
@@ -40,12 +40,12 @@
 
 **Interfaces:**
 - Consumes: a complete Meta pricing object `{ billable, pricingModel, type, category }` and an optional receipt timestamp.
-- Produces: `WhatsAppPricingSnapshot` with the original Meta values, `recordedAt`, and `servicePriceMyr` only for billable service pricing.
+- Produces: `WhatsAppPricingSnapshot` with the original Meta values and `recordedAt`.
 - Produces: `applyOutboundStatusByExternalId(..., { pricing?: WhatsAppPricingSnapshot })`, which stores pricing under `messages.receiptMetadata.pricing` while preserving any existing pricing snapshot when the incoming receipt has none.
 
 - [ ] **Step 1: Write failing pricing-contract tests**
 
-Create `convex/whatsappPricing.test.ts` for a free service webhook object and a billable service object while `WHATSAPP_SERVICE_MESSAGE_PRICE_MYR="0.00321"`; assert the latter snapshots exactly `"0.00321"`. Add assertions that a missing or non-decimal price throws for billed service and that non-service Meta categories do not receive a service price.
+Create `convex/whatsappPricing.test.ts` for free and billable service webhook objects without a local rate; assert both preserve Meta's values and timestamp. Add an assertion that another Meta category is retained unchanged.
 
 - [ ] **Step 2: Run the pricing-contract test to verify it fails**
 
@@ -138,11 +138,11 @@ git commit -m "feat: capture WhatsApp receipt pricing"
 
 **Interfaces:**
 - Consumes: `{ service, direction, pricing }` from the persisted message ledger.
-- Produces: `WhatsAppPricingLabel`, returning nothing for non-WhatsApp/non-outgoing messages; otherwise Free or `Service (RM<snapshot>)` plus an accessible information tooltip.
+- Produces: `WhatsAppPricingLabel`, returning nothing for non-WhatsApp/non-outgoing messages; otherwise Free or Service plus an accessible information tooltip.
 
 - [ ] **Step 1: Write failing label-presentation tests**
 
-Create `src/components/inbox/WhatsAppPricingLabel.test.tsx` using `renderToStaticMarkup` and `TooltipProvider`. Assert legacy WhatsApp without pricing renders `Free`, a billable-service snapshot renders `Service (RM0.00321)`, and Instagram without pricing renders no label. Assert the rendered information control has an accessible label and contains the exact 1 October / 1,000-message / Meta Business Manager copy.
+Create `src/components/inbox/WhatsAppPricingLabel.test.tsx` using `renderToStaticMarkup` and `TooltipProvider`. Assert legacy WhatsApp without pricing renders `Free`, a billable-service snapshot renders `Service`, and Instagram without pricing renders no label. Assert the rendered information control has an accessible label and the tooltip exposes the Meta October rate-card URL.
 
 - [ ] **Step 2: Run the label-presentation test to verify it fails**
 
@@ -152,7 +152,7 @@ Expected: FAIL because the component does not exist.
 
 - [ ] **Step 3: Implement the focused pricing-label component**
 
-Create `WhatsAppPricingLabel` with the shared Tooltip primitives and an `Info` icon. It must use the persisted decimal snapshot rather than environment data and render the exact tooltip copy: “Starting 1 October, Meta includes 1,000 free WhatsApp service messages each month. After that, service messages are charged. Add a payment method in Meta Business Manager to keep sending WhatsApp messages with Kilobot.”
+Create `WhatsAppPricingLabel` with the shared Tooltip primitives and an `Info` icon. It must render Service without a local rate, explain that Meta bills according to the customer's market, and link to Meta's October rate card.
 
 - [ ] **Step 4: Run the label-presentation test to verify it passes**
 
@@ -210,7 +210,7 @@ Expected: PASS; report any existing unrelated failures by test name.
 
 - [ ] **Step 3: Configure deployment only after receiving the exact MYR rate**
 
-Set `WHATSAPP_SERVICE_MESSAGE_PRICE_MYR` in the target Convex environment to the user-provided canonical decimal value. Do not deploy or set a guessed rate.
+No WhatsApp service-rate environment value is required.
 
 - [ ] **Step 4: Update continuity and commit final bookkeeping**
 
