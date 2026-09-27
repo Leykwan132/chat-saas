@@ -1450,6 +1450,15 @@ export default defineSchema({
         providerMessageId: v.optional(v.string()),
         providerTimestamp: v.optional(v.number()),
         watermark: v.optional(v.number()),
+        pricing: v.optional(
+          v.object({
+            billable: v.boolean(),
+            pricingModel: v.string(),
+            type: v.string(),
+            category: v.string(),
+            recordedAt: v.number(),
+          }),
+        ),
       }),
     ),
     failureReason: v.optional(v.string()),
