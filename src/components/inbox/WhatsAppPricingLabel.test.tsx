@@ -36,6 +36,7 @@ test('uses a tiny filled circle to separate the time from the pricing label', ()
 
   expect(markup).toContain('lucide-circle');
   expect(markup).toContain('size-1 fill-current');
+  expect(markup).toContain('items-center gap-1');
 });
 
 test('shows Service without a rate for billed WhatsApp service messages', () => {

@@ -35,7 +35,7 @@ export function WhatsAppPricingLabel({
       : 'Free';
 
   return (
-    <span className="inline-flex items-center gap-0.5">
+    <span className="inline-flex items-center gap-1">
       <Circle className="size-1 fill-current" aria-hidden="true" />
       <span>{label}</span>
       <Tooltip>
