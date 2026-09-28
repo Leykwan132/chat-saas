@@ -234,6 +234,7 @@ export const update = mutation({
       throw new Error("System prompt is required");
     }
 
+    const now = Date.now();
     const patch: Partial<Doc<"agents">> = {
       name,
       provider: getModelProvider(model),
@@ -246,8 +247,11 @@ export const update = mutation({
       emojiUse: args.emojiUse ?? "occasional",
       formality: args.formality ?? "conversational",
       humorLevel: args.humorLevel ?? "light",
-      updatedAt: Date.now(),
+      updatedAt: now,
     };
+    if (agent.systemPrompt !== systemPrompt) {
+      patch.instructionsUpdatedAt = now;
+    }
     if (args.escalationEnabled !== undefined) {
       patch.escalationEnabled = args.escalationEnabled;
       patch.escalationMessage = args.escalationMessage ?? undefined;

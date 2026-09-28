@@ -141,6 +141,7 @@ import type * as chat_inboxActions from "../chat/inboxActions.js";
 import type * as chat_inboxAudioIngest from "../chat/inboxAudioIngest.js";
 import type * as chat_inboxImageIngest from "../chat/inboxImageIngest.js";
 import type * as chat_inboxMessageMapping from "../chat/inboxMessageMapping.js";
+import type * as chat_instructionContext from "../chat/instructionContext.js";
 import type * as chat_mediaManifest from "../chat/mediaManifest.js";
 import type * as chat_mediaSendLogs from "../chat/mediaSendLogs.js";
 import type * as chat_mediaToolResults from "../chat/mediaToolResults.js";
@@ -688,6 +689,7 @@ declare const fullApi: ApiFromModules<{
   "chat/inboxAudioIngest": typeof chat_inboxAudioIngest;
   "chat/inboxImageIngest": typeof chat_inboxImageIngest;
   "chat/inboxMessageMapping": typeof chat_inboxMessageMapping;
+  "chat/instructionContext": typeof chat_instructionContext;
   "chat/mediaManifest": typeof chat_mediaManifest;
   "chat/mediaSendLogs": typeof chat_mediaSendLogs;
   "chat/mediaToolResults": typeof chat_mediaToolResults;
