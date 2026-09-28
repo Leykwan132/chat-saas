@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-09-28 [USER] Goal: after Instructions change, replies must follow the new system prompt. Customer messages stay in the model context; assistant and tool messages written before `instructionsUpdatedAt` are omitted. Inbox history stays visible. Unshipped on `fix-context-rot`.
 - 2026-09-28 [USER] Goal: fix `whatsappWebhook:ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi` failing with "Too many reads (limit 4096)" on long conversations. Branch `fix/inbox-search-read-limit`. Unshipped.
 - 2026-09-28 [CODE] Cause: the `inboxConversationSummaries` trigger rebuilt every message search document in the conversation on each summary change (every incoming message), ~4 reads per message. Fix: rebuild only when the copied scope (`orgId`, `userId`, `assignedAgentId`, `isChannelConnected`) changes or the summary is created or deleted, and run it as a self-rescheduling 100-message paged job (`convex/inboxMessageSearchRefresh.ts`). Unshipped.
 - 2026-09-28 [USER] Goal: allow every account to connect Instagram and Messenger by removing the single-email connection gates. Basic channel OAuth/page selection is available to all eligible users; the separate Comment-to-Inbox webhook allowlist remains unchanged. Unshipped.
@@ -130,6 +131,7 @@
 
 # Done (recent)
 
+- 2026-09-28 [CODE] Saving a changed system prompt stamps `instructionsUpdatedAt`. Later replies keep customer messages and drop earlier assistant and tool messages from the model context. Inbox transcript is unchanged. Unshipped.
 - 2026-09-22 [CODE] Signed-in Dashboard header CTA now matches the rounded public action. Unshipped.
 - 2026-09-22 [CODE] Pricing-card CTAs use the landing hero’s consistent pill geometry. Unshipped.
 - 2026-09-22 [CODE] Public sign-up CTAs no longer imply a free plan. Unshipped.
@@ -148,6 +150,7 @@
 
 # Working set
 
+- 2026-09-28 [CODE] `convex/chat/instructionContext.ts`, `convex/chat/instructionContext.test.ts`, `convex/chat/threads.ts`, `convex/agents.ts`, `convex/schema.ts`
 - 2026-09-12 [CODE] `convex/rag/{backfill,backfillIndex,backfillWeb,backfillPage,backfillPlan,cfFetch,fileBytesText}.ts`
 - 2026-09-12 [CODE] `convex/webResearch/{enqueue,update,persist,worker,prompt,markdown,markdownKey}.ts`
 - 2026-09-12 [CODE] `src/components/knowledge-base/{WebSection,WebKnowledgeModal,WebEntryDetails,TextEntryDetails,QAEntryDetails,FileEntryDetails}.tsx`
@@ -158,6 +161,9 @@
 - 2026-09-18 [CODE] `convex/chat/{workflowActionPlanner,workflowDecisions,workflowActionPlanner.test,inbox}.ts`
 
 # Receipts
+
+- 2026-09-28 [TOOL] PR #188 opened from `fix-context-rot`: https://github.com/Leykwan132/chat-saas/pull/188. `convex/chat/instructionContext.test.ts` passed (2 tests).
+- 2026-09-28 [TOOL] PR #187 opened from `fix/inbox-search-read-limit` for the WhatsApp ingest "Too many reads" fix; focused inbox search suites passed (7 tests), and the new no-rescan test fails on the old code.
 
 - 2026-09-28 [TOOL] PR #186 deployment build failure reproduced as missing deleted-module imports from `src/lib/posthogFeatureFlags.ts`; after removing those exports and the dependent Channels email gate, the exact `bun run build` command passed.
 

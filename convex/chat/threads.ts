@@ -47,6 +47,7 @@ import { getEscalationMessageForWorkflowNode } from "../workflowRuntimeContext";
 import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildToolUsageBlock } from "./toolPrompt";
 import { buildIdentityPriorityBlock } from "./identityPriorityPrompt";
+import { createInstructionContextHandler } from "./instructionContext";
 import { registerGoogleCalendarTools } from "../googleCalendar/agentTools";
 import { queryActiveBookingSession } from "./bookingToolSession";
 import type {
@@ -572,6 +573,7 @@ export function buildAgent(
     emojiUse?: string;
     formality?: string;
     humorLevel?: string;
+    instructionsUpdatedAt?: number;
   },
   agentId: Id<"agents">,
   enableCitations: boolean = false,
@@ -1143,6 +1145,10 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
     languageModel: resolvedModel.languageModel,
     callSettings: { maxRetries: AI_GENERATION_MAX_RETRIES },
     instructions,
+    contextHandler: createInstructionContextHandler({
+      instructionsUpdatedAt: agent.instructionsUpdatedAt,
+      promptMessageId: sourceAgentMessageId,
+    }),
     stopWhen: stepCountIs(8),
     tools,
     usageHandler: async (ctx, args) => {

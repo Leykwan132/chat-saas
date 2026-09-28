@@ -688,6 +688,7 @@ export default defineSchema({
       v.union(v.literal("none"), v.literal("light"), v.literal("playful")),
     ),
     telegramNotificationKinds: v.optional(telegramNotificationKindsValidator),
+    instructionsUpdatedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
