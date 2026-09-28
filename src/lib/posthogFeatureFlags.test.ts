@@ -3,8 +3,6 @@ import {
   POSTHOG_FEATURE_FLAGS,
   isAvatarUserAllowed,
   isCommentToInboxUserAllowed,
-  isInstagramUserAllowed,
-  isMessengerUserAllowed,
   isProductFeatureEnabled,
 } from './posthogFeatureFlags';
 
@@ -48,21 +46,4 @@ describe('PostHog product feature flags', () => {
     expect(isCommentToInboxUserAllowed(email)).toBe(expected);
   });
 
-  test.each([
-    ['leykwan132@gmail.com', true],
-    ['LEYKWAN132@GMAIL.COM', true],
-    ['other@example.com', false],
-    [undefined, false],
-  ] as const)('allows Instagram only for the approved email: %s', (email, expected) => {
-    expect(isInstagramUserAllowed(email)).toBe(expected);
-  });
-
-  test.each([
-    ['leykwan132@gmail.com', true],
-    ['LEYKWAN132@GMAIL.COM', true],
-    ['other@example.com', false],
-    [undefined, false],
-  ] as const)('allows Messenger only for the approved email: %s', (email, expected) => {
-    expect(isMessengerUserAllowed(email)).toBe(expected);
-  });
 });
