@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { assertWorkosUserCanConnectInstagram } from "./instagramConnectAccess";
 import {
   encodeOAuthState,
   generateCsrfToken,
@@ -42,8 +41,6 @@ export const start = action({
       internal.instagramChannelAssignment.getConnectContext,
       { agentId: args.agentId },
     );
-    await assertWorkosUserCanConnectInstagram(ctx, userId);
-
     const appId = process.env.META_IG_APP_ID;
     if (!appId) {
       throw new Error(

@@ -2,6 +2,8 @@
 
 # Snapshot
 
+- 2026-09-28 [USER] Goal: allow every account to connect Instagram and Messenger by removing the single-email connection gates. Basic channel OAuth/page selection is available to all eligible users; the separate Comment-to-Inbox webhook allowlist remains unchanged. Unshipped.
+- 2026-09-28 [CODE] Instagram signup and Messenger OAuth now accept a non-allowlisted account; the single-email connection access modules and all call sites are removed. Focused integration regressions pass. Unshipped.
 - 2026-09-27 [USER] Goal: persist Meta WhatsApp outbound webhook pricing on each message and distinguish free versus billable service messages beside the Inbox time. Meta webhook `pricing.billable` is the sole billing authority; no local monthly allowance or counter. Existing outgoing WhatsApp messages without pricing metadata display as Free. Every WhatsApp pricing label has a keyboard-focusable info hover explaining that Meta bills based on the customer's market and linking to Meta's October rate card. No local MYR rate or environment variable is used. Unshipped.
 - 2026-09-27 [CODE] WhatsApp status receipts store complete Meta pricing on the matched outgoing `messages.receiptMetadata.pricing` row. Inbox outgoing WhatsApp timestamps show Free for legacy/missing or non-billable pricing, and Service when Meta marks a service message billable. No message price is stored or displayed because the customer market is unknown. Unshipped.
 - 2026-09-23 [USER] Goal: replace the selectable OpenRouter model `openai/gpt-5.6-luna` with `openai/gpt-6-luna`; persisted GPT-5.6 Luna agent selections migrate in place to GPT-6 Luna. The existing two-credit price is retained. Unshipped.

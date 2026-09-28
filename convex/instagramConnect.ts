@@ -3,7 +3,6 @@ import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { instagramSyncPool } from "./channelSyncPools";
-import { assertWorkosUserCanConnectInstagram } from "./instagramConnectAccess";
 
 const DEFAULT_GRAPH_VERSION = "v25.0";
 const INSTAGRAM_LOGIN_SUBSCRIBED_FIELDS = [
@@ -101,7 +100,6 @@ export const internalCompleteSignup = internalAction({
     args,
   ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
     const { orgId, userId } = args;
-    await assertWorkosUserCanConnectInstagram(ctx, userId);
     await ctx.runQuery(internal.instagramChannelAssignment.assertOAuthConnectContext, {
       agentId: args.agentId,
       orgId,
