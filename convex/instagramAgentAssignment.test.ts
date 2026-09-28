@@ -54,7 +54,7 @@ async function setup() {
     const now = Date.now();
     const userId = await ctx.db.insert("users", {
       workosUserId: "owner",
-      email: "leykwan132@gmail.com",
+      email: "owner@example.com",
       createdAt: now,
       updatedAt: now,
     });
@@ -75,11 +75,11 @@ async function setup() {
     });
     return { selectedAgentId, newestAgentId, foreignAgentId };
   });
-  const owner = t.withIdentity({ subject: "owner", email: "leykwan132@gmail.com" });
+  const owner = t.withIdentity({ subject: "owner", email: "owner@example.com" });
   return { t, owner, ...ids };
 }
 
-test("Instagram Login saves the selected agent and remains visible after empty backfill", async () => {
+test("Instagram Login connects for an account outside the former allowlist", async () => {
   const { t, owner, selectedAgentId, newestAgentId } = await setup();
   const { channelId } = await t.action(internal.instagramConnect.internalCompleteSignup, {
     agentId: selectedAgentId, code: "code", redirectUri: "https://example.com/callback", orgId: "", userId: "owner",

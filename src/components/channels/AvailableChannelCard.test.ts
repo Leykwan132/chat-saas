@@ -73,7 +73,7 @@ function renderChannelsPage() {
   );
 }
 
-test('hides Messenger and Instagram connect cards until each flag and email allow it', () => {
+test('hides Messenger and Instagram connect cards until their flags are enabled', () => {
   const markup = renderChannelsPage();
 
   expect(markup).not.toContain('data-channel-service="instagram"');
@@ -81,18 +81,18 @@ test('hides Messenger and Instagram connect cards until each flag and email allo
   expect(markup).toContain('data-channel-service="whatsapp"');
 });
 
-test('shows only Instagram when that flag is on for the allowlisted account', () => {
+test('shows Instagram when its feature flag is on for any signed-in account', () => {
   featureFlags = { enable_instagram: true };
-  currentUserEmail = 'leykwan132@gmail.com';
+  currentUserEmail = 'owner@example.com';
   const markup = renderChannelsPage();
 
   expect(markup).toContain('data-channel-service="instagram"');
   expect(markup).not.toContain('data-channel-service="messenger"');
 });
 
-test('shows only Messenger when that flag is on for the allowlisted account', () => {
+test('shows Messenger when its feature flag is on for any signed-in account', () => {
   featureFlags = { enable_messenger: true };
-  currentUserEmail = 'leykwan132@gmail.com';
+  currentUserEmail = 'owner@example.com';
   const markup = renderChannelsPage();
 
   expect(markup).toContain('data-channel-service="messenger"');
@@ -101,7 +101,7 @@ test('shows only Messenger when that flag is on for the allowlisted account', ()
 
 test('channel cards make Messenger and Instagram available when both flags are on', () => {
   featureFlags = { enable_instagram: true, enable_messenger: true };
-  currentUserEmail = 'leykwan132@gmail.com';
+  currentUserEmail = 'owner@example.com';
   const markup = renderChannelsPage();
 
   expect(markup).toContain('data-channel-service="instagram"');

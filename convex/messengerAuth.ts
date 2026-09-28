@@ -9,7 +9,6 @@ import {
   sanitizeReturnPath,
 } from "./oauthShared";
 import { listPagesForUserToken, messengerOAuthRedirectUri } from "./messengerConnect";
-import { assertWorkosUserCanConnectMessenger } from "./messengerConnectAccess";
 
 const DEFAULT_FB_OAUTH_VERSION = "v25.0";
 
@@ -39,7 +38,6 @@ export const start = action({
   },
   handler: async (ctx, args): Promise<{ authorizeUrl: string }> => {
     const { orgId, userId } = await getAuthContext(ctx);
-    await assertWorkosUserCanConnectMessenger(ctx, userId);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
 
     const appId = process.env.META_APP_ID;
@@ -113,7 +111,6 @@ export const finalizePick = action({
     args,
   ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
     const { orgId, userId } = await getAuthContext(ctx);
-    await assertWorkosUserCanConnectMessenger(ctx, userId);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
     const session = await ctx.runQuery(internal.oauthSessions.internalGetById, {
       sessionId: args.sessionId,

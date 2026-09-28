@@ -2,10 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { useParams, useSearchParams } from 'react-router';
 import { usePostHog } from '@posthog/react';
-import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import {
-  isInstagramUserAllowed,
-  isMessengerUserAllowed,
   isProductFeatureEnabled,
   useEnableInstagram,
   useEnableMessenger,
@@ -195,13 +192,8 @@ function useMetaChannelCallbackParams() {
 
 export default function ChannelsPage() {
   const { agentId } = useParams();
-  const { user } = useAuth();
-  const instagramEnabled =
-    isProductFeatureEnabled(useEnableInstagram()) &&
-    isInstagramUserAllowed(user?.email);
-  const messengerEnabled =
-    isProductFeatureEnabled(useEnableMessenger()) &&
-    isMessengerUserAllowed(user?.email);
+  const instagramEnabled = isProductFeatureEnabled(useEnableInstagram());
+  const messengerEnabled = isProductFeatureEnabled(useEnableMessenger());
   const channels = useQuery(
     api.channels.listForCurrentOrg,
     agentId ? { agentId: agentId as Id<'agents'> } : {},
