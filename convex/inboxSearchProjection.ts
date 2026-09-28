@@ -1,4 +1,4 @@
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 
 type SearchProjectionCtx = Pick<MutationCtx, "db">;
@@ -151,16 +151,22 @@ export async function buildInboxMessageSearchDocument(
   };
 }
 
-export async function refreshInboxMessageSearchDocumentsForConversation(
-  ctx: SearchProjectionCtx,
-  conversationId: Id<"conversations">,
+type MessageSearchScope = Pick<
+  Doc<"inboxConversationSummaries">,
+  "orgId" | "userId" | "assignedAgentId" | "isChannelConnected"
+>;
+
+export function messageSearchScopeChanged(
+  oldSummary: MessageSearchScope | null,
+  newSummary: MessageSearchScope | null,
 ) {
-  const messages = ctx.db
-    .query("messages")
-    .withIndex("by_conversationId_and_createdAt", (q) =>
-      q.eq("conversationId", conversationId),
-    );
-  for await (const message of messages) {
-    await upsertInboxMessageSearchDocument(ctx, message._id);
+  if (oldSummary === null || newSummary === null) {
+    return true;
   }
+  return (
+    oldSummary.orgId !== newSummary.orgId ||
+    oldSummary.userId !== newSummary.userId ||
+    oldSummary.assignedAgentId !== newSummary.assignedAgentId ||
+    oldSummary.isChannelConnected !== newSummary.isChannelConnected
+  );
 }

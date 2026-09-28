@@ -2,6 +2,8 @@
 
 # Snapshot
 
+- 2026-09-28 [USER] Goal: fix `whatsappWebhook:ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi` failing with "Too many reads (limit 4096)" on long conversations. Branch `fix/inbox-search-read-limit`. Unshipped.
+- 2026-09-28 [CODE] Cause: the `inboxConversationSummaries` trigger rebuilt every message search document in the conversation on each summary change (every incoming message), ~4 reads per message. Fix: rebuild only when the copied scope (`orgId`, `userId`, `assignedAgentId`, `isChannelConnected`) changes or the summary is created or deleted, and run it as a self-rescheduling 100-message paged job (`convex/inboxMessageSearchRefresh.ts`). Unshipped.
 - 2026-09-28 [USER] Goal: allow every account to connect Instagram and Messenger by removing the single-email connection gates. Basic channel OAuth/page selection is available to all eligible users; the separate Comment-to-Inbox webhook allowlist remains unchanged. Unshipped.
 - 2026-09-28 [CODE] Instagram signup and Messenger OAuth now accept a non-allowlisted account; the single-email connection access modules and all call sites are removed. Focused integration regressions pass. Unshipped.
 - 2026-09-28 [CODE] PR #186 follow-up removes stale frontend allowlist exports and channel-card email conditions; Instagram and Messenger cards now rely only on their existing rollout flags. Focused UI tests and `bun run build` pass. Unshipped.
@@ -162,6 +164,7 @@
 - 2026-09-28 [TOOL] PR #186 opened from `codex/open-meta-connections` for universal Instagram and Messenger channel connections; full suite passed with test-only Stripe price identifiers.
 
 - 2026-09-27 [TOOL] WhatsApp pricing verification passed: `bunx tsc --noEmit`, 26 focused tests, and the full supported Vitest suite with test-only Stripe values. `bun test` remains unsuitable because Bun lacks Vite's `import.meta.glob` and no Stripe test variables were set; it failed with 232 tests and 151 setup errors before a usable full-suite result.
+- 2026-09-27 [TOOL] PR #182 build failure diagnosed and corrected: its pricing parser now types optional `WhatsAppChangeValue.statuses` with `NonNullable` before indexing. Direct webhook typecheck passed; root `tsc -b` excludes `convex/`, so it remains insufficient as the sole backend check.
 
 - 2026-09-25 [TOOL] PR #181 opened from isolated branch `codex/whatsapp-ai-disclosure`, cherry-picking only `e62158a` onto main for Meta AI disclosure payloads.
 

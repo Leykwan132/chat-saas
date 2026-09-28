@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   removeInboxMessageSearchDocument,
   upsertInboxChatSearchDocument,
@@ -11,6 +11,14 @@ import schema from "./schema";
 import { triggers } from "./triggers";
 
 const modules = import.meta.glob("./**/*.ts");
+
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 async function createFixture() {
   const t = convexTest(schema, modules);
@@ -186,6 +194,7 @@ test("keeps message search scope current through trigger-wrapped reassignment an
     await triggerCtx.db.patch(fixture.conversationId, { assignedAgentId: agentId });
     return agentId;
   });
+  await fixture.t.finishAllScheduledFunctions(vi.runAllTimers);
 
   expect(await messageSearch(fixture)).toMatchObject({ assignedAgentId: nextAgentId });
 
@@ -193,7 +202,73 @@ test("keeps message search scope current through trigger-wrapped reassignment an
     const triggerCtx = triggers.wrapDB(ctx);
     await triggerCtx.db.patch(fixture.channelId, { status: "disconnected" });
   });
+  await fixture.t.finishAllScheduledFunctions(vi.runAllTimers);
 
   expect(await chatSearch(fixture)).toMatchObject({ isChannelConnected: false });
   expect(await messageSearch(fixture)).toMatchObject({ isChannelConnected: false });
+});
+
+test("incoming-message summary updates do not rescan the conversation history", async () => {
+  const fixture = await createFixture();
+  await fixture.t.run(async (ctx) => {
+    await upsertInboxConversationSummary(ctx, fixture.conversationId);
+  });
+  await fixture.t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  await fixture.t.run(async (ctx) => {
+    const triggerCtx = triggers.wrapDB(ctx);
+    await triggerCtx.db.patch(fixture.conversationId, {
+      lastMessageAt: Date.now() + 1,
+      lastMessagePreview: "Another message",
+      unreadCount: 1,
+    });
+  });
+  await fixture.t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  expect(await messageSearch(fixture)).toBeNull();
+});
+
+test("scope changes refresh every message of a long conversation in batches", async () => {
+  const fixture = await createFixture();
+  const nextAgentId = await fixture.t.run(async (ctx) => {
+    for (let index = 0; index < 250; index += 1) {
+      await ctx.db.insert("messages", {
+        orgId: "",
+        conversationId: fixture.conversationId,
+        channelId: fixture.channelId,
+        service: "whatsapp",
+        orgAddress: "+60999999999",
+        contactAddress: "+60123456789",
+        direction: "incoming",
+        contentType: "text",
+        content: `History message ${index}`,
+        createdAt: index,
+      });
+    }
+    const now = Date.now();
+    const agentId = await ctx.db.insert("agents", {
+      name: "Reassigned agent",
+      provider: "openrouter",
+      model: "test-model",
+      systemPrompt: "Help.",
+      templateKey: "blank",
+      fileSize: 0,
+      userId: "inbox-search-owner",
+      orgId: "",
+      createdAt: now,
+      updatedAt: now,
+    });
+    await triggers.wrapDB(ctx).db.patch(fixture.conversationId, { assignedAgentId: agentId });
+    return agentId;
+  });
+  await fixture.t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  const documents = await fixture.t.run((ctx) =>
+    ctx.db
+      .query("inboxMessageSearchDocuments")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", fixture.conversationId))
+      .collect(),
+  );
+  expect(documents).toHaveLength(251);
+  expect(documents.every((document) => document.assignedAgentId === nextAgentId)).toBe(true);
 });

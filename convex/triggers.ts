@@ -22,8 +22,9 @@ import {
   removeInboxConversationSummary,
   upsertInboxConversationSummary,
 } from "./inboxConversationSummary";
+import { internal } from "./_generated/api";
 import {
-  refreshInboxMessageSearchDocumentsForConversation,
+  messageSearchScopeChanged,
   removeInboxChatSearchDocument,
   removeInboxMessageSearchDocument,
   upsertInboxChatSearchDocument,
@@ -68,7 +69,13 @@ triggers.register("inboxConversationSummaries", async (ctx, change) => {
   } else {
     await upsertInboxChatSearchDocument(ctx, conversationId);
   }
-  await refreshInboxMessageSearchDocumentsForConversation(ctx, conversationId);
+  if (messageSearchScopeChanged(change.oldDoc, change.newDoc)) {
+    await ctx.scheduler.runAfter(
+      0,
+      internal.inboxMessageSearchRefresh.refreshConversationMessageSearchDocuments,
+      { conversationId, cursor: null },
+    );
+  }
 });
 triggers.register("messages", async (ctx, change) => {
   if (change.operation === "delete") {
