@@ -45,6 +45,11 @@ vi.mock('./WebsiteChannelCard', () => ({
     createElement('div', { 'data-channel-service': 'web' }, 'web'),
 }));
 
+vi.mock('./AvatarChannelCard', () => ({
+  AvatarChannelCard: () =>
+    createElement('div', { 'data-channel-service': 'avatar' }, 'avatar'),
+}));
+
 vi.mock('./WebWidgetDetailsDialog', () => ({
   WebWidgetDetailsDialog: () => null,
 }));
@@ -78,7 +83,18 @@ test('hides Messenger and Instagram connect cards until their flags are enabled'
 
   expect(markup).not.toContain('data-channel-service="instagram"');
   expect(markup).not.toContain('data-channel-service="messenger"');
+  expect(markup).not.toContain('data-channel-service="avatar"');
   expect(markup).toContain('data-channel-service="whatsapp"');
+});
+
+test('shows the Avatar card only for the allowed account when the flag is on', () => {
+  featureFlags = { enable_avatar_feature: true };
+  currentUserEmail = 'someone@example.com';
+  expect(renderChannelsPage()).not.toContain('data-channel-service="avatar"');
+
+  queryCall = 0;
+  currentUserEmail = 'leykwan132@gmail.com';
+  expect(renderChannelsPage()).toContain('data-channel-service="avatar"');
 });
 
 test('shows Instagram when its feature flag is on for any signed-in account', () => {
