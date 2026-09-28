@@ -156,6 +156,8 @@
 
 # Receipts
 
+- 2026-09-28 [TOOL] PR #186 opened from `codex/open-meta-connections` for universal Instagram and Messenger channel connections; full suite passed with test-only Stripe price identifiers.
+
 - 2026-09-27 [TOOL] WhatsApp pricing verification passed: `bunx tsc --noEmit`, 26 focused tests, and the full supported Vitest suite with test-only Stripe values. `bun test` remains unsuitable because Bun lacks Vite's `import.meta.glob` and no Stripe test variables were set; it failed with 232 tests and 151 setup errors before a usable full-suite result.
 
 - 2026-09-25 [TOOL] PR #181 opened from isolated branch `codex/whatsapp-ai-disclosure`, cherry-picking only `e62158a` onto main for Meta AI disclosure payloads.
