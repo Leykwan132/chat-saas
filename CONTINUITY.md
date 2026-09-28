@@ -162,7 +162,7 @@
 
 # Receipts
 
-- 2026-09-28 [TOOL] `convex/chat/instructionContext.test.ts` passed (2 tests) after omitting pre-update assistant and tool messages from model context.
+- 2026-09-28 [TOOL] PR #188 opened from `fix-context-rot`: https://github.com/Leykwan132/chat-saas/pull/188. `convex/chat/instructionContext.test.ts` passed (2 tests).
 - 2026-09-28 [TOOL] PR #187 opened from `fix/inbox-search-read-limit` for the WhatsApp ingest "Too many reads" fix; focused inbox search suites passed (7 tests), and the new no-rescan test fails on the old code.
 
 - 2026-09-28 [TOOL] PR #186 deployment build failure reproduced as missing deleted-module imports from `src/lib/posthogFeatureFlags.ts`; after removing those exports and the dependent Channels email gate, the exact `bun run build` command passed.
