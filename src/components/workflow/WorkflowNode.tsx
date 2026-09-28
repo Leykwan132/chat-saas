@@ -1,94 +1,124 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { Trash2, TriangleAlert } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { isWorkflowTerminalNodeKind } from '../../../shared/workflows';
-import { WorkflowAddNodeMenu } from './WorkflowAddNodeMenu';
-import { WorkflowNodeDirectControls } from './WorkflowNodeDirectControls';
-import { workflowKindIcons } from './workflowCatalog';
-import type { WorkflowPersistedFlowNode } from './workflowTypes';
+import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Trash2, TriangleAlert } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { isWorkflowTerminalNodeKind } from "../../../shared/workflows";
+import { WorkflowNodeDirectControls } from "./WorkflowNodeDirectControls";
+import { workflowKindIcons } from "./workflowCatalog";
+import type { WorkflowPersistedFlowNode } from "./workflowTypes";
 
-const targetHandleClassName = '!z-0 opacity-0';
-const horizontalTargetHandleClassName = '!left-0';
-const verticalTargetHandleClassName = '!top-0 !left-1/2 !-translate-x-1/2';
-const sourceHandleClassName = '!z-20 !rounded-full !border !border-border !bg-background transition-colors group-hover:!border-muted-foreground/35';
-const horizontalSourceHandleClassName = '!right-0 !left-auto';
-const verticalSourceHandleClassName = '!bottom-0 !top-auto !left-1/2 !-translate-x-1/2';
+const targetHandleClassName = "!z-0 opacity-0";
+const horizontalTargetHandleClassName = "!left-0";
+const verticalTargetHandleClassName = "!top-0 !left-1/2 !-translate-x-1/2";
+const sourceHandleClassName =
+  "!z-20 !rounded-full !border !border-border !bg-background transition-colors group-hover:!border-muted-foreground/35";
+const horizontalSourceHandleClassName = "!right-0 !left-auto";
+const verticalSourceHandleClassName =
+  "!bottom-0 !top-auto !left-1/2 !-translate-x-1/2";
 
 function workflowNodeSetupItemLabel(readinessIssueCount: number) {
   return readinessIssueCount === 1
-    ? '1 setup item remaining'
+    ? "1 setup item remaining"
     : `${readinessIssueCount} setup items remaining`;
 }
 
-export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlowNode>) {
+export function WorkflowNode({
+  data,
+  selected,
+}: NodeProps<WorkflowPersistedFlowNode>) {
   const Icon = workflowKindIcons[data.kind];
   const isTerminal = isWorkflowTerminalNodeKind(data.kind);
-  const isEntry = data.kind === 'start';
-  const isProtected = data.kind === 'start' || data.kind === 'end';
-  const isVertical = data.layoutOrientation === 'vertical';
-  const isCompact = data.density === 'compact';
-  const hasDirectControls = (
-    data.density !== 'compact' &&
+  const isEntry = data.kind === "start";
+  const isProtected = data.kind === "start" || data.kind === "end";
+  const isVertical = data.layoutOrientation === "vertical";
+  const isCompact = data.density === "compact";
+  const hasDirectControls =
+    data.density !== "compact" &&
     data.agentId !== undefined &&
-    ['sendText', 'sendImage', 'sendFile', 'bookAppointment', 'humanEscalation', 'closeConversation'].includes(data.kind)
-  );
+    [
+      "sendText",
+      "sendImage",
+      "sendFile",
+      "bookAppointment",
+      "humanEscalation",
+      "closeConversation",
+    ].includes(data.kind);
   const setupItemLabel = workflowNodeSetupItemLabel(data.readinessIssueCount);
   const targetPosition = isVertical ? Position.Top : Position.Left;
   const sourcePosition = isVertical ? Position.Bottom : Position.Right;
   const nodeFrameClassName = hasDirectControls
-    ? 'min-w-[280px] max-w-[340px]'
+    ? "min-w-[280px] max-w-[340px]"
     : isCompact
-    ? 'min-w-[150px] max-w-[255px]'
-    : 'min-w-[176px] max-w-[300px]';
+      ? "min-w-[150px] max-w-[255px]"
+      : "min-w-[176px] max-w-[300px]";
   const nodeCardClassName = hasDirectControls
-    ? 'min-h-20 w-full gap-1.5 rounded-xl px-4 py-3.5'
+    ? "min-h-20 w-full gap-1.5 rounded-xl px-4 py-3.5"
     : isCompact
-    ? 'min-h-[68px] min-w-[150px] max-w-[255px] gap-[5px] rounded-[10px] px-3.5 py-3'
-    : 'min-h-20 min-w-[176px] max-w-[300px] gap-1.5 rounded-xl px-4 py-3.5';
-  const describedNodeWidthClassName = isCompact ? 'min-w-[187px]' : 'min-w-[220px]';
+      ? "min-h-[68px] min-w-[150px] max-w-[255px] gap-[5px] rounded-[10px] px-3.5 py-3"
+      : "min-h-20 min-w-[176px] max-w-[300px] gap-1.5 rounded-xl px-4 py-3.5";
+  const describedNodeWidthClassName = isCompact
+    ? "min-w-[187px]"
+    : "min-w-[220px]";
 
   return (
-    <div className={cn('group relative flex flex-col items-center', nodeFrameClassName)}>
+    <div
+      className={cn(
+        "group relative flex flex-col items-center",
+        nodeFrameClassName,
+      )}
+    >
       <Handle
         type="target"
         position={targetPosition}
         className={cn(
           targetHandleClassName,
-          isCompact && '!size-2.5',
-          isVertical ? verticalTargetHandleClassName : horizontalTargetHandleClassName,
+          isCompact && "!size-2.5",
+          isVertical
+            ? verticalTargetHandleClassName
+            : horizontalTargetHandleClassName,
         )}
         isConnectable={!isEntry && !data.disabled}
       />
       <div
         className={cn(
-          'relative z-10 flex w-fit flex-col items-start justify-center border border-border bg-card text-left text-card-foreground transition-all group-focus-within:bg-muted group-hover:bg-muted',
+          "relative z-10 flex w-fit flex-col items-start justify-center border border-border bg-card text-left text-card-foreground transition-all group-focus-within:bg-muted group-hover:bg-muted",
           nodeCardClassName,
-          selected && 'border-ring ring-1 ring-ring',
-          (data.description || hasDirectControls) && describedNodeWidthClassName,
+          selected && "border-ring ring-1 ring-ring",
+          (data.description || hasDirectControls) &&
+            describedNodeWidthClassName,
         )}
       >
-        <div className={cn(
-          'flex max-w-full items-center justify-start font-semibold',
-          isCompact ? 'gap-2 text-sm' : 'gap-2.5 text-base',
-        )}>
+        <div
+          className={cn(
+            "flex max-w-full items-center justify-start font-semibold",
+            isCompact ? "gap-2 text-sm" : "gap-2.5 text-base",
+          )}
+        >
           {isEntry ? (
-            <span className={cn(
-              'flex shrink-0 items-center justify-center bg-muted text-muted-foreground',
-              isCompact ? 'size-7 rounded-md' : 'size-8 rounded-lg',
-            )}>
-              <Icon className={isCompact ? 'size-3.5' : 'size-4'} />
+            <span
+              className={cn(
+                "flex shrink-0 items-center justify-center bg-muted text-muted-foreground",
+                isCompact ? "size-7 rounded-md" : "size-8 rounded-lg",
+              )}
+            >
+              <Icon className={isCompact ? "size-3.5" : "size-4"} />
             </span>
           ) : (
-            <Icon className={cn('shrink-0', isCompact ? 'size-3.5' : 'size-4')} />
+            <Icon
+              className={cn("shrink-0", isCompact ? "size-3.5" : "size-4")}
+            />
           )}
           <span className="min-w-0 truncate">{data.title}</span>
         </div>
         {data.description ? (
-          <p className={cn(
-            'line-clamp-2 max-w-full text-left text-muted-foreground',
-            isCompact ? 'text-[10px] leading-[1.35]' : 'text-xs leading-relaxed',
-          )}>
+          <p
+            className={cn(
+              "line-clamp-2 max-w-full text-left text-muted-foreground",
+              isCompact
+                ? "text-[10px] leading-[1.35]"
+                : "text-xs leading-relaxed",
+            )}
+          >
             {data.description}
           </p>
         ) : null}
@@ -99,14 +129,20 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
             kind={data.kind}
             description={data.description}
             incomingCondition={data.incomingCondition}
+            escalationMessageEnabled={data.escalationMessageEnabled}
+            escalationMessage={data.escalationMessage}
             allowedServiceIds={data.allowedAppointmentServiceIds}
             disabled={data.disabled}
           />
         ) : null}
       </div>
-      {!data.isReady && data.kind !== 'start' && !isCompact ? (
+      {!data.isReady && data.kind !== "start" && !isCompact ? (
         <div className="absolute left-0 top-full mt-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-          <TriangleAlert aria-label="Setup incomplete" role="img" className="size-3.5" />
+          <TriangleAlert
+            aria-label="Setup incomplete"
+            role="img"
+            className="size-3.5"
+          />
           <span>{setupItemLabel}</span>
         </div>
       ) : null}
@@ -116,42 +152,37 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
           position={sourcePosition}
           className={cn(
             sourceHandleClassName,
-            isCompact ? '!size-2.5' : '!size-3',
-            isVertical ? verticalSourceHandleClassName : horizontalSourceHandleClassName,
+            isCompact ? "!size-2.5" : "!size-3",
+            isVertical
+              ? verticalSourceHandleClassName
+              : horizontalSourceHandleClassName,
           )}
         />
       ) : null}
-      {(!isTerminal || !isProtected) ? (
-        <div className={cn(
-          'nodrag nopan absolute left-full top-1/2 z-20 flex -translate-y-1/2 items-center',
-          isCompact ? 'ml-3.5 gap-1.5' : 'ml-4 gap-2',
-        )}>
-          {!isTerminal ? (
-            <WorkflowAddNodeMenu
-              compact={isCompact}
-              disabled={data.disabled}
-              onSelect={(kind) => data.onAddNode(data.nodeId, kind)}
-            />
-          ) : null}
-          {!isProtected ? (
-            <Button
-              type="button"
-              variant="outline"
-              size={isCompact ? 'icon-sm' : 'icon'}
-              className={cn(
-                'cursor-pointer border-destructive bg-destructive text-white hover:bg-destructive/90 hover:text-white',
-                isCompact ? 'rounded-lg' : 'rounded-xl',
-              )}
-              disabled={data.disabled}
-              onClick={(event) => {
-                event.stopPropagation();
-                data.onRemoveNode(data.nodeId);
-              }}
-            >
-              <Trash2 className="size-4" />
-              <span className="sr-only">Delete node</span>
-            </Button>
-          ) : null}
+      {!isProtected ? (
+        <div
+          className={cn(
+            "nodrag nopan absolute left-full top-1/2 z-20 flex -translate-y-1/2 items-center",
+            isCompact ? "ml-3.5 gap-1.5" : "ml-4 gap-2",
+          )}
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size={isCompact ? "icon-sm" : "icon"}
+            className={cn(
+              "cursor-pointer border-destructive bg-destructive text-white hover:bg-destructive/90 hover:text-white",
+              isCompact ? "rounded-lg" : "rounded-xl",
+            )}
+            disabled={data.disabled}
+            onClick={(event) => {
+              event.stopPropagation();
+              data.onRemoveNode(data.nodeId);
+            }}
+          >
+            <Trash2 className="size-4" />
+            <span className="sr-only">Delete node</span>
+          </Button>
         </div>
       ) : null}
     </div>

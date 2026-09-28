@@ -36,6 +36,28 @@ test("workflow runtime tells send message nodes to send the configured message",
   expect(block).toContain("Thanks for reaching out");
 });
 
+test("workflow runtime identifies the Human escalation node that owns a pre-escalation message", () => {
+  const block = buildWorkflowRuntimeBlock({
+    workflowId: "workflow-id" as Id<"workflows">,
+    edges: [],
+    nodes: [
+      {
+        nodeId: "human-escalation" as Id<"workflowNodes">,
+        kind: "humanEscalation",
+        title: "Human escalation",
+        escalationMessageEnabled: true,
+        escalationMessage: "A teammate will be with you shortly.",
+        incomingConditions: [],
+        allowedServices: [],
+        mediaAssets: [],
+      },
+    ],
+  });
+
+  expect(block).toContain("Human escalation Node ID");
+  expect(block).toContain("human-escalation");
+});
+
 test("workflow runtime delegates media sends to the backend planner", () => {
   const block = buildWorkflowRuntimeBlock({
     workflowId: "workflow-id" as Id<"workflows">,
@@ -66,9 +88,13 @@ test("workflow runtime delegates media sends to the backend planner", () => {
     ],
   });
 
-  expect(block).toContain("This is important: for Send Photo/Video and Send Files nodes");
+  expect(block).toContain(
+    "This is important: for Send Photo/Video and Send Files nodes",
+  );
   expect(block).toContain("even if the same asset was sent earlier");
-  expect(block).toContain("the backend validates the matched workflow node and sends the assets separately");
+  expect(block).toContain(
+    "the backend validates the matched workflow node and sends the assets separately",
+  );
   expect(block).toContain("uploaded filenames are internal metadata");
   expect(block).toContain("clientId: layout-client-id");
   expect(block).not.toContain("https://cdn.example.com/type-a-layout.png");
@@ -90,7 +116,8 @@ test("workflow runtime makes send file nodes use uploaded file assets without ex
           {
             sourceNodeId: "source-id" as Id<"workflowNodes">,
             name: "A brochure of Arden Heights",
-            detail: "If the user asks for a brochure for Arden Heights, send this file.",
+            detail:
+              "If the user asks for a brochure for Arden Heights, send this file.",
           },
         ],
         allowedServices: [],
@@ -107,9 +134,15 @@ test("workflow runtime makes send file nodes use uploaded file assets without ex
   });
 
   expect(block).toContain("For sendFile nodes");
-  expect(block).toContain("brochure, PDF, document, file, catalog, menu, or attachment");
-  expect(block).toContain("clientId: brochure-client-id, file: Arden_Brochure.pdf, type: application/pdf");
-  expect(block).toContain("Do not say \"Here's the brochure\", \"I've attached the file\", or similar unless");
+  expect(block).toContain(
+    "brochure, PDF, document, file, catalog, menu, or attachment",
+  );
+  expect(block).toContain(
+    "clientId: brochure-client-id, file: Arden_Brochure.pdf, type: application/pdf",
+  );
+  expect(block).toContain(
+    'Do not say "Here\'s the brochure", "I\'ve attached the file", or similar unless',
+  );
   expect(block).not.toContain("https://cdn.example.com/arden-brochure.pdf");
   expect(block).not.toContain("<customer_response>");
 });
@@ -128,7 +161,8 @@ test("workflow runtime tells the model to follow every matching node without tag
           {
             sourceNodeId: "source-id" as Id<"workflowNodes">,
             name: "Customer asks for Type B video",
-            detail: "If the customer asks for Arden Heights Type B video, send this media.",
+            detail:
+              "If the customer asks for Arden Heights Type B video, send this media.",
           },
         ],
         allowedServices: [],
@@ -144,26 +178,32 @@ test("workflow runtime tells the model to follow every matching node without tag
     ],
   });
 
-  expect(block).toContain("Multiple workflow node conditions can match in one turn");
+  expect(block).toContain(
+    "Multiple workflow node conditions can match in one turn",
+  );
   expect(block).toContain("Follow every matching node");
   expect(block).toContain("do not stop at the first match");
-  expect(block).toContain("Let the backend workflow planner handle reliable action metadata and media sending");
+  expect(block).toContain(
+    "Let the backend workflow planner handle reliable action metadata and media sending",
+  );
   expect(block).not.toContain("<workflow_matches>");
 });
 
 test("workflow final response prompt contract is omitted because output is structured in code", () => {
-  expect(buildWorkflowFinalResponseContractBlock({
-    workflowId: "workflow-id" as Id<"workflows">,
-    edges: [],
-    nodes: [
-      {
-        nodeId: "node-id" as Id<"workflowNodes">,
-        kind: "sendFile",
-        title: "Send brochure",
-        incomingConditions: [],
-        allowedServices: [],
-        mediaAssets: [],
-      },
-    ],
-  })).toBe("");
+  expect(
+    buildWorkflowFinalResponseContractBlock({
+      workflowId: "workflow-id" as Id<"workflows">,
+      edges: [],
+      nodes: [
+        {
+          nodeId: "node-id" as Id<"workflowNodes">,
+          kind: "sendFile",
+          title: "Send brochure",
+          incomingConditions: [],
+          allowedServices: [],
+          mediaAssets: [],
+        },
+      ],
+    }),
+  ).toBe("");
 });

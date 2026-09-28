@@ -1,30 +1,35 @@
-import type { Edge, Node } from '@xyflow/react';
-import type { Doc, Id } from '../../../convex/_generated/dataModel';
-import type { AddableWorkflowNodeKind, WorkflowNodeKind } from '../../../shared/workflows';
-import type { WorkflowAutomationStepKey } from './workflowTriggerOptions';
-import type { WorkflowAutomationConfigs } from '../../../shared/workflowAutomations';
+import type { Edge, Node } from "@xyflow/react";
+import type { Doc, Id } from "../../../convex/_generated/dataModel";
+import type {
+  AddableWorkflowNodeKind,
+  WorkflowNodeKind,
+} from "../../../shared/workflows";
+import type { WorkflowAutomationStepKey } from "./workflowTriggerOptions";
+import type { WorkflowAutomationConfigs } from "../../../shared/workflowAutomations";
 
-export const AUTOMATION_WORKFLOW_EDGE_PREFIX = 'automation:';
+export const AUTOMATION_WORKFLOW_EDGE_PREFIX = "automation:";
 
 export type WorkflowGraph = {
-  workflow: Doc<'workflows'>;
-  nodes: Doc<'workflowNodes'>[];
-  edges: Doc<'workflowEdges'>[];
+  workflow: Doc<"workflows">;
+  nodes: Doc<"workflowNodes">[];
+  edges: Doc<"workflowEdges">[];
   automations: WorkflowAutomationConfigs;
 };
 
-export type WorkflowLayoutOrientation = 'horizontal' | 'vertical';
-export type WorkflowNodeDensity = 'standard' | 'compact';
+export type WorkflowLayoutOrientation = "horizontal" | "vertical";
+export type WorkflowNodeDensity = "standard" | "compact";
 
 export type WorkflowNodeData = Record<string, unknown> & {
-  nodeId: Id<'workflowNodes'>;
+  nodeId: Id<"workflowNodes">;
   kind: WorkflowNodeKind;
   title: string;
   description?: string;
-  allowedAppointmentServiceIds?: Id<'appointmentServices'>[];
-  agentId?: Id<'agents'>;
+  escalationMessageEnabled?: boolean;
+  escalationMessage?: string;
+  allowedAppointmentServiceIds?: Id<"appointmentServices">[];
+  agentId?: Id<"agents">;
   incomingCondition?: {
-    edgeId: Id<'workflowEdges'>;
+    edgeId: Id<"workflowEdges">;
     detail?: string;
   };
   isReady: boolean;
@@ -32,11 +37,14 @@ export type WorkflowNodeData = Record<string, unknown> & {
   density?: WorkflowNodeDensity;
   layoutOrientation: WorkflowLayoutOrientation;
   disabled: boolean;
-  onAddNode: (nodeId: Id<'workflowNodes'>, kind: AddableWorkflowNodeKind) => void;
-  onRemoveNode: (nodeId: Id<'workflowNodes'>) => void;
+  onAddNode: (
+    nodeId: Id<"workflowNodes">,
+    kind: AddableWorkflowNodeKind,
+  ) => void;
+  onRemoveNode: (nodeId: Id<"workflowNodes">) => void;
 };
 
-export type WorkflowAutomationNodeKind = 'reminders' | 'followups';
+export type WorkflowAutomationNodeKind = "reminders" | "followups";
 
 export type WorkflowAutomationNodeData = Record<string, unknown> & {
   kind: WorkflowAutomationNodeKind;
@@ -50,26 +58,26 @@ export type WorkflowAutomationStepNodeData = Record<string, unknown> & {
 };
 
 export type WorkflowFollowupSummaryNodeData = Record<string, unknown> & {
-  kind: 'followups';
+  kind: "followups";
   title: string;
 };
 
 export type WorkflowFollowupGuidesNodeData = Record<string, unknown> & {
-  kind: 'followups';
+  kind: "followups";
 };
 
 export type WorkflowFollowupSetupNodeData = Record<string, unknown> & {
-  kind: 'followups';
+  kind: "followups";
   title: string;
 };
 
 export type WorkflowReminderSummaryNodeData = Record<string, unknown> & {
-  kind: 'reminders';
+  kind: "reminders";
   title: string;
 };
 
 export type WorkflowReminderSetupNodeData = Record<string, unknown> & {
-  kind: 'reminders';
+  kind: "reminders";
   title: string;
 };
 
@@ -91,38 +99,38 @@ export type WorkflowEdgeRoutePoint = {
   y: number;
 };
 
-export type WorkflowPersistedFlowNode = Node<WorkflowNodeData, 'workflow'>;
+export type WorkflowPersistedFlowNode = Node<WorkflowNodeData, "workflow">;
 export type WorkflowAutomationFlowNode = Node<
   WorkflowAutomationNodeData,
-  'workflowAutomation'
+  "workflowAutomation"
 >;
 export type WorkflowAutomationStepFlowNode = Node<
   WorkflowAutomationStepNodeData,
-  'workflowAutomationStep'
+  "workflowAutomationStep"
 >;
 export type WorkflowFollowupSummaryFlowNode = Node<
   WorkflowFollowupSummaryNodeData,
-  'workflowFollowupSummary'
+  "workflowFollowupSummary"
 >;
 export type WorkflowFollowupGuidesFlowNode = Node<
   WorkflowFollowupGuidesNodeData,
-  'workflowFollowupGuides'
+  "workflowFollowupGuides"
 >;
 export type WorkflowFollowupSetupFlowNode = Node<
   WorkflowFollowupSetupNodeData,
-  'workflowFollowupSetup'
+  "workflowFollowupSetup"
 >;
 export type WorkflowReminderSummaryFlowNode = Node<
   WorkflowReminderSummaryNodeData,
-  'workflowReminderSummary'
+  "workflowReminderSummary"
 >;
 export type WorkflowReminderSetupFlowNode = Node<
   WorkflowReminderSetupNodeData,
-  'workflowReminderSetup'
+  "workflowReminderSetup"
 >;
 export type WorkflowTriggerBackdropFlowNode = Node<
   WorkflowTriggerBackdropNodeData,
-  'workflowTriggerBackdrop'
+  "workflowTriggerBackdrop"
 >;
 export type WorkflowFlowNode =
   | WorkflowPersistedFlowNode
@@ -134,4 +142,4 @@ export type WorkflowFlowNode =
   | WorkflowReminderSummaryFlowNode
   | WorkflowReminderSetupFlowNode
   | WorkflowTriggerBackdropFlowNode;
-export type WorkflowFlowEdge = Edge<WorkflowEdgeData, 'workflow'>;
+export type WorkflowFlowEdge = Edge<WorkflowEdgeData, "workflow">;

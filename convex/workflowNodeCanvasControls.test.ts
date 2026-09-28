@@ -11,8 +11,10 @@ const modules = import.meta.glob("./**/*.ts");
 function initTest() {
   const t = convexTest(schema, modules);
   t.registerComponent("stripe", stripeSchema, {
-    public: () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
-    private: () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
+    public: () =>
+      import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
+    private: () =>
+      import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
     "_generated/server": () =>
       import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
   });
@@ -67,7 +69,9 @@ async function createWorkflowNode(
 ) {
   const agentId = await createPersonalAgent(t, workosUserId);
   const authed = t.withIdentity({ subject: workosUserId });
-  const initialGraph = await authed.mutation(api.workflows.ensureForAgent, { agentId });
+  const initialGraph = await authed.mutation(api.workflows.ensureForAgent, {
+    agentId,
+  });
   const startNode = initialGraph.nodes.find((node) => node.kind === "start")!;
   const graph = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
@@ -75,7 +79,9 @@ async function createWorkflowNode(
     kind,
   });
   const node = graph.nodes.find((entry) => entry.kind === kind)!;
-  const incomingEdge = graph.edges.find((edge) => edge.targetNodeId === node._id)!;
+  const incomingEdge = graph.edges.find(
+    (edge) => edge.targetNodeId === node._id,
+  )!;
   return { agentId, authed, node, incomingEdge };
 }
 
@@ -109,14 +115,46 @@ test("updates the incoming When condition for Human escalation", async () => {
     "humanEscalation",
   );
 
-  await authed.mutation(api.workflowNodeCanvasControls.updateIncomingCondition, {
-    agentId,
-    nodeId: node._id,
-    conditionDetail: "  When the customer asks for a person.  ",
-  });
+  await authed.mutation(
+    api.workflowNodeCanvasControls.updateIncomingCondition,
+    {
+      agentId,
+      nodeId: node._id,
+      conditionDetail: "  When the customer asks for a person.  ",
+    },
+  );
 
-  const savedEdge = await t.run(async (ctx) => await ctx.db.get(incomingEdge._id));
+  const savedEdge = await t.run(
+    async (ctx) => await ctx.db.get(incomingEdge._id),
+  );
   expect(savedEdge?.detail).toBe("When the customer asks for a person.");
+});
+
+test("enables a Human escalation message and trims its configured content", async () => {
+  const t = initTest();
+  const { agentId, authed, node } = await createWorkflowNode(
+    t,
+    "workflow-canvas-escalation-message",
+    "humanEscalation",
+  );
+
+  await authed.mutation(
+    api.workflowNodeCanvasControls.updateEscalationMessage,
+    {
+      agentId,
+      nodeId: node._id,
+      enabled: true,
+      message: "  A teammate will be with you shortly.  ",
+    },
+  );
+
+  const savedNode = await t.run(async (ctx) => await ctx.db.get(node._id));
+  expect(savedNode).toMatchObject({
+    escalationMessageEnabled: true,
+    escalationMessage: "A teammate will be with you shortly.",
+    isReady: true,
+    readinessIssueCount: 0,
+  });
 });
 
 test("rejects canvas controls on an incompatible node kind", async () => {

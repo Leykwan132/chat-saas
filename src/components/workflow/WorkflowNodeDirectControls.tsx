@@ -1,20 +1,23 @@
-import type { Id } from '../../../convex/_generated/dataModel';
-import type { WorkflowNodeKind } from '../../../shared/workflows';
-import { WorkflowBookingNodeServices } from './WorkflowBookingNodeServices';
-import { WorkflowNodeConditionControl } from './WorkflowNodeConditionControl';
-import { WorkflowNodeMessageControl } from './WorkflowNodeMessageControl';
-import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
+import type { Id } from "../../../convex/_generated/dataModel";
+import type { WorkflowNodeKind } from "../../../shared/workflows";
+import { WorkflowBookingNodeServices } from "./WorkflowBookingNodeServices";
+import { WorkflowNodeConditionControl } from "./WorkflowNodeConditionControl";
+import { WorkflowNodeEscalationMessageControl } from "./WorkflowNodeEscalationMessageControl";
+import { WorkflowNodeMessageControl } from "./WorkflowNodeMessageControl";
+import { WorkflowSendMediaSection } from "./WorkflowSendMediaSection";
 
 type WorkflowNodeDirectControlsProps = {
-  agentId: Id<'agents'>;
-  nodeId: Id<'workflowNodes'>;
+  agentId: Id<"agents">;
+  nodeId: Id<"workflowNodes">;
   kind: WorkflowNodeKind;
   description?: string;
+  escalationMessageEnabled?: boolean;
+  escalationMessage?: string;
   incomingCondition?: {
-    edgeId: Id<'workflowEdges'>;
+    edgeId: Id<"workflowEdges">;
     detail?: string;
   };
-  allowedServiceIds?: Id<'appointmentServices'>[];
+  allowedServiceIds?: Id<"appointmentServices">[];
   disabled: boolean;
 };
 
@@ -23,11 +26,13 @@ export function WorkflowNodeDirectControls({
   nodeId,
   kind,
   description,
+  escalationMessageEnabled,
+  escalationMessage,
   incomingCondition,
   allowedServiceIds,
   disabled,
 }: WorkflowNodeDirectControlsProps) {
-  if (kind === 'sendText') {
+  if (kind === "sendText") {
     return (
       <WorkflowNodeMessageControl
         agentId={agentId}
@@ -37,7 +42,7 @@ export function WorkflowNodeDirectControls({
       />
     );
   }
-  if (kind === 'sendImage' || kind === 'sendFile') {
+  if (kind === "sendImage" || kind === "sendFile") {
     return (
       <div className="nodrag nopan mt-3 w-full border-t border-border pt-3">
         <WorkflowSendMediaSection
@@ -49,7 +54,7 @@ export function WorkflowNodeDirectControls({
       </div>
     );
   }
-  if (kind === 'bookAppointment') {
+  if (kind === "bookAppointment") {
     return (
       <WorkflowBookingNodeServices
         agentId={agentId}
@@ -59,18 +64,33 @@ export function WorkflowNodeDirectControls({
       />
     );
   }
-  if (kind === 'humanEscalation' && incomingCondition !== undefined) {
+  if (kind === "humanEscalation") {
     return (
-      <WorkflowNodeConditionControl
-        agentId={agentId}
-        nodeId={nodeId}
-        conditionDetail={incomingCondition.detail}
-        disabled={disabled}
-      />
+      <>
+        {incomingCondition !== undefined ? (
+          <WorkflowNodeConditionControl
+            agentId={agentId}
+            nodeId={nodeId}
+            conditionDetail={incomingCondition.detail}
+            disabled={disabled}
+          />
+        ) : null}
+        <WorkflowNodeEscalationMessageControl
+          agentId={agentId}
+          nodeId={nodeId}
+          enabled={escalationMessageEnabled}
+          message={escalationMessage}
+          disabled={disabled}
+        />
+      </>
     );
   }
-  if (kind === 'closeConversation') {
-    return <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">Closes the conversation.</p>;
+  if (kind === "closeConversation") {
+    return (
+      <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
+        Closes the conversation.
+      </p>
+    );
   }
   return null;
 }

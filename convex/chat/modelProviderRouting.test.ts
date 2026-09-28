@@ -25,6 +25,6 @@ test("usage tracking records the provider of the model used for each call", () =
     /const \{[^}]*provider[^}]*\} = args;/s,
   );
   expect(threads).not.toContain("provider: resolvedModel.provider");
-  expect(threads).toContain("provider,\n        usage:");
-  expect(threads).toContain("provider,\n        inputTokens:");
+  expect(threads).toMatch(/provider,\s+usage:/);
+  expect(threads).toMatch(/provider,\s+inputTokens:/);
 });

@@ -1,10 +1,18 @@
 import { v } from "convex/values";
 import { internalQuery } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
-import { getWorkflowForAgent, listWorkflowEdges, listWorkflowNodes } from "./workflowCore";
-import { workflowNodeDescription, workflowNodeDisplayTitle } from "../shared/workflows";
+import {
+  getWorkflowForAgent,
+  listWorkflowEdges,
+  listWorkflowNodes,
+} from "./workflowCore";
+import {
+  workflowNodeDescription,
+  workflowNodeDisplayTitle,
+} from "../shared/workflows";
 import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 import { requireReadyMediaPublicUrl } from "./media/publicUrls";
+import type { WorkflowRuntimeContextForPrompt } from "./chat/workflowPrompt";
 
 const MAX_RUNTIME_SERVICES = 100;
 const MAX_RUNTIME_MEDIA = 500;
@@ -27,10 +35,15 @@ function serviceForPrompt(service: Doc<"appointmentServices">): RuntimeService {
   };
 }
 
-async function listActiveServices(ctx: Parameters<typeof getWorkflowForAgent>[0], agentId: Id<"agents">) {
+async function listActiveServices(
+  ctx: Parameters<typeof getWorkflowForAgent>[0],
+  agentId: Id<"agents">,
+) {
   const rows = await ctx.db
     .query("appointmentServices")
-    .withIndex("by_agentId_and_isActive", (q) => q.eq("agentId", agentId).eq("isActive", true))
+    .withIndex("by_agentId_and_isActive", (q) =>
+      q.eq("agentId", agentId).eq("isActive", true),
+    )
     .take(MAX_RUNTIME_SERVICES);
   return rows
     .filter((service) => service.archivedAt === undefined)
@@ -48,7 +61,9 @@ function servicesForNode(
   }
   return node.allowedAppointmentServiceIds
     .map((serviceId) => serviceById.get(serviceId))
-    .filter((service): service is Doc<"appointmentServices"> => service !== undefined)
+    .filter(
+      (service): service is Doc<"appointmentServices"> => service !== undefined,
+    )
     .map(serviceForPrompt);
 }
 
@@ -58,10 +73,11 @@ function mediaForNode(
 ) {
   if (node.kind !== "sendImage" && node.kind !== "sendFile") return [];
   return mediaRows
-    .filter((row) =>
-      row.workflowNodeId === node._id &&
-      row.purpose === MediaUploadPurpose.WorkflowSendMedia &&
-      row.status === "ready",
+    .filter(
+      (row) =>
+        row.workflowNodeId === node._id &&
+        row.purpose === MediaUploadPurpose.WorkflowSendMedia &&
+        row.status === "ready",
     )
     .map((row) => ({
       clientId: row.clientId,
@@ -96,10 +112,29 @@ export function getReadyWorkflowGraph(
   const readyNodeIds = new Set(readyNodes.map((node) => node._id));
   return {
     nodes: readyNodes,
-    edges: edges.filter((edge) =>
-      readyNodeIds.has(edge.sourceNodeId) && readyNodeIds.has(edge.targetNodeId),
+    edges: edges.filter(
+      (edge) =>
+        readyNodeIds.has(edge.sourceNodeId) &&
+        readyNodeIds.has(edge.targetNodeId),
     ),
   };
+}
+
+export function getEscalationMessageForWorkflowNode(
+  context: WorkflowRuntimeContextForPrompt,
+  workflowNodeId: string,
+) {
+  if (context === null) return undefined;
+  const node = context.nodes.find(
+    (entry) => entry.nodeId.toString() === workflowNodeId,
+  );
+  if (
+    node?.kind !== "humanEscalation" ||
+    node.escalationMessageEnabled !== true
+  ) {
+    return undefined;
+  }
+  return node.escalationMessage?.trim() || undefined;
 }
 
 export const loadForAgent = internalQuery({
@@ -114,7 +149,9 @@ export const loadForAgent = internalQuery({
     const edges = await listWorkflowEdges(ctx, workflow._id);
     const readyGraph = getReadyWorkflowGraph(nodes, edges);
     const activeServices = await listActiveServices(ctx, args.agentId);
-    const serviceById = new Map(activeServices.map((service) => [service._id, service]));
+    const serviceById = new Map(
+      activeServices.map((service) => [service._id, service]),
+    );
     const mediaRows = await ctx.db
       .query("mediaUploads")
       .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
@@ -128,6 +165,8 @@ export const loadForAgent = internalQuery({
         title: workflowNodeDisplayTitle(node.kind, node.title),
         goal: goalForNode(node),
         textToSend: textToSendForNode(node),
+        escalationMessageEnabled: node.escalationMessageEnabled,
+        escalationMessage: node.escalationMessage,
         notes: node.notes,
         incomingConditions: readyGraph.edges
           .filter((edge) => edge.targetNodeId === node._id)

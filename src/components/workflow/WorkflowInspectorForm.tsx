@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { conditionDetailBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
 import { WorkflowRequiredLabel } from './WorkflowRequiredLabel';
 import { WorkflowBookingNodeServices } from './WorkflowBookingNodeServices';
+import { WorkflowNodeEscalationMessageControl } from './WorkflowNodeEscalationMessageControl';
 import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
 
 const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
@@ -73,6 +74,7 @@ export function WorkflowInspectorForm({
   } = getWorkflowInspectorBehavior(node.kind, Boolean(node.description));
   const isCustomAction = node.kind === 'aiResponds';
   const isHumanEscalationAction = node.kind === 'humanEscalation';
+  const showConditionNameField = !isHumanEscalationAction;
   let conditionNamePlaceholder = 'e.g., Yes';
   let conditionDetailPlaceholder = 'Describe when this action should run';
   if (isSendTextAction) {
@@ -91,14 +93,16 @@ export function WorkflowInspectorForm({
     conditionNamePlaceholder = 'e.g., Needs human';
     conditionDetailPlaceholder = 'If the customer asks for a human or the AI cannot answer safely...';
   }
-  const contentGridClassName = conditionEnabled
+  const contentGridClassName = isHumanEscalationAction
+    ? 'grid gap-8'
+    : conditionEnabled
     ? 'grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
     : 'grid gap-8';
   const hasConditionDetail = !conditionDetailBlocksApply(conditionEnabled, conditionDetail);
-  const hasActionDescription = !saveRequiresDescription || Boolean(goal.trim());
+  const hasActionDescription = isHumanEscalationAction || !saveRequiresDescription || Boolean(goal.trim());
   const hasMedia = !hasMediaSection || !agentId || hasReadyMedia === true;
   const hasRequiredConfiguration = hasConditionDetail && hasActionDescription && hasMedia;
-  const saveDisabled = isSaving || !name.trim();
+  const saveDisabled = isSaving || (!isHumanEscalationAction && !name.trim());
 
   const handleApply = () => {
     if (!hasRequiredConfiguration) {
@@ -106,8 +110,8 @@ export function WorkflowInspectorForm({
       return;
     }
     onSave({
-      name,
-      description: hasGoalField ? goal : '',
+      name: isHumanEscalationAction ? node.title : name,
+      description: isHumanEscalationAction ? (node.description ?? '') : hasGoalField ? goal : '',
       conditionName: conditionEnabled ? conditionName : undefined,
       conditionDetail: conditionEnabled ? conditionDetail : undefined,
     });
@@ -134,15 +138,17 @@ export function WorkflowInspectorForm({
                     Decide when this node should run in the conversation.
                   </FieldDescription>
                 </div>
-                <Field className="gap-2">
-                  <FieldLabel htmlFor="workflow-node-condition-name">Name</FieldLabel>
-                  <Input
-                    id="workflow-node-condition-name"
-                    value={conditionName}
-                    onChange={(event) => setConditionName(event.target.value)}
-                    placeholder={conditionNamePlaceholder}
-                  />
-                </Field>
+                {showConditionNameField ? (
+                  <Field className="gap-2">
+                    <FieldLabel htmlFor="workflow-node-condition-name">Name</FieldLabel>
+                    <Input
+                      id="workflow-node-condition-name"
+                      value={conditionName}
+                      onChange={(event) => setConditionName(event.target.value)}
+                      placeholder={conditionNamePlaceholder}
+                    />
+                  </Field>
+                ) : null}
                 <Field className="gap-2">
                   <FieldLabel htmlFor="workflow-node-condition-detail"><WorkflowRequiredLabel>Detail</WorkflowRequiredLabel></FieldLabel>
                   <Textarea
@@ -177,9 +183,20 @@ export function WorkflowInspectorForm({
                     </div>
                   ) : null}
                 </Field>
+                {isHumanEscalationAction && agentId ? (
+                  <WorkflowNodeEscalationMessageControl
+                    agentId={agentId}
+                    nodeId={node._id}
+                    enabled={node.escalationMessageEnabled}
+                    message={node.escalationMessage}
+                    disabled={isSaving}
+                    presentation="inspector"
+                  />
+                ) : null}
               </section>
             ) : null}
-            <section className="flex flex-col gap-5 text-left">
+            {!isHumanEscalationAction ? (
+              <section className="flex flex-col gap-5 text-left">
               <div className="flex flex-col gap-1">
                 <h3 className="text-base font-semibold text-foreground">Actions</h3>
                 <FieldDescription className="text-xs">
@@ -231,7 +248,8 @@ export function WorkflowInspectorForm({
                   presentation="inspector"
                 />
               ) : null}
-            </section>
+              </section>
+            ) : null}
           </div>
         </FieldGroup>
       </div>

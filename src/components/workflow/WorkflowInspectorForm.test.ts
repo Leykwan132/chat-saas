@@ -8,6 +8,14 @@ const mediaSectionSource = readFileSync(
   fileURLToPath(new URL('./WorkflowSendMediaSection.tsx', import.meta.url)),
   'utf8',
 );
+const inspectorSource = readFileSync(
+  fileURLToPath(new URL('./WorkflowInspector.tsx', import.meta.url)),
+  'utf8',
+);
+const escalationMessageControlSource = readFileSync(
+  fileURLToPath(new URL('./WorkflowNodeEscalationMessageControl.tsx', import.meta.url)),
+  'utf8',
+);
 
 test('workflow inspector explains condition and action sections', () => {
   expect(source).toContain('Decide when this node should run in the conversation.');
@@ -40,6 +48,31 @@ test('uses the shared required label for condition and file requirements', () =>
   expect(source).toContain('<WorkflowRequiredLabel>Detail</WorkflowRequiredLabel>');
   expect(source).toMatch(/id="workflow-node-condition-detail"[\s\S]*?required/);
   expect(source).toContain('conditionDetailBlocksApply(');
+});
+
+test('places the escalation message control below Human escalation condition detail', () => {
+  expect(source).toContain('WorkflowNodeEscalationMessageControl');
+  expect(source).toMatch(
+    /id="workflow-node-condition-detail"[\s\S]*?<WorkflowNodeEscalationMessageControl/,
+  );
+});
+
+test('limits Human escalation editing to condition detail and its send-message control', () => {
+  expect(source).toContain('const showConditionNameField = !isHumanEscalationAction');
+  expect(source).toContain('{showConditionNameField ? (');
+  expect(source).toContain('{!isHumanEscalationAction ? (');
+  expect(source).toContain('name: isHumanEscalationAction ? node.title : name');
+  expect(source).toContain(
+    "description: isHumanEscalationAction ? (node.description ?? '') : hasGoalField ? goal : ''",
+  );
+});
+
+test('gives Human escalation a narrower modal and a heading for its message section', () => {
+  expect(inspectorSource).toContain('sm:max-w-[820px]');
+  expect(source).toContain('presentation="inspector"');
+  expect(escalationMessageControlSource).toMatch(/presentation === ["']inspector["']/);
+  expect(escalationMessageControlSource).toContain('text-base font-semibold text-foreground');
+  expect(escalationMessageControlSource).toContain('nodrag nopan mt-3 w-full');
 });
 
 test('explains incomplete requirements when Apply is attempted', () => {
