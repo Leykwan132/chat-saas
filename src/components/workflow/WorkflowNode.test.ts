@@ -24,8 +24,6 @@ function renderActionNode() {
         dragging: false,
         zIndex: 0,
         isConnectable: true,
-        xPos: 0,
-        yPos: 0,
         data: {
           nodeId: "workflow-action-node" as Id<"workflowNodes">,
           kind: "sendText",
