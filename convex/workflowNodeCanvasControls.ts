@@ -22,7 +22,9 @@ export const updateMessage = mutation({
       throw new Error("Workflow node not found");
     }
     if (node.kind !== "sendText") {
-      throw new Error("Message controls are only available on Send message actions");
+      throw new Error(
+        "Message controls are only available on Send message actions",
+      );
     }
 
     const now = Math.max(Date.now(), workflow.updatedAt + 1);
@@ -54,7 +56,9 @@ export const updateIncomingCondition = mutation({
       throw new Error("Workflow node not found");
     }
     if (node.kind !== "humanEscalation") {
-      throw new Error("Human escalation controls are only available on Human escalation actions");
+      throw new Error(
+        "Human escalation controls are only available on Human escalation actions",
+      );
     }
 
     const edge = await ctx.db
@@ -70,6 +74,49 @@ export const updateIncomingCondition = mutation({
     const now = Math.max(Date.now(), workflow.updatedAt + 1);
     await ctx.db.patch(edge._id, {
       detail: args.conditionDetail.trim() || undefined,
+      updatedAt: now,
+    });
+    await ctx.db.patch(workflow._id, { updatedAt: now });
+    await refreshWorkflowNodeReadinessForAgent(ctx, agent._id);
+    return null;
+  },
+});
+
+export const updateEscalationMessage = mutation({
+  args: {
+    agentId: v.id("agents"),
+    nodeId: v.id("workflowNodes"),
+    enabled: v.boolean(),
+    message: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { agent } = await assertManageableAgent(ctx, args.agentId);
+    const workflow = await getWorkflowForAgent(ctx, agent._id);
+    if (workflow === null) {
+      throw new Error("Workflow not found");
+    }
+
+    const node = await ctx.db.get(args.nodeId);
+    if (node === null || node.workflowId !== workflow._id) {
+      throw new Error("Workflow node not found");
+    }
+    if (node.kind !== "humanEscalation") {
+      throw new Error(
+        "Escalation messages are only available on Human escalation actions",
+      );
+    }
+
+    const message = args.message.trim();
+    if (args.enabled && !message) {
+      throw new Error(
+        "Escalation message is required when sending before escalation",
+      );
+    }
+
+    const now = Math.max(Date.now(), workflow.updatedAt + 1);
+    await ctx.db.patch(node._id, {
+      escalationMessageEnabled: args.enabled || undefined,
+      escalationMessage: args.enabled ? message : undefined,
       updatedAt: now,
     });
     await ctx.db.patch(workflow._id, { updatedAt: now });

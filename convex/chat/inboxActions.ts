@@ -74,7 +74,10 @@ function skippedMetaIndicator(reason: string): MetaIndicatorActionResult {
   return { ok: true, skipped: reason };
 }
 
-function formatUserDisplayName(user: Doc<"users"> | null, fallback: string): string {
+function formatUserDisplayName(
+  user: Doc<"users"> | null,
+  fallback: string,
+): string {
   if (user === null) return fallback;
   const name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
   return name || user.email || fallback;
@@ -83,7 +86,10 @@ function formatUserDisplayName(user: Doc<"users"> | null, fallback: string): str
 async function enqueueMetaMarkSeenIfRead(
   ctx: ActionCtx,
   conversationId: Doc<"conversations">["_id"],
-  result: Pick<ReplyPersistResult, "markedRead" | "latestInboundExternalId"> | null,
+  result: Pick<
+    ReplyPersistResult,
+    "markedRead" | "latestInboundExternalId"
+  > | null,
 ) {
   if (!result?.markedRead) return;
   await metaIndicatorPool.enqueueAction(
@@ -111,9 +117,12 @@ export const sendReply = action({
       throw new Error("Cannot send an empty message");
     }
 
-    const ctxData = await ctx.runQuery(internal.chat.inbox.internalGetSendContext, {
-      conversationId: args.conversationId,
-    });
+    const ctxData = await ctx.runQuery(
+      internal.chat.inbox.internalGetSendContext,
+      {
+        conversationId: args.conversationId,
+      },
+    );
     if (ctxData === null || ctxData.conversation.orgId !== orgId) {
       throw new Error("Conversation not found");
     }
@@ -133,22 +142,29 @@ export const sendReply = action({
 
     const readyUploads =
       clientIds.length > 0
-        ? await ctx.runMutation(internal.media.attachments.internalGetReadyUploads, {
-            clientIds,
-            orgId,
-            userId,
-          })
+        ? await ctx.runMutation(
+            internal.media.attachments.internalGetReadyUploads,
+            {
+              clientIds,
+              orgId,
+              userId,
+            },
+          )
         : [];
 
-    const imageUrls = readyUploads.map((u: { publicUrl: string }) => u.publicUrl);
+    const imageUrls = readyUploads.map(
+      (u: { publicUrl: string }) => u.publicUrl,
+    );
     const channelSendOptions = {
       allowHumanAgentTag: true as const,
       whatsappCustomer: customer ?? undefined,
     };
-    const persistImages = readyUploads.map((u: { publicUrl: string; mediaType: string }) => ({
-      publicUrl: u.publicUrl,
-      mediaType: u.mediaType,
-    }));
+    const persistImages = readyUploads.map(
+      (u: { publicUrl: string; mediaType: string }) => ({
+        publicUrl: u.publicUrl,
+        mediaType: u.mediaType,
+      }),
+    );
 
     const isMetaTextAndImage =
       (conversation.service === "instagram" ||
@@ -181,11 +197,7 @@ export const sendReply = action({
           clientIds,
         },
       );
-      await enqueueMetaMarkSeenIfRead(
-        ctx,
-        args.conversationId,
-        persistResult,
-      );
+      await enqueueMetaMarkSeenIfRead(ctx, args.conversationId, persistResult);
 
       return { agentMessageId: persistResult.agentMessageId };
     }
@@ -197,7 +209,12 @@ export const sendReply = action({
             imageUrls,
             ...channelSendOptions,
           })
-        : await sendTextToChannel(conversation, channel, trimmed, channelSendOptions);
+        : await sendTextToChannel(
+            conversation,
+            channel,
+            trimmed,
+            channelSendOptions,
+          );
 
     throwIfChannelSendFailed(result);
 
@@ -224,9 +241,12 @@ export const internalSendText = internalAction({
     allowHumanAgentTag: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<ChannelSendResult> => {
-    const ctxData = await ctx.runQuery(internal.chat.inbox.internalGetSendContext, {
-      conversationId: args.conversationId,
-    });
+    const ctxData = await ctx.runQuery(
+      internal.chat.inbox.internalGetSendContext,
+      {
+        conversationId: args.conversationId,
+      },
+    );
     if (ctxData === null) {
       return { ok: false, error: "Conversation not found", policy: "generic" };
     }
@@ -367,7 +387,9 @@ export const reactToMessage = action({
       ctxData.conversation.service !== "instagram" &&
       ctxData.conversation.service !== "messenger"
     ) {
-      throw new Error("Reactions are only supported for WhatsApp, Instagram, and Messenger");
+      throw new Error(
+        "Reactions are only supported for WhatsApp, Instagram, and Messenger",
+      );
     }
     const target = await ctx.runQuery(
       internal.chat.reactions.internalResolveReactionTarget,
@@ -380,9 +402,12 @@ export const reactToMessage = action({
     if (target === null || !target.externalId) {
       throw new Error("This message cannot be reacted to yet");
     }
-    const currentUser = await ctx.runQuery(internal.users.internalGetByWorkosUserId, {
-      workosUserId: userId,
-    });
+    const currentUser = await ctx.runQuery(
+      internal.users.internalGetByWorkosUserId,
+      {
+        workosUserId: userId,
+      },
+    );
     await metaReactionPool.enqueueAction(
       ctx,
       internal.chat.inboxActions.internalSendAndPersistReaction,
@@ -609,7 +634,8 @@ async function sendAiReplyContent(
       mediaItems,
       ...options,
     });
-    if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
+    if (!result.ok)
+      return { ok: false, error: result.error, policy: result.policy };
     return {
       ok: true,
       textExternalId: result.textConsumed ? undefined : result.externalId,
@@ -618,8 +644,14 @@ async function sendAiReplyContent(
   }
 
   if (content.trim()) {
-    const result = await sendTextToChannel(conversation, channel, content, options);
-    if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
+    const result = await sendTextToChannel(
+      conversation,
+      channel,
+      content,
+      options,
+    );
+    if (!result.ok)
+      return { ok: false, error: result.error, policy: result.policy };
     return { ok: true, textExternalId: result.externalId };
   }
 
@@ -628,10 +660,12 @@ async function sendAiReplyContent(
       mediaItems,
       ...options,
     });
-    if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
+    if (!result.ok)
+      return { ok: false, error: result.error, policy: result.policy };
     return {
       ok: true,
-      mediaExternalIds: result.externalIds ?? (result.externalId ? [result.externalId] : []),
+      mediaExternalIds:
+        result.externalIds ?? (result.externalId ? [result.externalId] : []),
     };
   }
 
@@ -671,7 +705,10 @@ export const internalSendAiReplyMessages = internalAction({
     mediaItems: v.optional(v.array(channelMediaItemValidator)),
     allowHumanAgentTag: v.optional(v.boolean()),
   },
-  handler: async (ctx, args): Promise<{
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
     ok: boolean;
     error?: string;
     policy?: ChannelSendPolicy;
@@ -708,7 +745,8 @@ export const internalSendAiReplyMessages = internalAction({
     }
 
     const contents = normalizeAiReplyMessages(args.contents);
-    const mediaItems = args.mediaItems ?? args.mediaUrls.map((url) => ({ url }));
+    const mediaItems =
+      args.mediaItems ?? args.mediaUrls.map((url) => ({ url }));
     const textExternalIds: Array<string | null> = [];
     let mediaExternalIds: string[] = [];
     let mediaSent = false;
@@ -776,7 +814,7 @@ export const internalSendEscalationMessage = internalAction({
     conversationId: v.id("conversations"),
     content: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ ok: boolean; error?: string }> => {
     const sendResult = await ctx.runAction(
       internal.chat.inboxActions.internalSendAiReply,
       {
@@ -788,14 +826,23 @@ export const internalSendEscalationMessage = internalAction({
     );
 
     if (!sendResult.ok) {
-      console.error("Failed to send escalation message to channel:", sendResult.error);
-      return;
+      console.error(
+        "Failed to send escalation message to channel:",
+        sendResult.error,
+      );
+      return {
+        ok: false,
+        error: sendResult.error ?? "Could not send escalation message",
+      };
     }
 
-    const conv = await ctx.runQuery(internal.chat.inbox.internalGetConversation, {
-      conversationId: args.conversationId,
-    });
-    if (!conv) return;
+    const conv = await ctx.runQuery(
+      internal.chat.inbox.internalGetConversation,
+      {
+        conversationId: args.conversationId,
+      },
+    );
+    if (!conv) return { ok: false, error: "Conversation not found" };
 
     const persistResult: ReplyPersistResult | null = await ctx.runMutation(
       internal.chat.inbox.internalPersistAiReply,
@@ -809,6 +856,10 @@ export const internalSendEscalationMessage = internalAction({
       },
     );
     await enqueueMetaMarkSeenIfRead(ctx, args.conversationId, persistResult);
+    if (persistResult === null) {
+      return { ok: false, error: "Could not record escalation message" };
+    }
+    return { ok: true };
   },
 });
 
@@ -860,10 +911,17 @@ function parseLeadTemperature(
 export const internalLabelLeadOnSync = internalAction({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, args) => {
-    const conv = await ctx.runQuery(internal.chat.inbox.internalGetConversation, {
-      conversationId: args.conversationId,
-    });
-    if (conv === null || conv.syncLeadLabeledAt !== undefined || !conv.customerId) {
+    const conv = await ctx.runQuery(
+      internal.chat.inbox.internalGetConversation,
+      {
+        conversationId: args.conversationId,
+      },
+    );
+    if (
+      conv === null ||
+      conv.syncLeadLabeledAt !== undefined ||
+      !conv.customerId
+    ) {
       return;
     }
 
@@ -905,9 +963,9 @@ You MUST respond with ONLY a JSON object in this exact format, no other text:
         maxRetries: AI_GENERATION_MAX_RETRIES,
       });
       await captureAIGeneration({
-        distinctId: conv.assignedUserId ?? 'anonymous',
+        distinctId: conv.assignedUserId ?? "anonymous",
         traceId: args.conversationId,
-        spanName: 'lead_temperature_classification',
+        spanName: "lead_temperature_classification",
         model: modelId,
         provider: resolvedModel.provider,
         inputTokens: leadUsage.inputTokens,
@@ -922,7 +980,11 @@ You MUST respond with ONLY a JSON object in this exact format, no other text:
         return;
       }
 
-      const temperatureMap = { hot: "Hot", warm: "Warm", cold: "Cold" } as const;
+      const temperatureMap = {
+        hot: "Hot",
+        warm: "Warm",
+        cold: "Cold",
+      } as const;
       await ctx.runMutation(internal.customers.internalSetLeadTemperature, {
         customerId: conv.customerId,
         temperature: temperatureMap[leadTemperature],
@@ -940,9 +1002,12 @@ export const generateThreadSummary = action({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, args): Promise<{ summary: string }> => {
     const { orgId } = await getAuthContext(ctx);
-    const conv = await ctx.runQuery(internal.chat.inbox.internalGetConversation, {
-      conversationId: args.conversationId,
-    });
+    const conv = await ctx.runQuery(
+      internal.chat.inbox.internalGetConversation,
+      {
+        conversationId: args.conversationId,
+      },
+    );
     if (conv === null || conv.orgId !== orgId) {
       throw new Error("Conversation not found");
     }
@@ -984,9 +1049,9 @@ Make it highly customer-centric and readable at a single glance.`;
         maxRetries: AI_GENERATION_MAX_RETRIES,
       });
       await captureAIGeneration({
-        distinctId: conv.assignedUserId ?? 'anonymous',
+        distinctId: conv.assignedUserId ?? "anonymous",
         traceId: args.conversationId,
-        spanName: 'thread_summary_generation',
+        spanName: "thread_summary_generation",
         model: modelId,
         provider: resolvedModel.provider,
         inputTokens: summaryUsage.inputTokens,
@@ -1004,7 +1069,9 @@ Make it highly customer-centric and readable at a single glance.`;
         throw error;
       }
       console.error("Failed to generate thread summary:", error);
-      throw new Error("Failed to generate summary. Please try again.", { cause: error });
+      throw new Error("Failed to generate summary. Please try again.", {
+        cause: error,
+      });
     }
   },
 });

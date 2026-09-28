@@ -284,7 +284,7 @@ export default defineSchema({
         role: v.string(),
         useCase: v.array(v.string()),
         channels: v.array(v.string()),
-      })
+      }),
     ),
     activeTeamId: v.optional(v.id("teams")),
     createdAt: v.number(),
@@ -307,29 +307,65 @@ export default defineSchema({
     timeZone: v.optional(v.string()),
     memberFeatureAccess: v.optional(
       v.object({
-        agents: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        agents: v.union(
+          v.literal("none"),
+          v.literal("view"),
+          v.literal("edit"),
+        ),
         chats: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
         team: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
-        invitations: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
-        billing: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        invitations: v.union(
+          v.literal("none"),
+          v.literal("view"),
+          v.literal("edit"),
+        ),
+        billing: v.union(
+          v.literal("none"),
+          v.literal("view"),
+          v.literal("edit"),
+        ),
       }),
     ),
     adminFeatureAccess: v.optional(
       v.object({
-        agents: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        agents: v.union(
+          v.literal("none"),
+          v.literal("view"),
+          v.literal("edit"),
+        ),
         chats: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
         team: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
-        invitations: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
-        billing: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        invitations: v.union(
+          v.literal("none"),
+          v.literal("view"),
+          v.literal("edit"),
+        ),
+        billing: v.union(
+          v.literal("none"),
+          v.literal("view"),
+          v.literal("edit"),
+        ),
       }),
     ),
     ownerFeatureAccess: v.optional(
       v.object({
-        agents: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        agents: v.union(
+          v.literal("none"),
+          v.literal("view"),
+          v.literal("edit"),
+        ),
         chats: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
         team: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
-        invitations: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
-        billing: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        invitations: v.union(
+          v.literal("none"),
+          v.literal("view"),
+          v.literal("edit"),
+        ),
+        billing: v.union(
+          v.literal("none"),
+          v.literal("view"),
+          v.literal("edit"),
+        ),
       }),
     ),
     memberAccessSlugs: v.optional(v.array(v.string())),
@@ -341,8 +377,8 @@ export default defineSchema({
         v.object({
           key: v.string(),
           label: v.string(),
-        })
-      )
+        }),
+      ),
     ),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -478,11 +514,7 @@ export default defineSchema({
     workosUserId: v.string(),
     workosOrganizationMembershipId: v.string(),
     email: v.string(),
-    role: v.union(
-      v.literal("owner"),
-      v.literal("admin"),
-      v.literal("member"),
-    ),
+    role: v.union(v.literal("owner"), v.literal("admin"), v.literal("member")),
     status: v.literal("active"),
     passwordResetAt: v.optional(v.number()),
     createdAt: v.number(),
@@ -492,8 +524,8 @@ export default defineSchema({
     .index("by_workosUserId", ["workosUserId"])
     .index("by_partnerOrganizationId_and_workosUserId", [
       "partnerOrganizationId",
-    "workosUserId",
-  ]),
+      "workosUserId",
+    ]),
   whiteLabelPartnerCustomerCredentials: defineTable({
     partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
     workosUserId: v.string(),
@@ -530,7 +562,10 @@ export default defineSchema({
     appliesAt: v.number(),
     assignedByUserId: v.id("users"),
     createdAt: v.number(),
-  }).index("by_partnerOrganizationId_and_createdAt", ["partnerOrganizationId", "createdAt"]),
+  }).index("by_partnerOrganizationId_and_createdAt", [
+    "partnerOrganizationId",
+    "createdAt",
+  ]),
   whiteLabelPartnerOrganizationCreditPeriods: defineTable({
     partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
     planKey: whiteLabelPlanKeyValidator,
@@ -540,7 +575,10 @@ export default defineSchema({
     usedCredits: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_partnerOrganizationId_and_periodStart", ["partnerOrganizationId", "periodStart"]),
+  }).index("by_partnerOrganizationId_and_periodStart", [
+    "partnerOrganizationId",
+    "periodStart",
+  ]),
   whiteLabelPartnerOrganizationCreditGrants: defineTable({
     partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
     grantedCredits: v.number(),
@@ -548,7 +586,10 @@ export default defineSchema({
     grantedByUserId: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_partnerOrganizationId_and_createdAt", ["partnerOrganizationId", "createdAt"]),
+  }).index("by_partnerOrganizationId_and_createdAt", [
+    "partnerOrganizationId",
+    "createdAt",
+  ]),
   whiteLabelPartnerOrganizationCreditBalances: defineTable({
     partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
     manualGrantedCredits: v.number(),
@@ -563,7 +604,10 @@ export default defineSchema({
     credits: v.number(),
     actorUserId: v.optional(v.id("users")),
     createdAt: v.number(),
-  }).index("by_partnerOrganizationId_and_createdAt", ["partnerOrganizationId", "createdAt"]),
+  }).index("by_partnerOrganizationId_and_createdAt", [
+    "partnerOrganizationId",
+    "createdAt",
+  ]),
   whiteLabelPartnerDomains: defineTable({
     partnerId: v.id("whiteLabelPartners"),
     hostname: v.string(),
@@ -615,9 +659,7 @@ export default defineSchema({
     ),
     businessName: v.optional(v.string()),
     businessDescription: v.optional(v.string()),
-    goal: v.optional(
-      v.union(v.literal("support"), v.literal("bookService")),
-    ),
+    goal: v.optional(v.union(v.literal("support"), v.literal("bookService"))),
     websiteUrls: v.optional(v.array(v.string())),
     contacts: v.optional(v.string()),
     fileSize: v.number(),
@@ -625,10 +667,26 @@ export default defineSchema({
     orgId: v.string(),
     escalationEnabled: v.optional(v.boolean()),
     escalationMessage: v.optional(v.string()),
-    responseLength: v.optional(v.union(v.literal("brief"), v.literal("standard"), v.literal("detailed"))),
-    emojiUse: v.optional(v.union(v.literal("never"), v.literal("occasional"), v.literal("frequent"))),
-    formality: v.optional(v.union(v.literal("casual"), v.literal("conversational"), v.literal("professional"))),
-    humorLevel: v.optional(v.union(v.literal("none"), v.literal("light"), v.literal("playful"))),
+    responseLength: v.optional(
+      v.union(v.literal("brief"), v.literal("standard"), v.literal("detailed")),
+    ),
+    emojiUse: v.optional(
+      v.union(
+        v.literal("never"),
+        v.literal("occasional"),
+        v.literal("frequent"),
+      ),
+    ),
+    formality: v.optional(
+      v.union(
+        v.literal("casual"),
+        v.literal("conversational"),
+        v.literal("professional"),
+      ),
+    ),
+    humorLevel: v.optional(
+      v.union(v.literal("none"), v.literal("light"), v.literal("playful")),
+    ),
     telegramNotificationKinds: v.optional(telegramNotificationKindsValidator),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -661,8 +719,12 @@ export default defineSchema({
     kind: workflowNodeKindValidator,
     title: v.string(),
     description: v.optional(v.string()),
+    escalationMessageEnabled: v.optional(v.boolean()),
+    escalationMessage: v.optional(v.string()),
     notes: v.optional(v.string()),
-    allowedAppointmentServiceIds: v.optional(v.array(v.id("appointmentServices"))),
+    allowedAppointmentServiceIds: v.optional(
+      v.array(v.id("appointmentServices")),
+    ),
     isReady: v.optional(v.boolean()),
     readinessIssueCount: v.optional(v.number()),
     positionX: v.number(),
@@ -687,14 +749,16 @@ export default defineSchema({
     title: v.string(),
     content: v.string(),
     fileSize: v.number(),
-    status: v.optional(v.union(
-      v.literal("pending"),
-      v.literal("queued"),
-      v.literal("processing"),
-      v.literal("completed"),
-      v.literal("failed"),
-      v.literal("deleting"),
-    )),
+    status: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("queued"),
+        v.literal("processing"),
+        v.literal("completed"),
+        v.literal("failed"),
+        v.literal("deleting"),
+      ),
+    ),
     cfItemId: v.optional(v.string()),
     ragEntryId: v.optional(v.string()),
     userId: v.string(),
@@ -709,14 +773,16 @@ export default defineSchema({
     title: v.optional(v.string()),
     fileName: v.string(),
     fileSize: v.number(),
-    status: v.optional(v.union(
-      v.literal("pending"),
-      v.literal("queued"),
-      v.literal("processing"),
-      v.literal("completed"),
-      v.literal("failed"),
-      v.literal("deleting"),
-    )),
+    status: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("queued"),
+        v.literal("processing"),
+        v.literal("completed"),
+        v.literal("failed"),
+        v.literal("deleting"),
+      ),
+    ),
     cfItemId: v.optional(v.string()),
     ragEntryId: v.optional(v.string()),
     extractedText: v.optional(v.string()),
@@ -732,14 +798,16 @@ export default defineSchema({
     agentId: v.id("agents"),
     url: v.string(),
     fileSize: v.number(),
-    status: v.optional(v.union(
-      v.literal("gettingLinks"),
-      v.literal("linksObtained"),
-      v.literal("gettingMarkdown"),
-      v.literal("completed"),
-      v.literal("failed"),
-      v.literal("deleting"),
-    )),
+    status: v.optional(
+      v.union(
+        v.literal("gettingLinks"),
+        v.literal("linksObtained"),
+        v.literal("gettingMarkdown"),
+        v.literal("completed"),
+        v.literal("failed"),
+        v.literal("deleting"),
+      ),
+    ),
     cfItemId: v.optional(v.string()),
     ragEntryId: v.optional(v.string()),
     markdownStorageId: v.optional(v.id("_storage")),
@@ -758,14 +826,16 @@ export default defineSchema({
     question: v.string(),
     answer: v.string(),
     fileSize: v.number(),
-    status: v.optional(v.union(
-      v.literal("pending"),
-      v.literal("queued"),
-      v.literal("processing"),
-      v.literal("completed"),
-      v.literal("failed"),
-      v.literal("deleting"),
-    )),
+    status: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("queued"),
+        v.literal("processing"),
+        v.literal("completed"),
+        v.literal("failed"),
+        v.literal("deleting"),
+      ),
+    ),
     cfItemId: v.optional(v.string()),
     ragEntryId: v.optional(v.string()),
     userId: v.string(),
@@ -855,7 +925,8 @@ export default defineSchema({
     createdByUserId: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_orgId", ["orgId"])
+  })
+    .index("by_orgId", ["orgId"])
     .index("by_orgId_and_agentId", ["orgId", "agentId"]),
   commentAutomationPages: defineTable({
     automationId: v.id("commentAutomations"),
@@ -974,7 +1045,11 @@ export default defineSchema({
     visitorId: v.string(),
     conversationId: v.optional(v.id("conversations")),
     isSandbox: v.boolean(),
-    status: v.union(v.literal("active"), v.literal("stopped"), v.literal("failed")),
+    status: v.union(
+      v.literal("active"),
+      v.literal("stopped"),
+      v.literal("failed"),
+    ),
     startedAt: v.number(),
     stoppedAt: v.optional(v.number()),
     durationMs: v.optional(v.number()),
@@ -982,7 +1057,10 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_sessionId", ["sessionId"])
-    .index("by_configurationId_and_startedAt", ["configurationId", "startedAt"]),
+    .index("by_configurationId_and_startedAt", [
+      "configurationId",
+      "startedAt",
+    ]),
   avatarEvents: defineTable({
     sessionId: v.string(),
     eventId: v.string(),
@@ -1080,10 +1158,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_batchId_and_status", ["batchId", "status"])
-    .index("by_batchId_and_whatsappThreadId", [
-      "batchId",
-      "whatsappThreadId",
-    ])
+    .index("by_batchId_and_whatsappThreadId", ["batchId", "whatsappThreadId"])
     .index("by_channelId_and_status", ["channelId", "status"])
     .index("by_channelId_and_whatsappThreadId", [
       "channelId",
@@ -1149,7 +1224,7 @@ export default defineSchema({
     searchText: v.optional(v.string()),
     tags: v.array(v.string()),
     leadTemperature: v.optional(
-      v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"))
+      v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold")),
     ),
     notes: v.optional(v.string()),
     source: customerServiceValidator,
@@ -1192,8 +1267,7 @@ export default defineSchema({
   customerTags: defineTable({
     workspaceKey: v.string(),
     tag: v.string(),
-  })
-    .index("by_workspaceKey_and_tag", ["workspaceKey", "tag"]),
+  }).index("by_workspaceKey_and_tag", ["workspaceKey", "tag"]),
   // Unified conversation table. service: "playground" rows are AI-playground
   // threads; the rest are channel-backed inbox conversations.
   conversations: defineTable({
@@ -1221,7 +1295,7 @@ export default defineSchema({
         context: v.string(),
         escalatedAt: v.number(),
         sourceMessageId: v.optional(v.id("messages")),
-      })
+      }),
     ),
     tags: v.optional(v.array(v.string())),
     assignedAgentId: v.optional(v.id("agents")),
@@ -1336,7 +1410,12 @@ export default defineSchema({
     .index("by_conversationId", ["conversationId"])
     .searchIndex("search_text", {
       searchField: "searchText",
-      filterFields: ["orgId", "userId", "assignedAgentId", "isChannelConnected"],
+      filterFields: [
+        "orgId",
+        "userId",
+        "assignedAgentId",
+        "isChannelConnected",
+      ],
     }),
   inboxMessageSearchDocuments: defineTable({
     messageId: v.id("messages"),
@@ -1352,7 +1431,12 @@ export default defineSchema({
     .index("by_conversationId", ["conversationId"])
     .searchIndex("search_content", {
       searchField: "content",
-      filterFields: ["orgId", "userId", "assignedAgentId", "isChannelConnected"],
+      filterFields: [
+        "orgId",
+        "userId",
+        "assignedAgentId",
+        "isChannelConnected",
+      ],
     }),
   inboundMediaBatches: defineTable({
     conversationId: v.id("conversations"),
@@ -1421,11 +1505,13 @@ export default defineSchema({
     mediaUrl: v.optional(v.string()),
     messageKind: v.optional(messageKindValidator),
     broadcastPresentation: v.optional(broadcastPresentationValidator),
-    workflowAutomationSource: v.optional(v.union(
-      v.literal("workflowReminder"),
-      v.literal("workflowFollowUp"),
-      v.literal("commentAutomation"),
-    )),
+    workflowAutomationSource: v.optional(
+      v.union(
+        v.literal("workflowReminder"),
+        v.literal("workflowFollowUp"),
+        v.literal("commentAutomation"),
+      ),
+    ),
     status: v.optional(
       v.union(
         v.literal("queued"),
@@ -1516,11 +1602,7 @@ export default defineSchema({
     date: v.string(),
     createdAt: v.number(),
   })
-    .index("by_agentId_and_timeZone_and_date", [
-      "agentId",
-      "timeZone",
-      "date",
-    ])
+    .index("by_agentId_and_timeZone_and_date", ["agentId", "timeZone", "date"])
     .index("by_agentId_and_conversationId_and_timeZone_and_date", [
       "agentId",
       "conversationId",
@@ -1537,11 +1619,7 @@ export default defineSchema({
     date: v.string(),
     createdAt: v.number(),
   })
-    .index("by_agentId_and_timeZone_and_date", [
-      "agentId",
-      "timeZone",
-      "date",
-    ])
+    .index("by_agentId_and_timeZone_and_date", ["agentId", "timeZone", "date"])
     .index("by_conversationLogId", ["conversationLogId"])
     .index("by_orgId", ["orgId"]),
   conversationAnalyticsFacts: defineTable({
@@ -1702,10 +1780,12 @@ export default defineSchema({
     mediaType: v.string(),
     filename: v.optional(v.string()),
     fileSize: v.optional(v.number()),
-    purpose: v.optional(v.union(
-      v.literal(MediaUploadPurpose.KnowledgeBase),
-      v.literal(MediaUploadPurpose.WorkflowSendMedia),
-    )),
+    purpose: v.optional(
+      v.union(
+        v.literal(MediaUploadPurpose.KnowledgeBase),
+        v.literal(MediaUploadPurpose.WorkflowSendMedia),
+      ),
+    ),
     agentId: v.optional(v.id("agents")),
     workflowNodeId: v.optional(v.id("workflowNodes")),
     collectionName: v.optional(v.string()),
@@ -1805,7 +1885,7 @@ export default defineSchema({
     type: v.union(
       v.literal("deduction"),
       v.literal("top_up"),
-      v.literal("grant")
+      v.literal("grant"),
     ),
     eventType: v.optional(
       v.union(
@@ -1923,11 +2003,13 @@ export default defineSchema({
     agentId: v.id("agents"),
     name: v.string(),
     description: v.optional(v.string()),
-    locationMode: v.optional(v.union(
-      v.literal("remote"),
-      v.literal("video_call"),
-      v.literal("in_person"),
-    )),
+    locationMode: v.optional(
+      v.union(
+        v.literal("remote"),
+        v.literal("video_call"),
+        v.literal("in_person"),
+      ),
+    ),
     location: v.optional(v.string()),
     isActive: v.boolean(),
     archivedAt: v.optional(v.number()),
@@ -1984,7 +2066,10 @@ export default defineSchema({
   })
     .index("by_phoneDigits", ["phoneDigits"])
     .index("by_verificationTokenHash", ["verificationTokenHash"])
-    .index("by_verificationChatId_and_updatedAt", ["verificationChatId", "updatedAt"])
+    .index("by_verificationChatId_and_updatedAt", [
+      "verificationChatId",
+      "updatedAt",
+    ])
     .index("by_telegramChatId", ["telegramChatId"])
     .index("by_telegramUserId", ["telegramUserId"]),
   agentTelegramNotificationSubscriptions: defineTable({
@@ -2007,8 +2092,7 @@ export default defineSchema({
     r2Keys: v.optional(v.array(v.string())),
     createdAt: v.number(),
     updatedAt: v.number(),
-  })
-    .index("by_teamId", ["teamId"]),
+  }).index("by_teamId", ["teamId"]),
   calendarEvents: defineTable({
     teamId: v.id("teams"),
     title: v.string(),
@@ -2040,7 +2124,9 @@ export default defineSchema({
     conversationId: v.optional(v.id("conversations")),
     appointmentServiceId: v.optional(v.id("appointmentServices")),
     bookingSource: v.optional(v.union(v.literal("manual"), v.literal("ai"))),
-    customFieldResponses: v.optional(v.record(v.string(), appointmentCollectedValueValidator)),
+    customFieldResponses: v.optional(
+      v.record(v.string(), appointmentCollectedValueValidator),
+    ),
     remarks: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -2141,7 +2227,11 @@ export default defineSchema({
     eventId: v.id("calendarEvents"),
     teamId: v.id("teams"),
     userId: v.id("users"),
-    bucketKind: v.union(v.literal("day"), v.literal("month"), v.literal("long")),
+    bucketKind: v.union(
+      v.literal("day"),
+      v.literal("month"),
+      v.literal("long"),
+    ),
     bucketKey: v.string(),
     startAt: v.number(),
     endAt: v.number(),
@@ -2175,7 +2265,11 @@ export default defineSchema({
     windowEndAt: v.number(),
     userIds: v.array(v.id("users")),
     state: v.union(v.literal("pending"), v.literal("ready")),
-    phase: v.union(v.literal("cleanup"), v.literal("repair"), v.literal("load")),
+    phase: v.union(
+      v.literal("cleanup"),
+      v.literal("repair"),
+      v.literal("load"),
+    ),
     generation: v.number(),
     nextUserIndex: v.number(),
     revision: v.optional(v.number()),
@@ -2194,12 +2288,14 @@ export default defineSchema({
     userId: v.id("users"),
     generation: v.number(),
     safe: v.boolean(),
-    intervals: v.array(v.object({
-      eventId: v.id("calendarEvents"),
-      startAt: v.number(),
-      endAt: v.number(),
-      externalOwnerUserId: v.optional(v.id("users")),
-    })),
+    intervals: v.array(
+      v.object({
+        eventId: v.id("calendarEvents"),
+        startAt: v.number(),
+        endAt: v.number(),
+        externalOwnerUserId: v.optional(v.id("users")),
+      }),
+    ),
     updatedAt: v.number(),
   })
     .index("by_preloadId", ["preloadId"])
@@ -2257,13 +2353,13 @@ export default defineSchema({
         attemptNumber: v.number(),
         templateName: v.string(),
         templateLanguage: v.string(),
-      })
+      }),
     ),
     maxAttempts: v.number(),
     triggerDelayHours: v.number(),
     intervalHours: v.number(),
     audienceLeadTemperatures: v.array(
-      v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"))
+      v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold")),
     ),
     audienceTags: v.optional(v.array(v.string())),
     isActive: v.boolean(),
@@ -2340,14 +2436,17 @@ export default defineSchema({
     ),
     // Who performed the action
     actorType: v.union(v.literal("user"), v.literal("ai"), v.literal("system")),
-    actorName: v.optional(v.string()),     // Display name (user name or agent name)
-    actorUserId: v.optional(v.string()),   // workosUserId if user
+    actorName: v.optional(v.string()), // Display name (user name or agent name)
+    actorUserId: v.optional(v.string()), // workosUserId if user
     actorAgentId: v.optional(v.id("agents")),
     // What changed (flexible metadata)
-    metadata: v.optional(v.any()),  // e.g. { tag: "VIP" }, { assigneeName: "John" }, { eventTitle: "Consultation" }
+    metadata: v.optional(v.any()), // e.g. { tag: "VIP" }, { assigneeName: "John" }, { eventTitle: "Consultation" }
     performedAt: v.number(),
   })
-    .index("by_conversationId_and_performedAt", ["conversationId", "performedAt"])
+    .index("by_conversationId_and_performedAt", [
+      "conversationId",
+      "performedAt",
+    ])
     .index("by_actorAgentId_and_action_and_performedAt", [
       "actorAgentId",
       "action",
@@ -2371,8 +2470,16 @@ export default defineSchema({
   })
     .index("by_channelId", ["channelId"])
     .index("by_orgId_and_channelId", ["orgId", "channelId"])
-    .index("by_channelId_and_name_and_language", ["channelId", "name", "language"])
-    .index("by_orgId_and_channelId_and_status", ["orgId", "channelId", "status"])
+    .index("by_channelId_and_name_and_language", [
+      "channelId",
+      "name",
+      "language",
+    ])
+    .index("by_orgId_and_channelId_and_status", [
+      "orgId",
+      "channelId",
+      "status",
+    ])
     .index("by_channelId_and_metaTemplateId", ["channelId", "metaTemplateId"]),
   whatsappTemplateMediaAssets: defineTable({
     orgId: v.string(),
@@ -2474,8 +2581,8 @@ export default defineSchema({
           name: v.string(),
           reason: v.string(),
           type: v.union(v.literal("skipped"), v.literal("failed")),
-        })
-      )
+        }),
+      ),
     ),
   })
     .index("by_jobId", ["jobId"])

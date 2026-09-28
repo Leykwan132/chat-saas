@@ -1,10 +1,10 @@
-import { MarkerType, Position } from '@xyflow/react';
-import type { Id } from '../../../convex/_generated/dataModel';
+import { MarkerType, Position } from "@xyflow/react";
+import type { Id } from "../../../convex/_generated/dataModel";
 import {
   workflowConditionDisplayLabel,
   workflowNodeDisplayTitle,
   type AddableWorkflowNodeKind,
-} from '../../../shared/workflows';
+} from "../../../shared/workflows";
 import {
   type WorkflowFollowupGuidesFlowNode,
   type WorkflowFollowupSetupFlowNode,
@@ -16,8 +16,8 @@ import {
   type WorkflowNodeDensity,
   type WorkflowReminderSetupFlowNode,
   type WorkflowReminderSummaryFlowNode,
-} from './workflowTypes';
-import { getWorkflowEdgeRoutes } from './workflowEdgeRouting';
+} from "./workflowTypes";
+import { getWorkflowEdgeRoutes } from "./workflowEdgeRouting";
 
 const AUTOMATION_PANEL_X_OFFSET = 400;
 const AUTOMATION_FLOW_TOP_PADDING = 24;
@@ -33,31 +33,25 @@ export const WORKFLOW_SELECTED_NODE_Z_INDEX = 30;
 function getAutomationFlowNodes(
   graph: WorkflowGraph,
 ): Array<
-  WorkflowFollowupGuidesFlowNode |
-  WorkflowFollowupSetupFlowNode |
-  WorkflowFollowupSummaryFlowNode |
-  WorkflowReminderSetupFlowNode |
-  WorkflowReminderSummaryFlowNode
+  | WorkflowFollowupGuidesFlowNode
+  | WorkflowFollowupSetupFlowNode
+  | WorkflowFollowupSummaryFlowNode
+  | WorkflowReminderSetupFlowNode
+  | WorkflowReminderSummaryFlowNode
 > {
-  const startNode = graph.nodes.find((node) => node.kind === 'start');
+  const startNode = graph.nodes.find((node) => node.kind === "start");
   if (!startNode) return [];
 
   const nodeY = startNode.positionY;
   const setupPanelX = startNode.positionX + AUTOMATION_PANEL_X_OFFSET;
-  const reminderSidePanelX = (
-    setupPanelX +
-    REMINDER_SETUP_PANEL_WIDTH +
-    AUTOMATION_SIDE_PANEL_GAP
-  );
-  const followupSidePanelX = (
-    setupPanelX +
-    FOLLOWUP_SETUP_PANEL_WIDTH +
-    AUTOMATION_SIDE_PANEL_GAP
-  );
+  const reminderSidePanelX =
+    setupPanelX + REMINDER_SETUP_PANEL_WIDTH + AUTOMATION_SIDE_PANEL_GAP;
+  const followupSidePanelX =
+    setupPanelX + FOLLOWUP_SETUP_PANEL_WIDTH + AUTOMATION_SIDE_PANEL_GAP;
   const panelY = nodeY - AUTOMATION_FLOW_TOP_PADDING;
   const reminderSetupNode: WorkflowReminderSetupFlowNode = {
-    id: 'workflow-automation-reminders',
-    type: 'workflowReminderSetup',
+    id: "workflow-automation-reminders",
+    type: "workflowReminderSetup",
     position: {
       x: setupPanelX,
       y: panelY,
@@ -66,14 +60,14 @@ function getAutomationFlowNodes(
     selectable: false,
     connectable: false,
     data: {
-      kind: 'reminders',
-      title: 'Reminders',
+      kind: "reminders",
+      title: "Reminders",
     },
     zIndex: WORKFLOW_NODE_Z_INDEX,
   };
   const reminderSummaryNode: WorkflowReminderSummaryFlowNode = {
-    id: 'workflow-automation-reminders-summary',
-    type: 'workflowReminderSummary',
+    id: "workflow-automation-reminders-summary",
+    type: "workflowReminderSummary",
     position: {
       x: reminderSidePanelX,
       y: panelY,
@@ -82,14 +76,14 @@ function getAutomationFlowNodes(
     selectable: false,
     connectable: false,
     data: {
-      kind: 'reminders',
-      title: 'Summary',
+      kind: "reminders",
+      title: "Summary",
     },
     zIndex: WORKFLOW_NODE_Z_INDEX,
   };
   const followupSetupNode: WorkflowFollowupSetupFlowNode = {
-    id: 'workflow-automation-followups',
-    type: 'workflowFollowupSetup',
+    id: "workflow-automation-followups",
+    type: "workflowFollowupSetup",
     position: {
       x: setupPanelX,
       y: panelY,
@@ -98,14 +92,14 @@ function getAutomationFlowNodes(
     selectable: false,
     connectable: false,
     data: {
-      kind: 'followups',
-      title: 'Follow-up',
+      kind: "followups",
+      title: "Follow-up",
     },
     zIndex: WORKFLOW_NODE_Z_INDEX,
   };
   const followupSummaryNode: WorkflowFollowupSummaryFlowNode = {
-    id: 'workflow-automation-followups-summary',
-    type: 'workflowFollowupSummary',
+    id: "workflow-automation-followups-summary",
+    type: "workflowFollowupSummary",
     position: {
       x: followupSidePanelX,
       y: panelY,
@@ -114,14 +108,14 @@ function getAutomationFlowNodes(
     selectable: false,
     connectable: false,
     data: {
-      kind: 'followups',
-      title: 'Summary',
+      kind: "followups",
+      title: "Summary",
     },
     zIndex: WORKFLOW_NODE_Z_INDEX,
   };
   const followupGuidesNode: WorkflowFollowupGuidesFlowNode = {
-    id: 'workflow-automation-followups-guides',
-    type: 'workflowFollowupGuides',
+    id: "workflow-automation-followups-guides",
+    type: "workflowFollowupGuides",
     position: {
       x: followupSidePanelX,
       y: panelY + FOLLOWUP_GUIDES_TOP,
@@ -130,7 +124,7 @@ function getAutomationFlowNodes(
     selectable: false,
     connectable: false,
     data: {
-      kind: 'followups',
+      kind: "followups",
     },
     zIndex: WORKFLOW_NODE_Z_INDEX,
   };
@@ -148,21 +142,26 @@ function getAutomationFlowEdges(): WorkflowFlowEdge[] {
   return [];
 }
 
-function getPersistedNodeHandlePositions(orientation: WorkflowLayoutOrientation) {
-  return orientation === 'horizontal'
+function getPersistedNodeHandlePositions(
+  orientation: WorkflowLayoutOrientation,
+) {
+  return orientation === "horizontal"
     ? { sourcePosition: Position.Right, targetPosition: Position.Left }
     : { sourcePosition: Position.Bottom, targetPosition: Position.Top };
 }
 
 export function workflowGraphToFlow(
   graph: WorkflowGraph,
-  onAddNode: (nodeId: Id<'workflowNodes'>, kind: AddableWorkflowNodeKind) => void,
-  onRemoveNode: (nodeId: Id<'workflowNodes'>) => void,
-  selectedNodeId?: Id<'workflowNodes'>,
-  layoutOrientation: WorkflowLayoutOrientation = 'horizontal',
+  onAddNode: (
+    nodeId: Id<"workflowNodes">,
+    kind: AddableWorkflowNodeKind,
+  ) => void,
+  onRemoveNode: (nodeId: Id<"workflowNodes">) => void,
+  selectedNodeId?: Id<"workflowNodes">,
+  layoutOrientation: WorkflowLayoutOrientation = "horizontal",
   disabled = false,
-  nodeDensity: WorkflowNodeDensity = 'standard',
-  agentId?: Id<'agents'>,
+  nodeDensity: WorkflowNodeDensity = "standard",
+  agentId?: Id<"agents">,
 ): { nodes: WorkflowFlowNode[]; edges: WorkflowFlowEdge[] } {
   const edgeRoutes = getWorkflowEdgeRoutes(graph, layoutOrientation);
   const handlePositions = getPersistedNodeHandlePositions(layoutOrientation);
@@ -175,7 +174,7 @@ export function workflowGraphToFlow(
       ...getAutomationFlowNodes(graph),
       ...graph.nodes.map((node) => ({
         id: node._id,
-        type: 'workflow' as const,
+        type: "workflow" as const,
         position: {
           x: node.positionX,
           y: node.positionY,
@@ -185,18 +184,25 @@ export function workflowGraphToFlow(
           kind: node.kind,
           title: workflowNodeDisplayTitle(node.kind, node.title),
           description: node.description,
+          escalationMessageEnabled: node.escalationMessageEnabled,
+          escalationMessage: node.escalationMessage,
           allowedAppointmentServiceIds: node.allowedAppointmentServiceIds,
           agentId,
-          incomingCondition: node.kind === 'humanEscalation'
-            ? (() => {
-              const edge = incomingEdgesByTargetNodeId.get(node._id);
-              return edge === undefined
-                ? undefined
-                : { edgeId: edge._id, detail: edge.detail?.trim() || undefined };
-            })()
-            : undefined,
+          incomingCondition:
+            node.kind === "humanEscalation"
+              ? (() => {
+                  const edge = incomingEdgesByTargetNodeId.get(node._id);
+                  return edge === undefined
+                    ? undefined
+                    : {
+                        edgeId: edge._id,
+                        detail: edge.detail?.trim() || undefined,
+                      };
+                })()
+              : undefined,
           isReady: node.isReady === true,
-          readinessIssueCount: node.readinessIssueCount ?? (node.isReady === true ? 0 : 1),
+          readinessIssueCount:
+            node.readinessIssueCount ?? (node.isReady === true ? 0 : 1),
           density: nodeDensity,
           layoutOrientation,
           disabled,
@@ -206,9 +212,10 @@ export function workflowGraphToFlow(
         selected: node._id === selectedNodeId,
         sourcePosition: handlePositions.sourcePosition,
         targetPosition: handlePositions.targetPosition,
-        zIndex: node._id === selectedNodeId
-          ? WORKFLOW_SELECTED_NODE_Z_INDEX
-          : WORKFLOW_NODE_Z_INDEX,
+        zIndex:
+          node._id === selectedNodeId
+            ? WORKFLOW_SELECTED_NODE_Z_INDEX
+            : WORKFLOW_NODE_Z_INDEX,
       })),
     ],
     edges: [
@@ -218,14 +225,14 @@ export function workflowGraphToFlow(
           id: edge._id,
           source: edge.sourceNodeId,
           target: edge.targetNodeId,
-          type: 'workflow' as const,
+          type: "workflow" as const,
           animated: true,
           label: conditionLabel,
           markerEnd: {
             type: MarkerType.ArrowClosed,
           },
           zIndex: WORKFLOW_EDGE_Z_INDEX,
-          className: 'workflow-edge',
+          className: "workflow-edge",
           data: {
             routePoints: edgeRoutes.get(edge._id),
             conditionDetail: edge.detail?.trim() || undefined,

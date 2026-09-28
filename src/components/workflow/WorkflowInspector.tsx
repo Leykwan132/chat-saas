@@ -36,7 +36,7 @@ export function WorkflowInspector({
       {node ? (
         <DialogContent
           className={cn(
-            'flex max-h-[min(90vh,760px)] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[920px]',
+            'flex max-h-[min(90vh,760px)] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[820px]',
             contentClassName,
           )}
           overlayClassName={overlayClassName}

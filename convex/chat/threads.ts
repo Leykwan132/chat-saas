@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import type { MutationCtx } from "../_generated/server";
+import type { ActionCtx, MutationCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { components } from "../_generated/api";
 import { captureAIGeneration } from "../posthog";
@@ -28,14 +28,22 @@ import {
   INBOX_ORDER_SPACER_TEXT,
   type InboxOutboundMeta,
 } from "./inboxMessageMapping";
-import { applyInboundLeadRouting, isAnyoneOnSchedule } from "../leadRouting/assign";
+import {
+  applyInboundLeadRouting,
+  isAnyoneOnSchedule,
+} from "../leadRouting/assign";
 import { getOrCreateLeadAssignmentSettings } from "../leadRouting/helpers";
-import { DEFAULT_TEAM_TIME_ZONE, getUserByWorkosId, normalizeTimeZone } from "../teamHelpers";
+import {
+  DEFAULT_TEAM_TIME_ZONE,
+  getUserByWorkosId,
+  normalizeTimeZone,
+} from "../teamHelpers";
 import { logConversationEvent } from "../conversationLogs";
 import {
   buildWorkflowRuntimeBlock,
   type WorkflowRuntimeContextForPrompt,
 } from "./workflowPrompt";
+import { getEscalationMessageForWorkflowNode } from "../workflowRuntimeContext";
 import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildToolUsageBlock } from "./toolPrompt";
 import { buildIdentityPriorityBlock } from "./identityPriorityPrompt";
@@ -64,6 +72,36 @@ type UsageWithTokenAliases = {
   reasoningTokens?: number;
   cachedInputTokens?: number;
 };
+
+export async function sendEscalationMessageThenEscalate(
+  ctx: Pick<ActionCtx, "runAction" | "runMutation">,
+  args: {
+    conversationId: Id<"conversations">;
+    question: string;
+    context: string;
+    sourceAgentMessageId: string;
+    message?: string;
+  },
+) {
+  if (args.message !== undefined) {
+    const sendResult: { ok: boolean; error?: string } = await ctx.runAction(
+      internal.chat.inboxActions.internalSendEscalationMessage,
+      {
+        conversationId: args.conversationId,
+        content: args.message,
+      },
+    );
+    if (!sendResult.ok) {
+      throw new Error(sendResult.error ?? "Could not send escalation message");
+    }
+  }
+  await ctx.runMutation(internal.chat.inbox.internalEscalateConversation, {
+    conversationId: args.conversationId,
+    question: args.question,
+    context: args.context,
+    sourceAgentMessageId: args.sourceAgentMessageId,
+  });
+}
 
 export async function resolveAssignedAgentName(
   ctx: MutationCtx,
@@ -218,7 +256,11 @@ async function saveAssistantWithOwnOrder(
               username: args.outbound.authorName,
             },
           }
-        : { channel: { name: args.outbound.channelName ?? args.outbound.agentName } }),
+        : {
+            channel: {
+              name: args.outbound.channelName ?? args.outbound.agentName,
+            },
+          }),
     ...(args.inboxAttachments?.length
       ? { inbox: { attachments: args.inboxAttachments } }
       : {}),
@@ -256,13 +298,19 @@ export async function saveHumanReply(
   },
 ): Promise<string> {
   const agentName = await resolveAssignedAgentName(ctx, opts.assignedAgentId);
-  const replyContent = buildHumanReplyContent(content, opts.images ?? [], opts.files ?? []);
+  const replyContent = buildHumanReplyContent(
+    content,
+    opts.images ?? [],
+    opts.files ?? [],
+  );
 
   let authorName = opts.authorName;
   if (authorName === undefined && opts.authorUserId !== undefined) {
     const user = await getUserByWorkosId(ctx, opts.authorUserId);
     if (user) {
-      authorName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || user.email;
+      authorName =
+        [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
+        user.email;
     }
   }
 
@@ -277,7 +325,9 @@ export async function saveHumanReply(
         ? { authorUserId: opts.authorUserId }
         : {}),
       ...(authorName !== undefined ? { authorName } : {}),
-      ...(opts.channelName !== undefined ? { channelName: opts.channelName } : {}),
+      ...(opts.channelName !== undefined
+        ? { channelName: opts.channelName }
+        : {}),
     },
     inboxAttachments:
       (opts.files?.length ?? 0) > 0 || (opts.images?.length ?? 0) > 0
@@ -311,7 +361,9 @@ export async function saveHumanReplyTextAndImages(
     throw new Error("Text is required when saving text and images together");
   }
   if (images.length === 0) {
-    throw new Error("At least one image is required when saving text and images together");
+    throw new Error(
+      "At least one image is required when saving text and images together",
+    );
   }
   const sentAt = opts.sentAt ?? Date.now();
 
@@ -319,7 +371,9 @@ export async function saveHumanReplyTextAndImages(
   if (authorName === undefined && opts.authorUserId !== undefined) {
     const user = await getUserByWorkosId(ctx, opts.authorUserId);
     if (user) {
-      authorName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || user.email;
+      authorName =
+        [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
+        user.email;
     }
   }
 
@@ -334,7 +388,9 @@ export async function saveHumanReplyTextAndImages(
         ? { authorUserId: opts.authorUserId }
         : {}),
       ...(authorName !== undefined ? { authorName } : {}),
-      ...(opts.channelName !== undefined ? { channelName: opts.channelName } : {}),
+      ...(opts.channelName !== undefined
+        ? { channelName: opts.channelName }
+        : {}),
     },
     inboxAttachments: toInboxAttachments({ images }),
     messageMetadata:
@@ -399,13 +455,17 @@ function formatPreferredTimeLabels(minutes: number[]) {
     .join(", ");
 }
 
-function buildActiveBookingServicesBlock(services: ActiveBookingServiceForPrompt[]) {
+function buildActiveBookingServicesBlock(
+  services: ActiveBookingServiceForPrompt[],
+) {
   const serviceSections = services
     .map((service, index) => {
       const lines = [
         `### ${index + 1}. ${service.name}`,
         `- Service ID: ${service.serviceId}`,
-        service.description ? `- Description: ${service.description}` : undefined,
+        service.description
+          ? `- Description: ${service.description}`
+          : undefined,
         `- Duration: ${service.durationMinutes} minutes`,
         `- Time zone: ${service.timeZone}`,
         `- Required booking fields: ${service.fields.map((field) => `${field.label} (key: \`${field.key}\`)`).join(", ")}`,
@@ -521,9 +581,14 @@ export function buildAgent(
   sourceAgentMessageId?: string,
   playgroundAvailabilityOnly = false,
 ) {
-  const appointmentBookingEnabled = conversationId !== undefined && activeBookingServices.length > 0;
-  const defaultBookingTimeZone = normalizeTimeZone(activeBookingServices[0]?.timeZone);
-  const availabilityDateRule = buildAvailabilityDateRule(defaultBookingTimeZone);
+  const appointmentBookingEnabled =
+    conversationId !== undefined && activeBookingServices.length > 0;
+  const defaultBookingTimeZone = normalizeTimeZone(
+    activeBookingServices[0]?.timeZone,
+  );
+  const availabilityDateRule = buildAvailabilityDateRule(
+    defaultBookingTimeZone,
+  );
   const humanEscalationNodeIds = new Set(
     workflowRuntimeContext?.nodes
       .filter((node) => node.kind === "humanEscalation")
@@ -531,8 +596,8 @@ export function buildAgent(
   );
   const escalationConfigured = humanEscalationNodeIds.size > 0;
   const hasWorkflowMediaNodes =
-    workflowRuntimeContext?.nodes.some((node) =>
-      node.kind === "sendImage" || node.kind === "sendFile"
+    workflowRuntimeContext?.nodes.some(
+      (node) => node.kind === "sendImage" || node.kind === "sendFile",
     ) ?? false;
 
   const tools: ToolSet = {
@@ -543,10 +608,13 @@ export function buildAgent(
         query: z.string().describe("Describe the context you're looking for"),
       }),
       execute: async (ctx, { query }) => {
-        const result = await ctx.runAction(internal.rag.search.internalSearchKnowledge, {
-          agentId,
-          query,
-        });
+        const result = await ctx.runAction(
+          internal.rag.search.internalSearchKnowledge,
+          {
+            agentId,
+            query,
+          },
+        );
         return result;
       },
     }),
@@ -557,26 +625,57 @@ export function buildAgent(
       description:
         "Call this tool when the customer's latest message matches a Human escalation workflow node, when you lack confidence in answering, when you do not have enough details to answer, or when the user explicitly requests a human agent. Do NOT send any message to the user when escalating — call this tool only. This will pause automated responses and alert a human teammate to take over.",
       inputSchema: z.object({
-        question: z.string().describe("The exact user question or issue you are unsure of or lack detail to answer."),
-        context: z.string().describe("The reason or context explaining why you are unsure, what detail is missing, or why the conversation needs a human."),
-        workflowNodeId: z.string().optional().describe("The exact Human escalation workflow node ID that matched, if a node condition matched."),
+        question: z
+          .string()
+          .describe(
+            "The exact user question or issue you are unsure of or lack detail to answer.",
+          ),
+        context: z
+          .string()
+          .describe(
+            "The reason or context explaining why you are unsure, what detail is missing, or why the conversation needs a human.",
+          ),
+        workflowNodeId: z
+          .string()
+          .optional()
+          .describe(
+            "The exact Human escalation workflow node ID that matched, if a node condition matched.",
+          ),
       }),
       execute: async (ctx, { question, context, workflowNodeId }) => {
-        if (workflowNodeId !== undefined && !humanEscalationNodeIds.has(workflowNodeId as Id<"workflowNodes">)) {
-          throw new Error("Human escalation node is not available in the active workflow");
+        if (
+          workflowNodeId !== undefined &&
+          !humanEscalationNodeIds.has(workflowNodeId as Id<"workflowNodes">)
+        ) {
+          throw new Error(
+            "Human escalation node is not available in the active workflow",
+          );
         }
         if (conversationId) {
           if (!sourceAgentMessageId) {
-            throw new Error("Human escalation requires a source customer message");
+            throw new Error(
+              "Human escalation requires a source customer message",
+            );
           }
-          await ctx.runMutation(internal.chat.inbox.internalEscalateConversation, {
+          const escalationMessage =
+            workflowNodeId === undefined
+              ? undefined
+              : getEscalationMessageForWorkflowNode(
+                  workflowRuntimeContext,
+                  workflowNodeId,
+                );
+          await sendEscalationMessageThenEscalate(ctx, {
             conversationId,
             question,
             context,
             sourceAgentMessageId,
+            message: escalationMessage,
           });
         }
-        return { success: true, message: "Escalated to human. Automated responses are paused." };
+        return {
+          success: true,
+          message: "Escalated to human. Automated responses are paused.",
+        };
       },
     });
   }
@@ -586,8 +685,12 @@ export function buildAgent(
       description:
         "Give a small best-effort assurance reaction to the customer's latest message. This is optional feedback and does not confirm, create, update, or block a booking. Also use after you have fulfilled other requests or answered one concrete question. Do not use for greetings, jokes, unclear requests, or complaints that need escalation.",
       inputSchema: z.object({
-        target: z.literal("latest_user_message").describe("Always react to the latest customer message."),
-        emoji: z.enum(INBOX_REACTION_EMOJIS).describe("Use one assurance-oriented emoji."),
+        target: z
+          .literal("latest_user_message")
+          .describe("Always react to the latest customer message."),
+        emoji: z
+          .enum(INBOX_REACTION_EMOJIS)
+          .describe("Use one assurance-oriented emoji."),
       }),
       execute: async (ctx, { emoji }) => {
         return await ctx.runAction(
@@ -613,9 +716,17 @@ export function buildAgent(
       description:
         "Returns today's date and current time from the server. Call this whenever you need the current date or time for booking, scheduling, or interpreting relative dates like 'today', 'tomorrow', or 'next Tuesday'. Do not guess — use this tool.",
       inputSchema: z.object({
-        timeZone: z.string().optional().describe("IANA timezone for the date, e.g. Asia/Kuala_Lumpur. Defaults to the booking service time zone."),
+        timeZone: z
+          .string()
+          .optional()
+          .describe(
+            "IANA timezone for the date, e.g. Asia/Kuala_Lumpur. Defaults to the booking service time zone.",
+          ),
       }),
-      execute: async (_ctx, { timeZone }) => getCurrentDateInfo(timeZone ?? defaultBookingTimeZone ?? DEFAULT_TEAM_TIME_ZONE),
+      execute: async (_ctx, { timeZone }) =>
+        getCurrentDateInfo(
+          timeZone ?? defaultBookingTimeZone ?? DEFAULT_TEAM_TIME_ZONE,
+        ),
     });
 
     tools.getActiveBookingSession = createTool({
@@ -633,9 +744,12 @@ export function buildAgent(
       inputSchema: z.object({}),
       execute: async (ctx) => {
         await queryActiveBookingSession(ctx, conversationId);
-        return await ctx.runQuery(internal.appointmentBooking.currentBooking.getCurrentBooking, {
-          conversationId,
-        });
+        return await ctx.runQuery(
+          internal.appointmentBooking.currentBooking.getCurrentBooking,
+          {
+            conversationId,
+          },
+        );
       },
     });
 
@@ -645,9 +759,12 @@ export function buildAgent(
       inputSchema: z.object({}),
       execute: async (ctx) => {
         await queryActiveBookingSession(ctx, conversationId);
-        return await ctx.runMutation(internal.appointmentBooking.editing.beginBookingEdit, {
-          conversationId,
-        });
+        return await ctx.runMutation(
+          internal.appointmentBooking.editing.beginBookingEdit,
+          {
+            conversationId,
+          },
+        );
       },
     });
 
@@ -655,35 +772,70 @@ export function buildAgent(
       description:
         "Adds customer details to the active booking session after an available slot was requested or selected, or updates details during a booking edit. Returns missingFields and readyForBooking. When readyForBooking is true, call bookAppointment immediately without asking for another confirmation.",
       inputSchema: z.object({
-        serviceId: z.string().optional().describe("The selected Services service ID."),
-        collectedFields: collectedFieldsSchema.optional().describe("Booking details collected from the customer so far, keyed by field key."),
+        serviceId: z
+          .string()
+          .optional()
+          .describe("The selected Services service ID."),
+        collectedFields: collectedFieldsSchema
+          .optional()
+          .describe(
+            "Booking details collected from the customer so far, keyed by field key.",
+          ),
       }),
       execute: async (ctx, input) => {
         await queryActiveBookingSession(ctx, conversationId);
-        return await ctx.runMutation(internal.appointmentBooking.sessions.startBookingSession, {
-          conversationId,
-          ...(input.serviceId ? { serviceId: input.serviceId as Id<"appointmentServices"> } : {}),
-          ...(input.collectedFields ? { collectedFields: input.collectedFields } : {}),
-        });
+        return await ctx.runMutation(
+          internal.appointmentBooking.sessions.startBookingSession,
+          {
+            conversationId,
+            ...(input.serviceId
+              ? { serviceId: input.serviceId as Id<"appointmentServices"> }
+              : {}),
+            ...(input.collectedFields
+              ? { collectedFields: input.collectedFields }
+              : {}),
+          },
+        );
       },
     });
 
     tools.checkAvailability = createTool({
       description:
-        "Checks live appointment availability directly without requiring a booking session or customer details. Use a service ID from Available Appointment Services. Call immediately for availability questions. Dates must be today or later according to the current date in the system prompt; never send a past year or past date. A range search returns every available slot in that range. When more than five slots are available, contiguous slots are grouped into summarized time ranges; present those ranges with their exact date and timeRange instead of flooding the customer with every half-hour entry. Do not use generic morning or afternoon labels. Present slots or summarized ranges as numbered time ranges, for example \"1. 5:00 AM - 5:30 AM\" and \"2. 3:00 PM - 3:30 PM\". If an exact customer-requested or selected preferredTimeIso is available, this starts the booking session and returns missingFields.",
+        'Checks live appointment availability directly without requiring a booking session or customer details. Use a service ID from Available Appointment Services. Call immediately for availability questions. Dates must be today or later according to the current date in the system prompt; never send a past year or past date. A range search returns every available slot in that range. When more than five slots are available, contiguous slots are grouped into summarized time ranges; present those ranges with their exact date and timeRange instead of flooding the customer with every half-hour entry. Do not use generic morning or afternoon labels. Present slots or summarized ranges as numbered time ranges, for example "1. 5:00 AM - 5:30 AM" and "2. 3:00 PM - 3:30 PM". If an exact customer-requested or selected preferredTimeIso is available, this starts the booking session and returns missingFields.',
       inputSchema: z.object({
-        serviceId: z.string().optional().describe("The selected Services service ID."),
-        preferredTimeIso: z.string().optional().describe(`Customer's preferred appointment start time as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`),
-        rangeStartIso: z.string().optional().describe(`Start of the search range as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`),
-        rangeEndIso: z.string().optional().describe(`End of the search range as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`),
+        serviceId: z
+          .string()
+          .optional()
+          .describe("The selected Services service ID."),
+        preferredTimeIso: z
+          .string()
+          .optional()
+          .describe(
+            `Customer's preferred appointment start time as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`,
+          ),
+        rangeStartIso: z
+          .string()
+          .optional()
+          .describe(
+            `Start of the search range as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`,
+          ),
+        rangeEndIso: z
+          .string()
+          .optional()
+          .describe(
+            `End of the search range as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`,
+          ),
       }),
       execute: async (ctx, input) => {
-        console.log("agent_tool_check_availability_invoked", JSON.stringify({
-          agentId,
-          conversationId,
-          sourceAgentMessageId,
-          input,
-        }));
+        console.log(
+          "agent_tool_check_availability_invoked",
+          JSON.stringify({
+            agentId,
+            conversationId,
+            sourceAgentMessageId,
+            input,
+          }),
+        );
         const args: {
           conversationId: Id<"conversations">;
           serviceId?: Id<"appointmentServices">;
@@ -712,10 +864,15 @@ export function buildAgent(
         if (rangeEndAt !== null) {
           args.rangeEndAt = rangeEndAt;
         }
-        return await ctx.runMutation(internal.appointmentBooking.sessions.checkAvailability, {
-          ...args,
-          ...(sourceAgentMessageId ? { customerRequestAgentMessageId: sourceAgentMessageId } : {}),
-        });
+        return await ctx.runMutation(
+          internal.appointmentBooking.sessions.checkAvailability,
+          {
+            ...args,
+            ...(sourceAgentMessageId
+              ? { customerRequestAgentMessageId: sourceAgentMessageId }
+              : {}),
+          },
+        );
       },
     });
 
@@ -724,27 +881,44 @@ export function buildAgent(
         "Creates the official calendar appointment for the active booking session. Call immediately when startBookingSession returns readyForBooking true. The customer's requested or selected available slot is already confirmation; do not ask again.",
       inputSchema: z.object({
         serviceId: z.string().describe("The selected Services service ID."),
-        startTimeIso: z.string().describe("Confirmed appointment start time as an ISO timestamp from checkAvailability."),
-        customerConfirmed: z.literal(true).describe("Set only when the customer explicitly requested this exact slot or confirmed it after it was offered."),
+        startTimeIso: z
+          .string()
+          .describe(
+            "Confirmed appointment start time as an ISO timestamp from checkAvailability.",
+          ),
+        customerConfirmed: z
+          .literal(true)
+          .describe(
+            "Set only when the customer explicitly requested this exact slot or confirmed it after it was offered.",
+          ),
       }),
       execute: async (ctx, input) => {
         const startAt = Date.parse(input.startTimeIso);
         if (!Number.isFinite(startAt)) {
           return { success: false, message: "Invalid appointment start time." };
         }
-        const activeSession = await queryActiveBookingSession(ctx, conversationId);
+        const activeSession = await queryActiveBookingSession(
+          ctx,
+          conversationId,
+        );
         if (!activeSession.hasActiveSession) return activeSession;
-        const confirmation = await ctx.runMutation(internal.appointmentBooking.sessions.confirmBookingSlot, {
-          conversationId,
-          serviceId: input.serviceId as Id<"appointmentServices">,
-          startAt,
-        });
+        const confirmation = await ctx.runMutation(
+          internal.appointmentBooking.sessions.confirmBookingSlot,
+          {
+            conversationId,
+            serviceId: input.serviceId as Id<"appointmentServices">,
+            startAt,
+          },
+        );
         if (!confirmation.success) return confirmation;
-        return await ctx.runAction(internal.appointmentBooking.bookAppointment.bookAppointment, {
-          conversationId,
-          serviceId: input.serviceId as Id<"appointmentServices">,
-          startAt,
-        });
+        return await ctx.runAction(
+          internal.appointmentBooking.bookAppointment.bookAppointment,
+          {
+            conversationId,
+            serviceId: input.serviceId as Id<"appointmentServices">,
+            startAt,
+          },
+        );
       },
     });
 
@@ -753,20 +927,29 @@ export function buildAgent(
         "Updates the existing calendar booking after a booking edit. Use only a service ID from Available Appointment Services. Call after beginBookingEdit and once the customer confirms the final details and time. Use the service ID and confirmed startTimeIso from checkAvailability, or the current booking time if only other details changed.",
       inputSchema: z.object({
         serviceId: z.string().describe("The Services service ID."),
-        startTimeIso: z.string().describe("Confirmed appointment start time as an ISO timestamp."),
+        startTimeIso: z
+          .string()
+          .describe("Confirmed appointment start time as an ISO timestamp."),
       }),
       execute: async (ctx, input) => {
         const startAt = Date.parse(input.startTimeIso);
         if (!Number.isFinite(startAt)) {
           return { success: false, message: "Invalid appointment start time." };
         }
-        const activeSession = await queryActiveBookingSession(ctx, conversationId);
-        if (!activeSession.hasActiveSession) return activeSession;
-        return await ctx.runAction(internal.appointmentBooking.updateAppointment.updateBookingAppointment, {
+        const activeSession = await queryActiveBookingSession(
+          ctx,
           conversationId,
-          serviceId: input.serviceId as Id<"appointmentServices">,
-          startAt,
-        });
+        );
+        if (!activeSession.hasActiveSession) return activeSession;
+        return await ctx.runAction(
+          internal.appointmentBooking.updateAppointment
+            .updateBookingAppointment,
+          {
+            conversationId,
+            serviceId: input.serviceId as Id<"appointmentServices">,
+            startAt,
+          },
+        );
       },
     });
 
@@ -776,9 +959,12 @@ export function buildAgent(
       inputSchema: z.object({}),
       execute: async (ctx) => {
         await queryActiveBookingSession(ctx, conversationId);
-        return await ctx.runMutation(internal.appointmentBooking.confirmations.sendBookingConfirmation, {
-          conversationId,
-        });
+        return await ctx.runMutation(
+          internal.appointmentBooking.confirmations.sendBookingConfirmation,
+          {
+            conversationId,
+          },
+        );
       },
     });
 
@@ -788,9 +974,13 @@ export function buildAgent(
       inputSchema: z.object({}),
       execute: async (ctx) => {
         await queryActiveBookingSession(ctx, conversationId);
-        return await ctx.runMutation(internal.appointmentBooking.confirmations.sendBookingUpdateConfirmation, {
-          conversationId,
-        });
+        return await ctx.runMutation(
+          internal.appointmentBooking.confirmations
+            .sendBookingUpdateConfirmation,
+          {
+            conversationId,
+          },
+        );
       },
     });
 
@@ -800,9 +990,12 @@ export function buildAgent(
       inputSchema: z.object({}),
       execute: async (toolCtx) => {
         await queryActiveBookingSession(toolCtx, conversationId);
-        return await toolCtx.runAction(internal.appointmentBooking.cancellations.cancelBookingSession, {
-          conversationId,
-        });
+        return await toolCtx.runAction(
+          internal.appointmentBooking.cancellations.cancelBookingSession,
+          {
+            conversationId,
+          },
+        );
       },
     });
   }
@@ -880,38 +1073,53 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
 
 ${agent.systemPrompt}${(() => {
     let styleBlock = "";
-    if (agent.responseLength || agent.emojiUse || agent.formality || agent.humorLevel) {
+    if (
+      agent.responseLength ||
+      agent.emojiUse ||
+      agent.formality ||
+      agent.humorLevel
+    ) {
       styleBlock = "\n\n## Response Style Guidelines";
       if (agent.responseLength === "brief") {
         styleBlock += "\n- Keep your responses brief (1-2 sentences).";
       } else if (agent.responseLength === "standard") {
-        styleBlock += "\n- Keep your responses standard length (2-5 sentences).";
+        styleBlock +=
+          "\n- Keep your responses standard length (2-5 sentences).";
       } else if (agent.responseLength === "detailed") {
         styleBlock += "\n- Keep your responses detailed (5-7 sentences).";
       }
 
       if (agent.emojiUse === "never") {
-        styleBlock += "\n- Do not use any emojis in your responses under any circumstances.";
+        styleBlock +=
+          "\n- Do not use any emojis in your responses under any circumstances.";
       } else if (agent.emojiUse === "occasional") {
-        styleBlock += "\n- Use emojis occasionally (use them in some responses but don't overdo it).";
+        styleBlock +=
+          "\n- Use emojis occasionally (use them in some responses but don't overdo it).";
       } else if (agent.emojiUse === "frequent") {
-        styleBlock += "\n- Use emojis frequently (use emojis in most responses to sound friendly and expressive 🤠).";
+        styleBlock +=
+          "\n- Use emojis frequently (use emojis in most responses to sound friendly and expressive 🤠).";
       }
 
       if (agent.formality === "casual") {
-        styleBlock += "\n- Adopt a casual tone (e.g., 'No problem, gotcha covered!').";
+        styleBlock +=
+          "\n- Adopt a casual tone (e.g., 'No problem, gotcha covered!').";
       } else if (agent.formality === "conversational") {
-        styleBlock += "\n- Adopt a conversational tone (e.g., 'Sure thing. I'll fix it right away.').";
+        styleBlock +=
+          "\n- Adopt a conversational tone (e.g., 'Sure thing. I'll fix it right away.').";
       } else if (agent.formality === "professional") {
-        styleBlock += "\n- Adopt a professional tone (e.g., 'I understand. We're addressing your concern now.').";
+        styleBlock +=
+          "\n- Adopt a professional tone (e.g., 'I understand. We're addressing your concern now.').";
       }
 
       if (agent.humorLevel === "none") {
-        styleBlock += "\n- Do not use humor (e.g., 'Let me look into that.'). Keep it straightforward.";
+        styleBlock +=
+          "\n- Do not use humor (e.g., 'Let me look into that.'). Keep it straightforward.";
       } else if (agent.humorLevel === "light") {
-        styleBlock += "\n- Use light humor when appropriate (e.g., 'Seems like we're in a bit of a pickle.').";
+        styleBlock +=
+          "\n- Use light humor when appropriate (e.g., 'Seems like we're in a bit of a pickle.').";
       } else if (agent.humorLevel === "playful") {
-        styleBlock += "\n- Use playful, highly enthusiastic humor (e.g., 'Hold tight, I'm fetching your data faster than a squirrel!').";
+        styleBlock +=
+          "\n- Use playful, highly enthusiastic humor (e.g., 'Hold tight, I'm fetching your data faster than a squirrel!').";
       }
     }
     return styleBlock;
@@ -955,23 +1163,27 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
         reasoningTokens: u.reasoningTokens ?? undefined,
         cachedInputTokens: u.cachedInputTokens ?? undefined,
       };
-      const trackedUsage = await ctx.runMutation(internal.agentUsage.insertRawUsage, {
-        userId: userId ?? undefined,
-        threadId: threadId ?? undefined,
-        agentId,
-        agentName: agentName ?? undefined,
-        model,
-        provider,
-        usage: normalizedUsage,
-        providerMetadata,
-      });
+      const trackedUsage = await ctx.runMutation(
+        internal.agentUsage.insertRawUsage,
+        {
+          userId: userId ?? undefined,
+          threadId: threadId ?? undefined,
+          agentId,
+          agentName: agentName ?? undefined,
+          model,
+          provider,
+          usage: normalizedUsage,
+          providerMetadata,
+        },
+      );
 
       const fallbackDistinctId =
         userId !== undefined && !userId.startsWith("org:") ? userId : undefined;
       await captureAIGeneration({
-        distinctId: trackedUsage?.workosUserId ?? fallbackDistinctId ?? 'anonymous',
+        distinctId:
+          trackedUsage?.workosUserId ?? fallbackDistinctId ?? "anonymous",
         traceId: threadId ?? agentId,
-        spanName: 'inbox_ai_reply',
+        spanName: "inbox_ai_reply",
         model,
         provider,
         inputTokens: normalizedUsage.promptTokens,
@@ -999,9 +1211,7 @@ export function resolveSyncMessageDirection(
   },
 ): boolean {
   const channelLabel = normalizeLabel(channel.displayUsername);
-  const fromName = normalizeLabel(
-    message.from?.name ?? message.from?.username,
-  );
+  const fromName = normalizeLabel(message.from?.name ?? message.from?.username);
   const isOutgoingByName =
     channelLabel.length > 0 && fromName.length > 0 && fromName === channelLabel;
 
@@ -1045,11 +1255,13 @@ export const ingestChannelMessageArgs = {
   contentType: v.optional(contentTypeValidator),
   messageKind: v.optional(messageKindValidator),
   broadcastPresentation: v.optional(broadcastPresentationValidator),
-  workflowAutomationSource: v.optional(v.union(
-    v.literal("workflowReminder"),
-    v.literal("workflowFollowUp"),
-    v.literal("commentAutomation"),
-  )),
+  workflowAutomationSource: v.optional(
+    v.union(
+      v.literal("workflowReminder"),
+      v.literal("workflowFollowUp"),
+      v.literal("commentAutomation"),
+    ),
+  ),
   timestampMs: v.number(),
   isHistorical: v.optional(v.boolean()),
   outboundStatus: v.optional(
@@ -1070,16 +1282,16 @@ export const ingestChannelMessageArgs = {
       v.object({
         url: v.string(),
         mimeType: v.string(),
-      })
-    )
+      }),
+    ),
   ),
   files: v.optional(
     v.array(
       v.object({
         url: v.string(),
         mimeType: v.string(),
-      })
-    )
+      }),
+    ),
   ),
 };
 
@@ -1191,29 +1403,24 @@ export async function ingestChannelMessage(
           ? "Audio"
           : "";
 
-  const {
-    conversationId,
-    threadId,
-    isNew,
-    assignedAgentId,
-    assignToAiAgent,
-  } = await upsertInboxConversation(ctx, {
-    orgId: channel.orgId,
-    channelId: channel._id,
-    service,
-    orgAddress,
-    contactAddress: args.contactAddress,
-    contactName: args.contactName,
-    whatsappUserId: args.whatsappUserId,
-    customerId,
-    lastMessageAt: args.timestampMs,
-    preview,
-    isIncoming: args.direction === "incoming",
-    assignedAgentId: args.assignedAgentId,
-    pauseAiReplies: args.pauseAiReplies,
-    metaConversationId: args.metaConversationId,
-    isHistorical: args.isHistorical,
-  });
+  const { conversationId, threadId, isNew, assignedAgentId, assignToAiAgent } =
+    await upsertInboxConversation(ctx, {
+      orgId: channel.orgId,
+      channelId: channel._id,
+      service,
+      orgAddress,
+      contactAddress: args.contactAddress,
+      contactName: args.contactName,
+      whatsappUserId: args.whatsappUserId,
+      customerId,
+      lastMessageAt: args.timestampMs,
+      preview,
+      isIncoming: args.direction === "incoming",
+      assignedAgentId: args.assignedAgentId,
+      pauseAiReplies: args.pauseAiReplies,
+      metaConversationId: args.metaConversationId,
+      isHistorical: args.isHistorical,
+    });
 
   let agentMessageId: string | undefined;
   const hasThreadMessage =
@@ -1236,11 +1443,17 @@ export async function ingestChannelMessage(
         assignedAgentId,
         authorUserId: args.authorUserId,
         sentAt: args.timestampMs,
-        images: images.map(img => ({ url: img.url, mimeType: img.mimeType })),
-        files: files.map(file => ({ url: file.url, mimeType: file.mimeType })),
+        images: images.map((img) => ({ url: img.url, mimeType: img.mimeType })),
+        files: files.map((file) => ({
+          url: file.url,
+          mimeType: file.mimeType,
+        })),
         channelName: args.humanAgentName,
         messageMetadata: {
-          ...broadcastAgentMetadata(args.messageKind, args.broadcastPresentation),
+          ...broadcastAgentMetadata(
+            args.messageKind,
+            args.broadcastPresentation,
+          ),
           ...(args.workflowAutomationSource
             ? { workflowAutomationSource: args.workflowAutomationSource }
             : {}),
@@ -1272,30 +1485,60 @@ export async function ingestChannelMessage(
   const messageIds: Id<"messages">[] = [];
   if (images.length > 0) {
     for (const img of images) {
-      messageIds.push(await ctx.db.insert("messages", {
-        orgId: channel.orgId,
-        conversationId,
-        channelId: channel._id,
-        service,
-        externalId: args.externalId,
-        orgAddress,
-        contactAddress: args.contactAddress,
-        direction: args.direction,
-        authorUserId: args.authorUserId,
-        contentType: "image",
-        content: img.url,
-        mediaUrl: img.url,
-        agentMessageId,
-        ...broadcastFields,
-        ...outboundStatusFields,
-        createdAt: now,
-      }));
+      messageIds.push(
+        await ctx.db.insert("messages", {
+          orgId: channel.orgId,
+          conversationId,
+          channelId: channel._id,
+          service,
+          externalId: args.externalId,
+          orgAddress,
+          contactAddress: args.contactAddress,
+          direction: args.direction,
+          authorUserId: args.authorUserId,
+          contentType: "image",
+          content: img.url,
+          mediaUrl: img.url,
+          agentMessageId,
+          ...broadcastFields,
+          ...outboundStatusFields,
+          createdAt: now,
+        }),
+      );
     }
   }
 
   if (files.length > 0) {
     for (const file of files) {
-      messageIds.push(await ctx.db.insert("messages", {
+      messageIds.push(
+        await ctx.db.insert("messages", {
+          orgId: channel.orgId,
+          conversationId,
+          channelId: channel._id,
+          service,
+          externalId: args.externalId,
+          orgAddress,
+          contactAddress: args.contactAddress,
+          direction: args.direction,
+          authorUserId: args.authorUserId,
+          contentType: "file",
+          content: file.url,
+          mediaUrl: file.url,
+          agentMessageId,
+          ...broadcastFields,
+          ...outboundStatusFields,
+          createdAt: now,
+        }),
+      );
+    }
+  }
+
+  if (
+    trimmedContent.length > 0 ||
+    (images.length === 0 && files.length === 0)
+  ) {
+    messageIds.push(
+      await ctx.db.insert("messages", {
         orgId: channel.orgId,
         conversationId,
         channelId: channel._id,
@@ -1305,35 +1548,14 @@ export async function ingestChannelMessage(
         contactAddress: args.contactAddress,
         direction: args.direction,
         authorUserId: args.authorUserId,
-        contentType: "file",
-        content: file.url,
-        mediaUrl: file.url,
+        contentType: args.contentType ?? "text",
+        content: args.content,
         agentMessageId,
         ...broadcastFields,
         ...outboundStatusFields,
         createdAt: now,
-      }));
-    }
-  }
-
-  if (trimmedContent.length > 0 || (images.length === 0 && files.length === 0)) {
-    messageIds.push(await ctx.db.insert("messages", {
-      orgId: channel.orgId,
-      conversationId,
-      channelId: channel._id,
-      service,
-      externalId: args.externalId,
-      orgAddress,
-      contactAddress: args.contactAddress,
-      direction: args.direction,
-      authorUserId: args.authorUserId,
-      contentType: args.contentType ?? "text",
-      content: args.content,
-      agentMessageId,
-      ...broadcastFields,
-      ...outboundStatusFields,
-      createdAt: now,
-    }));
+      }),
+    );
   }
 
   await ctx.runMutation(internal.customers.internalSetLastConversation, {
@@ -1350,7 +1572,10 @@ export async function ingestChannelMessage(
       args.direction === "incoming" &&
       assignToAiAgent &&
       assignedAgentId !== undefined &&
-      Boolean(agentMessageId && (trimmedContent.length > 0 || images.length > 0 || files.length > 0)),
+      Boolean(
+        agentMessageId &&
+        (trimmedContent.length > 0 || images.length > 0 || files.length > 0),
+      ),
     isNew,
     agentMessageId,
   };
@@ -1410,7 +1635,8 @@ async function upsertInboxConversation(
   const now = Date.now();
   const channel = await ctx.db.get(args.channelId);
   const customer = await ctx.db.get(args.customerId);
-  const resolvedContactName = args.contactName?.trim() || customer?.name?.trim();
+  const resolvedContactName =
+    args.contactName?.trim() || customer?.name?.trim();
 
   if (existing === null) {
     const threadId = await createThreadForConversation(ctx, {
@@ -1440,7 +1666,9 @@ async function upsertInboxConversation(
       // Final fallback for personal workspaces: resolve the owner's agent.
       const userAgent = await ctx.db
         .query("agents")
-        .withIndex("by_userId", (q) => q.eq("userId", channel.connectedByUserId!))
+        .withIndex("by_userId", (q) =>
+          q.eq("userId", channel.connectedByUserId!),
+        )
         .order("desc")
         .first();
       if (userAgent !== null) {
@@ -1450,9 +1678,17 @@ async function upsertInboxConversation(
 
     let assignToAiAgent = !args.pauseAiReplies;
     if (routingAgentId !== undefined) {
-      const settings = await getOrCreateLeadAssignmentSettings(ctx, routingAgentId);
-      assignToAiAgent = args.pauseAiReplies ? false : settings.aiEnabledOnInbound;
-      if (settings.aiWhenOutsideSchedule && !(await isAnyoneOnSchedule(ctx, routingAgentId, now))) {
+      const settings = await getOrCreateLeadAssignmentSettings(
+        ctx,
+        routingAgentId,
+      );
+      assignToAiAgent = args.pauseAiReplies
+        ? false
+        : settings.aiEnabledOnInbound;
+      if (
+        settings.aiWhenOutsideSchedule &&
+        !(await isAnyoneOnSchedule(ctx, routingAgentId, now))
+      ) {
         assignToAiAgent = !args.pauseAiReplies;
       }
     }
@@ -1472,10 +1708,11 @@ async function upsertInboxConversation(
       assignedAgentId: routingAgentId,
       threadId,
       lastMessageAt: args.lastMessageAt,
-      lastMessagePreview: args.preview && args.preview.trim() !== "" ? args.preview : undefined,
+      lastMessagePreview:
+        args.preview && args.preview.trim() !== "" ? args.preview : undefined,
       lastMessageSentByAi: false,
       lastCustomerMessageAt: args.isIncoming ? args.lastMessageAt : undefined,
-      unreadCount: args.isHistorical ? 0 : (args.isIncoming ? 1 : 0),
+      unreadCount: args.isHistorical ? 0 : args.isIncoming ? 1 : 0,
       metaConversationId: args.metaConversationId,
       createdAt: now,
       updatedAt: now,
@@ -1523,7 +1760,11 @@ async function upsertInboxConversation(
 
   const patch: Record<string, unknown> = {
     lastMessageAt: args.lastMessageAt,
-    unreadCount: args.isHistorical ? 0 : (args.isIncoming ? existing.unreadCount + 1 : existing.unreadCount),
+    unreadCount: args.isHistorical
+      ? 0
+      : args.isIncoming
+        ? existing.unreadCount + 1
+        : existing.unreadCount,
     updatedAt: now,
   };
   if (args.preview && args.preview.trim() !== "") {
@@ -1564,7 +1805,8 @@ export function selectReusableInboxConversation(
   latest: Doc<"conversations"> | null,
   service: Doc<"conversations">["service"],
 ) {
-  return latest?.status === "closed" && (service === "avatar" || service === "web")
+  return latest?.status === "closed" &&
+    (service === "avatar" || service === "web")
     ? null
     : latest;
 }

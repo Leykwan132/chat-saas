@@ -28,6 +28,8 @@ export type WorkflowRuntimeContextForPrompt = {
     title: string;
     goal?: string;
     textToSend?: string;
+    escalationMessageEnabled?: boolean;
+    escalationMessage?: string;
     notes?: string;
     incomingConditions: Array<{
       sourceNodeId: Id<"workflowNodes">;
@@ -45,10 +47,7 @@ export type WorkflowRuntimeContextForPrompt = {
   }>;
 } | null;
 
-function formatCondition(condition: {
-  name?: string;
-  detail?: string;
-}) {
+function formatCondition(condition: { name?: string; detail?: string }) {
   const name = condition.name?.trim();
   const detail = condition.detail?.trim();
   if (name && detail) return `Name: ${name}; Detail: ${detail}`;
@@ -65,7 +64,9 @@ function formatServices(services: RuntimeService[]) {
       const fields = service.fields
         .map((field) => `${field.label} (key: ${field.key})`)
         .join(", ");
-      const description = service.description ? ` - ${service.description}` : "";
+      const description = service.description
+        ? ` - ${service.description}`
+        : "";
       return `  - ${service.name} (${service.durationMinutes} min, ID: ${service.serviceId})${description}. Required fields: ${fields}`;
     }),
   ].join("\n");
@@ -112,41 +113,61 @@ Services and knowledge-base context have different jobs:
 - Do not invent, rename, bundle, split, or imply availability for Services that are not listed under the active Book appointment node.`;
 }
 
-export function buildWorkflowRuntimeBlock(context: WorkflowRuntimeContextForPrompt) {
+export function buildWorkflowRuntimeBlock(
+  context: WorkflowRuntimeContextForPrompt,
+) {
   const backendHandlingBlock = buildWorkflowBackendHandlingBlock();
 
-  if (context === null || context.nodes.length === 0) return backendHandlingBlock;
+  if (context === null || context.nodes.length === 0)
+    return backendHandlingBlock;
 
   const nodeSections = context.nodes
     .map((node, index) => {
-      const incoming = node.incomingConditions.length === 0
-        ? "- Incoming conditions: message enters here"
-        : [
-            "- Incoming conditions:",
-            ...node.incomingConditions.map((condition) => `  - ${formatCondition(condition)}`),
-          ].join("\n");
+      const incoming =
+        node.incomingConditions.length === 0
+          ? "- Incoming conditions: message enters here"
+          : [
+              "- Incoming conditions:",
+              ...node.incomingConditions.map(
+                (condition) => `  - ${formatCondition(condition)}`,
+              ),
+            ].join("\n");
       const isMediaNode = node.kind === "sendImage" || node.kind === "sendFile";
       const isBookAppointmentNode = node.kind === "bookAppointment";
-      const goal = node.goal && !isMediaNode && !isBookAppointmentNode ? `- Goal: ${node.goal}` : undefined;
-      const textToSend = node.kind === "sendText" && node.textToSend
-        ? `- Exact text to send: ${node.textToSend}`
-        : undefined;
-      const notes = node.notes ? `- Notes: ${node.notes}` : undefined;
-      const services = node.kind === "bookAppointment" ? formatServices(node.allowedServices) : undefined;
-      const mediaAssets =
-        isMediaNode
-          ? formatMediaAssets(node.kind, node.mediaAssets)
+      const goal =
+        node.goal && !isMediaNode && !isBookAppointmentNode
+          ? `- Goal: ${node.goal}`
           : undefined;
+      const textToSend =
+        node.kind === "sendText" && node.textToSend
+          ? `- Exact text to send: ${node.textToSend}`
+          : undefined;
+      const escalationMessage =
+        node.kind === "humanEscalation" &&
+        node.escalationMessageEnabled === true
+          ? "- Send the configured customer message before escalating."
+          : undefined;
+      const notes = node.notes ? `- Notes: ${node.notes}` : undefined;
+      const services =
+        node.kind === "bookAppointment"
+          ? formatServices(node.allowedServices)
+          : undefined;
+      const mediaAssets = isMediaNode
+        ? formatMediaAssets(node.kind, node.mediaAssets)
+        : undefined;
       return [
         `### ${index + 1}. ${node.title} (${node.kind})`,
         `- Node ID: ${node.nodeId}`,
         incoming,
         goal,
         textToSend,
+        escalationMessage,
         notes,
         services,
         mediaAssets,
-      ].filter((line): line is string => line !== undefined).join("\n");
+      ]
+        .filter((line): line is string => line !== undefined)
+        .join("\n");
     })
     .join("\n\n");
 
@@ -171,7 +192,7 @@ This is important: for Send Photo/Video and Send Files nodes, treat the media no
 For sendFile nodes, customer words such as brochure, PDF, document, file, catalog, menu, or attachment mean the matching file node should be used. Do not say "Here's the brochure", "I've attached the file", or similar unless the workflow node has an uploaded file listed under it.
 Do not use tool calls for Send message, Q&A, booking, Send Photo/Video, Send Files, or custom action nodes.
 
-For Human escalation nodes, call \`escalateToHuman\` when the incoming condition matches. Adding a Human escalation node enables human escalation mode for this workflow, so if you cannot answer safely or confidently while that node exists, escalate instead of guessing.
+For Human escalation nodes, call \`escalateToHuman\` when the incoming condition matches. Always include the matching Human escalation Node ID in the tool input, so the backend can deliver that node's configured message before pausing AI replies. Adding a Human escalation node enables human escalation mode for this workflow, so if you cannot answer safely or confidently while that node exists, escalate instead of guessing.
 
 For Book appointment nodes, use only the Services listed on that node. Start a new booking only when the workflow conditions indicate Book appointment or when the customer explicitly asks to book. Reschedule and cancellation requests for an existing appointment may use the booking tools even if the current turn is about changing or cancelling rather than creating a new booking.
 ${buildServiceBoundaryRules()}
