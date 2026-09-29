@@ -5,7 +5,6 @@ describe('Comment-to-Inbox navigation', () => {
   it('places Comment-to-Inbox under Outreach', () => {
     const outreach = getNavItems('agent-id', {
       showSavedReplies: false,
-      enableAvatarFeature: true,
       enableCommentToInbox: true,
     }).find((section) => section.label === 'Outreach')?.items;
 

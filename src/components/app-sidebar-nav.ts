@@ -27,7 +27,6 @@ import {
   PiRobot,
   PiRobotFill,
   PiShoppingCart,
-  PiUserFocus,
   PiUsers,
 } from 'react-icons/pi';
 import { Permission, type PermissionSlug } from '../../shared/permissions';
@@ -45,7 +44,6 @@ export type NavItem = {
 
 export type NavFeatureOptions = {
   showSavedReplies: boolean;
-  enableAvatarFeature: boolean;
   enableCommentToInbox?: boolean;
 };
 
@@ -58,7 +56,7 @@ export type NavSection = {
 
 export function getNavItems(
   agentId: string,
-  { showSavedReplies, enableAvatarFeature, enableCommentToInbox }: NavFeatureOptions,
+  { showSavedReplies, enableCommentToInbox }: NavFeatureOptions,
 ): NavSection[] {
   return [
     {
@@ -89,9 +87,6 @@ export function getNavItems(
         { to: `/dashboard/${agentId}/knowledge-base`, icon: PiBookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
         { to: `/dashboard/${agentId}/workflow`, icon: PiFlowArrow, label: 'Workflow', requiredPermission: Permission.AGENTS_MANAGE },
         { to: `/dashboard/${agentId}/channels`, icon: PiPlugs, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
-        ...(enableAvatarFeature
-          ? [{ to: `/dashboard/${agentId}/avatar`, icon: PiUserFocus, label: 'Avatar', badgeLabel: 'Beta', requiredPermission: Permission.CHANNELS_READ }]
-          : []),
       ],
     },
     {

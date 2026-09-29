@@ -2,8 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { useParams, useSearchParams } from 'react-router';
 import { usePostHog } from '@posthog/react';
+import { useAuth } from '@/partnerAuth/AppAuthProvider';
 import {
+  isAvatarUserAllowed,
   isProductFeatureEnabled,
+  useEnableAvatarFeature,
   useEnableInstagram,
   useEnableMessenger,
 } from '@/lib/posthogFeatureFlags';
@@ -44,6 +47,7 @@ import {
 import { WhatsAppSyncSummary } from '@/components/channels/WhatsAppSyncSummary';
 import { WhatsAppConnectingAction } from '@/components/channels/WhatsAppConnectionFeedback';
 import { WebWidgetDetailsDialog } from '@/components/channels/WebWidgetDetailsDialog';
+import { AvatarChannelCard } from '@/components/channels/AvatarChannelCard';
 import { WebsiteChannelCard } from '@/components/channels/WebsiteChannelCard';
 import { WHATSAPP_OAUTH_REDIRECT_CODE_KEY } from '@/lib/whatsappEmbeddedSignup';
 import {
@@ -192,8 +196,12 @@ function useMetaChannelCallbackParams() {
 
 export default function ChannelsPage() {
   const { agentId } = useParams();
+  const { user } = useAuth();
   const instagramEnabled = isProductFeatureEnabled(useEnableInstagram());
   const messengerEnabled = isProductFeatureEnabled(useEnableMessenger());
+  const avatarEnabled =
+    isProductFeatureEnabled(useEnableAvatarFeature()) &&
+    isAvatarUserAllowed(user?.email);
   const channels = useQuery(
     api.channels.listForCurrentOrg,
     agentId ? { agentId: agentId as Id<'agents'> } : {},
@@ -313,6 +321,7 @@ export default function ChannelsPage() {
             agentId={agentId}
             onShowDetails={() => setWebDetailsOpen(true)}
           />
+          {avatarEnabled ? <AvatarChannelCard agentId={agentId} /> : null}
 
           {showPendingWhatsApp && openWhatsAppAttempt ? (
             <PendingWhatsAppConnectionCard

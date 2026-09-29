@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { ChevronDown, ExternalLink, Pencil, ScanFace } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ExternalLink, Pencil, ScanFace } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
@@ -37,15 +37,19 @@ export default function AvatarPage() {
     if (configuration === null && canManage) void ensureConfiguration({ agentId: typedAgentId });
   }, [canManage, configuration, ensureConfiguration, typedAgentId]);
 
-  if (permissionsLoading || configuration === undefined) return <LoadingState />;
-  if (!canRead) return <MessageState text="You do not have permission to view Avatar settings." />;
-  if (configuration === null) return canManage ? <LoadingState /> : <MessageState text="Avatar has not been configured for this workspace." />;
+  if (permissionsLoading || configuration === undefined) return <LoadingState agentId={agentId} />;
+  if (!canRead) return <MessageState agentId={agentId} text="You do not have permission to view Avatar settings." />;
+  if (configuration === null) return canManage ? <LoadingState agentId={agentId} /> : <MessageState agentId={agentId} text="Avatar has not been configured for this workspace." />;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-2"><h1 className="font-title text-3xl font-normal">Avatar</h1><Badge variant="secondary" className="bg-muted text-muted-foreground">Beta</Badge></div>
+          <div className="flex items-center gap-2">
+            <BackToChannels agentId={agentId} />
+            <h1 className="font-title text-3xl font-normal">Avatar</h1>
+            <Badge variant="secondary" className="bg-muted text-muted-foreground">Beta</Badge>
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">Give visitors a face and voice for live conversations with KiloBot.</p>
         </div>
         {configuration.configured ? (
@@ -163,10 +167,31 @@ export default function AvatarPage() {
   );
 }
 
-function LoadingState() {
-  return <div className="flex min-h-[50vh] items-center justify-center"><Spinner className="size-6" /></div>;
+function BackToChannels({ agentId }: { agentId?: string }) {
+  if (!agentId) return null;
+  return (
+    <Button variant="ghost" size="icon" className="shrink-0" aria-label="Back to channels" asChild>
+      <Link to={`/dashboard/${agentId}/channels`}>
+        <ArrowLeft className="size-4" />
+      </Link>
+    </Button>
+  );
 }
 
-function MessageState({ text }: { text: string }) {
-  return <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">{text}</div>;
+function LoadingState({ agentId }: { agentId?: string }) {
+  return (
+    <div className="flex min-h-[50vh] flex-col gap-6 p-6">
+      <BackToChannels agentId={agentId} />
+      <div className="flex flex-1 items-center justify-center"><Spinner className="size-6" /></div>
+    </div>
+  );
+}
+
+function MessageState({ agentId, text }: { agentId?: string; text: string }) {
+  return (
+    <div className="flex min-h-[50vh] flex-col gap-6 p-6">
+      <BackToChannels agentId={agentId} />
+      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">{text}</div>
+    </div>
+  );
 }

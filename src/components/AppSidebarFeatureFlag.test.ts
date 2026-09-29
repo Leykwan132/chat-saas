@@ -11,35 +11,26 @@ describe('sidebar feature flags', () => {
   test('includes Quick Replies only when enabled', () => {
     const enabled = getNavItems('agent-id', {
       showSavedReplies: true,
-      enableAvatarFeature: false,
     });
     const disabled = getNavItems('agent-id', {
       showSavedReplies: false,
-      enableAvatarFeature: false,
     });
 
     expect(enabled.find((section) => section.label === 'Conversations')?.items.map((item) => item.label)).toContain('Quick Replies');
     expect(disabled.find((section) => section.label === 'Conversations')?.items.map((item) => item.label)).not.toContain('Quick Replies');
   });
 
-  test('includes Avatar only when enabled', () => {
-    const enabled = getNavItems('agent-id', {
+  test('keeps Avatar out of the Agent section', () => {
+    const labels = getNavItems('agent-id', {
       showSavedReplies: false,
-      enableAvatarFeature: true,
-    });
-    const disabled = getNavItems('agent-id', {
-      showSavedReplies: false,
-      enableAvatarFeature: false,
-    });
+    }).find((section) => section.label === 'Agent')?.items.map((item) => item.label);
 
-    expect(enabled.find((section) => section.label === 'Agent')?.items.map((item) => item.label)).toContain('Avatar');
-    expect(disabled.find((section) => section.label === 'Agent')?.items.map((item) => item.label)).not.toContain('Avatar');
+    expect(labels).not.toContain('Avatar');
   });
 
   test('places Knowledge Base directly below Configuration', () => {
     const labels = getNavItems('agent-id', {
       showSavedReplies: false,
-      enableAvatarFeature: false,
     }).find((section) => section.label === 'Agent')?.items.map((item) => item.label);
 
     expect(labels).toEqual([
@@ -53,7 +44,6 @@ describe('sidebar feature flags', () => {
   test('uses the approved Inbox and Services navigation icons', () => {
     const navigation = getNavItems('agent-id', {
       showSavedReplies: false,
-      enableAvatarFeature: false,
     });
 
     expect(
@@ -67,7 +57,6 @@ describe('sidebar feature flags', () => {
   test('uses distinct icons for Agent Configuration and Outreach Broadcast', () => {
     const navigation = getNavItems('agent-id', {
       showSavedReplies: false,
-      enableAvatarFeature: false,
     });
 
     expect(
