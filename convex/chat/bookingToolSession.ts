@@ -4,6 +4,8 @@ import type { Id } from "../_generated/dataModel";
 type ActiveBookingSessionQueryResult = {
   success: boolean;
   hasActiveSession: boolean;
+  bookingKind?: "single" | "batch";
+  batchId?: Id<"appointmentBookingBatches">;
   sessionId?: Id<"appointmentBookingSessions">;
   status?: string;
   message?: string;

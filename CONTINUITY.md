@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-29 [USER] Goal: batch booking lets an agent check up to ten exact appointment times from one customer message and create every requested appointment only when all are available. Design and implementation plan written; native test-first implementation pending final plan review. Unshipped.
+- 2026-09-29 [CODE] Batch booking accepts 2–10 ordered exact times from one customer message, creates an active batch only when all are available, collects shared customer details once, and creates every appointment through an all-or-compensate local/Google flow. One combined confirmation contains every booking. Existing single booking remains source-compatible. Unshipped.
 - 2026-09-29 [USER] Goal: show Avatar as its own card on Channels, opening the existing Avatar setup. Same Beta flag and account gate. Sidebar Avatar item is removed. Avatar page has an arrow back to the channel cards. Pushed to PR #189.
 - 2026-09-28 [USER] Goal: after Instructions change, replies must follow the new system prompt. Customer messages stay in the model context; assistant and tool messages written before `instructionsUpdatedAt` are omitted. Inbox history stays visible. Unshipped on `fix-context-rot`.
 - 2026-09-28 [USER] Goal: fix `whatsappWebhook:ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi` failing with "Too many reads (limit 4096)" on long conversations. Branch `fix/inbox-search-read-limit`. Unshipped.
@@ -133,6 +133,7 @@
 
 # Done (recent)
 
+- 2026-09-29 [CODE] Multi-appointment booking is implemented test-first: durable batch state, all-slot availability, exact-list confirmation, atomic child creation, chronological round robin, Google compensation, agent tools, and prompt routing. Unshipped.
 - 2026-09-29 [CODE] Channels shows an Avatar card beside Website for the Beta flag and allowed account. Setup opens the existing Avatar page, which has an arrow back to the channel cards. The sidebar no longer lists Avatar. Unshipped.
 - 2026-09-28 [CODE] Saving a changed system prompt stamps `instructionsUpdatedAt`. Later replies keep customer messages and drop earlier assistant and tool messages from the model context. Inbox transcript is unchanged. Unshipped.
 - 2026-09-22 [CODE] Signed-in Dashboard header CTA now matches the rounded public action. Unshipped.
@@ -167,6 +168,7 @@
 
 # Receipts
 
+- 2026-09-29 [TOOL] Convex code generation and TypeScript completed. Focused multi-booking verification passed: 6 files and 27 tests; single Google booking regressions also passed (7 tests across batch orchestration excluded). Worktree commits: `fbdf9f9`, `f2f679e`, `a51d8f9`, `0615dea`; final tool commit pending.
 - 2026-09-29 [TOOL] Sidebar suites passed after removing Avatar (11 tests). Avatar page test passed (4). Follow-up pushed to https://github.com/Leykwan132/chat-saas/pull/189.
 - 2026-09-28 [TOOL] PR #188 opened from `fix-context-rot`: https://github.com/Leykwan132/chat-saas/pull/188. `convex/chat/instructionContext.test.ts` passed (2 tests).
 - 2026-09-28 [TOOL] PR #187 opened from `fix/inbox-search-read-limit` for the WhatsApp ingest "Too many reads" fix; focused inbox search suites passed (7 tests), and the new no-rescan test fails on the old code.

@@ -51,6 +51,18 @@ test("booking flow chains a fully specified requested slot without progress chat
   expect(block).toContain("Do not ask for another confirmation");
 });
 
+test("booking flow uses the atomic batch tools for multiple exact requested times", () => {
+  const block = buildBookingFlowBlock();
+
+  expect(block).toContain("two or more exact appointment times");
+  expect(block).toContain("`preferredTimesIso`");
+  expect(block).toContain("report every unavailable time together");
+  expect(block).toContain("`bookAppointments`");
+  expect(block).toContain("`sendBatchBookingConfirmation`");
+  expect(block).toContain("`bookAppointment`");
+  expect(block).toContain("`sendBookingConfirmation`");
+});
+
 test("booking flow embeds the server current date for relative requests", () => {
   const block = buildBookingFlowBlock(
     "Asia/Kuala_Lumpur",

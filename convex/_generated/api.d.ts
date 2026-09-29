@@ -135,6 +135,7 @@ import type * as chat_aiReplyMedia from "../chat/aiReplyMedia.js";
 import type * as chat_aiReplyMessages from "../chat/aiReplyMessages.js";
 import type * as chat_aiReplyOutput from "../chat/aiReplyOutput.js";
 import type * as chat_applyBookingReply from "../chat/applyBookingReply.js";
+import type * as chat_appointmentBookingTools from "../chat/appointmentBookingTools.js";
 import type * as chat_bookingReplyGate from "../chat/bookingReplyGate.js";
 import type * as chat_bookingToolSession from "../chat/bookingToolSession.js";
 import type * as chat_broadcastMessageMetadata from "../chat/broadcastMessageMetadata.js";
@@ -694,6 +695,7 @@ declare const fullApi: ApiFromModules<{
   "chat/aiReplyMessages": typeof chat_aiReplyMessages;
   "chat/aiReplyOutput": typeof chat_aiReplyOutput;
   "chat/applyBookingReply": typeof chat_applyBookingReply;
+  "chat/appointmentBookingTools": typeof chat_appointmentBookingTools;
   "chat/bookingReplyGate": typeof chat_bookingReplyGate;
   "chat/bookingToolSession": typeof chat_bookingToolSession;
   "chat/broadcastMessageMetadata": typeof chat_broadcastMessageMetadata;

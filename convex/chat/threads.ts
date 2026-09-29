@@ -50,6 +50,7 @@ import { buildIdentityPriorityBlock } from "./identityPriorityPrompt";
 import { createInstructionContextHandler } from "./instructionContext";
 import { registerGoogleCalendarTools } from "../googleCalendar/agentTools";
 import { queryActiveBookingSession } from "./bookingToolSession";
+import { registerBatchAppointmentBookingTools } from "./appointmentBookingTools";
 import type {
   BroadcastMessageKind,
   BroadcastPresentation,
@@ -527,11 +528,13 @@ Available Services are the complete booking catalog for this turn. Knowledge-bas
 - Call \`getActiveBookingSession\` before booking-state replies or booking tools except a first \`checkAvailability\` preview. Availability itself checks the live database and does not require a session.
 - Today's date is ${currentDate.dateIso} in ${currentDate.timeZone}. Use this date when interpreting "today", "tomorrow", "next week", or validating booking dates. Do not guess or use a different year.
 - Do not narrate tool steps or send progress updates such as "I will start the booking session" or "I will check availability." Call the tools immediately and reply only with the result or the next information the customer must provide.
-1. *Check slots* — For any availability question, call \`checkAvailability\` immediately with the matching service ID. Do not collect customer details first. For a specific time use \`preferredTimeIso\`; for a day or range use \`rangeStartIso\` and \`rangeEndIso\`. When presenting slots, include each returned slot's exact \`date\` and \`timeRange\`; if the tool groups more than five slots into ranges, present those summarized ranges and their exact times. Never replace them with generic labels such as "morning session" or "afternoon session". Use a numbered format such as "1. 5:00 AM - 5:30 AM" and "2. 3:00 PM - 3:30 PM".
+1. *Check slots* — For any availability question, call \`checkAvailability\` immediately with the matching service ID. Do not collect customer details first. For a specific time use \`preferredTimeIso\`; for a day or range use \`rangeStartIso\` and \`rangeEndIso\`. When the customer gives two or more exact appointment times, pass all of them together in \`preferredTimesIso\`; do not check them one at a time. If any are unavailable, report every unavailable time together and create none. When presenting slots, include each returned slot's exact \`date\` and \`timeRange\`; if the tool groups more than five slots into ranges, present those summarized ranges and their exact times. Never replace them with generic labels such as "morning session" or "afternoon session". Use a numbered format such as "1. 5:00 AM - 5:30 AM" and "2. 3:00 PM - 3:30 PM".
 2. *Select slot* — A customer's exact requested time or choice from offered slots counts as confirmation. Call \`checkAvailability\` for that exact time. When available, it starts the session and returns only the missing booking fields.
 3. *Collect details* — Ask only for \`missingFields\`, then call \`startBookingSession\` with the new values. Always obtain name, phone, date, and time in chat for the person being booked. Do not use the chatter's contact details.
 4. *Book* — As soon as \`startBookingSession\` returns \`readyForBooking: true\`, call \`bookAppointment\` in the same turn. Do not ask for another confirmation. Booking creation revalidates the selected slot before writing the calendar event.
 5. *Confirm* — Immediately after \`bookAppointment\` succeeds, call \`sendBookingConfirmation\` and send the returned \`confirmationMessage\` to the customer exactly as written. Do not rewrite it.
+
+For a batch of two to ten exact times, collect shared details once. When \`startBookingSession\` returns \`readyForBooking: true\`, call \`bookAppointments\` with the exact ordered list. After it succeeds, call \`sendBatchBookingConfirmation\` and send its single \`confirmationMessage\` exactly as written. Never claim partial batch success.
 
 ## Editing an existing booking
 If the customer wants to change their booking (time, name, phone, or any other detail):
@@ -815,6 +818,14 @@ export function buildAgent(
           .describe(
             `Customer's preferred appointment start time as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`,
           ),
+        preferredTimesIso: z
+          .array(z.string())
+          .min(2)
+          .max(10)
+          .optional()
+          .describe(
+            `Two to ten exact appointment start times requested together. Preserve the customer's order. ${availabilityDateRule}`,
+          ),
         rangeStartIso: z
           .string()
           .optional()
@@ -842,6 +853,7 @@ export function buildAgent(
           conversationId: Id<"conversations">;
           serviceId?: Id<"appointmentServices">;
           preferredStartAt?: number;
+          preferredStartAts?: number[];
           rangeStartAt?: number;
           rangeEndAt?: number;
         } = { conversationId };
@@ -853,6 +865,15 @@ export function buildAgent(
           : null;
         if (preferredStartAt !== null) {
           args.preferredStartAt = preferredStartAt;
+        }
+        if (input.preferredTimesIso !== undefined) {
+          const parsed = input.preferredTimesIso.map((value) =>
+            parseAvailabilityIso(value, defaultBookingTimeZone)
+          );
+          if (parsed.some((value) => value === null)) {
+            return { success: false, message: "One or more appointment times are invalid." };
+          }
+          args.preferredStartAts = parsed as number[];
         }
         const rangeStartAt = input.rangeStartIso
           ? parseAvailabilityIso(input.rangeStartIso, defaultBookingTimeZone)
@@ -999,6 +1020,12 @@ export function buildAgent(
           },
         );
       },
+    });
+
+    registerBatchAppointmentBookingTools({
+      tools,
+      conversationId,
+      defaultTimeZone: defaultBookingTimeZone,
     });
   }
 
