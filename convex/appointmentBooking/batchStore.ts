@@ -19,6 +19,18 @@ export async function getActiveBatch(
   return batches.find((batch) => isActiveAppointmentBookingBatchStatus(batch.status));
 }
 
+export async function getLatestBookedBatch(
+  ctx: DbCtx,
+  conversationId: Id<"conversations">,
+) {
+  const batches = await ctx.db
+    .query("appointmentBookingBatches")
+    .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+    .order("desc")
+    .take(20);
+  return batches.find((batch) => batch.status === AppointmentBookingBatchStatus.Booked);
+}
+
 export async function getActiveBookingState(
   ctx: DbCtx,
   conversationId: Id<"conversations">,
