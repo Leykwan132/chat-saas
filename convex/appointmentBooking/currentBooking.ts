@@ -11,6 +11,7 @@ import {
   getActiveSession,
   getExistingBookingSession,
 } from "./sessionStore";
+import { activeBatchSnapshot, getActiveBookingState } from "./batchStore";
 
 async function loadActiveBookingDetailsForConversation(
   ctx: QueryCtx,
@@ -99,8 +100,8 @@ export const getCurrentBookingForConversation = query({
 export const getActiveBookingSession = internalQuery({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, args) => {
-    const session = await getActiveSession(ctx, args.conversationId);
-    if (session === undefined) {
+    const state = await getActiveBookingState(ctx, args.conversationId);
+    if (state === undefined) {
       return {
         success: false,
         hasActiveSession: false,
@@ -110,7 +111,9 @@ export const getActiveBookingSession = internalQuery({
     return {
       success: true,
       hasActiveSession: true,
-      ...activeSessionSnapshot(session),
+      ...(state.kind === "batch"
+        ? activeBatchSnapshot(state.row)
+        : { bookingKind: "single" as const, ...activeSessionSnapshot(state.row) }),
     };
   },
 });

@@ -10,6 +10,7 @@ import {
 } from "./fields";
 import type { DbCtx } from "./types";
 import { DEFAULT_TEAM_TIME_ZONE } from "../teamHelpers";
+import { getActiveBatch } from "./batchStore";
 
 export async function getActiveSession(ctx: DbCtx, conversationId: Id<"conversations">) {
   const sessions = await ctx.db
@@ -50,6 +51,10 @@ export async function getOrCreateSession(
   conversationId: Id<"conversations">,
   agentId: Id<"agents">,
 ) {
+  const batch = await getActiveBatch(ctx, conversationId);
+  if (batch !== undefined) {
+    throw new Error("An active batch already exists for this conversation");
+  }
   const sessions = await ctx.db
     .query("appointmentBookingSessions")
     .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))

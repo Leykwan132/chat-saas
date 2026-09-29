@@ -951,6 +951,14 @@ export const deleteCustomer = mutation({
         await ctx.db.delete(session._id);
       }
 
+      const bookingBatches = await ctx.db
+        .query("appointmentBookingBatches")
+        .withIndex("by_conversationId", (q) => q.eq("conversationId", conv._id))
+        .collect();
+      for (const batch of bookingBatches) {
+        await ctx.db.delete(batch._id);
+      }
+
       // 1e. Delete conversation logs
       const logs = await ctx.db
         .query("conversationLogs")
