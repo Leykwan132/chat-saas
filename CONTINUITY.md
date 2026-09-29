@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-29 [USER] Goal: batch booking lets an agent check up to ten exact appointment times from one customer message and create every requested appointment only when all are available. Design approved; spec written, implementation pending. Unshipped.
+- 2026-09-29 [USER] Goal: batch booking lets an agent check up to ten exact appointment times from one customer message and create every requested appointment only when all are available. Design and implementation plan written; native test-first implementation pending final plan review. Unshipped.
 - 2026-09-29 [USER] Goal: show Avatar as its own card on Channels, opening the existing Avatar setup. Same Beta flag and account gate. Sidebar Avatar item is removed. Avatar page has an arrow back to the channel cards. Pushed to PR #189.
 - 2026-09-28 [USER] Goal: after Instructions change, replies must follow the new system prompt. Customer messages stay in the model context; assistant and tool messages written before `instructionsUpdatedAt` are omitted. Inbox history stays visible. Unshipped on `fix-context-rot`.
 - 2026-09-28 [USER] Goal: fix `whatsappWebhook:ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi` failing with "Too many reads (limit 4096)" on long conversations. Branch `fix/inbox-search-read-limit`. Unshipped.
@@ -153,7 +153,7 @@
 
 # Working set
 
-- 2026-09-29 [USER] `docs/superpowers/specs/2026-09-29-multi-appointment-booking-design.md`, `convex/appointmentBooking`, `convex/googleCalendar`, `convex/chat/threads.ts`, `convex/schema.ts`
+- 2026-09-29 [USER] `docs/superpowers/specs/2026-09-29-multi-appointment-booking-design.md`, `docs/superpowers/plans/2026-09-29-multi-appointment-booking.md`, `convex/appointmentBooking`, `convex/googleCalendar`, `convex/chat/threads.ts`, `convex/schema.ts`
 - 2026-09-29 [CODE] `src/components/channels/AvatarChannelCard.tsx`, `src/pages/ChannelsPage.tsx`, `src/components/app-sidebar-nav.ts`, `src/components/app-sidebar.tsx`
 - 2026-09-28 [CODE] `convex/chat/instructionContext.ts`, `convex/chat/instructionContext.test.ts`, `convex/chat/threads.ts`, `convex/agents.ts`, `convex/schema.ts`
 - 2026-09-12 [CODE] `convex/rag/{backfill,backfillIndex,backfillWeb,backfillPage,backfillPlan,cfFetch,fileBytesText}.ts`
