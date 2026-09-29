@@ -4,27 +4,19 @@ import { describe, expect, it } from 'vitest';
 import { getNavItems } from './app-sidebar-nav';
 
 describe('Avatar navigation', () => {
-  it('places Avatar under Agent with channel read access', () => {
-    const agent = getNavItems('agent-id', {
+  it('keeps Avatar out of the sidebar', () => {
+    const labels = getNavItems('agent-id', {
       showSavedReplies: true,
-      enableAvatarFeature: true,
-    }).find((section) => section.label === 'Agent')?.items;
+    }).find((section) => section.label === 'Agent')?.items.map((item) => item.label);
 
-    expect(agent?.at(-1)).toMatchObject({
-      to: '/dashboard/agent-id/avatar',
-      label: 'Avatar',
-      badgeLabel: 'Beta',
-      requiredPermission: 'channels:read',
-    });
+    expect(labels).not.toContain('Avatar');
   });
 
-  it('resolves the Avatar flag before building navigation', () => {
+  it('does not resolve the Avatar flag in the sidebar', () => {
     const source = readFileSync(new URL('./app-sidebar.tsx', import.meta.url), 'utf8');
 
-    expect(source).toContain('useEnableAvatarFeature()');
-    expect(source).toContain(
-      'enableAvatarFeature: isProductFeatureEnabled(avatarFeatureState)',
-    );
+    expect(source).not.toContain('useEnableAvatarFeature()');
+    expect(source).not.toContain('enableAvatarFeature');
   });
 
   it('renders the beta badge beside the label with neutral styling', () => {
@@ -40,7 +32,6 @@ describe('Avatar navigation', () => {
   it('places Notifications after Message Templates under Outreach', () => {
     const outreach = getNavItems('agent-id', {
       showSavedReplies: true,
-      enableAvatarFeature: true,
     }).find((section) => section.label === 'Outreach')?.items;
 
     const notificationIndex = outreach?.findIndex((item) => item.label === 'Notifications');

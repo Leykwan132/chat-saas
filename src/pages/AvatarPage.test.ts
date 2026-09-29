@@ -37,6 +37,8 @@ describe('Avatar configured overview', () => {
     expect(pageSource).not.toContain('Edit avatar');
     expect(pageSource).toContain('<AvatarShareDialog publicKey={configuration.publicKey} />');
     expect(pageSource).toContain('buildAvatarLiveUrl(configuration.publicKey)');
+    expect(pageSource).toContain('aria-label="Back to channels"');
+    expect(pageSource).toContain('to={`/dashboard/${agentId}/channels`}');
     expect(pageSource).toContain('aria-label="Open Avatar preview"');
     expect(pageSource).toContain('title="Open Avatar preview"');
     expect(pageSource).toContain('configuration.configured ?');

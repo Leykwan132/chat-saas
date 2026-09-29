@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-29 [USER] Goal: show Avatar as its own card on Channels, opening the existing Avatar setup. Same Beta flag and account gate as the sidebar. Unshipped in PR #189.
+- 2026-09-29 [USER] Goal: show Avatar as its own card on Channels, opening the existing Avatar setup. Same Beta flag and account gate. Sidebar Avatar item is removed. Avatar page has an arrow back to the channel cards. Committed locally on `codex/avatar-channel-card`; not pushed to PR #189.
 - 2026-09-28 [USER] Goal: after Instructions change, replies must follow the new system prompt. Customer messages stay in the model context; assistant and tool messages written before `instructionsUpdatedAt` are omitted. Inbox history stays visible. Unshipped on `fix-context-rot`.
 - 2026-09-28 [USER] Goal: fix `whatsappWebhook:ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi` failing with "Too many reads (limit 4096)" on long conversations. Branch `fix/inbox-search-read-limit`. Unshipped.
 - 2026-09-28 [CODE] Cause: the `inboxConversationSummaries` trigger rebuilt every message search document in the conversation on each summary change (every incoming message), ~4 reads per message. Fix: rebuild only when the copied scope (`orgId`, `userId`, `assignedAgentId`, `isChannelConnected`) changes or the summary is created or deleted, and run it as a self-rescheduling 100-message paged job (`convex/inboxMessageSearchRefresh.ts`). Unshipped.
@@ -132,7 +132,7 @@
 
 # Done (recent)
 
-- 2026-09-29 [CODE] Channels shows an Avatar card beside Website for the Beta flag and allowed account. Setup opens the existing Avatar page. Unshipped.
+- 2026-09-29 [CODE] Channels shows an Avatar card beside Website for the Beta flag and allowed account. Setup opens the existing Avatar page, which has an arrow back to the channel cards. The sidebar no longer lists Avatar. Unshipped.
 - 2026-09-28 [CODE] Saving a changed system prompt stamps `instructionsUpdatedAt`. Later replies keep customer messages and drop earlier assistant and tool messages from the model context. Inbox transcript is unchanged. Unshipped.
 - 2026-09-22 [CODE] Signed-in Dashboard header CTA now matches the rounded public action. Unshipped.
 - 2026-09-22 [CODE] Pricing-card CTAs use the landing hero’s consistent pill geometry. Unshipped.
@@ -152,7 +152,7 @@
 
 # Working set
 
-- 2026-09-29 [CODE] `src/components/channels/AvatarChannelCard.tsx`, `src/pages/ChannelsPage.tsx`
+- 2026-09-29 [CODE] `src/components/channels/AvatarChannelCard.tsx`, `src/pages/ChannelsPage.tsx`, `src/components/app-sidebar-nav.ts`, `src/components/app-sidebar.tsx`
 - 2026-09-28 [CODE] `convex/chat/instructionContext.ts`, `convex/chat/instructionContext.test.ts`, `convex/chat/threads.ts`, `convex/agents.ts`, `convex/schema.ts`
 - 2026-09-12 [CODE] `convex/rag/{backfill,backfillIndex,backfillWeb,backfillPage,backfillPlan,cfFetch,fileBytesText}.ts`
 - 2026-09-12 [CODE] `convex/webResearch/{enqueue,update,persist,worker,prompt,markdown,markdownKey}.ts`
@@ -165,7 +165,7 @@
 
 # Receipts
 
-- 2026-09-29 [TOOL] PR #189 opened from `codex/avatar-channel-card`: https://github.com/Leykwan132/chat-saas/pull/189. Avatar channel card suite passed: `AvatarChannelCard.test.ts` (1) and `AvailableChannelCard.test.ts` (6).
+- 2026-09-29 [TOOL] Sidebar suites passed after removing Avatar (11 tests). Avatar page test passed (4). Follow-up is committed locally and not pushed: https://github.com/Leykwan132/chat-saas/pull/189.
 - 2026-09-28 [TOOL] PR #188 opened from `fix-context-rot`: https://github.com/Leykwan132/chat-saas/pull/188. `convex/chat/instructionContext.test.ts` passed (2 tests).
 - 2026-09-28 [TOOL] PR #187 opened from `fix/inbox-search-read-limit` for the WhatsApp ingest "Too many reads" fix; focused inbox search suites passed (7 tests), and the new no-rescan test fails on the old code.
 
