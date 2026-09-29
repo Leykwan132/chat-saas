@@ -4,6 +4,7 @@ export function validateAvailabilityDates(args: {
   now: number;
   timeZone: string;
   preferredStartAt?: number;
+  preferredStartAts?: number[];
   rangeStartAt?: number;
   rangeEndAt?: number;
 }) {
@@ -11,6 +12,7 @@ export function validateAvailabilityDates(args: {
   const todayDate = toTimeZoneDateKey(args.now, args.timeZone);
   const requestedDates = [
     args.preferredStartAt,
+    ...(args.preferredStartAts ?? []),
     args.rangeStartAt,
     args.rangeEndAt,
   ].filter((value): value is number => value !== undefined);
