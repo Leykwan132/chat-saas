@@ -65,7 +65,11 @@ import type * as appointmentBooking_availabilityDateTime from "../appointmentBoo
 import type * as appointmentBooking_availabilityEligibility from "../appointmentBooking/availabilityEligibility.js";
 import type * as appointmentBooking_availabilityPresentation from "../appointmentBooking/availabilityPresentation.js";
 import type * as appointmentBooking_availabilityRoster from "../appointmentBooking/availabilityRoster.js";
+import type * as appointmentBooking_batchAvailability from "../appointmentBooking/batchAvailability.js";
+import type * as appointmentBooking_batchCreate from "../appointmentBooking/batchCreate.js";
+import type * as appointmentBooking_batchStore from "../appointmentBooking/batchStore.js";
 import type * as appointmentBooking_bookAppointment from "../appointmentBooking/bookAppointment.js";
+import type * as appointmentBooking_bookAppointments from "../appointmentBooking/bookAppointments.js";
 import type * as appointmentBooking_bookingEvents from "../appointmentBooking/bookingEvents.js";
 import type * as appointmentBooking_calendarHelpers from "../appointmentBooking/calendarHelpers.js";
 import type * as appointmentBooking_calendarManualBooking from "../appointmentBooking/calendarManualBooking.js";
@@ -84,6 +88,8 @@ import type * as appointmentBooking_manualBookingCore from "../appointmentBookin
 import type * as appointmentBooking_manualBookingFields from "../appointmentBooking/manualBookingFields.js";
 import type * as appointmentBooking_serviceAssignments from "../appointmentBooking/serviceAssignments.js";
 import type * as appointmentBooking_services from "../appointmentBooking/services.js";
+import type * as appointmentBooking_sessionConfirmation from "../appointmentBooking/sessionConfirmation.js";
+import type * as appointmentBooking_sessionDetails from "../appointmentBooking/sessionDetails.js";
 import type * as appointmentBooking_sessionStore from "../appointmentBooking/sessionStore.js";
 import type * as appointmentBooking_sessions from "../appointmentBooking/sessions.js";
 import type * as appointmentBooking_staffBooking from "../appointmentBooking/staffBooking.js";
@@ -91,6 +97,7 @@ import type * as appointmentBooking_statusTransition from "../appointmentBooking
 import type * as appointmentBooking_types from "../appointmentBooking/types.js";
 import type * as appointmentBooking_updateAppointment from "../appointmentBooking/updateAppointment.js";
 import type * as appointmentBooking_validators from "../appointmentBooking/validators.js";
+import type * as appointmentBookingBatchStatus from "../appointmentBookingBatchStatus.js";
 import type * as appointmentBookingSessionStatus from "../appointmentBookingSessionStatus.js";
 import type * as auth from "../auth.js";
 import type * as authUtils from "../authUtils.js";
@@ -209,6 +216,10 @@ import type * as googleCalendar_agentToolList from "../googleCalendar/agentToolL
 import type * as googleCalendar_agentToolMutate from "../googleCalendar/agentToolMutate.js";
 import type * as googleCalendar_agentTools from "../googleCalendar/agentTools.js";
 import type * as googleCalendar_availability from "../googleCalendar/availability.js";
+import type * as googleCalendar_batchBookingFinalize from "../googleCalendar/batchBookingFinalize.js";
+import type * as googleCalendar_batchBookingPrepare from "../googleCalendar/batchBookingPrepare.js";
+import type * as googleCalendar_batchBookingSync from "../googleCalendar/batchBookingSync.js";
+import type * as googleCalendar_batchBookingTypes from "../googleCalendar/batchBookingTypes.js";
 import type * as googleCalendar_bookingCancelPrepare from "../googleCalendar/bookingCancelPrepare.js";
 import type * as googleCalendar_bookingFinalize from "../googleCalendar/bookingFinalize.js";
 import type * as googleCalendar_bookingGate from "../googleCalendar/bookingGate.js";
@@ -613,7 +624,11 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/availabilityEligibility": typeof appointmentBooking_availabilityEligibility;
   "appointmentBooking/availabilityPresentation": typeof appointmentBooking_availabilityPresentation;
   "appointmentBooking/availabilityRoster": typeof appointmentBooking_availabilityRoster;
+  "appointmentBooking/batchAvailability": typeof appointmentBooking_batchAvailability;
+  "appointmentBooking/batchCreate": typeof appointmentBooking_batchCreate;
+  "appointmentBooking/batchStore": typeof appointmentBooking_batchStore;
   "appointmentBooking/bookAppointment": typeof appointmentBooking_bookAppointment;
+  "appointmentBooking/bookAppointments": typeof appointmentBooking_bookAppointments;
   "appointmentBooking/bookingEvents": typeof appointmentBooking_bookingEvents;
   "appointmentBooking/calendarHelpers": typeof appointmentBooking_calendarHelpers;
   "appointmentBooking/calendarManualBooking": typeof appointmentBooking_calendarManualBooking;
@@ -632,6 +647,8 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/manualBookingFields": typeof appointmentBooking_manualBookingFields;
   "appointmentBooking/serviceAssignments": typeof appointmentBooking_serviceAssignments;
   "appointmentBooking/services": typeof appointmentBooking_services;
+  "appointmentBooking/sessionConfirmation": typeof appointmentBooking_sessionConfirmation;
+  "appointmentBooking/sessionDetails": typeof appointmentBooking_sessionDetails;
   "appointmentBooking/sessionStore": typeof appointmentBooking_sessionStore;
   "appointmentBooking/sessions": typeof appointmentBooking_sessions;
   "appointmentBooking/staffBooking": typeof appointmentBooking_staffBooking;
@@ -639,6 +656,7 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/types": typeof appointmentBooking_types;
   "appointmentBooking/updateAppointment": typeof appointmentBooking_updateAppointment;
   "appointmentBooking/validators": typeof appointmentBooking_validators;
+  appointmentBookingBatchStatus: typeof appointmentBookingBatchStatus;
   appointmentBookingSessionStatus: typeof appointmentBookingSessionStatus;
   auth: typeof auth;
   authUtils: typeof authUtils;
@@ -757,6 +775,10 @@ declare const fullApi: ApiFromModules<{
   "googleCalendar/agentToolMutate": typeof googleCalendar_agentToolMutate;
   "googleCalendar/agentTools": typeof googleCalendar_agentTools;
   "googleCalendar/availability": typeof googleCalendar_availability;
+  "googleCalendar/batchBookingFinalize": typeof googleCalendar_batchBookingFinalize;
+  "googleCalendar/batchBookingPrepare": typeof googleCalendar_batchBookingPrepare;
+  "googleCalendar/batchBookingSync": typeof googleCalendar_batchBookingSync;
+  "googleCalendar/batchBookingTypes": typeof googleCalendar_batchBookingTypes;
   "googleCalendar/bookingCancelPrepare": typeof googleCalendar_bookingCancelPrepare;
   "googleCalendar/bookingFinalize": typeof googleCalendar_bookingFinalize;
   "googleCalendar/bookingGate": typeof googleCalendar_bookingGate;

@@ -169,8 +169,8 @@ test("creates all five local bookings atomically with chronological round robin"
   vi.useFakeTimers();
   const t = createTest();
   const fixture = await createFixture(t);
-  const result = await t.mutation(
-    internal.appointmentBooking.batchCreate.createLocalBatch,
+  const result = await t.action(
+    internal.appointmentBooking.bookAppointments.bookAppointments,
     { conversationId: fixture.conversationId, serviceId: fixture.serviceId, startAts: starts },
   );
   expect(result).toMatchObject({ success: true });
@@ -222,7 +222,7 @@ test("creates no child records when any confirmed slot becomes unavailable", asy
       label: "Unavailable",
     });
   });
-  const result = await t.mutation(internal.appointmentBooking.batchCreate.createLocalBatch, {
+  const result = await t.action(internal.appointmentBooking.bookAppointments.bookAppointments, {
     conversationId: fixture.conversationId,
     serviceId: fixture.serviceId,
     startAts: starts,
@@ -240,7 +240,7 @@ test.each([{ startAts: starts.slice(0, 4) }, { startAts: [...starts].reverse() }
   async ({ startAts }) => {
     const t = createTest();
     const fixture = await createFixture(t);
-    const result = await t.mutation(internal.appointmentBooking.batchCreate.createLocalBatch, {
+    const result = await t.action(internal.appointmentBooking.bookAppointments.bookAppointments, {
       conversationId: fixture.conversationId,
       serviceId: fixture.serviceId,
       startAts,

@@ -19,7 +19,7 @@ import {
 } from "./fields";
 import type { BookingSlot } from "./types";
 
-type PreparedBatch = {
+export type PreparedBatch = {
   batch: Doc<"appointmentBookingBatches">;
   conversation: Doc<"conversations">;
   agent: Doc<"agents">;

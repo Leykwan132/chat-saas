@@ -1,6 +1,9 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import {
+  batchBookingSyncDependencies,
+  runBookAppointments,
+} from "../googleCalendar/batchBookingSync";
 
 export const bookAppointments = internalAction({
   args: {
@@ -9,9 +12,6 @@ export const bookAppointments = internalAction({
     startAts: v.array(v.number()),
   },
   handler: async (ctx, args) => {
-    return await ctx.runMutation(
-      internal.appointmentBooking.batchCreate.createLocalBatch,
-      args,
-    );
+    return await runBookAppointments(args, batchBookingSyncDependencies(ctx));
   },
 });
