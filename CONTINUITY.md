@@ -2,7 +2,7 @@
 
 # Snapshot
 
-- 2026-09-29 [USER] Goal: show Avatar as its own card on Channels, opening the existing Avatar setup. Same Beta flag and account gate. Sidebar Avatar item is removed. Avatar page has an arrow back to the channel cards. Committed locally on `codex/avatar-channel-card`; not pushed to PR #189.
+- 2026-09-29 [USER] Goal: show Avatar as its own card on Channels, opening the existing Avatar setup. Same Beta flag and account gate. Sidebar Avatar item is removed. Avatar page has an arrow back to the channel cards. Pushed to PR #189.
 - 2026-09-28 [USER] Goal: after Instructions change, replies must follow the new system prompt. Customer messages stay in the model context; assistant and tool messages written before `instructionsUpdatedAt` are omitted. Inbox history stays visible. Unshipped on `fix-context-rot`.
 - 2026-09-28 [USER] Goal: fix `whatsappWebhook:ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi` failing with "Too many reads (limit 4096)" on long conversations. Branch `fix/inbox-search-read-limit`. Unshipped.
 - 2026-09-28 [CODE] Cause: the `inboxConversationSummaries` trigger rebuilt every message search document in the conversation on each summary change (every incoming message), ~4 reads per message. Fix: rebuild only when the copied scope (`orgId`, `userId`, `assignedAgentId`, `isChannelConnected`) changes or the summary is created or deleted, and run it as a self-rescheduling 100-message paged job (`convex/inboxMessageSearchRefresh.ts`). Unshipped.
@@ -165,7 +165,7 @@
 
 # Receipts
 
-- 2026-09-29 [TOOL] Sidebar suites passed after removing Avatar (11 tests). Avatar page test passed (4). Follow-up is committed locally and not pushed: https://github.com/Leykwan132/chat-saas/pull/189.
+- 2026-09-29 [TOOL] Sidebar suites passed after removing Avatar (11 tests). Avatar page test passed (4). Follow-up pushed to https://github.com/Leykwan132/chat-saas/pull/189.
 - 2026-09-28 [TOOL] PR #188 opened from `fix-context-rot`: https://github.com/Leykwan132/chat-saas/pull/188. `convex/chat/instructionContext.test.ts` passed (2 tests).
 - 2026-09-28 [TOOL] PR #187 opened from `fix/inbox-search-read-limit` for the WhatsApp ingest "Too many reads" fix; focused inbox search suites passed (7 tests), and the new no-rescan test fails on the old code.
 
