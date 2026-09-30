@@ -16,7 +16,7 @@ function doc(args: {
   };
 }
 
-test("instruction context keeps customer messages and drops earlier assistant replies", () => {
+test("instruction context sends only customer messages from history", () => {
   const history = instructionContextHistory(
     [
       doc({ id: "old-assistant", createdAt: 100, role: "assistant" }),
@@ -29,17 +29,14 @@ test("instruction context keeps customer messages and drops earlier assistant re
     "prompt",
   );
 
-  expect(history.map((message) => message._id)).toEqual([
-    "customer",
-    "new-assistant",
-  ]);
+  expect(history.map((message) => message._id)).toEqual(["customer"]);
 });
 
-test("assistant reply written at the instruction update stays in context", () => {
+test("instruction context drops assistant replies regardless of timestamp", () => {
   const history = instructionContextHistory(
     [doc({ id: "same-time", createdAt: 1_000, role: "assistant" })],
     1_000,
   );
 
-  expect(history.map((message) => message._id)).toEqual(["same-time"]);
+  expect(history.map((message) => message._id)).toEqual([]);
 });
