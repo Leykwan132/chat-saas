@@ -23,6 +23,15 @@ export type CustomerBookingHistoryItem = {
   collectedFields: Record<string, string | number | boolean | null>;
 };
 
+export function upcomingCustomerBookings(
+  bookings: CustomerBookingHistoryItem[],
+  now: number,
+) {
+  return bookings
+    .filter((booking) => booking.status === 'booked' && booking.endAt > now)
+    .sort((left, right) => left.startAt - right.startAt);
+}
+
 export function getMostRecentCustomerBooking(
   bookings: CustomerBookingHistoryItem[],
 ) {

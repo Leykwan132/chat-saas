@@ -56,14 +56,15 @@ test('landing hero and metadata describe Kilobot as an easy-to-start AI chatbot'
   );
 });
 
-test('root page does not embed a local development widget', () => {
+test('root page embeds the development widget only for local hosts', () => {
   const indexSource = readFileSync(new URL('../../../index.html', import.meta.url), 'utf8');
 
-  expect(indexSource).not.toContain('pub_7190131b74754f789d20f973b6328c82');
-  expect(indexSource).not.toContain('https://outstanding-rabbit-215.convex.site');
-  expect(indexSource).not.toContain('data-kilobot-widget');
-  expect(indexSource).not.toContain('data-kilobot-api');
-  expect(indexSource).not.toContain('data-kilobot-mode');
+  expect(indexSource).toContain('pub_7190131b74754f789d20f973b6328c82');
+  expect(indexSource).toContain('https://outstanding-rabbit-215.convex.site');
+  expect(indexSource).toContain("hostname === 'localhost'");
+  expect(indexSource).toContain("hostname === '127.0.0.1'");
+  expect(indexSource).toContain("script.src = '/widget/v1.js'");
+  expect(indexSource).toContain("script.dataset.kilobotMode = 'ai-powered'");
 });
 
 test('landing hero is centered with stacked actions and smaller copy on mobile', () => {

@@ -64,8 +64,22 @@ test("booking flow uses the atomic batch tools for multiple exact requested time
   expect(block).toContain("`sendBookingConfirmation`");
   expect(block).toContain("`listCustomerBookings`");
   expect(block).toContain("every booking for this customer");
-  expect(block).toContain("`beginBookingEdit` with that appointment's `bookingId`");
+  expect(block).toContain("`beginBookingDetailsEdit` with that appointment's `bookingId`");
   expect(block).toContain("Never propose cancelling and recreating bookings as a workaround for an edit.");
+});
+
+test("booking flow reschedules through one updateBookingsDateTime call after listing bookings", () => {
+  const block = buildBookingFlowBlock();
+
+  expect(block).toContain("even just one, use `updateBookingsDateTime`");
+  expect(block).toContain("Always call `listCustomerBookings` before `updateBookingsDateTime`");
+  expect(block).toContain("For a single booking, pass a one-item `bookings` array");
+  expect(block).toContain('bookingId: "calendar-event-id", startTimeIso: "2026-10-01T16:00:00+08:00"');
+  expect(block).toContain('bookingId: "october-5-booking-id", startTimeIso: "2026-10-05T14:00:00+08:00"');
+  expect(block).toContain("one concise message listing every updated appointment");
+  expect(block).toContain("Never cancel and rebook to reschedule");
+  expect(block).toContain("`beginBookingDetailsEdit` and `saveBookingDetails` never change a date or time");
+  expect(block).not.toMatch(/`beginBookingEdit`|`updateBookingAppointment`/);
 });
 
 test("booking flow embeds the server current date for relative requests", () => {

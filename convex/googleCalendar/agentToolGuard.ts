@@ -1,5 +1,3 @@
-import type { Doc, Id } from "../_generated/dataModel";
-
 export type AgentCalendarBusyInterval = {
   startAt: number;
   endAt: number;
@@ -18,11 +16,6 @@ export type AgentCalendarToolFailure = {
     | "failed";
   success: false;
   message: string;
-};
-
-export type AgentCalendarMutationOk = {
-  kind: "ok";
-  event: Doc<"calendarEvents">;
 };
 
 const failureMessages: Record<AgentCalendarToolFailure["kind"], string> = {
@@ -49,16 +42,4 @@ export function requireExplicitConfirmation(confirmed: boolean) {
     "invalid_request",
     "Cancellation and updates require an explicit current customer confirmation.",
   );
-}
-
-export function guardKilobotConversationEvent(
-  event: Doc<"calendarEvents"> | null,
-  conversationId: Id<"conversations">,
-): AgentCalendarToolFailure | AgentCalendarMutationOk {
-  if (event === null) return agentCalendarToolFailure("not_found");
-  const origin = event.externalOrigin ?? "kilobot";
-  if (origin !== "kilobot" || event.conversationId !== conversationId) {
-    return agentCalendarToolFailure("forbidden");
-  }
-  return { kind: "ok", event };
 }

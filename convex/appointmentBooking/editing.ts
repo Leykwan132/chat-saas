@@ -28,7 +28,7 @@ async function editableSessionsForConversation(
   );
 }
 
-async function sessionForCustomerBooking(
+export async function sessionForCustomerBooking(
   ctx: MutationCtx,
   conversation: Doc<"conversations">,
   bookingId: Id<"calendarEvents">,
@@ -96,7 +96,7 @@ export const beginBookingEdit = internalMutation({
     if (editable.length > 1 && args.bookingId === undefined) {
       return {
         success: false,
-        message: "This customer has more than one booking. Call listCustomerBookings and pass that booking's bookingId to beginBookingEdit.",
+        message: "This customer has more than one booking. Call listCustomerBookings and pass that booking's bookingId to beginBookingDetailsEdit.",
       };
     }
     const calendarEventId = session?.calendarEventId;
@@ -136,7 +136,7 @@ export const beginBookingEdit = internalMutation({
         timeZone: serviceTimeZone(service, team ?? undefined),
         assignedTo: assigned?.displayName ?? assigned?.email,
       }),
-      message: "Booking edit started. Update details with startBookingSession, then checkAvailability if the time is changing, and call updateBookingAppointment after the customer confirms.",
+      message: "Booking details edit started. Update details with startBookingSession, then call saveBookingDetails after the customer confirms. This cannot change the date or time; use updateBookingsDateTime for that.",
     };
   },
 });

@@ -61,12 +61,16 @@ function isCollectedFieldValuePresent(value: string | number | boolean | null | 
 }
 
 export function mergeCollectedFields(
+  service: Pick<Doc<"appointmentServices">, "fields">,
   sessionFields: CollectedFields,
   incomingFields?: CollectedFields,
 ): CollectedFields {
+  const serviceKeys = new Set([...service.fields.map((field) => field.key), "email"]);
+  const accepted = Object.entries(incomingFields ?? {})
+    .filter(([key]) => serviceKeys.has(key));
   return {
     ...sessionFields,
-    ...(incomingFields ?? {}),
+    ...Object.fromEntries(accepted),
   };
 }
 

@@ -64,6 +64,7 @@ import {
   INBOX_REACTION_EMOJIS,
   type InboxMessageReaction,
 } from '../../../shared/messageReactions';
+import { hideSystemErrorText } from '@/lib/systemErrorText';
 import { cn } from '@/lib/utils';
 import { splitWhatsAppText } from '@/lib/whatsappText';
 import { InboxAudioTranscript } from './InboxAudioTranscript';
@@ -126,7 +127,9 @@ function OutgoingReceiptIcon({
             />
           </TooltipTrigger>
           <TooltipContent>
-            {message.failureReason ?? 'Failed to send'}
+            {message.failureReason
+              ? hideSystemErrorText(message.failureReason)
+              : 'Failed to send'}
           </TooltipContent>
         </Tooltip>
       );
@@ -367,7 +370,8 @@ function InboxMessageBody({
       }),
     [files],
   );
-  const text = message.text?.trim() ?? '';
+  const rawText = message.text?.trim() ?? '';
+  const text = isCustomer ? rawText : hideSystemErrorText(rawText);
   const audioTranscripts = (message.inboxMediaUnderstanding?.assets ?? [])
     .filter((asset) => asset.kind === 'audio' && asset.audioTranscript)
     .map((asset) => asset.audioTranscript!);

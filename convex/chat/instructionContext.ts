@@ -17,7 +17,7 @@ export type InstructionContextDoc = {
 
 export function instructionContextHistory<T extends InstructionContextDoc>(
   docsAscending: T[],
-  _instructionsUpdatedAt: number | undefined,
+  instructionsUpdatedAt: number | undefined,
   promptMessageId?: string,
 ): T[] {
   const promptIndex =
@@ -26,7 +26,12 @@ export function instructionContextHistory<T extends InstructionContextDoc>(
       : docsAscending.findIndex((doc) => doc._id === promptMessageId);
   const history =
     promptIndex === -1 ? docsAscending : docsAscending.slice(0, promptIndex);
-  return history.filter((doc) => doc.message?.role === "user");
+  if (instructionsUpdatedAt === undefined) return history;
+  return history.filter(
+    (doc) =>
+      doc.message?.role === "user" ||
+      doc._creationTime >= instructionsUpdatedAt,
+  );
 }
 
 export function createInstructionContextHandler(args: {
@@ -35,7 +40,7 @@ export function createInstructionContextHandler(args: {
 }): ContextHandler {
   return async (ctx, handlerArgs) => {
     if (handlerArgs.threadId === undefined) {
-      return handlerArgs.allMessages.filter((message) => message.role === "user");
+      return handlerArgs.allMessages;
     }
     const { page } = await listMessages(ctx, components.agent, {
       threadId: handlerArgs.threadId,

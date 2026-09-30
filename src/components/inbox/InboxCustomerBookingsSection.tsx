@@ -25,9 +25,9 @@ export function InboxCustomerBookingsSection({
         aria-expanded={open}
       >
         <CalendarDays className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-        <span className="text-sm font-semibold text-foreground">Bookings</span>
+        <span className="text-sm font-semibold text-foreground">Upcoming Bookings</span>
         {!loading ? (
-          <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <span className="rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-medium text-white">
             {bookings.length}
           </span>
         ) : null}
@@ -42,7 +42,7 @@ export function InboxCustomerBookingsSection({
               <div className="h-10 rounded-md bg-muted motion-safe:animate-pulse" />
             </div>
           ) : bookings.length === 0 ? (
-            <p className="py-2 text-center text-xs text-muted-foreground">No bookings yet</p>
+            <p className="py-2 text-center text-xs text-muted-foreground">No upcoming bookings</p>
           ) : (
             <div className="flex flex-col gap-2">
               {bookings.map((booking) => (

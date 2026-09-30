@@ -1,24 +1,22 @@
-import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 
-export function CalendarEventDeleteDialog({
-  eventId,
+export function InboxDeleteConversationDialog({
   open,
-  isDeleting,
+  pending,
   onOpenChange,
   onConfirm,
 }: {
-  eventId: Id<'calendarEvents'> | null;
   open: boolean;
-  isDeleting: boolean;
+  pending: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 }) {
@@ -26,16 +24,16 @@ export function CalendarEventDeleteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle>Delete event?</DialogTitle>
+          <DialogTitle>Clear conversation?</DialogTitle>
+          <DialogDescription>
+            This clears the thread and deletes the conversation and its messages.
+          </DialogDescription>
         </DialogHeader>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          This removes the appointment from the shared team calendar.
-        </p>
         <DialogFooter>
           <Button
             type="button"
             variant="ghost"
-            disabled={isDeleting}
+            disabled={pending}
             onClick={() => onOpenChange(false)}
           >
             Cancel
@@ -44,11 +42,11 @@ export function CalendarEventDeleteDialog({
             type="button"
             variant="destructive"
             className="bg-destructive text-white hover:bg-destructive/90 dark:bg-destructive dark:text-white dark:hover:bg-destructive/90"
-            disabled={isDeleting || !eventId}
+            disabled={pending}
             onClick={onConfirm}
           >
-            {isDeleting ? <Spinner /> : null}
-            Delete
+            {pending ? <Spinner /> : null}
+            Clear conversation
           </Button>
         </DialogFooter>
       </DialogContent>

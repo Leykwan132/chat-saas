@@ -55,7 +55,7 @@ async function buildConfirmation(ctx: Parameters<typeof getLatestBookedSession>[
       message: active
         ? `No completed booking found. Active session status is ${active.status}. Call bookAppointment first.`
         : updated
-          ? "No updated booking found. Call updateBookingAppointment first."
+          ? "No updated booking found. Call saveBookingDetails first."
           : "No completed booking found. Call bookAppointment first.",
     };
   }

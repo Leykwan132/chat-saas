@@ -28,7 +28,6 @@ import { bookingToolResultValidator, prepareBookResultValidator } from "./bookin
 const updateArgs = {
   conversationId: v.id("conversations"),
   serviceId: v.id("appointmentServices"),
-  startAt: v.number(),
   refreshed: v.optional(v.boolean()),
 };
 
@@ -50,7 +49,7 @@ export const prepareUpdate = internalMutation({
     if (session === undefined || session.calendarEventId === undefined) {
       return {
         kind: "failed" as const,
-        result: { success: false, message: "No booking edit in progress. Call beginBookingEdit first." },
+        result: { success: false, message: "No booking details edit in progress. Call beginBookingDetailsEdit first." },
       };
     }
     if (session.serviceId !== undefined && session.serviceId !== service._id) {
@@ -83,15 +82,15 @@ export const prepareUpdate = internalMutation({
       service,
       conversation,
       teamId: team._id,
-      rangeStartAt: args.startAt,
-      rangeEndAt: args.startAt + service.durationMinutes * 60 * 1000,
+      rangeStartAt: event.startAt,
+      rangeEndAt: event.startAt + service.durationMinutes * 60 * 1000,
       limit: 1,
       excludeEventId: session.calendarEventId,
     };
-    let selectedSlot = (await generateSlots(ctx, slotArgs)).find((slot) => slot.startAt === args.startAt);
+    let selectedSlot = (await generateSlots(ctx, slotArgs)).find((slot) => slot.startAt === event.startAt);
     if (selectedSlot === undefined) {
       const unhealthySlot = (await generateSlots(ctx, { ...slotArgs, ignoreGoogleHealth: true }))
-        .find((slot) => slot.startAt === args.startAt);
+        .find((slot) => slot.startAt === event.startAt);
       if (unhealthySlot !== undefined) {
         const connection = await loadGoogleCalendarConnectionForUser(ctx, unhealthySlot.assignedUserId);
         const gate = googleCalendarBookingGate(connection);
@@ -214,7 +213,6 @@ export const finalizeUpdate = internalMutation({
   args: {
     conversationId: v.id("conversations"),
     serviceId: v.id("appointmentServices"),
-    startAt: v.number(),
   },
   returns: bookingToolResultValidator,
   handler: async (ctx, args) => {
@@ -227,7 +225,7 @@ export const finalizeUpdate = internalMutation({
     const service = await loadService(ctx, args.serviceId);
     const session = await getActiveSession(ctx, conversation._id);
     if (session === undefined || session.calendarEventId === undefined) {
-      return { success: false, message: "No booking edit in progress. Call beginBookingEdit first." };
+      return { success: false, message: "No booking details edit in progress. Call beginBookingDetailsEdit first." };
     }
     const event = await ctx.db.get(session.calendarEventId);
     if (event === null) return { success: false, message: "The booking to update could not be found." };

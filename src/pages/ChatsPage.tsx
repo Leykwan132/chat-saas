@@ -22,6 +22,7 @@ import {
   Check,
   AlertCircle,
   Plus,
+  Trash2,
   ScanFace,
   type LucideIcon,
 } from 'lucide-react';
@@ -83,15 +84,14 @@ import {
   InboxFilterSidebarSkeleton,
   InboxPageSkeleton,
 } from '@/components/inbox/InboxPageSkeleton';
-import {
-  InboxBookingDetailsCard,
-} from '@/components/inbox/InboxBookingDetailsCard';
 import { InboxCustomerBookingsSection } from '@/components/inbox/InboxCustomerBookingsSection';
+import { InboxDeleteConversationDialog } from '@/components/inbox/InboxDeleteConversationDialog';
 import { CreateCustomerBookingDialog } from '@/components/inbox/CreateCustomerBookingDialog';
 import { InboxCustomerBookingDetailsDialog } from '@/components/inbox/InboxCustomerBookingDetailsDialog';
 import { runInboxLeadStatusUpdate } from '@/components/inbox/inboxLeadStatusToast';
 import {
   getMostRecentCustomerBooking,
+  upcomingCustomerBookings,
   type CustomerBookingHistoryItem,
 } from '@/components/inbox/customerBookingsModel';
 import { BookedCheckIcon } from '@/components/booking/BookingDetailsPanel';
@@ -366,6 +366,7 @@ export default function ChatsPage() {
   const setConversationAiEnabled = useMutation(api.conversations.setConversationAiEnabled);
   const setConversationLeadOwner = useMutation(api.conversations.setConversationLeadOwner);
   const resolveEscalation = useMutation(api.conversations.resolveEscalation);
+  const deleteConversation = useMutation(api.conversationDeletion.remove);
   const addCustomerTag = useMutation(api.customers.addCustomerTag);
   const removeCustomerTag = useMutation(api.customers.removeCustomerTag);
   const updateCustomer = useMutation(api.customers.update);
@@ -410,8 +411,10 @@ export default function ChatsPage() {
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [tagsSectionOpen, setTagsSectionOpen] = useState(false);
   const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
-  const [bookingsOpen, setBookingsOpen] = useState(false);
+  const [bookingsOpen, setBookingsOpen] = useState(true);
   const [createBookingOpen, setCreateBookingOpen] = useState(false);
+  const [deleteConversationId, setDeleteConversationId] = useState<Id<'conversations'> | null>(null);
+  const [deleteConversationBusy, setDeleteConversationBusy] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(true);
   const [mobileDetailsOpen, setMobileDetailsOpen] = useState(false);
@@ -453,6 +456,7 @@ export default function ChatsPage() {
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
   ) as CustomerBookingHistoryItem[] | undefined;
   const mostRecentBooking = getMostRecentCustomerBooking(customerBookings ?? []);
+  const upcomingBookings = upcomingCustomerBookings(customerBookings ?? [], Date.now());
   const selectedBooking = customerBookings?.find((booking) => booking.bookingId === selectedBookingId) ?? null;
 
   const conversationLogs = useQuery(
@@ -696,6 +700,24 @@ export default function ChatsPage() {
       else next.add(key);
       return next;
     });
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!deleteConversationId) return;
+    setDeleteConversationBusy(true);
+    try {
+      await deleteConversation({ conversationId: deleteConversationId });
+      if (selectedConversationId === deleteConversationId) {
+        setSelectedConversationId(null);
+      }
+      setDeleteConversationId(null);
+      toast.success('Conversation cleared');
+    } catch (error) {
+      if (!(error instanceof Error)) throw error;
+      toast.error(error.message);
+    } finally {
+      setDeleteConversationBusy(false);
+    }
   };
 
   const handleMobileConversationSwitcherOpenChange = (open: boolean) => {
@@ -1313,6 +1335,7 @@ export default function ChatsPage() {
           selectedConversationId={selectedConversationId}
           onSelectConversation={setSelectedConversationId}
           onTogglePin={togglePin}
+          onRequestDelete={setDeleteConversationId}
           activeFilters={activeInboxFilters}
           onRemoveActiveFilter={handleRemoveInboxFilter}
           canLoadMore={inboxSummaryStatus === 'CanLoadMore'}
@@ -1338,6 +1361,7 @@ export default function ChatsPage() {
             selectedConversationId={selectedConversationId}
             onSelectConversation={setSelectedConversationId}
             onTogglePin={togglePin}
+            onRequestDelete={setDeleteConversationId}
             activeFilters={activeInboxFilters}
             onRemoveActiveFilter={handleRemoveInboxFilter}
             canLoadMore={inboxSummaryStatus === 'CanLoadMore'}
@@ -1378,6 +1402,7 @@ export default function ChatsPage() {
                         setMobileConversationSwitcherOpen(false);
                       }}
                       onTogglePin={togglePin}
+                      onRequestDelete={setDeleteConversationId}
                       activeFilters={activeInboxFilters}
                       onRemoveActiveFilter={handleRemoveInboxFilter}
                       canLoadMore={inboxSummaryStatus === 'CanLoadMore'}
@@ -1423,6 +1448,18 @@ export default function ChatsPage() {
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2.5">
+                  {selectedConversationId ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8"
+                      aria-label="Delete conversation"
+                      onClick={() => setDeleteConversationId(selectedConversationId)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  ) : null}
                   {selectedConversation ? (
                     <div className="inline-flex h-8 w-fit shrink-0 items-center gap-1 px-0 shadow-none">
                       <label
@@ -1495,21 +1532,6 @@ export default function ChatsPage() {
 
               {/* Chat Input — pinned to bottom of the chat column */}
               <div className="row-start-3 flex w-full min-w-0 flex-col gap-3 border-t border-border bg-background p-4">
-                {mostRecentBooking ? (
-                  <InboxBookingDetailsCard
-                    booking={{
-                      ...mostRecentBooking,
-                      service: {
-                        name: mostRecentBooking.service.name,
-                        fields: mostRecentBooking.service.fields ?? [],
-                      },
-                    }}
-                    variant="compact"
-                    canManage={can(Permission.CALENDAR_MANAGE)}
-                    agentId={agentId}
-                    onOpenDetails={() => setSelectedBookingId(mostRecentBooking.bookingId)}
-                  />
-                ) : null}
                 {selectedConversation?.escalation && (
                   <div className="relative flex max-h-28 items-start justify-between gap-4 overflow-y-auto rounded-lg border border-border bg-muted/40 p-3 text-xs shadow-none">
                     <ShineBorder shineColor={['#DC2626', '#EF4444', '#F87171']} />
@@ -1637,14 +1659,14 @@ export default function ChatsPage() {
                   onClick={() => handleExpandDetailsSection('customer')}
                 />
                 <DetailsPanelRailButton
-                  label="Tags"
-                  icon={Tag}
-                  onClick={() => handleExpandDetailsSection('tags')}
-                />
-                <DetailsPanelRailButton
                   label="Summary"
                   icon={FileText}
                   onClick={() => handleExpandDetailsSection('summary')}
+                />
+                <DetailsPanelRailButton
+                  label="Tags"
+                  icon={Tag}
+                  onClick={() => handleExpandDetailsSection('tags')}
                 />
                 <DetailsPanelRailButton
                   label="Action History"
@@ -1660,6 +1682,7 @@ export default function ChatsPage() {
                 ) : null}
               </div>
             ) : (
+            <div className="flex min-h-0 flex-1 flex-col">
             <div className={cn(inboxColumnScrollClassName, 'no-scrollbar')}>
               {detailsPanelLoading ? (
                 <DetailsPanelSkeleton />
@@ -1965,13 +1988,72 @@ export default function ChatsPage() {
 
                     <Separator />
 
-                    <InboxCustomerBookingsSection
-                      bookings={customerBookings ?? []}
-                      loading={customerBookings === undefined}
-                      open={bookingsOpen}
-                      onOpenChange={setBookingsOpen}
-                      onSelect={(booking) => setSelectedBookingId(booking.bookingId)}
-                    />
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
+                        onClick={() => setInteractionSummaryOpen((o) => !o)}
+                        aria-expanded={interactionSummaryOpen}
+                      >
+                        <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="text-sm font-semibold text-foreground">
+                          Summary
+                        </span>
+                        <div className="flex items-center gap-1 rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-600 dark:bg-violet-500/20 dark:text-violet-400">
+                          <Sparkles className="size-2.5 animate-pulse" />
+                          <span>AI</span>
+                        </div>
+                        <div className="flex-1" />
+                        <ChevronDown
+                          className={cn(
+                            'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                            !interactionSummaryOpen && '-rotate-90',
+                          )}
+                        />
+                      </button>
+                      {interactionSummaryOpen ? (
+                        <div className="px-4 pb-3 space-y-2">
+                          <div className="pl-4 border-l border-violet-200 dark:border-violet-800 space-y-2.5">
+                            {generatedSummary ? (
+                              <p className="text-sm text-foreground/90 font-normal leading-relaxed whitespace-pre-wrap block w-full">
+                                {generatedSummary}
+                              </p>
+                            ) : isGeneratingSummary ? (
+                              <Shimmer
+                                duration={1.5}
+                                spread={3}
+                                className="text-sm font-normal italic"
+                                aria-busy
+                                aria-live="polite"
+                              >
+                                Generating summary…
+                              </Shimmer>
+                            ) : summaryError ? (
+                              <div className="space-y-2">
+                                <p className="text-sm text-destructive">{summaryError}</p>
+                                <button
+                                  type="button"
+                                  onClick={() => void handleGenerateSummary()}
+                                  disabled={isGeneratingSummary}
+                                  className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline cursor-pointer disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
+                                >
+                                  Generate AI summary
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => void handleGenerateSummary()}
+                                disabled={isGeneratingSummary}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline cursor-pointer disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
+                              >
+                                Generate AI summary
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
 
                     <Separator />
 
@@ -2166,76 +2248,28 @@ export default function ChatsPage() {
 
                     <Separator />
 
-                    <div className="flex flex-col">
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
-                        onClick={() => setInteractionSummaryOpen((o) => !o)}
-                        aria-expanded={interactionSummaryOpen}
-                      >
-                        <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                        <span className="text-sm font-semibold text-foreground">
-                          Summary
-                        </span>
-                        <div className="flex items-center gap-1 rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-600 dark:bg-violet-500/20 dark:text-violet-400">
-                          <Sparkles className="size-2.5 animate-pulse" />
-                          <span>AI</span>
-                        </div>
-                        <div className="flex-1" />
-                        <ChevronDown
-                          className={cn(
-                            'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                            !interactionSummaryOpen && '-rotate-90',
-                          )}
-                        />
-                      </button>
-                      {interactionSummaryOpen ? (
-                        <div className="px-4 pb-3 space-y-2">
-                          <div className="pl-4 border-l border-violet-200 dark:border-violet-800 space-y-2.5">
-                            {generatedSummary ? (
-                              <p className="text-sm text-foreground/90 font-normal leading-relaxed whitespace-pre-wrap block w-full">
-                                {generatedSummary}
-                              </p>
-                            ) : isGeneratingSummary ? (
-                              <Shimmer
-                                duration={1.5}
-                                spread={3}
-                                className="text-sm font-normal italic"
-                                aria-busy
-                                aria-live="polite"
-                              >
-                                Generating summary…
-                              </Shimmer>
-                            ) : summaryError ? (
-                              <div className="space-y-2">
-                                <p className="text-sm text-destructive">{summaryError}</p>
-                                <button
-                                  type="button"
-                                  onClick={() => void handleGenerateSummary()}
-                                  disabled={isGeneratingSummary}
-                                  className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline cursor-pointer disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
-                                >
-                                  Generate AI summary
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => void handleGenerateSummary()}
-                                disabled={isGeneratingSummary}
-                                className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline cursor-pointer disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
-                              >
-                                Generate AI summary
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
+                    <InboxCustomerBookingsSection
+                      bookings={upcomingBookings}
+                      loading={customerBookings === undefined}
+                      open={bookingsOpen}
+                      onOpenChange={setBookingsOpen}
+                      onSelect={(booking) => setSelectedBookingId(booking.bookingId)}
+                    />
 
                   </div>
                 )
               )}
+            </div>
+            <div className="shrink-0 border-t border-border p-4">
+              <Button
+                type="button"
+                variant="destructive"
+                className="h-11 w-full bg-destructive text-white hover:bg-destructive/90 dark:bg-destructive dark:text-white dark:hover:bg-destructive/90"
+                onClick={() => setDeleteConversationId(selectedConversationId)}
+              >
+                Clear Conversation
+              </Button>
+            </div>
             </div>
             )}
           </div>
@@ -2248,6 +2282,14 @@ export default function ChatsPage() {
           conversationId={selectedConversationId}
         />
       ) : null}
+      <InboxDeleteConversationDialog
+        open={deleteConversationId !== null}
+        pending={deleteConversationBusy}
+        onOpenChange={(open) => {
+          if (!open && !deleteConversationBusy) setDeleteConversationId(null);
+        }}
+        onConfirm={() => void handleDeleteConversation()}
+      />
       <InboxCustomerBookingDetailsDialog
         booking={selectedBooking}
         open={selectedBookingId !== null}

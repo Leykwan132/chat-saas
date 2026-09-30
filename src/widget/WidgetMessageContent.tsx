@@ -1,3 +1,4 @@
+import { hideSystemErrorText } from "@/lib/systemErrorText";
 import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -19,11 +20,12 @@ export function WidgetMessageContent({
   isAssistantMessage: boolean;
 }) {
   if (!isAssistantMessage) return <span>{content}</span>;
+  const visible = hideSystemErrorText(content);
 
   return (
     <div className="markdown-content">
       <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-        {content}
+        {visible}
       </Markdown>
     </div>
   );

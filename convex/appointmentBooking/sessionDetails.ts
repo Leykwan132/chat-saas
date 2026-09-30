@@ -50,7 +50,7 @@ export const startBookingSession = internalMutation({
       if (activeBatch.serviceId !== undefined && activeBatch.serviceId !== service._id) {
         return { success: false, message: "The active booking batch is for a different service." };
       }
-      const collectedFields = mergeCollectedFields(activeBatch.collectedFields, args.collectedFields);
+      const collectedFields = mergeCollectedFields(service, activeBatch.collectedFields, args.collectedFields);
       const missingFields = missingBatchServiceFields(service, collectedFields);
       const status = missingFields.length === 0 && activeBatch.customerConfirmationMessageId !== undefined
         ? AppointmentBookingBatchStatus.Confirming
@@ -75,7 +75,7 @@ export const startBookingSession = internalMutation({
     }
     const now = Date.now();
     const session = await getOrCreateSession(ctx, conversation._id, conversation.assignedAgentId);
-    const collectedFields = mergeCollectedFields(session.collectedFields, args.collectedFields);
+    const collectedFields = mergeCollectedFields(service, session.collectedFields, args.collectedFields);
     const missing = missingServiceFields(service, collectedFields);
     const isEditing = session.calendarEventId !== undefined;
     const keepsConfirmedAvailability =
@@ -113,7 +113,7 @@ export const startBookingSession = internalMutation({
       message: missing.length > 0
         ? `${isEditing ? "Booking edit in progress" : "Booking session started"}. Still collecting: ${missing.join(", ")}`
         : isEditing
-          ? "Booking details updated. Check availability if the time changed, then call updateBookingAppointment after the customer confirms."
+          ? "Booking details updated. Call saveBookingDetails after the customer confirms. The date and time stay the same."
           : keepsConfirmedAvailability
             ? "All required details are collected. Create the booking now."
             : "Booking session started. All required details are collected - you can check availability next.",

@@ -39,6 +39,7 @@ type InboxConversationListProps = {
   selectedConversationId: Id<'conversations'> | null;
   onSelectConversation: (id: Id<'conversations'>) => void;
   onTogglePin: (id: Id<'conversations'>) => void;
+  onRequestDelete?: (id: Id<'conversations'>) => void;
   activeFilters?: InboxActiveFilter[];
   onRemoveActiveFilter?: (id: string) => void;
   canLoadMore: boolean;
@@ -61,6 +62,7 @@ export function InboxConversationList({
   selectedConversationId,
   onSelectConversation,
   onTogglePin,
+  onRequestDelete,
   activeFilters = [],
   onRemoveActiveFilter,
   canLoadMore,
@@ -198,6 +200,7 @@ export function InboxConversationList({
                     isPinned
                     onSelect={onSelectConversation}
                     onTogglePin={onTogglePin}
+                    onDelete={onRequestDelete}
                   />
                 ))}
                 <div className="flex items-center gap-1.5 border-b border-t border-border px-4 py-2">
@@ -219,6 +222,7 @@ export function InboxConversationList({
                 isPinned={false}
                 onSelect={onSelectConversation}
                 onTogglePin={onTogglePin}
+                onDelete={onRequestDelete}
               />
             ))}
             {canLoadMore || isLoadingMore ? (

@@ -51,8 +51,6 @@ const workpoolModules = {
 };
 const startAt = Date.UTC(2026, 6, 1, 9, 0, 0);
 const endAt = startAt + 30 * 60 * 1000;
-const movedStartAt = startAt + 60 * 60 * 1000;
-
 function createTest() {
   const t = convexTest(schema, modules);
   t.registerComponent("conversationLogWorkpool", workpoolSchema, workpoolModules);
@@ -249,7 +247,7 @@ test("updating a connected booking reports conflict without changing the local b
     return new Response(null, { status: 412 });
   });
   const result = await runUpdateBookingAppointment(
-    { conversationId: fixture.conversationId, serviceId: fixture.serviceId, startAt: movedStartAt },
+    { conversationId: fixture.conversationId, serviceId: fixture.serviceId },
     deps,
   );
   expect(result).toMatchObject({ success: false, kind: "conflict" });

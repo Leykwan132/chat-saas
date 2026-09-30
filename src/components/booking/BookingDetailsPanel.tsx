@@ -233,7 +233,7 @@ export function BookingDetailsPanel({
       <BookedCheckIcon size="lg" className="mt-0.5" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-base font-semibold leading-snug text-foreground">{title}</h3>
+          <h3 className="text-xl font-semibold leading-snug text-foreground">{title}</h3>
           {badge ? (
             <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
               {badge}

@@ -23,7 +23,7 @@ export function BookingDetailsActionsBar({
     return null;
   }
 
-  const buttonClassName = compact ? undefined : 'w-full';
+  const buttonClassName = compact ? undefined : 'h-11 w-full';
   const buttonSize = compact ? 'sm' : 'default';
 
   return (

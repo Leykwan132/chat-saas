@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAction, useMutation, useQuery } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
@@ -61,7 +61,7 @@ export function EditBookingDialog({
   );
   const updateEvent = useAction(api.calendarEvents.update);
   const removeEvent = useAction(api.calendarEvents.remove);
-  const updateBookingStatus = useMutation(api.appointmentBooking.statusTransition.updateBookingStatus);
+  const updateBookingStatus = useAction(api.appointmentBooking.statusTransition.updateBookingStatus);
   const displayTimeZone = useMemo(
     () => activeTeam?.timeZone ? normalizeCalendarTimeZone(activeTeam.timeZone) : getClientTimeZone(),
     [activeTeam?.timeZone],
@@ -197,7 +197,7 @@ export function EditBookingDialog({
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Delete event?</DialogTitle><DialogDescription>This removes the appointment from the shared team calendar.</DialogDescription></DialogHeader>
-          <DialogFooter><Button type="button" variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button><Button type="button" variant="destructive" onClick={handleDeleteEvent} disabled={isDeleting}>{isDeleting ? <Spinner className="mr-2 size-4" /> : null}Delete</Button></DialogFooter>
+          <DialogFooter><Button type="button" variant="ghost" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button><Button type="button" className="bg-destructive text-white hover:bg-destructive/90 dark:bg-destructive dark:text-white dark:hover:bg-destructive/90" variant="destructive" onClick={handleDeleteEvent} disabled={isDeleting}>{isDeleting ? <Spinner className="mr-2 size-4" /> : null}Delete</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </>

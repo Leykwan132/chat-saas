@@ -109,6 +109,13 @@ async function deleteConversationPage(
     )
     .take(PAGE_SIZE);
   if (await deleteRows(ctx, bookingBatches)) return true;
+  const updateBatches = await ctx.db
+    .query("appointmentBookingUpdateBatches")
+    .withIndex("by_conversationId", (q) =>
+      q.eq("conversationId", conversation._id),
+    )
+    .take(PAGE_SIZE);
+  if (await deleteRows(ctx, updateBatches)) return true;
   await decrementChannelConversationCount(ctx, conversation.channelId);
   await ctx.db.delete(conversation._id);
   return true;
@@ -171,6 +178,11 @@ async function deleteAgentPage(
     .withIndex("by_agentId_and_updatedAt", (q) => q.eq("agentId", agent._id))
     .take(PAGE_SIZE);
   if (await deleteRows(ctx, bookingBatches)) return true;
+  const updateBatches = await ctx.db
+    .query("appointmentBookingUpdateBatches")
+    .withIndex("by_agentId_and_updatedAt", (q) => q.eq("agentId", agent._id))
+    .take(PAGE_SIZE);
+  if (await deleteRows(ctx, updateBatches)) return true;
   const usage = await ctx.db
     .query("rawAgentUsage")
     .withIndex("by_agentId", (q) => q.eq("agentId", agent._id))

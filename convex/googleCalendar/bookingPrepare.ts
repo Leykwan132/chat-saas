@@ -63,7 +63,7 @@ export const prepareBook = internalMutation({
         kind: "failed" as const,
         result: {
           success: false,
-          message: "This session is editing an existing booking. Call updateBookingAppointment instead of bookAppointment.",
+          message: "This session is editing an existing booking. Call saveBookingDetails instead of bookAppointment.",
         },
       };
     }

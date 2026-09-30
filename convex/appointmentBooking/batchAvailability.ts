@@ -1,6 +1,7 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { AppointmentBookingBatchStatus } from "../appointmentBookingBatchStatus";
+import { AppointmentBookingSessionStatus } from "../appointmentBookingSessionStatus";
 import { resolveTeamForAgent } from "./access";
 import { resolveAvailableInterval } from "./availability";
 import { formatAvailabilitySlotsForTool } from "./availabilityPresentation";
@@ -24,6 +25,16 @@ export function missingBatchServiceFields(
         (typeof value === "string" && value.trim().length === 0);
     })
     .map((field) => field.label);
+}
+
+function batchFieldsFromSingleSession(
+  service: Doc<"appointmentServices">,
+  fields: CollectedFields,
+): CollectedFields {
+  const scheduleKeys = new Set(service.fields
+    .filter((field) => field.type === "date" || field.type === "time")
+    .map((field) => field.key));
+  return Object.fromEntries(Object.entries(fields).filter(([key]) => !scheduleKeys.has(key)));
 }
 
 function invalidInput(message: string) {
@@ -86,8 +97,9 @@ export async function checkBatchAvailability(
     return invalidInput(`Availability dates must be ${dateValidation.todayDate} or later.`);
   }
   const state = await getActiveBookingState(ctx, args.conversation._id);
-  if (state?.kind === "single") {
-    return invalidInput("Cancel or finish the active booking session before starting a batch.");
+  const pendingSingle = state?.kind === "single" ? state.row : undefined;
+  if (pendingSingle?.calendarEventId !== undefined) {
+    return invalidInput("Finish or discard the booking edit with cancelBooking before starting a batch.");
   }
   if (state?.kind === "batch" && state.row.serviceId !== undefined &&
       state.row.serviceId !== args.service._id) {
@@ -113,7 +125,15 @@ export async function checkBatchAvailability(
     return { success: true, allAvailable: false, requested, unavailable };
   }
   const resolvedSlots = slots.filter((slot): slot is NonNullable<typeof slot> => slot !== null);
-  const collectedFields = state?.kind === "batch" ? state.row.collectedFields : {};
+  const collectedFields = state?.kind === "batch"
+    ? state.row.collectedFields
+    : batchFieldsFromSingleSession(args.service, pendingSingle?.collectedFields ?? {});
+  if (pendingSingle !== undefined) {
+    await ctx.db.patch(pendingSingle._id, {
+      status: AppointmentBookingSessionStatus.Cancelled,
+      updatedAt: Date.now(),
+    });
+  }
   const confirmedMessageId = await confirmationMessageId(
     ctx,
     args.conversation._id,

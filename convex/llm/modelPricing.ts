@@ -50,7 +50,7 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     provider: "openrouter",
     chef: "Meta",
     chefSlug: "meta",
-    requiredPlan: "starter",
+    requiredPlan: "free",
     labels: ["advanced", "latest"],
   },
   "deepseek/deepseek-v4-flash": {

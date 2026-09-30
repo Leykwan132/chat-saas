@@ -135,7 +135,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "Basic Analytics",
     ],
     actionLabel: "Start for Free",
-    models: ["ilmu-mini-v3.3"],
+    models: ["ilmu-mini-v3.3", "meta/muse-spark-1.3-contributor"],
     platforms: ["whatsapp", "instagram", "messenger", "web"],
     features: {
       broadcasting: true,

@@ -244,7 +244,7 @@ export const checkAvailability = internalMutation({
         effectiveConfirmationMessageId !== undefined,
       slots: formattedSlots,
       message: isEditing
-        ? "Slots ready for the booking update. Call updateBookingAppointment after the customer confirms."
+        ? "A booking details edit is open and cannot change the time. To move an appointment, use updateBookingsDateTime."
         : undefined,
     };
   },

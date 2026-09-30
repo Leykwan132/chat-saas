@@ -179,6 +179,40 @@ test("five available requested times create one confirmed pending batch", async 
   });
 });
 
+test("a batch takes over an unbooked single session and keeps its customer details", async () => {
+  const t = convexTest(schema, modules);
+  const fixture = await createAvailabilityFixture(t);
+  const sessionId = await t.run((ctx) => ctx.db.insert("appointmentBookingSessions", {
+    conversationId: fixture.conversationId,
+    agentId: fixture.agentId,
+    serviceId: fixture.serviceId,
+    status: "collecting",
+    collectedFields: { name: "Aisha" },
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  }));
+
+  const availability = await t.mutation(
+    internal.appointmentBooking.sessions.checkAvailability,
+    {
+      conversationId: fixture.conversationId,
+      serviceId: fixture.serviceId,
+      preferredStartAts: requestedStarts,
+    },
+  );
+
+  expect(availability).toMatchObject({ success: true, allAvailable: true, missingFields: ["Phone Number"] });
+  const rows = await t.run(async (ctx) => ({
+    session: await ctx.db.get(sessionId),
+    batch: await ctx.db
+      .query("appointmentBookingBatches")
+      .withIndex("by_conversationId", (q) => q.eq("conversationId", fixture.conversationId))
+      .first(),
+  }));
+  expect(rows.session?.status).toBe("cancelled");
+  expect(rows.batch?.collectedFields).toEqual({ name: "Aisha" });
+});
+
 test("one unavailable requested time prevents creation of the entire batch", async () => {
   const t = convexTest(schema, modules);
   const fixture = await createAvailabilityFixture(t);
