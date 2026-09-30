@@ -33,6 +33,7 @@ const batchInternal = (internal as unknown as {
     batchBookingFinalize: {
       finalizeBatchBook: MutationRef<{ batchId: Id<"appointmentBookingBatches"> }, BatchBookingResult>;
       rollbackBatchBook: MutationRef<{ batchId: Id<"appointmentBookingBatches"> }, null>;
+      releasePendingBatch: MutationRef<{ batchId: Id<"appointmentBookingBatches"> }, null>;
       markBatchCompensationFailed: MutationRef<{
         batchId: Id<"appointmentBookingBatches">;
         failedCalendarEventIds: Id<"calendarEvents">[];
@@ -57,6 +58,7 @@ export type BatchBookingSyncDependencies = {
   remove(write: PreparedBatchWrite): Promise<GoogleCalendarOperationResult>;
   finalize(args: { batchId: Id<"appointmentBookingBatches"> }): Promise<BatchBookingResult>;
   rollback(args: { batchId: Id<"appointmentBookingBatches"> }): Promise<null>;
+  release(args: { batchId: Id<"appointmentBookingBatches"> }): Promise<null>;
   markCompensationFailed(args: {
     batchId: Id<"appointmentBookingBatches">;
     failedCalendarEventIds: Id<"calendarEvents">[];
@@ -86,7 +88,13 @@ export async function runBookAppointments(
   const completed: PreparedBatchWrite[] = [];
   for (const write of prepared.writes) {
     if (write.kind === "local") continue;
-    const result = await dependencies.create(write);
+    let result;
+    try {
+      result = await dependencies.create(write);
+    } catch (error) {
+      await dependencies.release({ batchId: prepared.batchId });
+      throw error;
+    }
     if (result.kind === "success") {
       completed.push(write);
       continue;
@@ -121,7 +129,13 @@ export function batchBookingSyncDependencies(ctx: ActionCtx): BatchBookingSyncDe
     refresh: (args) => ctx.runAction(batchInternal.syncWorker.run, args),
     create: (write) => {
       if (write.connectionId === undefined) throw new Error("Google connection is required");
-      return runCreateGoogleCalendarEvent({ ...write, connectionId: write.connectionId }, writeDependencies);
+      return runCreateGoogleCalendarEvent({
+        connectionId: write.connectionId,
+        calendarEventId: write.calendarEventId,
+        operationKey: write.operationKey,
+        event: write.event,
+        now: write.now,
+      }, writeDependencies);
     },
     remove: (write) => {
       if (write.connectionId === undefined) throw new Error("Google connection is required");
@@ -134,6 +148,7 @@ export function batchBookingSyncDependencies(ctx: ActionCtx): BatchBookingSyncDe
     },
     finalize: (args) => ctx.runMutation(batchInternal.batchBookingFinalize.finalizeBatchBook, args),
     rollback: (args) => ctx.runMutation(batchInternal.batchBookingFinalize.rollbackBatchBook, args),
+    release: (args) => ctx.runMutation(batchInternal.batchBookingFinalize.releasePendingBatch, args),
     markCompensationFailed: (args) =>
       ctx.runMutation(batchInternal.batchBookingFinalize.markBatchCompensationFailed, args),
   };

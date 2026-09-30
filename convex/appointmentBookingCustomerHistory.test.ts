@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -140,4 +140,10 @@ test("lists all completed booking statuses for a customer across conversations n
     fixture.now + 900,
   ]);
   expect(history.every((item) => item.bookingReference === item.bookingId)).toBe(true);
+
+  const agentBookings = await t.query(
+    internal.appointmentBooking.customerBookings.listCustomerBookings,
+    { conversationId: fixture.conversationId },
+  );
+  expect(agentBookings.map((item) => item.bookingId)).toEqual(history.map((item) => item.bookingId));
 });

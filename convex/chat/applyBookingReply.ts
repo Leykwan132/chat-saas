@@ -14,6 +14,8 @@ type BookingReplyGateRefs = {
         {
           success: boolean;
           hasActiveSession: boolean;
+          bookingKind?: "single" | "batch";
+          calendarEventId?: Id<"calendarEvents">;
           status?: string;
           message?: string;
         }
@@ -32,7 +34,7 @@ export async function applyBookingReplyGate(
     hadBookingBefore: boolean;
   },
 ): Promise<string[]> {
-  await ctx.runQuery(
+  const activeBookingSession = await ctx.runQuery(
     bookingReplyGateRefs.appointmentBooking.currentBooking.getActiveBookingSession,
     { conversationId: args.conversationId },
   );
@@ -51,5 +53,8 @@ export async function applyBookingReplyGate(
     confirmationMessage: confirmation?.success ? confirmation.confirmationMessage : undefined,
     bookingExists: bookingAfterReply.success,
     hadBookingBefore: args.hadBookingBefore,
+    bookingEditInProgress:
+      activeBookingSession.bookingKind === "single" &&
+      activeBookingSession.calendarEventId !== undefined,
   });
 }

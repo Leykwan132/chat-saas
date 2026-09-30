@@ -61,6 +61,19 @@ test("keeps ordinary replies when no booking finalization was attempted", () => 
   ).toEqual(["What time works for you?"]);
 });
 
+test("replaces a cancel-and-rebook proposal during a booking edit", () => {
+  const result = resolveBookingReply({
+    generatedMessages: [
+      "I can cancel this booking and recreate it instead. This would involve cancelling all your current bookings and rebooking them all.",
+    ],
+    bookingExists: true,
+    hadBookingBefore: true,
+    bookingEditInProgress: true,
+  } as Parameters<typeof resolveBookingReply>[0] & { bookingEditInProgress: true });
+
+  expect(result).toEqual(["I couldn’t update that appointment. Please choose another available time."]);
+});
+
 test("detects invented confirmation-link copy", () => {
   expect(
     inventedBookingConfirmation(

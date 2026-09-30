@@ -23,6 +23,12 @@ export const finalizeBatchBook = internalMutation({
     if (conversation === null || agent === null || service === null) {
       return { success: false, message: "Booking details could not be found." };
     }
+    for (const eventId of batch.calendarEventIds) {
+      const event = await ctx.db.get(eventId);
+      if (event?.externalProvider === "google" && event.externalSyncState !== "synced") {
+        return { success: false, message: "Google Calendar event was not created." };
+      }
+    }
     const now = Date.now();
     const bookings = [];
     for (const [index, eventId] of batch.calendarEventIds.entries()) {
@@ -99,6 +105,20 @@ export const rollbackBatchBook = internalMutation({
       status: AppointmentBookingBatchStatus.Confirming,
       calendarEventIds: undefined,
       sessionIds: undefined,
+      updatedAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+export const releasePendingBatch = internalMutation({
+  args: { batchId: v.id("appointmentBookingBatches") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const batch = await ctx.db.get(args.batchId);
+    if (batch === null || batch.status !== AppointmentBookingBatchStatus.Creating) return null;
+    await ctx.db.patch(batch._id, {
+      status: AppointmentBookingBatchStatus.Confirming,
       updatedAt: Date.now(),
     });
     return null;

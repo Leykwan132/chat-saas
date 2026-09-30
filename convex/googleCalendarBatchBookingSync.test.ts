@@ -5,6 +5,7 @@ import {
   type BatchBookingSyncDependencies,
 } from "./googleCalendar/batchBookingSync";
 import type { PrepareBatchBookResult } from "./googleCalendar/batchBookingTypes";
+import { runCreateGoogleCalendarEvent } from "./googleCalendar/writeExecution";
 
 const conversationId = "conversation" as Id<"conversations">;
 const serviceId = "service" as Id<"appointmentServices">;
@@ -68,6 +69,7 @@ function dependencies(options?: {
       message: "Bookings created.",
     })),
     rollback: vi.fn(async () => null),
+    release: vi.fn(async () => null),
     markCompensationFailed: vi.fn(async () => null),
   };
   return { deps, calls };
@@ -104,6 +106,48 @@ test("returns authorization failure before any local or remote preparation", asy
   const result = await runBookAppointments({ conversationId, serviceId, startAts }, deps);
   expect(result).toEqual(failure.result);
   expect(deps.create).not.toHaveBeenCalled();
+  expect(deps.finalize).not.toHaveBeenCalled();
+});
+
+test("google create drops batch metadata the write validator rejects", async () => {
+  const batch = prepared();
+  if (batch.kind !== "prepared") throw new Error("expected a prepared batch");
+  const write = batch.writes[0];
+  if (write === undefined || write.connectionId === undefined) {
+    throw new Error("Google connection is required");
+  }
+  const prepare = vi.fn(async (args: Record<string, unknown>) => {
+    expect(Object.keys(args).sort()).toEqual([
+      "action",
+      "calendarEventId",
+      "connectionId",
+      "externalEventId",
+      "now",
+      "operationKey",
+    ]);
+    return {
+      kind: "error" as const,
+      result: { kind: "invalid_request" as const, message: "stopped" },
+    };
+  });
+  const result = await runCreateGoogleCalendarEvent(
+    { ...write, connectionId: write.connectionId },
+    { prepare } as never,
+  );
+  expect(result).toMatchObject({ kind: "invalid_request" });
+});
+
+test("keeps local appointments when Google create throws so the retry can finish them", async () => {
+  const { deps } = dependencies();
+  deps.create = vi.fn(async () => {
+    throw new Error("ArgumentValidationError");
+  });
+  await expect(runBookAppointments(
+    { conversationId, serviceId, startAts },
+    deps,
+  )).rejects.toThrow("ArgumentValidationError");
+  expect(deps.release).toHaveBeenCalledWith({ batchId });
+  expect(deps.rollback).not.toHaveBeenCalled();
   expect(deps.finalize).not.toHaveBeenCalled();
 });
 

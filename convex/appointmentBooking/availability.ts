@@ -223,6 +223,7 @@ export async function resolveAvailableInterval(
     teamId: Id<"teams">;
     startAt: number;
     endAt: number;
+    excludeEventId?: Id<"calendarEvents">;
     ignoreGoogleHealth?: boolean;
     logUnavailableReason?: boolean;
   },
@@ -242,6 +243,7 @@ export async function resolveAvailableInterval(
     entries,
     startAt: args.startAt - bufferMs,
     endAt: args.endAt + bufferMs,
+    excludeEventId: args.excludeEventId,
     ignoreGoogleHealth: args.ignoreGoogleHealth,
   });
   if (assignee?.user === undefined || assignee.user === null) return null;

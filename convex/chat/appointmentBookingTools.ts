@@ -36,18 +36,23 @@ export function registerBatchAppointmentBookingTools(args: {
       ),
     }),
     execute: async (ctx, input) => {
-      const parsed = parseBatchAppointmentTimes(input.startTimesIso, defaultTimeZone);
-      if (!parsed.success) return parsed;
-      const active = await queryActiveBookingSession(ctx, conversationId);
-      if (!active.hasActiveSession) return active;
-      return await ctx.runAction(
-        internal.appointmentBooking.bookAppointments.bookAppointments,
-        {
-          conversationId,
-          serviceId: input.serviceId as Id<"appointmentServices">,
-          startAts: parsed.startAts,
-        },
-      );
+      try {
+        const parsed = parseBatchAppointmentTimes(input.startTimesIso, defaultTimeZone);
+        if (!parsed.success) return parsed;
+        const active = await queryActiveBookingSession(ctx, conversationId);
+        if (!active.hasActiveSession) return active;
+        return await ctx.runAction(
+          internal.appointmentBooking.bookAppointments.bookAppointments,
+          {
+            conversationId,
+            serviceId: input.serviceId as Id<"appointmentServices">,
+            startAts: parsed.startAts,
+          },
+        );
+      } catch (error) {
+        console.error(error);
+        return { success: false as const, message: "System reported an error." };
+      }
     },
   });
 

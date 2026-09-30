@@ -74,6 +74,16 @@ export async function prepareLocalBatch(
     return failed(`Missing required booking details: ${missingFields.join(", ")}.`);
   }
   const team = await resolveTeamForAgent(ctx, agent);
+  const ownEventIdByStart = new Map<number, Id<"calendarEvents">>();
+  for (const eventId of batch.calendarEventIds ?? []) {
+    const event = await ctx.db.get(eventId);
+    if (
+      event !== null && event.status !== "cancelled" &&
+      (event.externalSyncState === "pending" || event.externalSyncState === "synced")
+    ) {
+      ownEventIdByStart.set(event.startAt, event._id);
+    }
+  }
   const slots: BookingSlot[] = [];
   let assignmentService = service;
   for (const startAt of [...args.startAts].sort((a, b) => a - b)) {
@@ -83,6 +93,7 @@ export async function prepareLocalBatch(
       teamId: team._id,
       startAt,
       endAt: startAt + service.durationMinutes * 60 * 1000,
+      excludeEventId: ownEventIdByStart.get(startAt),
     });
     if (slot === null) {
       return failed("One or more requested times are no longer available. Check availability again.");

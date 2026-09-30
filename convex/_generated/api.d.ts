@@ -75,6 +75,7 @@ import type * as appointmentBooking_calendarHelpers from "../appointmentBooking/
 import type * as appointmentBooking_calendarManualBooking from "../appointmentBooking/calendarManualBooking.js";
 import type * as appointmentBooking_cancellations from "../appointmentBooking/cancellations.js";
 import type * as appointmentBooking_completion from "../appointmentBooking/completion.js";
+import type * as appointmentBooking_confirmationMessage from "../appointmentBooking/confirmationMessage.js";
 import type * as appointmentBooking_confirmations from "../appointmentBooking/confirmations.js";
 import type * as appointmentBooking_currentBooking from "../appointmentBooking/currentBooking.js";
 import type * as appointmentBooking_customerBookings from "../appointmentBooking/customerBookings.js";
@@ -183,6 +184,7 @@ import type * as contactAdminMigration from "../contactAdminMigration.js";
 import type * as contactAdminNotify from "../contactAdminNotify.js";
 import type * as contactAdminShared from "../contactAdminShared.js";
 import type * as contactRequests from "../contactRequests.js";
+import type * as conversationDeletion from "../conversationDeletion.js";
 import type * as conversationLogs from "../conversationLogs.js";
 import type * as conversations from "../conversations.js";
 import type * as creditEntries from "../creditEntries.js";
@@ -635,6 +637,7 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/calendarManualBooking": typeof appointmentBooking_calendarManualBooking;
   "appointmentBooking/cancellations": typeof appointmentBooking_cancellations;
   "appointmentBooking/completion": typeof appointmentBooking_completion;
+  "appointmentBooking/confirmationMessage": typeof appointmentBooking_confirmationMessage;
   "appointmentBooking/confirmations": typeof appointmentBooking_confirmations;
   "appointmentBooking/currentBooking": typeof appointmentBooking_currentBooking;
   "appointmentBooking/customerBookings": typeof appointmentBooking_customerBookings;
@@ -743,6 +746,7 @@ declare const fullApi: ApiFromModules<{
   contactAdminNotify: typeof contactAdminNotify;
   contactAdminShared: typeof contactAdminShared;
   contactRequests: typeof contactRequests;
+  conversationDeletion: typeof conversationDeletion;
   conversationLogs: typeof conversationLogs;
   conversations: typeof conversations;
   creditEntries: typeof creditEntries;

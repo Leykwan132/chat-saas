@@ -87,7 +87,7 @@ export function missingServiceFields(service: Doc<"appointmentServices">, fields
   return missing;
 }
 
-function formatCollectedFieldValue(value: string | number | boolean | null | undefined) {
+export function formatCollectedFieldValue(value: string | number | boolean | null | undefined) {
   if (value === undefined || value === null) return "";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   return String(value).trim();

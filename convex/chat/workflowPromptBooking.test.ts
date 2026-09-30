@@ -59,8 +59,13 @@ test("booking flow uses the atomic batch tools for multiple exact requested time
   expect(block).toContain("report every unavailable time together");
   expect(block).toContain("`bookAppointments`");
   expect(block).toContain("`sendBatchBookingConfirmation`");
+  expect(block).toContain('reply with only "System reported an error."');
   expect(block).toContain("`bookAppointment`");
   expect(block).toContain("`sendBookingConfirmation`");
+  expect(block).toContain("`listCustomerBookings`");
+  expect(block).toContain("every booking for this customer");
+  expect(block).toContain("`beginBookingEdit` with that appointment's `bookingId`");
+  expect(block).toContain("Never propose cancelling and recreating bookings as a workaround for an edit.");
 });
 
 test("booking flow embeds the server current date for relative requests", () => {

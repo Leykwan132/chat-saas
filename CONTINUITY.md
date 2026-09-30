@@ -2,7 +2,20 @@
 
 # Snapshot
 
-- 2026-09-29 [CODE] Batch booking accepts 2–10 ordered exact times from one customer message, creates an active batch only when all are available, collects shared customer details once, and creates every appointment through an all-or-compensate local/Google flow. One combined confirmation contains every booking. Existing single booking remains source-compatible. Unshipped.
+- 2026-09-30 [USER] Editing a named booking date or time updates only that appointment, including when its session is marked completed; never cancel or recreate the customer's other appointments. Unshipped.
+- 2026-09-30 [CODE] During a targeted booking edit, the reply guard replaces model-invented cancel/rebook text with a concise truthful update failure. Completed booking sessions can enter the same targeted edit flow. Unshipped.
+- 2026-09-30 [USER] The agent can list every booking for the customer in the conversation. Unshipped.
+- 2026-09-29 [USER] A batch booking confirmation lists every appointment in one message. Unshipped.
+- 2026-09-29 [USER] Details panel has a bottom Clear Conversation button. It confirms, then clears the thread and deletes the conversation and messages. Unshipped.
+- 2026-09-29 [USER] Delete event confirmation uses a ghost Cancel and a solid red Delete button with white text. Unshipped.
+- 2026-09-29 [CODE] Batch booking test fixture is named so Convex does not bundle convex-test. Unshipped.
+- 2026-09-29 [USER] Inbox Upcoming Bookings count stays a solid badge with white text. Unshipped.
+- 2026-09-29 [USER] Booking detail modal event name is larger, and Mark as completed and Edit booking have more vertical padding. Unshipped.
+- 2026-09-29 [USER] The booking card above the inbox reply box is removed. Unshipped.
+- 2026-09-29 [USER] Inbox booking dates read like Wednesday, 23 Sep · 4:00 – 4:30pm, without the Scheduled label. Unshipped.
+- 2026-09-29 [USER] Inbox Upcoming Bookings lists only scheduled appointments that are in progress or still ahead. Unshipped.
+- 2026-09-29 [USER] Local-only testing: root `index.html` loads AI widget `pub_7190131b74754f789d20f973b6328c82` from `/widget/v1.js` against `https://outstanding-rabbit-215.convex.site` only on loopback hosts. Keep uncommitted and do not push.
+- 2026-09-29 [CODE] Agent batch booking posts each appointment to Google Calendar. A retry finishes pending Kilobot rows instead of leaving them local. The five Multiple-Kwan dev appointments are synced. Unshipped.
 - 2026-09-29 [USER] Goal: show Avatar as its own card on Channels, opening the existing Avatar setup. Same Beta flag and account gate. Sidebar Avatar item is removed. Avatar page has an arrow back to the channel cards. Pushed to PR #189.
 - 2026-09-28 [USER] Goal: after Instructions change, replies must follow the new system prompt. Customer messages stay in the model context; assistant and tool messages written before `instructionsUpdatedAt` are omitted. Inbox history stays visible. Unshipped on `fix-context-rot`.
 - 2026-09-28 [USER] Goal: fix `whatsappWebhook:ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi` failing with "Too many reads (limit 4096)" on long conversations. Branch `fix/inbox-search-read-limit`. Unshipped.
@@ -133,6 +146,13 @@
 
 # Done (recent)
 
+- 2026-09-30 [CODE] Booking edits target only the named booked or completed appointment; model-invented cancel/rebook replies during an edit are replaced with a concise update failure. Unshipped.
+- 2026-09-30 [CODE] The agent tool `listCustomerBookings` returns every booking for the customer in the conversation. Unshipped.
+- 2026-09-29 [CODE] A batch confirmation is one message listing every appointment, date, time, and booking reference. Unshipped.
+- 2026-09-29 [CODE] Inbox Upcoming Bookings hides ended, cancelled, completed, and no-show appointments. Unshipped.
+- 2026-09-29 [CODE] Agent batch booking now creates the Google Calendar event. Pending rows are reused and posted on retry. Dev batch Multiple-Kwan is synced. Unshipped.
+- 2026-09-29 [CODE] Business-visible AI replies that contain a system error now show "System reported an error." A thrown batch booking tool returns that same sentence. Unshipped.
+- 2026-09-29 [CODE] Batch Google creates no longer send `kind` or `sessionId` into `googleCalendar/writeStore:prepare`. Unshipped.
 - 2026-09-29 [CODE] Multi-appointment booking is implemented test-first: durable batch state, all-slot availability, exact-list confirmation, atomic child creation, chronological round robin, Google compensation, agent tools, and prompt routing. Unshipped.
 - 2026-09-29 [CODE] Channels shows an Avatar card beside Website for the Beta flag and allowed account. Setup opens the existing Avatar page, which has an arrow back to the channel cards. The sidebar no longer lists Avatar. Unshipped.
 - 2026-09-28 [CODE] Saving a changed system prompt stamps `instructionsUpdatedAt`. Later replies keep customer messages and drop earlier assistant and tool messages from the model context. Inbox transcript is unchanged. Unshipped.
@@ -168,6 +188,10 @@
 
 # Receipts
 
+- 2026-09-30 [TOOL] Booking-edit guard, completed-target, and prompt regressions passed; full supported suite passed 661 files / 2,259 tests, and Docs tests passed 63. Unshipped.
+- 2026-09-29 [TOOL] Pending agent batch is posted to Google: `convex/googleCalendarBatchPendingCreate.test.ts` plus batch create and sync suites (11 tests). Dev `bookAppointments` for the stuck batch returned success and all five events are `synced`. Unshipped.
+- 2026-09-29 [TOOL] System-error display and booking prompt tests passed: `src/lib/systemErrorText.test.ts`, `convex/chat/workflowPromptBooking.test.ts` (7 tests). Unshipped.
+- 2026-09-29 [TOOL] Batch Google create validator regression passed: `convex/googleCalendarBatchBookingSync.test.ts` (5 tests). Unshipped.
 - 2026-09-29 [TOOL] PR #190 opened for multi-appointment booking: https://github.com/Leykwan132/chat-saas/pull/190. Convex code generation and TypeScript completed; focused verification passed 27 tests; the final main-updated branch passed 803 suites and 2,245 tests. Unshipped.
 - 2026-09-29 [TOOL] Sidebar suites passed after removing Avatar (11 tests). Avatar page test passed (4). Follow-up pushed to https://github.com/Leykwan132/chat-saas/pull/189.
 - 2026-09-28 [TOOL] PR #188 opened from `fix-context-rot`: https://github.com/Leykwan132/chat-saas/pull/188. `convex/chat/instructionContext.test.ts` passed (2 tests).
