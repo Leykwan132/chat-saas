@@ -132,6 +132,7 @@ import type * as channelConversationCountMigration from "../channelConversationC
 import type * as channelConversationCounts from "../channelConversationCounts.js";
 import type * as channelSyncPools from "../channelSyncPools.js";
 import type * as channels from "../channels.js";
+import type * as chat_agentRequestResponseLogging from "../chat/agentRequestResponseLogging.js";
 import type * as chat_aiReplyMedia from "../chat/aiReplyMedia.js";
 import type * as chat_aiReplyMessages from "../chat/aiReplyMessages.js";
 import type * as chat_aiReplyOutput from "../chat/aiReplyOutput.js";
@@ -694,6 +695,7 @@ declare const fullApi: ApiFromModules<{
   channelConversationCounts: typeof channelConversationCounts;
   channelSyncPools: typeof channelSyncPools;
   channels: typeof channels;
+  "chat/agentRequestResponseLogging": typeof chat_agentRequestResponseLogging;
   "chat/aiReplyMedia": typeof chat_aiReplyMedia;
   "chat/aiReplyMessages": typeof chat_aiReplyMessages;
   "chat/aiReplyOutput": typeof chat_aiReplyOutput;

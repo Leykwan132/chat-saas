@@ -62,6 +62,7 @@ import {
 import { broadcastAgentMetadata } from "./broadcastMessageMetadata";
 import { isTeamDeletionActive } from "../teamDeletion/access";
 import { parseAvailabilityIso } from "../appointmentBooking/availabilityDateTime";
+import { logAgentRequestResponse } from "./agentRequestResponseLogging";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -1197,6 +1198,16 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
       instructionsUpdatedAt: agent.instructionsUpdatedAt,
       promptMessageId: sourceAgentMessageId,
     }),
+    rawRequestResponseHandler: async (_ctx, { agentName, request, response }) => {
+      logAgentRequestResponse({
+        agentId,
+        agentName,
+        conversationId,
+        sourceAgentMessageId,
+        request,
+        response,
+      });
+    },
     stopWhen: stepCountIs(8),
     tools,
     usageHandler: async (ctx, args) => {
