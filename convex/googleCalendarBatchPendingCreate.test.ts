@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { expect, test } from "vitest";
 import { internal } from "./_generated/api";
-import { createFixture, createTest, starts } from "./appointmentBookingBatchCreateFixture";
+import { createFixture, createTest, starts } from "./appointmentBookingBatchCreate.testFixture";
 import { googleCalendarWriteTestDependencies } from "./googleCalendar/writeTestDependencies";
 import { runCreateGoogleCalendarEvent } from "./googleCalendar/writeExecution";
 import { createGoogleCalendarBookingSyncFetch } from "./googleCalendarBookingSyncTestHelpers";

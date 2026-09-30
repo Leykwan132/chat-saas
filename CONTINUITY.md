@@ -4,6 +4,9 @@
 
 - 2026-09-30 [USER] Editing a named booking date or time updates only that appointment, including when its session is marked completed; never cancel or recreate the customer's other appointments. Unshipped.
 - 2026-09-30 [CODE] During a targeted booking edit, the reply guard replaces model-invented cancel/rebook text with a concise truthful update failure. Completed booking sessions can enter the same targeted edit flow. Unshipped.
+- 2026-09-30 [CODE] Cancellation is not multi-booking safe: `cancelBooking` resolves one most-recent eligible session by conversation, and `deleteCalendarEvent` validates an event ID but delegates to that same unscoped cancellation. No batch cancellation tool exists. Unshipped.
+- 2026-09-30 [CODE] Convex deployment failed because `convex/appointmentBookingBatchCreateFixture.ts` imports runtime `convex-test`; its single-dot filename made Convex bundle Node-only `node:async_hooks`. The fixture is now named `appointmentBookingBatchCreate.testFixture.ts`, which Convex excludes and Vitest does not execute as a suite. Unshipped.
+- 2026-09-30 [CODE] Cancellation retains the event with status `cancelled`, but the calendar projection returns cancelled events and the calendar UI has no cancelled presentation. A cancelled appointment therefore still appears as a normal booking. Unshipped.
 - 2026-09-30 [USER] The agent can list every booking for the customer in the conversation. Unshipped.
 - 2026-09-29 [USER] A batch booking confirmation lists every appointment in one message. Unshipped.
 - 2026-09-29 [USER] Details panel has a bottom Clear Conversation button. It confirms, then clears the thread and deletes the conversation and messages. Unshipped.
@@ -188,6 +191,8 @@
 
 # Receipts
 
+- 2026-09-30 [TOOL] Batch fixture isolation regression and both affected batch suites passed (6 tests). `convex deploy --dry-run --typecheck disable` completed without the Node API bundling error, and the full supported Vitest suite completed successfully. Unshipped.
+- 2026-09-30 [TOOL] Release commit `12c1aef` is pushed to PR #190. Workers Builds: kilobot is in progress; GitHub requires a review and this repository does not allow auto-merge. Unshipped.
 - 2026-09-30 [TOOL] Booking-edit guard, completed-target, and prompt regressions passed; full supported suite passed 661 files / 2,259 tests, and Docs tests passed 63. Unshipped.
 - 2026-09-29 [TOOL] Pending agent batch is posted to Google: `convex/googleCalendarBatchPendingCreate.test.ts` plus batch create and sync suites (11 tests). Dev `bookAppointments` for the stuck batch returned success and all five events are `synced`. Unshipped.
 - 2026-09-29 [TOOL] System-error display and booking prompt tests passed: `src/lib/systemErrorText.test.ts`, `convex/chat/workflowPromptBooking.test.ts` (7 tests). Unshipped.

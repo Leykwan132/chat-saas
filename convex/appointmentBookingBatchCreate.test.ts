@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
-import { createFixture, createTest, starts } from "./appointmentBookingBatchCreateFixture";
+import { createFixture, createTest, starts } from "./appointmentBookingBatchCreate.testFixture";
 
 test("creates all five local bookings atomically with chronological round robin", async () => {
   vi.useFakeTimers();
