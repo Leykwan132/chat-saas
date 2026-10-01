@@ -13,7 +13,7 @@ import {
 import { getConversationIdForEvent } from "../calendarEventsHelpers";
 import { dashboardOrigin } from "./dashboardOrigin";
 import { enqueueTelegramAgentNotification } from "./dispatch";
-import { escalationChannelLabel, escalationInboxUrl } from "./escalationMessage";
+import { escalationChannelLabel, notificationConversationUrl } from "./escalationMessage";
 import { isNotificationKindEnabled } from "./kinds";
 
 async function hasEnabledRecipient(ctx: MutationCtx, agentId: Id<"agents">): Promise<boolean> {
@@ -51,7 +51,7 @@ export async function notifyHumanEscalation(ctx: MutationCtx, agentId: Id<"agent
   const contact = customer?.email?.trim() || customer?.phone?.trim() || conversation.contactAddress;
   const customerName = customer?.name?.trim() || conversation.contactName?.trim() || contact;
   const origin = await dashboardOrigin(ctx, conversation.orgId);
-  const openUrl = escalationInboxUrl(origin, agentId, conversationId);
+  const openUrl = notificationConversationUrl(origin, agentId, conversation, customer);
   return await enqueueTelegramAgentNotification(
     ctx,
     agentId,
@@ -98,7 +98,10 @@ export async function notifyAppointmentEvent(ctx: MutationCtx, agentId: Id<"agen
   const label = event === "booked" ? "New booking" : event === "updated" ? "Booking updated" : "Booking cancelled";
   const origin = await dashboardOrigin(ctx, agent?.orgId ?? "");
   const conversationId = await getConversationIdForEvent(ctx, appointment);
-  const openUrl = escalationInboxUrl(origin, agentId, conversationId);
+  const conversation = conversationId ? await ctx.db.get(conversationId) : null;
+  const customerId = conversation?.customerId ?? customer?.customerId;
+  const customerProfile = customerId ? await ctx.db.get(customerId) : null;
+  const openUrl = notificationConversationUrl(origin, agentId, conversation, customerProfile);
   const customerName = customer?.displayName?.trim() || customer?.email?.trim() || "Customer";
   const serviceName = service?.name?.trim() || appointment.title;
   const calendarUrl = event === "booked" ? googleCalendarBookingUrl({

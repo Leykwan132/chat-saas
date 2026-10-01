@@ -1,8 +1,14 @@
+export const sampleWhatsAppChatUrl = 'https://wa.me/12025550123';
+
+export function notificationChatLabel(url: string): string {
+  return url.startsWith('https://wa.me/') ? 'Chat on WhatsApp' : 'Open chat';
+}
+
 export type TelegramNotificationButton = { text: string; url: string };
 
 export function notificationButtons(chatUrl: string, calendarUrl?: string): TelegramNotificationButton[] {
   return [
-    { text: 'Open chat', url: chatUrl },
+    { text: notificationChatLabel(chatUrl), url: chatUrl },
     ...(calendarUrl ? [{ text: 'Add to Google Calendar', url: calendarUrl }] : []),
   ];
 }
@@ -35,7 +41,7 @@ export function googleCalendarBookingUrl(input: {
     text: input.title,
     dates,
     ctz: input.timeZone,
-    details: `Open chat: ${input.chatUrl}`,
+    details: `${notificationChatLabel(input.chatUrl)}: ${input.chatUrl}`,
   });
   if (input.location) params.set('location', input.location);
   return `https://calendar.google.com/calendar/render?${params.toString()}`;

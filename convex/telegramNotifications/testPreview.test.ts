@@ -9,7 +9,7 @@ import { formatEventTestPreview } from './testPreview';
 test('creates a clearly marked sample message for each notification type', () => {
   const origin = 'https://chat.gosolutions.sg';
   const agentId = 'agent-1';
-  const inboxUrl = `${origin}/dashboard/${agentId}/inbox`;
+  const inboxUrl = "https://wa.me/12025550123";
   const escalation = formatEventTestPreview('humanEscalation', 'Support Agent', origin, agentId);
   const newBooking = formatEventTestPreview('bookingCreated', 'Support Agent', origin, agentId);
   const updatedBooking = formatEventTestPreview('bookingUpdated', 'Support Agent', origin, agentId);
@@ -19,16 +19,16 @@ test('creates a clearly marked sample message for each notification type', () =>
   expect(newBooking).toBe(markNotificationTest(bookingSampleMessage('New booking', 'Support Agent', inboxUrl)));
   expect(updatedBooking).toBe(markNotificationTest(bookingSampleMessage('Booking updated', 'Support Agent', inboxUrl)));
   expect(cancelledBooking).toBe(markNotificationTest(bookingSampleMessage('Booking cancelled', 'Support Agent', inboxUrl)));
-  expect(escalation).toContain(`Open chat: ${inboxUrl}`);
-  expect(cancelledBooking).toContain(`Open chat: ${inboxUrl}`);
+  expect(escalation).toContain(`Chat on WhatsApp: ${inboxUrl}`);
+  expect(cancelledBooking).toContain(`Chat on WhatsApp: ${inboxUrl}`);
 });
 
 test('demo deliveries include chat buttons for every kind and calendar only for creation', async () => {
   const { eventTestNotification } = await import('./testPreview');
   for (const kind of ['humanEscalation', 'bookingCreated', 'bookingUpdated', 'bookingCancelled'] as const) {
     const demo = eventTestNotification(kind, 'Support Agent', 'https://chat.example.com', 'agent-1');
-    expect(demo.buttons[0]).toEqual({ text: 'Open chat', url: 'https://chat.example.com/dashboard/agent-1/inbox' });
-    expect(demo.text).toContain('Open chat: https://chat.example.com/dashboard/agent-1/inbox');
+    expect(demo.buttons[0]).toEqual({ text: 'Chat on WhatsApp', url: 'https://wa.me/12025550123' });
+    expect(demo.text).toContain('Chat on WhatsApp: https://wa.me/12025550123');
     if (kind === 'bookingCreated') {
       expect(demo.buttons).toHaveLength(2);
       const calendar = new URL(demo.buttons[1].url);

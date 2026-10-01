@@ -1,4 +1,4 @@
-import { sampleBookingCalendarUrl } from './telegramNotificationActions';
+import { notificationChatLabel, sampleBookingCalendarUrl, sampleWhatsAppChatUrl } from './telegramNotificationActions';
 
 const MESSAGE_LIMIT = 280;
 
@@ -35,7 +35,7 @@ export function formatHumanEscalationMessage(input: {
     line("Needs help", input.question),
     line("Context", input.context),
     "",
-    `Open chat: ${input.openUrl}`,
+    `${notificationChatLabel(input.openUrl)}: ${input.openUrl}`,
   ].filter((entry): entry is string => entry !== null);
   return lines.join("\n");
 }
@@ -59,19 +59,19 @@ export function formatBookingNotificationMessage(input: {
     line("Date", input.date),
     line("Time", input.time),
     "",
-    `Open chat: ${input.openUrl}`,
+    `${notificationChatLabel(input.openUrl)}: ${input.openUrl}`,
     input.calendarUrl ? `Add to Google Calendar: ${input.calendarUrl}` : null,
   ].filter((entry): entry is string => entry !== null);
   return lines.join("\n");
 }
 
-const sampleInboxUrl = "https://your-domain/dashboard/…/inbox?conversation=…";
 
-export function humanEscalationSampleMessage(agentName = "Support Agent", openUrl = sampleInboxUrl): string {
+
+export function humanEscalationSampleMessage(agentName = "Support Agent", openUrl = sampleWhatsAppChatUrl): string {
   return formatHumanEscalationMessage({
     agentName,
     customerName: "Sample Customer",
-    contact: "sample@example.com",
+    contact: "+1 202-555-0123",
     channel: "WhatsApp",
     latestMessage: "I need help with my booking.",
     question: "Please review the customer request.",
@@ -85,7 +85,7 @@ export type BookingNotificationLabel = "New booking" | "Booking updated" | "Book
 export function bookingSampleMessage(
   label: BookingNotificationLabel,
   agentName = "Support Agent",
-  openUrl = sampleInboxUrl,
+  openUrl = sampleWhatsAppChatUrl,
 ): string {
   return formatBookingNotificationMessage({
     label,

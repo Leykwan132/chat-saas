@@ -1,4 +1,4 @@
-import { notificationButtons, sampleBookingCalendarUrl } from '../../shared/telegramNotificationActions';
+import { notificationButtons, sampleBookingCalendarUrl, sampleWhatsAppChatUrl } from '../../shared/telegramNotificationActions';
 import type { TelegramNotificationKind } from "../../shared/telegramNotificationKinds";
 import {
   bookingSampleMessage,
@@ -16,11 +16,10 @@ const bookingLabels: Record<Exclude<TelegramNotificationKind, "humanEscalation">
 export function eventTestNotification(
   kind: TelegramNotificationKind,
   agentName: string,
-  origin: string,
-  agentId: string,
+  _origin: string,
+  _agentId: string,
 ) {
-  const base = origin.replace(/\/$/, "");
-  const openUrl = `${base}/dashboard/${agentId}/inbox`;
+  const openUrl = sampleWhatsAppChatUrl;
   const message = kind === "humanEscalation"
     ? humanEscalationSampleMessage(agentName, openUrl)
     : bookingSampleMessage(bookingLabels[kind], agentName, openUrl);

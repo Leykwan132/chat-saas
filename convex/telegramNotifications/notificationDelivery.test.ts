@@ -123,3 +123,28 @@ test('finds the customer chat when the booking has no conversation reference', a
     `https://chat.example.com/dashboard/${agentId}/inbox?conversation=${conversationId}`,
   );
 });
+
+test('WhatsApp escalation and every booking event open the customer in WhatsApp', async () => {
+  vi.stubEnv('APP_BASE_URL', 'https://chat.example.com');
+  const queued: Array<{ text: string; buttons?: Array<{ text: string; url: string }> }> = [];
+  vi.spyOn(telegramNotificationWorkpool, 'enqueueAction').mockImplementation(async (_ctx, _fn, args) => {
+    queued.push(args as typeof queued[number]);
+    return 'work-id' as never;
+  });
+  const { t, agentId, conversationId, appointmentId } = await notificationFixture();
+  await t.run(async (ctx) => {
+    await ctx.db.patch(conversationId, { service: 'whatsapp', contactAddress: '+60 12-345 6789' });
+    await notifyHumanEscalation(ctx, agentId, conversationId, 'Support Agent');
+    for (const event of ['booked', 'updated', 'cancelled'] as const) {
+      await notifyAppointmentEvent(ctx, agentId, appointmentId, 'Support Agent', event);
+    }
+  });
+  expect(queued).toHaveLength(4);
+  for (const message of queued) {
+    expect(message.buttons?.[0]).toEqual({ text: 'Chat on WhatsApp', url: 'https://wa.me/60123456789' });
+    expect(message.text).toContain('Chat on WhatsApp: https://wa.me/60123456789');
+    expect(message.text).not.toContain('/dashboard/');
+  }
+  const calendar = new URL(queued[1].buttons![1].url);
+  expect(calendar.searchParams.get('details')).toBe('Chat on WhatsApp: https://wa.me/60123456789');
+});
