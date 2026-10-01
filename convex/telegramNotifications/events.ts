@@ -121,6 +121,7 @@ export async function notifyAppointmentEvent(ctx: MutationCtx, agentId: Id<"agen
       agentName,
       customerName,
       serviceName,
+      platform: escalationChannelLabel(conversation?.service ?? customerProfile?.service ?? "unknown"),
       date: when.date,
       time: when.time,
       openUrl,

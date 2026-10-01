@@ -29,6 +29,7 @@ test('demo deliveries include chat buttons for every kind and calendar only for 
     const demo = eventTestNotification(kind, 'Support Agent', 'https://chat.example.com', 'agent-1');
     expect(demo.buttons[0]).toEqual({ text: 'Chat on WhatsApp', url: 'https://wa.me/12025550123' });
     expect(demo.text).toContain('Chat on WhatsApp: https://wa.me/12025550123');
+    expect(demo.text).toContain('Platform: WhatsApp');
     if (kind === 'bookingCreated') {
       expect(demo.buttons).toHaveLength(2);
       const calendar = new URL(demo.buttons[1].url);

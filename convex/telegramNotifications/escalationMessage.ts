@@ -5,7 +5,8 @@ const channelLabels: Record<string, string> = {
   whatsapp: "WhatsApp",
   instagram: "Instagram",
   messenger: "Messenger",
-  web: "Website",
+  web: "Web",
+  unknown: "Unknown",
   avatar: "Avatar",
   playground: "Test chat",
 };

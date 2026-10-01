@@ -13,6 +13,7 @@ test("booking notification names the customer, service, and date on the workspac
     agentName: "Support Agent",
     customerName: "Alicia Tan",
     serviceName: "Consultation",
+    platform: "Web",
     date: "October 2 (Friday)",
     time: "4:00 PM - 4:30 PM",
     openUrl,
@@ -23,6 +24,7 @@ test("booking notification names the customer, service, and date on the workspac
   );
   expect(message).toContain("Customer: Alicia Tan");
   expect(message).toContain("Service: Consultation");
+  expect(message).toContain("Platform: Web");
   expect(message).toContain("Date: October 2 (Friday)");
   expect(message).toContain("Time: 4:00 PM - 4:30 PM");
   expect(message).toContain(`Open chat: ${openUrl}`);
