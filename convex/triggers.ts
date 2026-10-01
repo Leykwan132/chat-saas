@@ -24,6 +24,12 @@ import {
 } from "./inboxConversationSummary";
 import { internal } from "./_generated/api";
 import {
+  customerInboxFieldsChanged,
+  customerSearchDetailsChanged,
+  messageSearchFieldsChanged,
+  summaryChatSearchFieldsChanged,
+} from "./inboxProjectionChanges";
+import {
   messageSearchScopeChanged,
   removeInboxChatSearchDocument,
   removeInboxMessageSearchDocument,
@@ -58,6 +64,12 @@ triggers.register("conversations", async (ctx, change) => {
     return;
   }
   await upsertInboxConversationSummary(ctx, change.id);
+  if (
+    change.oldDoc !== null &&
+    change.oldDoc.contactAddress !== change.newDoc.contactAddress
+  ) {
+    await upsertInboxChatSearchDocument(ctx, change.id);
+  }
 });
 triggers.register("inboxConversationSummaries", async (ctx, change) => {
   const conversationId = change.newDoc?.conversationId ?? change.oldDoc?.conversationId;
@@ -66,7 +78,7 @@ triggers.register("inboxConversationSummaries", async (ctx, change) => {
   }
   if (change.operation === "delete") {
     await removeInboxChatSearchDocument(ctx, conversationId);
-  } else {
+  } else if (summaryChatSearchFieldsChanged(change.oldDoc, change.newDoc)) {
     await upsertInboxChatSearchDocument(ctx, conversationId);
   }
   if (messageSearchScopeChanged(change.oldDoc, change.newDoc)) {
@@ -82,13 +94,23 @@ triggers.register("messages", async (ctx, change) => {
     await removeInboxMessageSearchDocument(ctx, change.id);
     return;
   }
-  await upsertInboxMessageSearchDocument(ctx, change.id);
+  if (messageSearchFieldsChanged(change.oldDoc, change.newDoc)) {
+    await upsertInboxMessageSearchDocument(ctx, change.id);
+  }
 });
 triggers.register("customers", async (ctx, change) => {
-  await refreshInboxSummariesForCustomer(ctx, change.id);
+  if (customerInboxFieldsChanged(change.oldDoc, change.newDoc)) {
+    await refreshInboxSummariesForCustomer(
+      ctx,
+      change.id,
+      customerSearchDetailsChanged(change.oldDoc, change.newDoc),
+    );
+  }
 });
 triggers.register("channels", async (ctx, change) => {
-  await refreshInboxSummariesForChannel(ctx, change.id);
+  if (change.oldDoc?.status !== change.newDoc?.status) {
+    await refreshInboxSummariesForChannel(ctx, change.id);
+  }
 });
 triggers.register("appointmentBookingSessions", async (ctx, change) => {
   const conversationIds = new Set(
