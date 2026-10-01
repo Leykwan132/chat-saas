@@ -1,4 +1,5 @@
-import type { Doc } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
+import { deriveGoogleCalendarEventId } from "./writeFingerprint";
 import type { GoogleCalendarWriteInput } from "./writeTypes";
 
 export function googleCalendarWriteInputFromEvent(
@@ -36,6 +37,24 @@ export function googleCalendarBookingOperationKey(
   action: "create" | "update" | "delete",
 ) {
   return `booking:${sessionId}:${action}`;
+}
+
+export async function pendingKilobotGoogleEventFields(args: {
+  ownerUserId: Id<"users">;
+  operationKey: string;
+}) {
+  return {
+    externalProvider: "google" as const,
+    externalCalendarId: "primary" as const,
+    externalOwnerUserId: args.ownerUserId,
+    externalOrigin: "kilobot" as const,
+    externalEventId: await deriveGoogleCalendarEventId(args.operationKey),
+    externalStatus: "confirmed" as const,
+    externalTransparency: "opaque" as const,
+    externalCanEdit: true,
+    externalSyncState: "pending" as const,
+    externalOperationKey: args.operationKey,
+  };
 }
 
 export function googleCalendarEventOperationKey(

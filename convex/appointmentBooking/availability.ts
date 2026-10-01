@@ -223,17 +223,26 @@ export async function resolveAvailableInterval(
     teamId: Id<"teams">;
     startAt: number;
     endAt: number;
+    excludeEventId?: Id<"calendarEvents">;
+    excludeEventIds?: Id<"calendarEvents">[];
     ignoreGoogleHealth?: boolean;
     logUnavailableReason?: boolean;
   },
 ): Promise<BookingSlot | null> {
   if (args.endAt <= args.startAt) return null;
   const bufferMs = (args.service.bufferMinutes ?? 0) * 60 * 1000;
-  const entries = await loadRoster(ctx, {
+  const excluded = new Set(args.excludeEventIds ?? []);
+  const entries = (await loadRoster(ctx, {
     agentId: args.service.agentId,
     teamId: args.teamId,
     windowStartAt: args.startAt - bufferMs,
     windowEndAt: args.endAt + bufferMs,
+  })).map((entry) => excluded.size === 0 ? entry : {
+    ...entry,
+    calendarAvailability: {
+      ...entry.calendarAvailability,
+      intervals: entry.calendarAvailability.intervals.filter((interval) => !excluded.has(interval.eventId)),
+    },
   });
   const assignee = chooseAssigneeForSlot({
     service: args.service,
@@ -242,6 +251,7 @@ export async function resolveAvailableInterval(
     entries,
     startAt: args.startAt - bufferMs,
     endAt: args.endAt + bufferMs,
+    excludeEventId: args.excludeEventId,
     ignoreGoogleHealth: args.ignoreGoogleHealth,
   });
   if (assignee?.user === undefined || assignee.user === null) return null;

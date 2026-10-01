@@ -31,7 +31,7 @@ describe('inbox booking status interaction', () => {
   });
 
   test('history and compact cards share status presentation', () => {
-    expect(rowSource).toContain('BookingStatusTag');
+    expect(rowSource).not.toContain('BookingStatusTag');
     expect(rowSource).not.toContain('STATUS_TAG_CLASSES');
     expect(tagSource).toContain('appointmentBookingStatusClass');
     expect(tagSource).toContain('appointmentBookingStatusAccentColor');

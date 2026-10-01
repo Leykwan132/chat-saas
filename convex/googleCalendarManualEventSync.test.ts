@@ -4,13 +4,19 @@ import { expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { runPreparedCalendarEventCreate } from "./googleCalendar/calendarEventCreateSync";
+import { deriveGoogleCalendarEventId } from "./googleCalendar/writeFingerprint";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
 type PrepareCreateRef = FunctionReference<"mutation", "internal", Record<string, unknown>, unknown>;
-const prepareCreate = (internal as unknown as {
-  googleCalendar: { calendarEventCreatePrepare: { prepareCreate: PrepareCreateRef } };
-}).googleCalendar.calendarEventCreatePrepare.prepareCreate;
+const googlePrepare = (internal as unknown as {
+  googleCalendar: {
+    calendarEventCreatePrepare: { prepareCreate: PrepareCreateRef };
+    calendarEventPrepare: { prepareRemove: PrepareCreateRef };
+  };
+}).googleCalendar;
+const prepareCreate = googlePrepare.calendarEventCreatePrepare.prepareCreate;
+const prepareRemove = googlePrepare.calendarEventPrepare.prepareRemove;
 
 const connectionId = "connection_1" as Id<"googleCalendarConnections">;
 const eventId = "event_1" as Id<"calendarEvents">;
@@ -83,7 +89,7 @@ async function createConnectedFixture() {
       createdAt: now,
       updatedAt: now,
     });
-    return { userId, customerId, connectionId };
+    return { userId, teamId, customerId, connectionId };
   });
   return { t, workosUserId, ...fixture };
 }
@@ -154,6 +160,34 @@ test("connected preparation persists a pending event owned by its creator", asyn
   expect(event).toMatchObject({
     externalOwnerUserId: fixture.userId,
     externalOrigin: "kilobot",
+    externalEventId: await deriveGoogleCalendarEventId(prepared.operationKey),
     externalSyncState: "pending",
   });
+});
+
+test("an agent event that never reached Google is removed locally", async () => {
+  const fixture = await createConnectedFixture();
+  const now = Date.now();
+  const eventId = await fixture.t.run((ctx) => ctx.db.insert("calendarEvents", {
+    teamId: fixture.teamId,
+    title: "Unsynced booking",
+    startAt: now,
+    endAt: now + 60_000,
+    timeZone: "UTC",
+    status: "confirmed",
+    createdBy: fixture.userId,
+    externalProvider: "google",
+    externalCalendarId: "primary",
+    externalOwnerUserId: fixture.userId,
+    externalOrigin: "kilobot",
+    externalCanEdit: true,
+    externalSyncState: "pending",
+    createdAt: now,
+    updatedAt: now,
+  }));
+  const prepared = await fixture.t.withIdentity({ subject: fixture.workosUserId }).mutation(
+    prepareRemove,
+    { eventId, refreshed: true },
+  );
+  expect(prepared).toEqual({ kind: "local" });
 });

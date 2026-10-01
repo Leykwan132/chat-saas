@@ -48,8 +48,15 @@ import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildToolUsageBlock } from "./toolPrompt";
 import { buildIdentityPriorityBlock } from "./identityPriorityPrompt";
 import { createInstructionContextHandler } from "./instructionContext";
-import { registerGoogleCalendarTools } from "../googleCalendar/agentTools";
+import {
+  registerGoogleCalendarTools,
+  CANCEL_BOOKINGS_MULTIPLE_EXAMPLE,
+  CANCEL_BOOKINGS_SINGLE_EXAMPLE,
+  UPDATE_BOOKINGS_MULTIPLE_EXAMPLE,
+  UPDATE_BOOKINGS_SINGLE_EXAMPLE,
+} from "../googleCalendar/agentTools";
 import { queryActiveBookingSession } from "./bookingToolSession";
+import { registerBatchAppointmentBookingTools } from "./appointmentBookingTools";
 import type {
   BroadcastMessageKind,
   BroadcastPresentation,
@@ -61,6 +68,7 @@ import {
 import { broadcastAgentMetadata } from "./broadcastMessageMetadata";
 import { isTeamDeletionActive } from "../teamDeletion/access";
 import { parseAvailabilityIso } from "../appointmentBooking/availabilityDateTime";
+import { logAgentRequestResponse } from "./agentRequestResponseLogging";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -527,26 +535,42 @@ Available Services are the complete booking catalog for this turn. Knowledge-bas
 - Call \`getActiveBookingSession\` before booking-state replies or booking tools except a first \`checkAvailability\` preview. Availability itself checks the live database and does not require a session.
 - Today's date is ${currentDate.dateIso} in ${currentDate.timeZone}. Use this date when interpreting "today", "tomorrow", "next week", or validating booking dates. Do not guess or use a different year.
 - Do not narrate tool steps or send progress updates such as "I will start the booking session" or "I will check availability." Call the tools immediately and reply only with the result or the next information the customer must provide.
-1. *Check slots* — For any availability question, call \`checkAvailability\` immediately with the matching service ID. Do not collect customer details first. For a specific time use \`preferredTimeIso\`; for a day or range use \`rangeStartIso\` and \`rangeEndIso\`. When presenting slots, include each returned slot's exact \`date\` and \`timeRange\`; if the tool groups more than five slots into ranges, present those summarized ranges and their exact times. Never replace them with generic labels such as "morning session" or "afternoon session". Use a numbered format such as "1. 5:00 AM - 5:30 AM" and "2. 3:00 PM - 3:30 PM".
+1. *Check slots* — For any availability question, call \`checkAvailability\` immediately with the matching service ID. Do not collect customer details first. For a specific time use \`preferredTimeIso\`; for a day or range use \`rangeStartIso\` and \`rangeEndIso\`. When the customer gives two or more exact appointment times, pass all of them together in \`preferredTimesIso\`; do not check them one at a time. If any are unavailable, report every unavailable time together and create none. When presenting slots, include each returned slot's exact \`date\` and \`timeRange\`; if the tool groups more than five slots into ranges, present those summarized ranges and their exact times. Never replace them with generic labels such as "morning session" or "afternoon session". Use a numbered format such as "1. 5:00 AM - 5:30 AM" and "2. 3:00 PM - 3:30 PM".
 2. *Select slot* — A customer's exact requested time or choice from offered slots counts as confirmation. Call \`checkAvailability\` for that exact time. When available, it starts the session and returns only the missing booking fields.
 3. *Collect details* — Ask only for \`missingFields\`, then call \`startBookingSession\` with the new values. Always obtain name, phone, date, and time in chat for the person being booked. Do not use the chatter's contact details.
 4. *Book* — As soon as \`startBookingSession\` returns \`readyForBooking: true\`, call \`bookAppointment\` in the same turn. Do not ask for another confirmation. Booking creation revalidates the selected slot before writing the calendar event.
 5. *Confirm* — Immediately after \`bookAppointment\` succeeds, call \`sendBookingConfirmation\` and send the returned \`confirmationMessage\` to the customer exactly as written. Do not rewrite it.
 
-## Editing an existing booking
-If the customer wants to change their booking (time, name, phone, or any other detail):
-1. *View booking* — Call \`getActiveBookingSession\`, then \`getCurrentBooking\` to show what is currently booked.
-2. *Start edit* — Call \`beginBookingEdit\` to open an edit session for that booking.
+When the customer asks about their bookings, call \`listCustomerBookings\`. It returns every booking for this customer. \`getCurrentBooking\` returns only the latest appointment.
+
+For a batch of two to ten exact times, collect shared details once. When \`startBookingSession\` returns \`readyForBooking: true\`, call \`bookAppointments\` with the exact ordered list. After it succeeds, call \`sendBatchBookingConfirmation\` and send its single \`confirmationMessage\` exactly as written. Never claim partial batch success.
+If a booking tool fails because of a system error, reply with only "System reported an error." Do not include error names, validators, fields, or ids.
+
+## Rescheduling existing bookings
+If the customer wants to move any appointment to a new date or time, even just one, use \`updateBookingsDateTime\`. You must invoke this tool when the user requests to make changes to the time of a booking:
+1. *List first* — Always call \`listCustomerBookings\` before \`updateBookingsDateTime\`, and map each appointment the customer named by its date and time to the returned \`bookingId\`. Never guess or reuse IDs from memory.
+2. *Confirm* — A customer message naming each appointment and its exact new time counts as confirmation. Otherwise, ask once for approval that lists every change together.
+3. *Apply together* — Send every confirmed change in one \`updateBookingsDateTime\` call with \`confirmed: true\`. For a single booking, pass a one-item \`bookings\` array. Each booking keeps its current duration.
+   One booking: \`${UPDATE_BOOKINGS_SINGLE_EXAMPLE}\`
+   Several bookings: \`${UPDATE_BOOKINGS_MULTIPLE_EXAMPLE}\`
+4. *Report* — After it succeeds, send one concise message listing every updated appointment with its \`date\` and \`timeRange\`. If it fails, no booking was changed; tell the customer which requested times cannot be used, or reply "System reported an error." for a system error.
+
+## Editing booking details
+If the customer wants to change details on a booking (name, phone, or any other field) without moving it. \`beginBookingDetailsEdit\` and \`saveBookingDetails\` never change a date or time; always use \`updateBookingsDateTime\` for that:
+1. *View booking* — Call \`getActiveBookingSession\`, then \`listCustomerBookings\` and match the appointment the customer named by its date and time.
+2. *Start edit* — Call \`beginBookingDetailsEdit\` with that appointment's \`bookingId\`. This opens only that booking. Do not omit \`bookingId\` when the customer has more than one booking.
 3. *Update details* — Call \`startBookingSession\` with the changed \`collectedFields\`. Ask in chat for any details they want to change.
-4. *Check slots* — If the time is changing, call \`checkAvailability\` after \`readyForAvailability\` is true and present the new slots.
-5. *Apply changes* — After the customer confirms, call \`updateBookingAppointment\` with the service ID and confirmed \`startTimeIso\`. You may also call \`giveReaction\` as a best-effort acknowledgement. If only non-time details changed, use the current booking time from \`getCurrentBooking\`.
-6. *Confirm update* — Call \`sendBookingUpdateConfirmation\` and send the returned \`confirmationMessage\` exactly as written.
+4. *Save details* — After the customer confirms, call \`saveBookingDetails\` with the service ID. The appointment keeps its current date and time. You may also call \`giveReaction\` as a best-effort acknowledgement.
+5. *Confirm update* — Call \`sendBookingUpdateConfirmation\` and send the returned \`confirmationMessage\` exactly as written.
+Never propose cancelling and recreating bookings as a workaround for an edit. Never cancel and rebook to reschedule either. Update only the appointments the customer named.
 
 ## Cancelling an existing booking
-If the customer wants to cancel a confirmed appointment:
-1. Call \`getActiveBookingSession\` and \`getCurrentBooking\` to verify the current appointment.
-2. If the customer has clearly asked to cancel, call \`cancelBooking\`.
-3. Tell the customer the booking has been cancelled only after \`cancelBooking\` succeeds.
+If the customer wants to cancel one or more confirmed appointments, use \`deleteCalendarEvent\`. You must invoke this tool when the user requests to cancel a booking:
+1. Call \`listCustomerBookings\` and map each appointment the customer named by its date and time to the returned \`bookingId\`. If they have more than one booking and did not say which, ask which one.
+2. If the customer has clearly asked to cancel, send every booking to cancel in one \`deleteCalendarEvent\` call with \`confirmed: true\`. For a single booking, pass a one-item \`bookingIds\` array.
+   One booking: \`${CANCEL_BOOKINGS_SINGLE_EXAMPLE}\`
+   Several bookings: \`${CANCEL_BOOKINGS_MULTIPLE_EXAMPLE}\`
+3. Send one concise message listing each booking whose result has \`success: true\` as cancelled. If any failed, say which ones were not cancelled. Never claim a booking was cancelled unless its result says so.
 
 Additional rules:
 - If multiple Services could apply and the customer has not chosen one, ask which service they want before starting the session.
@@ -556,7 +580,7 @@ Additional rules:
 - After booking succeeds, send only the \`confirmationMessage\` from \`sendBookingConfirmation\`. A Google Meet link appears there only when the service venue is Google Meet and the assigned teammate's Google Calendar is connected.
 - If the customer declines a slot, changes their mind, or asks to stop booking, call \`cancelBooking\` before replying.
 - During a booking edit, \`cancelBooking\` discards the changes and keeps the original booking.
-- Outside an edit, \`cancelBooking\` cancels the existing confirmed appointment when one exists.`;
+- Never use \`cancelBooking\` to cancel a confirmed appointment; always use \`deleteCalendarEvent\` with its \`bookingId\` in \`bookingIds\`.`;
 }
 
 export function buildAvailabilityDateRule(timeZone: string, now = new Date()) {
@@ -740,9 +764,21 @@ export function buildAgent(
       },
     });
 
+    tools.listCustomerBookings = createTool({
+      description:
+        "Returns every booking for the customer in this conversation, including upcoming, completed, cancelled, and no-show appointments. Call this when the customer asks about their bookings. getCurrentBooking returns only the latest appointment.",
+      inputSchema: z.object({}),
+      execute: async (ctx) => {
+        return await ctx.runQuery(
+          internal.appointmentBooking.customerBookings.listCustomerBookings,
+          { conversationId },
+        );
+      },
+    });
+
     tools.getCurrentBooking = createTool({
       description:
-        "Queries the live booking session and any completed appointment for this conversation. Call after getActiveBookingSession when you need the booked service, date, time, or team member.",
+        "Returns only the latest completed appointment for this conversation. Call listCustomerBookings when you need every booking for this customer.",
       inputSchema: z.object({}),
       execute: async (ctx) => {
         await queryActiveBookingSession(ctx, conversationId);
@@ -755,16 +791,21 @@ export function buildAgent(
       },
     });
 
-    tools.beginBookingEdit = createTool({
+    tools.beginBookingDetailsEdit = createTool({
       description:
-        "Starts editing an existing booked appointment. Call when the customer wants to change their booking. After this, use startBookingSession to update details and updateBookingAppointment to save changes to the calendar.",
-      inputSchema: z.object({}),
-      execute: async (ctx) => {
+        "Details only, never date or time: opens one existing booked or completed appointment so its customer details (name, phone, or other fields) can be changed. Pass the bookingId from listCustomerBookings. Then call startBookingSession with the changed details and saveBookingDetails. To move an appointment to a new date or time, use updateBookingsDateTime instead.",
+      inputSchema: z.object({
+        bookingId: z
+          .string()
+          .describe("The bookingId of the appointment to edit, from listCustomerBookings."),
+      }),
+      execute: async (ctx, input) => {
         await queryActiveBookingSession(ctx, conversationId);
         return await ctx.runMutation(
           internal.appointmentBooking.editing.beginBookingEdit,
           {
             conversationId,
+            bookingId: input.bookingId as Id<"calendarEvents">,
           },
         );
       },
@@ -815,6 +856,14 @@ export function buildAgent(
           .describe(
             `Customer's preferred appointment start time as an ISO timestamp. Include the service timezone offset when possible; if omitted, the timestamp is interpreted in the service timezone. ${availabilityDateRule}`,
           ),
+        preferredTimesIso: z
+          .array(z.string())
+          .min(2)
+          .max(10)
+          .optional()
+          .describe(
+            `Two to ten exact appointment start times requested together. Preserve the customer's order. ${availabilityDateRule}`,
+          ),
         rangeStartIso: z
           .string()
           .optional()
@@ -842,6 +891,7 @@ export function buildAgent(
           conversationId: Id<"conversations">;
           serviceId?: Id<"appointmentServices">;
           preferredStartAt?: number;
+          preferredStartAts?: number[];
           rangeStartAt?: number;
           rangeEndAt?: number;
         } = { conversationId };
@@ -853,6 +903,15 @@ export function buildAgent(
           : null;
         if (preferredStartAt !== null) {
           args.preferredStartAt = preferredStartAt;
+        }
+        if (input.preferredTimesIso !== undefined) {
+          const parsed = input.preferredTimesIso.map((value) =>
+            parseAvailabilityIso(value, defaultBookingTimeZone)
+          );
+          if (parsed.some((value) => value === null)) {
+            return { success: false, message: "One or more appointment times are invalid." };
+          }
+          args.preferredStartAts = parsed as number[];
         }
         const rangeStartAt = input.rangeStartIso
           ? parseAvailabilityIso(input.rangeStartIso, defaultBookingTimeZone)
@@ -924,20 +983,13 @@ export function buildAgent(
       },
     });
 
-    tools.updateBookingAppointment = createTool({
+    tools.saveBookingDetails = createTool({
       description:
-        "Updates the existing calendar booking after a booking edit. Use only a service ID from Available Appointment Services. Call after beginBookingEdit and once the customer confirms the final details and time. Use the service ID and confirmed startTimeIso from checkAvailability, or the current booking time if only other details changed.",
+        "Details only, never date or time: saves the changed customer details on the booking opened by beginBookingDetailsEdit. The appointment keeps its current date and time. Use only a service ID from Available Appointment Services. To move an appointment to a new date or time, use updateBookingsDateTime instead.",
       inputSchema: z.object({
         serviceId: z.string().describe("The Services service ID."),
-        startTimeIso: z
-          .string()
-          .describe("Confirmed appointment start time as an ISO timestamp."),
       }),
       execute: async (ctx, input) => {
-        const startAt = Date.parse(input.startTimeIso);
-        if (!Number.isFinite(startAt)) {
-          return { success: false, message: "Invalid appointment start time." };
-        }
         const activeSession = await queryActiveBookingSession(
           ctx,
           conversationId,
@@ -949,7 +1001,6 @@ export function buildAgent(
           {
             conversationId,
             serviceId: input.serviceId as Id<"appointmentServices">,
-            startAt,
           },
         );
       },
@@ -972,7 +1023,7 @@ export function buildAgent(
 
     tools.sendBookingUpdateConfirmation = createTool({
       description:
-        "Builds the updated booking confirmation message after updateBookingAppointment succeeds. Send the returned confirmationMessage to the customer exactly as written.",
+        "Builds the updated booking confirmation message after saveBookingDetails succeeds. Send the returned confirmationMessage to the customer exactly as written.",
       inputSchema: z.object({}),
       execute: async (ctx) => {
         await queryActiveBookingSession(ctx, conversationId);
@@ -988,7 +1039,7 @@ export function buildAgent(
 
     tools.cancelBooking = createTool({
       description:
-        "Cancels the customer's in-progress booking session or discards a booking edit. During an edit, this keeps the original booking unchanged.",
+        "Stops the customer's in-progress booking session or discards a booking edit. During an edit, this keeps the original booking unchanged. To cancel a confirmed appointment, use deleteCalendarEvent with its bookingId instead.",
       inputSchema: z.object({}),
       execute: async (toolCtx) => {
         await queryActiveBookingSession(toolCtx, conversationId);
@@ -1000,6 +1051,12 @@ export function buildAgent(
         );
       },
     });
+
+    registerBatchAppointmentBookingTools({
+      tools,
+      conversationId,
+      defaultTimeZone: defaultBookingTimeZone,
+    });
   }
 
   if (conversationId) {
@@ -1007,6 +1064,7 @@ export function buildAgent(
       tools,
       conversationId,
       eligible: appointmentBookingEnabled,
+      defaultTimeZone: defaultBookingTimeZone,
     });
   }
 
@@ -1149,6 +1207,16 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
       instructionsUpdatedAt: agent.instructionsUpdatedAt,
       promptMessageId: sourceAgentMessageId,
     }),
+    rawRequestResponseHandler: async (_ctx, { agentName, request, response }) => {
+      logAgentRequestResponse({
+        agentId,
+        agentName,
+        conversationId,
+        sourceAgentMessageId,
+        request,
+        response,
+      });
+    },
     stopWhen: stepCountIs(8),
     tools,
     usageHandler: async (ctx, args) => {

@@ -1,4 +1,4 @@
-import { Pin, PinOff, Image as ImageIcon, Volume2, AlertCircle, Globe, ScanFace } from 'lucide-react';
+import { Pin, PinOff, Image as ImageIcon, Volume2, AlertCircle, Globe, ScanFace, Trash2 } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import {
@@ -67,9 +67,10 @@ type ChatRowProps = {
   isPinned: boolean;
   onSelect: (id: Id<'conversations'>) => void;
   onTogglePin: (id: Id<'conversations'>) => void;
+  onDelete?: (id: Id<'conversations'>) => void;
 };
 
-export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, onTogglePin }: ChatRowProps) {
+export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, onTogglePin, onDelete }: ChatRowProps) {
 
   return (
     <ContextMenu>
@@ -200,6 +201,16 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
           {isPinned ? <PinOff size={14} /> : <Pin size={14} />}
           {isPinned ? 'Unpin' : 'Pin'}
         </ContextMenuItem>
+        {onDelete ? (
+          <ContextMenuItem
+            variant="destructive"
+            onClick={() => onDelete(chat.id)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Trash2 size={14} />
+            Delete
+          </ContextMenuItem>
+        ) : null}
       </ContextMenuContent>
     </ContextMenu>
   );

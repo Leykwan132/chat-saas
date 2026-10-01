@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { internalMutation } from "../triggers";
 import {
@@ -7,7 +7,8 @@ import {
   isActiveAppointmentBookingSessionStatus,
 } from "../appointmentBookingSessionStatus";
 import { logConversationEvent } from "../conversationLogs";
-import { getActiveSession, getExistingBookingSession } from "../appointmentBooking/sessionStore";
+import { getExistingBookingSession } from "../appointmentBooking/sessionStore";
+import { sessionForCustomerBooking } from "../appointmentBooking/editing";
 import { cancelWorkflowRemindersForAppointment } from "../workflowReminderRuntime";
 import { notifyAppointmentEvent } from "../telegramNotifications/events";
 import { syncCalendarEventAvailabilityIntervals } from "../calendarAvailabilityIntervals";
@@ -21,8 +22,24 @@ import { bookingToolResultValidator, prepareBookResultValidator } from "./bookin
 
 const cancelArgs = {
   conversationId: v.id("conversations"),
+  bookingId: v.optional(v.id("calendarEvents")),
   refreshed: v.optional(v.boolean()),
 };
+
+const noBookingToCancel = {
+  kind: "failed" as const,
+  result: { success: false, message: "No active booking to cancel." },
+};
+
+async function sessionForCancellation(
+  ctx: MutationCtx,
+  conversationId: Id<"conversations">,
+  bookingId: Id<"calendarEvents">,
+) {
+  const conversation = await ctx.db.get(conversationId);
+  if (conversation === null) return undefined;
+  return await sessionForCustomerBooking(ctx, conversation, bookingId);
+}
 
 async function cancelLocalBooking(
   ctx: MutationCtx,
@@ -65,42 +82,50 @@ export const prepareCancel = internalMutation({
   args: cancelArgs,
   returns: prepareBookResultValidator,
   handler: async (ctx, args) => {
-    const sessions = await ctx.db
-      .query("appointmentBookingSessions")
-      .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
-      .take(100);
-    const active = sessions.find((session) => isActiveAppointmentBookingSessionStatus(session.status));
-    if (
-      active !== undefined &&
-      active.calendarEventId !== undefined &&
-      (active.status === AppointmentBookingSessionStatus.Editing ||
-        active.status === AppointmentBookingSessionStatus.Confirming)
-    ) {
-      await ctx.db.patch(active._id, {
-        status: AppointmentBookingSessionStatus.Booked,
-        updatedAt: Date.now(),
-      });
-      return {
-        kind: "completed" as const,
-        result: {
-          success: true,
-          message: "Booking edit cancelled. The original booking is unchanged.",
-        },
-      };
+    let session: Doc<"appointmentBookingSessions"> | undefined;
+    if (args.bookingId !== undefined) {
+      session = await sessionForCancellation(ctx, args.conversationId, args.bookingId);
+    } else {
+      const sessions = await ctx.db
+        .query("appointmentBookingSessions")
+        .withIndex("by_conversationId", (q) => q.eq("conversationId", args.conversationId))
+        .take(100);
+      const active = sessions.find((row) => isActiveAppointmentBookingSessionStatus(row.status));
+      if (
+        active !== undefined &&
+        active.calendarEventId !== undefined &&
+        (active.status === AppointmentBookingSessionStatus.Editing ||
+          active.status === AppointmentBookingSessionStatus.Confirming)
+      ) {
+        await ctx.db.patch(active._id, {
+          status: AppointmentBookingSessionStatus.Booked,
+          updatedAt: Date.now(),
+        });
+        return {
+          kind: "completed" as const,
+          result: {
+            success: true,
+            message: "Booking edit cancelled. The original booking is unchanged.",
+          },
+        };
+      }
+      if (active !== undefined && active.calendarEventId === undefined) {
+        await ctx.db.patch(active._id, {
+          status: AppointmentBookingSessionStatus.Cancelled,
+          updatedAt: Date.now(),
+        });
+        return {
+          kind: "completed" as const,
+          result: { success: true, message: "Booking session stopped. No booking was made." },
+        };
+      }
+      session = active ?? await getExistingBookingSession(ctx, args.conversationId);
     }
-    const session = active ?? await getExistingBookingSession(ctx, args.conversationId);
-    if (session === undefined || session.calendarEventId === undefined) {
-      return {
-        kind: "failed" as const,
-        result: { success: false, message: "No active booking to cancel." },
-      };
-    }
+    if (session === undefined || session.calendarEventId === undefined) return noBookingToCancel;
     const event = await ctx.db.get(session.calendarEventId);
-    if (event === null) {
-      return {
-        kind: "failed" as const,
-        result: { success: false, message: "No active booking to cancel." },
-      };
+    if (event === null) return noBookingToCancel;
+    if (args.bookingId !== undefined && (event.externalOrigin ?? "kilobot") !== "kilobot") {
+      return noBookingToCancel;
     }
     const ownerId = event.externalOwnerUserId ?? event.createdBy;
     const connection = await loadGoogleCalendarConnectionForUser(ctx, ownerId);
@@ -126,10 +151,7 @@ export const prepareCancel = internalMutation({
       };
     }
     if (event.status === "cancelled" && session.status === AppointmentBookingSessionStatus.Cancelled) {
-      return {
-        kind: "failed" as const,
-        result: { success: false, message: "No active booking to cancel." },
-      };
+      return noBookingToCancel;
     }
     const result = await cancelLocalBooking(ctx, {
       conversationId: args.conversationId,
@@ -145,9 +167,11 @@ export const finalizeCancel = internalMutation({
   args: { conversationId: v.id("conversations"), calendarEventId: v.id("calendarEvents") },
   returns: bookingToolResultValidator,
   handler: async (ctx, args) => {
-    const session = await getActiveSession(ctx, args.conversationId)
-      ?? await getExistingBookingSession(ctx, args.conversationId);
-    if (session === undefined) {
+    const session = await ctx.db
+      .query("appointmentBookingSessions")
+      .withIndex("by_calendarEventId", (q) => q.eq("calendarEventId", args.calendarEventId))
+      .unique();
+    if (session === null) {
       return { success: false, message: "No active booking to cancel." };
     }
     return await cancelLocalBooking(ctx, {

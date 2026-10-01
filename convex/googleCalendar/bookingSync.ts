@@ -36,18 +36,17 @@ const googleInternal = (internal as unknown as {
       prepareUpdate: StoreMutation<{
         conversationId: Id<"conversations">;
         serviceId: Id<"appointmentServices">;
-        startAt: number;
         refreshed?: boolean;
       }, PrepareBookResult>;
       finalizeUpdate: StoreMutation<{
         conversationId: Id<"conversations">;
         serviceId: Id<"appointmentServices">;
-        startAt: number;
       }, BookingToolResult>;
     };
     bookingCancelPrepare: {
       prepareCancel: StoreMutation<{
         conversationId: Id<"conversations">;
+        bookingId?: Id<"calendarEvents">;
         refreshed?: boolean;
       }, PrepareBookResult>;
       finalizeCancel: StoreMutation<{
@@ -79,16 +78,15 @@ export type GoogleCalendarBookingSyncDependencies = {
   prepareUpdate: (args: {
     conversationId: Id<"conversations">;
     serviceId: Id<"appointmentServices">;
-    startAt: number;
     refreshed?: boolean;
   }) => Promise<PrepareBookResult>;
   finalizeUpdate: (args: {
     conversationId: Id<"conversations">;
     serviceId: Id<"appointmentServices">;
-    startAt: number;
   }) => Promise<BookingToolResult>;
   prepareCancel: (args: {
     conversationId: Id<"conversations">;
+    bookingId?: Id<"calendarEvents">;
     refreshed?: boolean;
   }) => Promise<PrepareBookResult>;
   finalizeCancel: (args: {
@@ -135,7 +133,7 @@ export async function runBookAppointment(
 }
 
 export async function runUpdateBookingAppointment(
-  args: { conversationId: Id<"conversations">; serviceId: Id<"appointmentServices">; startAt: number },
+  args: { conversationId: Id<"conversations">; serviceId: Id<"appointmentServices"> },
   dependencies: Pick<GoogleCalendarBookingSyncDependencies, "prepareUpdate" | "finalizeUpdate" | "refresh" | "write">,
 ): Promise<BookingToolResult> {
   let prepared = await dependencies.prepareUpdate({ ...args, refreshed: false });
@@ -156,7 +154,7 @@ export async function runUpdateBookingAppointment(
 }
 
 export async function runCancelBookingSession(
-  args: { conversationId: Id<"conversations"> },
+  args: { conversationId: Id<"conversations">; bookingId?: Id<"calendarEvents"> },
   dependencies: Pick<GoogleCalendarBookingSyncDependencies, "prepareCancel" | "finalizeCancel" | "refresh" | "write">,
 ): Promise<BookingToolResult> {
   let prepared = await dependencies.prepareCancel({ ...args, refreshed: false });

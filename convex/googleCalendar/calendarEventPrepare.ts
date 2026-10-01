@@ -129,6 +129,7 @@ export const prepareRemove = internalMutation({
   returns: calendarEventPrepareValidator,
   handler: async (ctx, args) => {
     const { event } = await assertMutableCalendarEvent(ctx, args.eventId);
+    if (event.externalEventId === undefined) return { kind: "local" as const };
     const gated = await googleWriteGate(ctx, event, args.refreshed, true);
     if (gated.kind !== "google") return gated;
     return googleWriteResult(gated.connectionId, event, "delete", event);

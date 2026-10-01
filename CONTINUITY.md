@@ -2,6 +2,37 @@
 
 # Snapshot
 
+- 2026-09-30 [USER] Editing a named booking date or time updates only that appointment, including when its session is marked completed; never cancel or recreate the customer's other appointments. Unshipped.
+- 2026-09-30 [USER] Booking-edit tools should accept a simple array of `{ bookingId, startTimeIso }` items so one confirmed request can target multiple appointments. Preserve each booking duration and never cancel/recreate. Approved design: `docs/superpowers/specs/2026-09-30-batch-booking-update-design.md`; implementation plan: `docs/superpowers/plans/2026-09-30-batch-booking-update.md`. Unshipped.
+- 2026-09-30 [CODE] Implemented: agent tool `updateBookings({ bookings: [{ bookingId, startTimeIso }] (1–10, distinct), confirmed: true })` replaces `updateCalendarEvent`. Flow: `batchBookingUpdatePrepare.prepareBatchUpdate` validates every target (ownership via `sessionForCustomerBooking`, Kilobot-origin, not cancelled, duration kept, availability excluding all targets, no mutual overlap) and writes nothing on any failure; batches are stored in `appointmentBookingUpdateBatches`; `batchBookingUpdateSync.runBatchBookingUpdate` writes Google updates in order and restores earlier writes on failure (`failed` + manual recovery if a restore fails); `batchBookingUpdateFinalize` patches rows in place. Detail-only agent tools are renamed `beginBookingDetailsEdit` and `saveBookingDetails` (internal functions keep `beginBookingEdit`/`updateBookingAppointment`); `saveBookingDetails` takes no time and always keeps the booking's current start. Uncommitted, unshipped; no changelog entry.
+- 2026-09-30T21:47 [USER] For testing, Free plan can use `meta/muse-spark-1.3-contributor` (1 credit). [CODE] Added to `PLAN_CATALOG.free.models` and set `requiredPlan: "free"` in `MODEL_PRICING`. Revert both when testing ends. [TOOL] 26 model/plan suites passed (100 tests). Uncommitted, unshipped; not customer-facing changelog.
+- 2026-09-30T21:18 [USER] Agent-invented booking fields (e.g. "Grouped Times" from a batch) must not appear in the calendar event summary or booking customer details. [CODE] `mergeCollectedFields(service, …)` now keeps only incoming keys defined in the service's fields plus `email`, for both single and batch sessions. Existing bookings already saved with such keys still show them. [TOOL] 20 booking suites passed (63 tests). Uncommitted, unshipped.
+- 2026-09-30T21:14 [USER] Agent-facing reschedule tool renamed `updateBookings` → `updateBookingsDateTime`; its description and prompt state it is the only date/time change tool and is used for a single booking too (one-item array). Internal action `googleCalendar/agentTools:updateBookings` keeps its name. [TOOL] 3 affected suites passed (14 tests). Uncommitted, unshipped.
+- 2026-09-30 [USER] Any booking edit or delete must also update the owner's Google Calendar when connected. [CODE] Audit: agent `updateBookings`/`saveBookingDetails`/`cancelBooking`, dashboard `calendarEvents.update`/`remove` already write to Google for linked events. Gap fixed: `appointmentBooking.statusTransition.updateBookingStatus` is now an action that deletes the Google event before marking a linked booking Cancelled, and rejects reopening a booking already removed from Google. Still not synced (by design or open): conversation/customer/team deletion, and Kilobot bookings made before Google was connected are never backfilled. Unshipped.
+- 2026-09-30 [TOOL] Status-cancel Google sync: full suite passed (667 files, 2,282 tests); codegen TypeScript clean.
+- 2026-09-30 [TOOL] After detail-tool rename: full suite passed (667 files, 2,279 tests); codegen TypeScript clean.
+- 2026-09-30 [TOOL] Batch update verification: 6 focused files, 28 tests passed; full Vitest suite with test Stripe price identifiers passed (667 files, 2,279 tests); `bunx convex codegen` TypeScript clean.
+- 2026-09-30 [CODE] During a targeted booking edit, the reply guard replaces model-invented cancel/rebook text with a concise truthful update failure. Completed booking sessions can enter the same targeted edit flow. Unshipped.
+- 2026-09-30 [CODE] SUPERSEDED 2026-09-30T22:00: cancellation was conversation-scoped; an in-progress session without an event made `prepareCancel` return "No active booking to cancel". [USER] Cancel must use the bookingId. [CODE] `deleteCalendarEvent({ eventId: bookingId })` now passes `bookingId` to `prepareCancel`, which resolves the session via `sessionForCustomerBooking` (same conversation or same customer, Kilobot origin), deletes the Google event when linked, and `finalizeCancel` finds the session by `calendarEventId`. Prompt routes confirmed cancellations through `listCustomerBookings` → `deleteCalendarEvent`; `cancelBooking` only stops an in-progress session/edit. `agentToolMutate.guardEvent` removed. [TOOL] 51 files / 276 tests passed; codegen TS clean. Uncommitted, unshipped.
+- 2026-09-30T22:05 [USER] Cancelling takes an array like rescheduling. [CODE] `deleteCalendarEvent({ bookingIds: [1–10 distinct], confirmed: true })` cancels each booking in order via the by-ID path and returns per-booking `{ bookingId, success, message }`; not all-or-nothing, since Google deletes are not reversed. Duplicates/empty/over-10 are rejected before any cancel. [TOOL] 34 files / 227 tests passed; codegen TS clean. Uncommitted, unshipped.
+- 2026-09-30T22:30 [CODE] Batch `checkAvailability` was blocked by a leftover single `collecting` session with no event, and `cancelBooking` could not stop it. Fix: `cancelBooking` now stops an event-less active session; batch availability takes over an unbooked single session (marks it cancelled, carries non-date/time fields); a single session editing a real booking still blocks. [TOOL] 51 files / 280 tests passed; codegen TS clean. Uncommitted, unshipped.
+- 2026-09-30 [CODE] Convex deployment failed because `convex/appointmentBookingBatchCreateFixture.ts` imports runtime `convex-test`; its single-dot filename made Convex bundle Node-only `node:async_hooks`. The fixture is now named `appointmentBookingBatchCreate.testFixture.ts`, which Convex excludes and Vitest does not execute as a suite. Unshipped.
+- 2026-09-30 [CODE] SUPERSEDED 2026-09-30T22:45: cancellation keeps the calendar row with status `cancelled`. Inbox upcoming bookings already hide it, and Google deletes the linked event, but `loadCalendarRangeProjection` still returned the row, so the team calendar showed it as a normal booking. The range query now drops `status` or `externalStatus` `cancelled`. [TOOL] `googleCalendarProjection` suites passed (16 tests). Uncommitted, unshipped.
+- 2026-09-30 [USER] The six visible `Test - Kwan` calendar rows for conversation `jd7en1znxmvj9v9cdn7crjv54n8fajeb` were permanently removed from the development Convex database with their twelve participant rows. The Google events were already cancelled. [TOOL]
+- 2026-09-30 [USER] Agent diagnostics log raw requests and responses as readable JSON plus each called tool name, call ID, and input; routine Inbox reply/send/persist info logs are removed. Unshipped.
+- 2026-09-30 [USER] SUPERSEDED 2026-09-30T20:36: historical model context excluded all assistant messages (`0ae42b2`). Now reverted to the #188 rule: full history (customer, assistant, tool) is sent; only assistant and tool messages created before `instructionsUpdatedAt` are dropped. `convex/chat/instructionContext.test.ts` passes (3 tests). Uncommitted, unshipped.
+- 2026-09-30 [USER] The agent can list every booking for the customer in the conversation. Unshipped.
+- 2026-09-29 [USER] A batch booking confirmation lists every appointment in one message. Unshipped.
+- 2026-09-29 [USER] Details panel has a bottom Clear Conversation button. It confirms, then clears the thread and deletes the conversation and messages. Unshipped.
+- 2026-09-29 [USER] Delete event confirmation uses a ghost Cancel and a solid red Delete button with white text. Unshipped.
+- 2026-09-29 [CODE] Batch booking test fixture is named so Convex does not bundle convex-test. Unshipped.
+- 2026-09-29 [USER] Inbox Upcoming Bookings count stays a solid badge with white text. Unshipped.
+- 2026-09-29 [USER] Booking detail modal event name is larger, and Mark as completed and Edit booking have more vertical padding. Unshipped.
+- 2026-09-29 [USER] The booking card above the inbox reply box is removed. Unshipped.
+- 2026-09-29 [USER] Inbox booking dates read like Wednesday, 23 Sep · 4:00 – 4:30pm, without the Scheduled label. Unshipped.
+- 2026-09-29 [USER] Inbox Upcoming Bookings lists only scheduled appointments that are in progress or still ahead. Unshipped.
+- 2026-09-29 [USER] Local-only testing: root `index.html` loads AI widget `pub_7190131b74754f789d20f973b6328c82` from `/widget/v1.js` against `https://outstanding-rabbit-215.convex.site` only on loopback hosts. Keep uncommitted and do not push.
+- 2026-09-29 [CODE] Agent batch booking posts each appointment to Google Calendar. A retry finishes pending Kilobot rows instead of leaving them local. The five Multiple-Kwan dev appointments are synced. Unshipped.
 - 2026-09-29 [USER] Goal: show Avatar as its own card on Channels, opening the existing Avatar setup. Same Beta flag and account gate. Sidebar Avatar item is removed. Avatar page has an arrow back to the channel cards. Pushed to PR #189.
 - 2026-09-28 [USER] Goal: after Instructions change, replies must follow the new system prompt. Customer messages stay in the model context; assistant and tool messages written before `instructionsUpdatedAt` are omitted. Inbox history stays visible. Unshipped on `fix-context-rot`.
 - 2026-09-28 [USER] Goal: fix `whatsappWebhook:ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi` failing with "Too many reads (limit 4096)" on long conversations. Branch `fix/inbox-search-read-limit`. Unshipped.
@@ -132,6 +163,14 @@
 
 # Done (recent)
 
+- 2026-09-30 [CODE] Booking edits target only the named booked or completed appointment; model-invented cancel/rebook replies during an edit are replaced with a concise update failure. Unshipped.
+- 2026-09-30 [CODE] The agent tool `listCustomerBookings` returns every booking for the customer in the conversation. Unshipped.
+- 2026-09-29 [CODE] A batch confirmation is one message listing every appointment, date, time, and booking reference. Unshipped.
+- 2026-09-29 [CODE] Inbox Upcoming Bookings hides ended, cancelled, completed, and no-show appointments. Unshipped.
+- 2026-09-29 [CODE] Agent batch booking now creates the Google Calendar event. Pending rows are reused and posted on retry. Dev batch Multiple-Kwan is synced. Unshipped.
+- 2026-09-29 [CODE] Business-visible AI replies that contain a system error now show "System reported an error." A thrown batch booking tool returns that same sentence. Unshipped.
+- 2026-09-29 [CODE] Batch Google creates no longer send `kind` or `sessionId` into `googleCalendar/writeStore:prepare`. Unshipped.
+- 2026-09-29 [CODE] Multi-appointment booking is implemented test-first: durable batch state, all-slot availability, exact-list confirmation, atomic child creation, chronological round robin, Google compensation, agent tools, and prompt routing. Unshipped.
 - 2026-09-29 [CODE] Channels shows an Avatar card beside Website for the Beta flag and allowed account. Setup opens the existing Avatar page, which has an arrow back to the channel cards. The sidebar no longer lists Avatar. Unshipped.
 - 2026-09-28 [CODE] Saving a changed system prompt stamps `instructionsUpdatedAt`. Later replies keep customer messages and drop earlier assistant and tool messages from the model context. Inbox transcript is unchanged. Unshipped.
 - 2026-09-22 [CODE] Signed-in Dashboard header CTA now matches the rounded public action. Unshipped.
@@ -152,6 +191,7 @@
 
 # Working set
 
+- 2026-09-29 [USER] `docs/superpowers/specs/2026-09-29-multi-appointment-booking-design.md`, `docs/superpowers/plans/2026-09-29-multi-appointment-booking.md`, `convex/appointmentBooking`, `convex/googleCalendar`, `convex/chat/threads.ts`, `convex/schema.ts`
 - 2026-09-29 [CODE] `src/components/channels/AvatarChannelCard.tsx`, `src/pages/ChannelsPage.tsx`, `src/components/app-sidebar-nav.ts`, `src/components/app-sidebar.tsx`
 - 2026-09-28 [CODE] `convex/chat/instructionContext.ts`, `convex/chat/instructionContext.test.ts`, `convex/chat/threads.ts`, `convex/agents.ts`, `convex/schema.ts`
 - 2026-09-12 [CODE] `convex/rag/{backfill,backfillIndex,backfillWeb,backfillPage,backfillPlan,cfFetch,fileBytesText}.ts`
@@ -165,6 +205,16 @@
 
 # Receipts
 
+- 2026-09-30 [TOOL] Agent tool-call diagnostic regression passed; Convex code generation and the full supported Vitest suite completed successfully. Unshipped.
+- 2026-09-30 [TOOL] Historical assistant-context regression passed; Convex code generation and the full supported Vitest suite completed successfully. Unshipped.
+- 2026-09-30 [TOOL] Agent raw request/response logging regression passed; Convex code generation and the full supported Vitest suite completed successfully. Unshipped.
+- 2026-09-30 [TOOL] Batch fixture isolation regression and both affected batch suites passed (6 tests). `convex deploy --dry-run --typecheck disable` completed without the Node API bundling error, and the full supported Vitest suite completed successfully. Unshipped.
+- 2026-09-30 [TOOL] Release commit `12c1aef` is pushed to PR #190. Workers Builds: kilobot is in progress; GitHub requires a review and this repository does not allow auto-merge. Unshipped.
+- 2026-09-30 [TOOL] Booking-edit guard, completed-target, and prompt regressions passed; full supported suite passed 661 files / 2,259 tests, and Docs tests passed 63. Unshipped.
+- 2026-09-29 [TOOL] Pending agent batch is posted to Google: `convex/googleCalendarBatchPendingCreate.test.ts` plus batch create and sync suites (11 tests). Dev `bookAppointments` for the stuck batch returned success and all five events are `synced`. Unshipped.
+- 2026-09-29 [TOOL] System-error display and booking prompt tests passed: `src/lib/systemErrorText.test.ts`, `convex/chat/workflowPromptBooking.test.ts` (7 tests). Unshipped.
+- 2026-09-29 [TOOL] Batch Google create validator regression passed: `convex/googleCalendarBatchBookingSync.test.ts` (5 tests). Unshipped.
+- 2026-09-29 [TOOL] PR #190 opened for multi-appointment booking: https://github.com/Leykwan132/chat-saas/pull/190. Convex code generation and TypeScript completed; focused verification passed 27 tests; the final main-updated branch passed 803 suites and 2,245 tests. Unshipped.
 - 2026-09-29 [TOOL] Sidebar suites passed after removing Avatar (11 tests). Avatar page test passed (4). Follow-up pushed to https://github.com/Leykwan132/chat-saas/pull/189.
 - 2026-09-28 [TOOL] PR #188 opened from `fix-context-rot`: https://github.com/Leykwan132/chat-saas/pull/188. `convex/chat/instructionContext.test.ts` passed (2 tests).
 - 2026-09-28 [TOOL] PR #187 opened from `fix/inbox-search-read-limit` for the WhatsApp ingest "Too many reads" fix; focused inbox search suites passed (7 tests), and the new no-rescan test fails on the old code.

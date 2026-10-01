@@ -160,6 +160,8 @@ export async function loadCalendarRangeProjection(ctx: QueryCtx, args: CalendarR
       (event): event is Doc<"calendarEvents"> =>
         event !== null &&
         event.teamId === args.teamId &&
+        event.status !== "cancelled" &&
+        event.externalStatus !== "cancelled" &&
         event.startAt >= args.startAt &&
         event.startAt < args.endAt &&
         (!isImportedGoogleEvent(event) ||

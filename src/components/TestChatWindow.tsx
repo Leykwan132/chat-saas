@@ -55,6 +55,7 @@ import { ChatPromptInput } from "@/components/ChatPromptInput";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { playgroundAssistantTextParts } from "@/lib/playgroundMessageParts";
+import { hideSystemErrorText } from "@/lib/systemErrorText";
 import { useStickToBottomContext } from "use-stick-to-bottom";
 import { PlaygroundAssistantResponse } from '@/components/PlaygroundAssistantResponse';
 import { PlaygroundAssistantResponseDialog } from '@/components/PlaygroundAssistantResponseDialog';
@@ -465,6 +466,7 @@ export function TestChatWindow({
                   ? []
                   : playgroundAssistantTextParts(message)
                       .map(stripMediaMarkers)
+                      .map(hideSystemErrorText)
                       .filter(Boolean);
               const mediaItems =
                 message.role === "user"

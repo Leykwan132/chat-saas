@@ -34,7 +34,7 @@ export function CalendarEventDeleteDialog({
         <DialogFooter>
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             disabled={isDeleting}
             onClick={() => onOpenChange(false)}
           >
@@ -43,6 +43,7 @@ export function CalendarEventDeleteDialog({
           <Button
             type="button"
             variant="destructive"
+            className="bg-destructive text-white hover:bg-destructive/90 dark:bg-destructive dark:text-white dark:hover:bg-destructive/90"
             disabled={isDeleting || !eventId}
             onClick={onConfirm}
           >

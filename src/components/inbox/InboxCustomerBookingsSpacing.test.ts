@@ -7,6 +7,8 @@ const source = readFileSync(
 );
 
 test('booking list retains comfortable spacing without the create action', () => {
+  expect(source).toContain('Upcoming Bookings');
+  expect(source).toContain('bg-foreground px-1.5 py-0.5 text-[10px] font-medium text-white');
   expect(source).toContain('flex flex-col gap-3 px-4 pb-4 pt-2');
   expect(source).not.toContain('Create booking');
   expect(source).not.toContain('onCreate');

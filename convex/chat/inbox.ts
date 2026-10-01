@@ -938,13 +938,6 @@ export const generateAiReplyWorker = internalAction({
         });
         return;
       }
-      console.info("[inbox] ai reply worker generated reply", {
-        conversationId: conv._id,
-        service: conv.service,
-        replyCount: replyMessages.length,
-        mediaCount: allMediaItems.length,
-      });
-
       let usage: { llmModel: string; creditsCharged: number };
       try {
         usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
@@ -1003,16 +996,6 @@ export const generateAiReplyWorker = internalAction({
         return null;
       });
       if (sendResult === null) return;
-      console.info("[inbox] ai reply worker channel send resolved", {
-        conversationId: conv._id,
-        ok: sendResult.ok,
-        sentTextCount: sendResult.sentTextCount,
-        mediaSent: sendResult.mediaSent,
-        textExternalIds: sendResult.textExternalIds,
-        mediaExternalIds: sendResult.mediaExternalIds,
-        error: sendResult.error,
-      });
-
       const enqueueMetaMarkSeenIfRead = async (
         persistResult: {
           markedRead: boolean;
@@ -1056,11 +1039,6 @@ export const generateAiReplyWorker = internalAction({
             : {}),
         }));
       if (sentMessages.length > 0) {
-        console.info("[inbox] ai reply worker persisting sent messages", {
-          conversationId: conv._id,
-          count: sentMessages.length,
-          allHaveExternalId: sentMessages.every((message) => message.externalId !== undefined),
-        });
         const persistResult: {
           markedRead: boolean;
           latestInboundExternalId?: string;

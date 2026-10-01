@@ -10,7 +10,6 @@ export const updateBookingAppointment = internalAction({
   args: {
     conversationId: v.id("conversations"),
     serviceId: v.id("appointmentServices"),
-    startAt: v.number(),
   },
   returns: bookingToolResultValidator,
   handler: async (ctx, args) =>

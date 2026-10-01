@@ -22,6 +22,7 @@ import {
 import {
   googleCalendarEventOperationKey,
   googleCalendarWriteInputFromEvent,
+  pendingKilobotGoogleEventFields,
 } from "./bookingPayload";
 import { googleCalendarWriteInputValidator, type GoogleCalendarWriteInput } from "./writeTypes";
 
@@ -80,15 +81,10 @@ async function insertCalendarEvent(
   });
   if (pendingGoogleEvent) {
     await ctx.db.patch(eventId, {
-      externalProvider: "google",
-      externalCalendarId: "primary",
-      externalOwnerUserId: creatorId,
-      externalOrigin: "kilobot",
-      externalStatus: "confirmed",
-      externalTransparency: "opaque",
-      externalCanEdit: true,
-      externalSyncState: "pending",
-      externalOperationKey: googleCalendarEventOperationKey(eventId, "create"),
+      ...await pendingKilobotGoogleEventFields({
+        ownerUserId: creatorId,
+        operationKey: googleCalendarEventOperationKey(eventId, "create"),
+      }),
       updatedAt: now,
     });
   }

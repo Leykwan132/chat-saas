@@ -111,7 +111,21 @@ export async function runCalendarEventRemove(
   ctx: ActionCtx,
   args: { eventId: Id<"calendarEvents"> },
 ) {
+  return await runPreparedCalendarEventRemove(args, calendarEventRemoveDependencies(ctx));
+}
+
+export async function runCalendarEventGoogleCancellation(
+  ctx: ActionCtx,
+  args: { eventId: Id<"calendarEvents"> },
+) {
   return await runPreparedCalendarEventRemove(args, {
+    ...calendarEventRemoveDependencies(ctx),
+    applyRemove: async () => null,
+  });
+}
+
+function calendarEventRemoveDependencies(ctx: ActionCtx): CalendarEventRemoveDependencies {
+  return {
     prepare: (prepareArgs) => ctx.runMutation(
       googleInternal.googleCalendar.calendarEventPrepare.prepareRemove,
       prepareArgs,
@@ -134,7 +148,7 @@ export async function runCalendarEventRemove(
       googleInternal.calendarEventsMutate.applyRemove,
       removeArgs,
     ),
-  });
+  };
 }
 
 export async function runPreparedCalendarEventRemove(

@@ -226,7 +226,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     unavailableLog.mockRestore();
   }
 
-  await expect(authed.mutation(
+  await expect(authed.action(
     api.appointmentBooking.statusTransition.updateBookingStatus,
     {
       bookingId: result.eventId,

@@ -1,6 +1,7 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { AppointmentBookingSessionStatus } from "../appointmentBookingSessionStatus";
+import { pendingKilobotGoogleEventFields } from "../googleCalendar/bookingPayload";
 import { insertCalendarParticipants } from "./calendarHelpers";
 import {
   bookingDisplayName,
@@ -61,17 +62,10 @@ export async function createManualBookingRecords(
     bookingSource: args.bookingSource,
     remarks,
     customFieldResponses: args.collectedFields,
-    ...(args.googlePending !== undefined ? {
-      externalProvider: "google" as const,
-      externalCalendarId: "primary" as const,
-      externalOwnerUserId: args.googlePending.ownerUserId,
-      externalOrigin: "kilobot" as const,
-      externalStatus: "confirmed" as const,
-      externalTransparency: "opaque" as const,
-      externalCanEdit: true,
-      externalSyncState: "pending" as const,
-      externalOperationKey: args.googlePending.operationKey,
-    } : {}),
+    ...(args.googlePending !== undefined ? await pendingKilobotGoogleEventFields({
+      ownerUserId: args.googlePending.ownerUserId,
+      operationKey: args.googlePending.operationKey,
+    }) : {}),
     createdAt: now,
     updatedAt: now,
   });

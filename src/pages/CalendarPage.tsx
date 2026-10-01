@@ -1578,7 +1578,7 @@ export default function CalendarPage() {
           <DialogFooter>
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => setDeleteDialogOpen(false)}
             >
               Cancel
@@ -1586,6 +1586,7 @@ export default function CalendarPage() {
             <Button
               type="button"
               variant="destructive"
+              className="bg-destructive text-white hover:bg-destructive/90 dark:bg-destructive dark:text-white dark:hover:bg-destructive/90"
               onClick={handleDeleteEvent}
               disabled={isDeleting}
             >

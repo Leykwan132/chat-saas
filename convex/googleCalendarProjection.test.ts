@@ -99,6 +99,14 @@ async function listRange(t: CalendarTest, subject: string, startAt: number) {
   });
 }
 
+test("a cancelled booking is left off the team calendar", async () => {
+  const t = convexTest(schema, modules);
+  const fixture = await setupPrivacyFixture(t);
+  await t.run((ctx) => ctx.db.patch(fixture.eventId, { status: "cancelled" }));
+
+  expect(await listRange(t, "external-owner", fixture.startAt)).toEqual([]);
+});
+
 test("the connection owner receives full Google event details", async () => {
   const t = convexTest(schema, modules);
   const fixture = await setupPrivacyFixture(t);

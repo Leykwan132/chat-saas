@@ -61,12 +61,16 @@ function isCollectedFieldValuePresent(value: string | number | boolean | null | 
 }
 
 export function mergeCollectedFields(
+  service: Pick<Doc<"appointmentServices">, "fields">,
   sessionFields: CollectedFields,
   incomingFields?: CollectedFields,
 ): CollectedFields {
+  const serviceKeys = new Set([...service.fields.map((field) => field.key), "email"]);
+  const accepted = Object.entries(incomingFields ?? {})
+    .filter(([key]) => serviceKeys.has(key));
   return {
     ...sessionFields,
-    ...(incomingFields ?? {}),
+    ...Object.fromEntries(accepted),
   };
 }
 
@@ -87,7 +91,7 @@ export function missingServiceFields(service: Doc<"appointmentServices">, fields
   return missing;
 }
 
-function formatCollectedFieldValue(value: string | number | boolean | null | undefined) {
+export function formatCollectedFieldValue(value: string | number | boolean | null | undefined) {
   if (value === undefined || value === null) return "";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   return String(value).trim();

@@ -9,7 +9,6 @@ import schema from "./schema";
 import {
   executeDeleteCalendarEvent,
   executeListCalendarEvents,
-  executeUpdateCalendarEvent,
   registerGoogleCalendarTools,
   type GoogleCalendarAgentToolDependencies,
 } from "./googleCalendar/agentTools";
@@ -21,7 +20,6 @@ type MutationRef = FunctionReference<"mutation", "internal", Record<string, unkn
 const googleInternal = internal as unknown as {
   googleCalendar: {
     agentToolList: { prepareList: MutationRef };
-    agentToolMutate: { guardEvent: MutationRef };
   };
 };
 const startAt = Date.UTC(2026, 6, 1, 9, 0, 0);
@@ -99,7 +97,6 @@ function toolDependencies(t: CalendarTest): GoogleCalendarAgentToolDependencies 
   const stores = googleInternal.googleCalendar;
   return {
     prepareList: (args) => t.mutation(stores.agentToolList.prepareList, args) as never,
-    guardEvent: (args) => t.mutation(stores.agentToolMutate.guardEvent, args) as never,
     refresh: async () => undefined,
   };
 }
@@ -146,71 +143,6 @@ test("agent calendar reads expose only busy intervals", async () => {
   expect(JSON.stringify(result)).not.toContain("Private interview");
 });
 
-test("agent update rejects a Kilobot event from another conversation", async () => {
-  const t = createTest();
-  const fixture = await createAgentFixture(t);
-  const otherConversationEventId = await t.run(async (ctx) => {
-    return await ctx.db.insert("calendarEvents", {
-      teamId: fixture.teamId,
-      title: "Other conversation booking",
-      startAt,
-      endAt,
-      timeZone: "UTC",
-      status: "confirmed",
-      createdBy: fixture.userId,
-      agentId: fixture.agentId,
-      conversationId: fixture.otherConversationId,
-      externalOrigin: "kilobot",
-      createdAt: fixture.now,
-      updatedAt: fixture.now,
-    });
-  });
-
-  expect(
-    await executeUpdateCalendarEvent(
-      {
-        conversationId: fixture.conversationId,
-        eventId: otherConversationEventId,
-        startAt,
-        confirmed: true,
-      },
-      toolDependencies(t),
-    ),
-  ).toMatchObject({ kind: "forbidden" });
-});
-
-test("agent update rejects a Google-originated event in the active conversation", async () => {
-  const t = createTest();
-  const fixture = await createAgentFixture(t);
-  const googleEventId = await t.run(async (ctx) => {
-    return await ctx.db.insert("calendarEvents", {
-      teamId: fixture.teamId,
-      title: "Private interview",
-      startAt,
-      endAt,
-      timeZone: "UTC",
-      status: "confirmed",
-      createdBy: fixture.userId,
-      conversationId: fixture.conversationId,
-      externalOrigin: "google",
-      createdAt: fixture.now,
-      updatedAt: fixture.now,
-    });
-  });
-
-  expect(
-    await executeUpdateCalendarEvent(
-      {
-        conversationId: fixture.conversationId,
-        eventId: googleEventId,
-        startAt,
-        confirmed: true,
-      },
-      toolDependencies(t),
-    ),
-  ).toMatchObject({ kind: "forbidden" });
-});
-
 test("agent cancellation requires an explicit current cancellation request", async () => {
   const t = createTest();
   const fixture = await createAgentFixture(t);
@@ -235,7 +167,7 @@ test("agent cancellation requires an explicit current cancellation request", asy
     await executeDeleteCalendarEvent(
       {
         conversationId: fixture.conversationId,
-        eventId,
+        bookingIds: [eventId],
         confirmed: false,
       },
       toolDependencies(t),
@@ -249,9 +181,10 @@ test("google calendar tools are absent outside booking-capable conversations", (
     tools,
     conversationId: "jd7conversation" as Id<"conversations">,
     eligible: false,
+    defaultTimeZone: "UTC",
   });
   expect(tools).not.toHaveProperty("listCalendarEvents");
-  expect(tools).not.toHaveProperty("updateCalendarEvent");
+  expect(tools).not.toHaveProperty("updateBookingsDateTime");
   expect(tools).not.toHaveProperty("deleteCalendarEvent");
 });
 

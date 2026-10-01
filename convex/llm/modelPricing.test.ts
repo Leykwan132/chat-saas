@@ -34,11 +34,12 @@ test("retired models are unavailable and excluded from plan entitlements", () =>
   }
 });
 
-test("Free plan includes only Ilmu Mini V3.3", () => {
-  expect(PLAN_CATALOG.free.models).toEqual(["ilmu-mini-v3.3"]);
+test("Free plan includes only Ilmu Mini V3.3 and Meta Muse Spark", () => {
+  const freeModels = ["ilmu-mini-v3.3", "meta/muse-spark-1.3-contributor"];
+  expect(PLAN_CATALOG.free.models).toEqual(freeModels);
 
   const otherModels = listEnabledModels().filter(
-    (model) => model.value !== "ilmu-mini-v3.3",
+    (model) => !freeModels.includes(model.value),
   );
 
   expect(otherModels.every((model) => model.requiredPlan !== "free")).toBe(true);
@@ -142,7 +143,6 @@ test("trimmed model options are not enabled or included in plan entitlements", (
 test.each([
   ["openai/gpt-6-luna", "OpenAI GPT-6 Luna", "OpenAI", "openai", 2],
   ["openai/gpt-oss-120b", "OpenAI GPT-OSS 120B", "OpenAI", "openai", 0.5],
-  ["meta/muse-spark-1.3-contributor", "Meta Muse Spark 1.3 Contributor", "Meta", "meta", 1],
 ])("%s is enabled for every paid plan", (modelId, label, chef, chefSlug, creditCost) => {
   const model = listEnabledModels().find((entry) => entry.value === modelId);
 
@@ -156,6 +156,25 @@ test.each([
     labels: ["advanced", "latest"],
   });
   expect(plansWithModel(modelId)).toEqual(["starter", "growth", "business"]);
+});
+
+test("meta/muse-spark-1.3-contributor is enabled for every plan including Free", () => {
+  const model = listEnabledModels().find(
+    (entry) => entry.value === "meta/muse-spark-1.3-contributor",
+  );
+
+  expect(model).toMatchObject({
+    label: "Meta Muse Spark 1.3 Contributor",
+    creditCost: 1,
+    provider: "openrouter",
+    requiredPlan: "free",
+  });
+  expect(plansWithModel("meta/muse-spark-1.3-contributor")).toEqual([
+    "free",
+    "starter",
+    "growth",
+    "business",
+  ]);
 });
 
 test("Qwen models are not enabled or included in plan entitlements", () => {

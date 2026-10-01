@@ -12,12 +12,25 @@ export function inventedBookingConfirmation(text: string): boolean {
 export const BOOKING_NOT_COMPLETED_MESSAGE =
   "I couldn’t complete the booking yet. Please confirm your preferred slot so I can try again.";
 
+export const BOOKING_UPDATE_NOT_COMPLETED_MESSAGE =
+  "I couldn’t update that appointment. Please choose another available time.";
+
+function proposesBookingRebuild(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return normalized.includes("cancel") &&
+    (normalized.includes("rebook") || normalized.includes("recreate"));
+}
+
 export function resolveBookingReply(args: {
   generatedMessages: string[];
   confirmationMessage?: string;
   bookingExists: boolean;
   hadBookingBefore: boolean;
+  bookingEditInProgress?: boolean;
 }): string[] {
+  if (args.bookingEditInProgress && args.generatedMessages.some(proposesBookingRebuild)) {
+    return [BOOKING_UPDATE_NOT_COMPLETED_MESSAGE];
+  }
   const invented = args.generatedMessages.some(inventedBookingConfirmation);
   if (invented && !(args.bookingExists && args.confirmationMessage)) {
     return [BOOKING_NOT_COMPLETED_MESSAGE];

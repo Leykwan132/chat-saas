@@ -1,8 +1,26 @@
 import { expect, test } from "vitest";
 import type { Id } from "../_generated/dataModel";
-import { buildBookingConfirmationMessage } from "./fields";
+import {
+  buildBookingConfirmationMessage,
+  DEFAULT_SERVICE_FIELDS,
+  mergeCollectedFields,
+} from "./fields";
 
 const bookingId = "booking-id" as Id<"calendarEvents">;
+
+test("drops agent-invented keys that the service does not ask for", () => {
+  const merged = mergeCollectedFields(
+    { fields: DEFAULT_SERVICE_FIELDS },
+    { name: "Kwan" },
+    {
+      phone: "+60123456789",
+      email: "kwan@example.com",
+      grouped_times: "2026-10-05T15:00:00+08:00,2026-10-06T14:00:00+08:00",
+    },
+  );
+
+  expect(merged).toEqual({ name: "Kwan", phone: "+60123456789", email: "kwan@example.com" });
+});
 
 test("includes the Google Meet link in a remote booking confirmation", () => {
   const message = buildBookingConfirmationMessage({

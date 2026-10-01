@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import type { Doc, Id } from "./_generated/dataModel";
+import { buildBookingsConfirmationMessage } from "./appointmentBooking/confirmationMessage";
 import {
   buildBookingConfirmationMessage,
   buildCalendarEventDescription,
@@ -52,6 +53,55 @@ test("booking confirmation groups details in a readable order", () => {
       "Phone Number: 0129499394\n\n" +
       "Team Member: Ley Kwan Choo\n\n" +
       "Booking reference: booking-reference\n\n" +
+      "Thank you — we look forward to seeing you!",
+  );
+});
+
+test("batch confirmation lists every appointment once", () => {
+  const service = {
+    name: "Test",
+    fields: [
+      { key: "date", label: "Booking Date", type: "date" as const },
+      { key: "time", label: "Booking Time", type: "time" as const },
+      { key: "name", label: "Customer Name", type: "text" as const },
+      { key: "phone", label: "Phone Number", type: "phone" as const },
+    ],
+    locationMode: "in_person" as const,
+    timeZone: "UTC",
+  };
+  const message = buildBookingsConfirmationMessage({
+    service,
+    collectedFields: { name: "Kwan", phone: "0129499394" },
+    timeZone: "UTC",
+    appointments: [
+      {
+        startAt: Date.UTC(2026, 9, 2, 6),
+        endAt: Date.UTC(2026, 9, 2, 6, 30),
+        bookingId: "later" as Id<"calendarEvents">,
+        assignedTo: "Teammate",
+      },
+      {
+        startAt: Date.UTC(2026, 9, 1, 6),
+        endAt: Date.UTC(2026, 9, 1, 6, 30),
+        bookingId: "sooner" as Id<"calendarEvents">,
+        assignedTo: "Kwan Kwan",
+      },
+    ],
+  });
+
+  expect(message).toBe(
+    "Your bookings are confirmed!\n\n" +
+      "Service: Test\n\n" +
+      "Date: October 1 (Thursday)\n" +
+      "Time: 6:00 AM - 6:30 AM\n" +
+      "Team Member: Kwan Kwan\n" +
+      "Booking reference: sooner\n\n" +
+      "Date: October 2 (Friday)\n" +
+      "Time: 6:00 AM - 6:30 AM\n" +
+      "Team Member: Teammate\n" +
+      "Booking reference: later\n\n" +
+      "Customer Name: Kwan\n" +
+      "Phone Number: 0129499394\n\n" +
       "Thank you — we look forward to seeing you!",
   );
 });

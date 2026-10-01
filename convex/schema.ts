@@ -1,6 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { appointmentBookingSessionStatusValidator } from "./appointmentBookingSessionStatus";
+import { appointmentBookingBatchStatusValidator } from "./appointmentBookingBatchStatus";
 import {
   telegramRecipientStatusValidator,
   telegramSubscriptionStatusValidator,
@@ -2049,6 +2050,47 @@ export default defineSchema({
   })
     .index("by_conversationId", ["conversationId"])
     .index("by_calendarEventId", ["calendarEventId"])
+    .index("by_agentId_and_updatedAt", ["agentId", "updatedAt"]),
+  appointmentBookingBatches: defineTable({
+    conversationId: v.id("conversations"),
+    agentId: v.id("agents"),
+    serviceId: v.optional(v.id("appointmentServices")),
+    status: appointmentBookingBatchStatusValidator,
+    collectedFields: v.record(v.string(), appointmentCollectedValueValidator),
+    requestedSlots: v.array(appointmentBookingSlotValidator),
+    customerConfirmationMessageId: v.optional(v.id("messages")),
+    calendarEventIds: v.optional(v.array(v.id("calendarEvents"))),
+    sessionIds: v.optional(v.array(v.id("appointmentBookingSessions"))),
+    failedCalendarEventIds: v.optional(v.array(v.id("calendarEvents"))),
+    failureMessage: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_conversationId", ["conversationId"])
+    .index("by_agentId_and_updatedAt", ["agentId", "updatedAt"]),
+  appointmentBookingUpdateBatches: defineTable({
+    conversationId: v.id("conversations"),
+    agentId: v.id("agents"),
+    status: v.union(
+      v.literal("prepared"),
+      v.literal("updated"),
+      v.literal("restored"),
+      v.literal("failed"),
+    ),
+    items: v.array(v.object({
+      calendarEventId: v.id("calendarEvents"),
+      sessionId: v.id("appointmentBookingSessions"),
+      originalStartAt: v.number(),
+      originalEndAt: v.number(),
+      slot: appointmentBookingSlotValidator,
+      connectionId: v.optional(v.id("googleCalendarConnections")),
+    })),
+    failedCalendarEventIds: v.optional(v.array(v.id("calendarEvents"))),
+    failureMessage: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_conversationId", ["conversationId"])
     .index("by_agentId_and_updatedAt", ["agentId", "updatedAt"]),
   telegramNotificationRecipients: defineTable({
     phoneDigits: v.string(),

@@ -12,22 +12,26 @@ import {
   type AgentCalendarBusyInterval,
   type AgentCalendarToolFailure,
 } from "./agentToolGuard";
-import {
-  googleCalendarBookingSyncDependencies,
-  runCancelBookingSession,
-  runUpdateBookingAppointment,
-} from "./bookingSync";
+import { googleCalendarBookingSyncDependencies, runCancelBookingSession } from "./bookingSync";
 import { queryActiveBookingSession } from "../chat/bookingToolSession";
 import type { BookingToolResult } from "./bookingTypes";
+import { batchBookingUpdateSyncDependencies, runBatchBookingUpdate } from "./batchBookingUpdateSync";
+import { parseBatchBookingUpdates } from "./batchBookingUpdateInput";
+import type { BatchBookingUpdate, BatchBookingUpdateResult } from "./batchBookingUpdateTypes";
+
+export const UPDATE_BOOKINGS_SINGLE_EXAMPLE =
+  'updateBookingsDateTime({ bookings: [{ bookingId: "calendar-event-id", startTimeIso: "2026-10-01T16:00:00+08:00" }], confirmed: true })';
+export const UPDATE_BOOKINGS_MULTIPLE_EXAMPLE =
+  'updateBookingsDateTime({ bookings: [{ bookingId: "october-1-booking-id", startTimeIso: "2026-10-01T16:00:00+08:00" }, { bookingId: "october-5-booking-id", startTimeIso: "2026-10-05T14:00:00+08:00" }], confirmed: true })';
+export const CANCEL_BOOKINGS_SINGLE_EXAMPLE =
+  'deleteCalendarEvent({ bookingIds: ["calendar-event-id"], confirmed: true })';
+export const CANCEL_BOOKINGS_MULTIPLE_EXAMPLE =
+  'deleteCalendarEvent({ bookingIds: ["october-14-booking-id", "october-16-booking-id"], confirmed: true })';
 
 type PrepareListResult =
   | { kind: "completed"; result: AgentCalendarBusyInterval[] }
   | { kind: "failed"; result: AgentCalendarToolFailure }
   | { kind: "needs_refresh"; connectionId: Id<"googleCalendarConnections"> };
-
-type GuardEventResult =
-  | { kind: "ok"; serviceId?: Id<"appointmentServices">; startAt: number }
-  | AgentCalendarToolFailure;
 
 export type GoogleCalendarAgentToolDependencies = {
   prepareList: (args: {
@@ -36,17 +40,15 @@ export type GoogleCalendarAgentToolDependencies = {
     rangeEndAt: number;
     refreshed?: boolean;
   }) => Promise<PrepareListResult>;
-  guardEvent: (args: {
-    conversationId: Id<"conversations">;
-    eventId: Id<"calendarEvents">;
-  }) => Promise<GuardEventResult>;
   refresh: (args: { connectionId: Id<"googleCalendarConnections"> }) => Promise<unknown>;
-  updateBooking?: (args: {
+  updateBookings?: (args: {
     conversationId: Id<"conversations">;
-    serviceId: Id<"appointmentServices">;
-    startAt: number;
+    updates: BatchBookingUpdate[];
+  }) => Promise<BatchBookingUpdateResult>;
+  cancelBooking?: (args: {
+    conversationId: Id<"conversations">;
+    bookingId: Id<"calendarEvents">;
   }) => Promise<BookingToolResult>;
-  cancelBooking?: (args: { conversationId: Id<"conversations"> }) => Promise<BookingToolResult>;
 };
 
 type StoreMutation<TArgs extends Record<string, unknown>, TResult> =
@@ -61,29 +63,22 @@ type GoogleAgentToolInternal = {
       refreshed?: boolean;
     }, PrepareListResult>;
   };
-  agentToolMutate: {
-    guardEvent: StoreMutation<{
-      conversationId: Id<"conversations">;
-      eventId: Id<"calendarEvents">;
-    }, GuardEventResult>;
-  };
   agentTools: {
     listCalendarEvents: FunctionReference<"action", "internal", {
       conversationId: Id<"conversations">;
       rangeStartAt: number;
       rangeEndAt: number;
     }, AgentCalendarBusyInterval[] | AgentCalendarToolFailure>;
-    updateCalendarEvent: FunctionReference<"action", "internal", {
+    updateBookings: FunctionReference<"action", "internal", {
       conversationId: Id<"conversations">;
-      eventId: Id<"calendarEvents">;
-      startAt?: number;
+      updates: BatchBookingUpdate[];
       confirmed: boolean;
-    }, { kind: string; success: boolean; message: string }>;
+    }, ReturnType<typeof updateBookingsResult> | AgentCalendarToolFailure>;
     deleteCalendarEvent: FunctionReference<"action", "internal", {
       conversationId: Id<"conversations">;
-      eventId: Id<"calendarEvents">;
+      bookingIds: Id<"calendarEvents">[];
       confirmed: boolean;
-    }, { kind: string; success: boolean; message: string }>;
+    }, Awaited<ReturnType<typeof executeDeleteCalendarEvent>>>;
   };
   syncWorker: {
     run: FunctionReference<"action", "internal", { connectionId: Id<"googleCalendarConnections"> }, unknown>;
@@ -120,51 +115,64 @@ export async function executeListCalendarEvents(
   return prepared.result;
 }
 
-export async function executeUpdateCalendarEvent(
+function updateBookingsResult(result: BatchBookingUpdateResult) {
+  return {
+    ...bookingResult(result),
+    ...(result.bookings === undefined ? {} : { bookings: result.bookings }),
+    ...(result.failures === undefined ? {} : { failures: result.failures }),
+  };
+}
+
+export async function executeUpdateBookings(
   args: {
     conversationId: Id<"conversations">;
-    eventId: Id<"calendarEvents">;
-    startAt?: number;
+    updates: BatchBookingUpdate[];
     confirmed: boolean;
   },
-  dependencies: GoogleCalendarAgentToolDependencies,
+  dependencies: Pick<GoogleCalendarAgentToolDependencies, "updateBookings">,
 ) {
   const confirmation = requireExplicitConfirmation(args.confirmed);
   if (confirmation !== null) return confirmation;
-  const guard = await dependencies.guardEvent({
+  if (dependencies.updateBookings === undefined) return agentCalendarToolFailure("invalid_request");
+  return updateBookingsResult(await dependencies.updateBookings({
     conversationId: args.conversationId,
-    eventId: args.eventId,
-  });
-  if (guard.kind !== "ok") return guard;
-  if (guard.serviceId === undefined || dependencies.updateBooking === undefined) {
-    return agentCalendarToolFailure("invalid_request");
-  }
-  return bookingResult(await dependencies.updateBooking({
-    conversationId: args.conversationId,
-    serviceId: guard.serviceId,
-    startAt: args.startAt ?? guard.startAt,
+    updates: args.updates,
   }));
 }
 
 export async function executeDeleteCalendarEvent(
   args: {
     conversationId: Id<"conversations">;
-    eventId: Id<"calendarEvents">;
+    bookingIds: Id<"calendarEvents">[];
     confirmed: boolean;
   },
-  dependencies: GoogleCalendarAgentToolDependencies,
+  dependencies: Pick<GoogleCalendarAgentToolDependencies, "cancelBooking">,
 ) {
   const confirmation = requireExplicitConfirmation(args.confirmed);
   if (confirmation !== null) return confirmation;
-  const guard = await dependencies.guardEvent({
-    conversationId: args.conversationId,
-    eventId: args.eventId,
-  });
-  if (guard.kind !== "ok") return guard;
-  if (dependencies.cancelBooking === undefined) {
-    return agentCalendarToolFailure("invalid_request");
+  const { cancelBooking } = dependencies;
+  if (cancelBooking === undefined) return agentCalendarToolFailure("invalid_request");
+  if (args.bookingIds.length === 0 || args.bookingIds.length > 10) {
+    return agentCalendarToolFailure("invalid_request", "Cancel between one and ten bookings at a time.");
   }
-  return bookingResult(await dependencies.cancelBooking({ conversationId: args.conversationId }));
+  if (new Set(args.bookingIds).size !== args.bookingIds.length) {
+    return agentCalendarToolFailure("invalid_request", "Each booking can be cancelled only once per request.");
+  }
+  const bookings = [];
+  for (const bookingId of args.bookingIds) {
+    const result = bookingResult(await cancelBooking({ conversationId: args.conversationId, bookingId }));
+    bookings.push({ bookingId, success: result.success, message: result.message });
+  }
+  const cancelled = bookings.filter((booking) => booking.success).length;
+  const success = cancelled === bookings.length;
+  return {
+    kind: success ? "success" as const : "failed" as const,
+    success,
+    message: success
+      ? `Cancelled ${cancelled} of ${bookings.length} bookings.`
+      : `Cancelled ${cancelled} of ${bookings.length} bookings. Report each failed booking to the customer.`,
+    bookings,
+  };
 }
 
 export function googleCalendarAgentToolDependencies(
@@ -173,9 +181,8 @@ export function googleCalendarAgentToolDependencies(
   const booking = googleCalendarBookingSyncDependencies(ctx);
   return {
     prepareList: (args) => ctx.runMutation(googleInternal.agentToolList.prepareList, args),
-    guardEvent: (args) => ctx.runMutation(googleInternal.agentToolMutate.guardEvent, args),
     refresh: (args) => ctx.runAction(googleInternal.syncWorker.run, args),
-    updateBooking: (args) => runUpdateBookingAppointment(args, booking),
+    updateBookings: (args) => runBatchBookingUpdate(args, batchBookingUpdateSyncDependencies(ctx)),
     cancelBooking: (args) => runCancelBookingSession(args, booking),
   };
 }
@@ -192,21 +199,20 @@ export const listCalendarEvents = internalAction({
     executeListCalendarEvents(args, googleCalendarAgentToolDependencies(ctx)),
 });
 
-export const updateCalendarEvent = internalAction({
+export const updateBookings = internalAction({
   args: {
     conversationId: v.id("conversations"),
-    eventId: v.id("calendarEvents"),
-    startAt: v.optional(v.number()),
+    updates: v.array(v.object({ bookingId: v.id("calendarEvents"), startAt: v.number() })),
     confirmed: v.boolean(),
   },
   handler: async (ctx, args) =>
-    executeUpdateCalendarEvent(args, googleCalendarAgentToolDependencies(ctx)),
+    executeUpdateBookings(args, googleCalendarAgentToolDependencies(ctx)),
 });
 
 export const deleteCalendarEvent = internalAction({
   args: {
     conversationId: v.id("conversations"),
-    eventId: v.id("calendarEvents"),
+    bookingIds: v.array(v.id("calendarEvents")),
     confirmed: v.boolean(),
   },
   handler: async (ctx, args) =>
@@ -217,9 +223,10 @@ export function registerGoogleCalendarTools(args: {
   tools: ToolSet;
   conversationId: Id<"conversations">;
   eligible: boolean;
+  defaultTimeZone: string;
 }) {
   if (!args.eligible) return;
-  const { tools, conversationId } = args;
+  const { tools, conversationId, defaultTimeZone } = args;
   tools.listCalendarEvents = createTool({
     description:
       "Lists busy time ranges on the assigned teammate's calendar for scheduling. Never includes titles, descriptions, attendees, links, or account details.",
@@ -243,37 +250,41 @@ export function registerGoogleCalendarTools(args: {
       });
     },
   });
-  tools.updateCalendarEvent = createTool({
+  tools.updateBookingsDateTime = createTool({
     description:
-      "Updates the Kilobot booking for this conversation after the customer explicitly confirms the final changes. Cannot change Google-only or other-conversation events.",
+      `You must invoke this tool when the user requests to make changes to the time of a booking. The only tool that changes the date or time of an existing booking. Use it whenever the customer wants to reschedule or move an appointment, including a single booking: pass a one-item bookings array. Handles one to ten bookings in one call and keeps each booking's duration. Every bookingId must come from listCustomerBookings. All changes succeed together or none are made. One booking: ${UPDATE_BOOKINGS_SINGLE_EXAMPLE}. Several bookings: ${UPDATE_BOOKINGS_MULTIPLE_EXAMPLE}.`,
     inputSchema: z.object({
-      eventId: z.string().describe("The calendar event ID from getCurrentBooking."),
-      startTimeIso: z.string().optional().describe("Confirmed new start time as an ISO timestamp."),
-      confirmed: z.boolean().describe("True only when the customer explicitly confirmed this change in the current request."),
+      bookings: z.array(z.object({
+        bookingId: z.string().describe("Booking ID returned by listCustomerBookings."),
+        startTimeIso: z.string().describe("Confirmed new start time as an ISO timestamp with offset."),
+      })).min(1).max(10),
+      confirmed: z.boolean().describe("True only when the customer explicitly approved these exact changes."),
     }),
     execute: async (ctx, input) => {
-      await queryActiveBookingSession(ctx, conversationId);
-      const startAt = input.startTimeIso ? Date.parse(input.startTimeIso) : Number.NaN;
-      return await ctx.runAction(googleInternal.agentTools.updateCalendarEvent, {
+      const parsed = parseBatchBookingUpdates(input.bookings.map((booking) => ({
+        bookingId: booking.bookingId as Id<"calendarEvents">,
+        startTimeIso: booking.startTimeIso,
+      })), defaultTimeZone);
+      if (!parsed.success) return agentCalendarToolFailure("invalid_request", parsed.message);
+      return await ctx.runAction(googleInternal.agentTools.updateBookings, {
         conversationId,
-        eventId: input.eventId as Id<"calendarEvents">,
-        ...(Number.isFinite(startAt) ? { startAt } : {}),
+        updates: parsed.updates,
         confirmed: input.confirmed,
       });
     },
   });
   tools.deleteCalendarEvent = createTool({
     description:
-      "Cancels the Kilobot booking for this conversation after the customer explicitly asks to cancel. Cannot delete Google-only or other-conversation events.",
+      `You must invoke this tool when the customer asks to cancel an existing booking. The only tool that cancels confirmed bookings, including a single booking: pass a one-item bookingIds array. Handles one to ten bookings in one call, cancels exactly those bookings, and removes them from the connected Google Calendar. Every bookingId must come from listCustomerBookings. Bookings are cancelled in order and the result lists each booking's outcome. One booking: ${CANCEL_BOOKINGS_SINGLE_EXAMPLE}. Several bookings: ${CANCEL_BOOKINGS_MULTIPLE_EXAMPLE}.`,
     inputSchema: z.object({
-      eventId: z.string().describe("The calendar event ID from getCurrentBooking."),
-      confirmed: z.boolean().describe("True only when the customer explicitly asked to cancel in the current request."),
+      bookingIds: z.array(z.string().describe("Booking ID returned by listCustomerBookings.")).min(1).max(10),
+      confirmed: z.boolean().describe("True only when the customer explicitly asked to cancel these exact bookings."),
     }),
     execute: async (ctx, input) => {
       await queryActiveBookingSession(ctx, conversationId);
       return await ctx.runAction(googleInternal.agentTools.deleteCalendarEvent, {
         conversationId,
-        eventId: input.eventId as Id<"calendarEvents">,
+        bookingIds: input.bookingIds.map((bookingId) => bookingId as Id<"calendarEvents">),
         confirmed: input.confirmed,
       });
     },

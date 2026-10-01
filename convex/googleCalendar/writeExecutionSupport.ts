@@ -86,7 +86,14 @@ export async function reserveAndBegin(
   externalEventId: string | undefined,
   event?: GoogleCalendarEventWriteArgs["event"],
 ) {
-  const prepared = await dependencies.prepare({ ...args, action, externalEventId });
+  const prepared = await dependencies.prepare({
+    connectionId: args.connectionId,
+    calendarEventId: args.calendarEventId,
+    operationKey: args.operationKey,
+    action,
+    externalEventId,
+    now: args.now,
+  });
   if (prepared.kind === "error") return prepared;
   const payloadFingerprint = await fingerprintGoogleCalendarWritePayload({
     action,

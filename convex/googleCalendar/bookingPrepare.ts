@@ -19,7 +19,11 @@ import {
   googleCalendarBookingGate,
   loadGoogleCalendarConnectionForUser,
 } from "./bookingGate";
-import { googleCalendarBookingOperationKey, googleCalendarWriteInputFromEvent } from "./bookingPayload";
+import {
+  googleCalendarBookingOperationKey,
+  googleCalendarWriteInputFromEvent,
+  pendingKilobotGoogleEventFields,
+} from "./bookingPayload";
 import { prepareBookResultValidator } from "./bookingTypes";
 
 const bookArgs = {
@@ -59,7 +63,7 @@ export const prepareBook = internalMutation({
         kind: "failed" as const,
         result: {
           success: false,
-          message: "This session is editing an existing booking. Call updateBookingAppointment instead of bookAppointment.",
+          message: "This session is editing an existing booking. Call saveBookingDetails instead of bookAppointment.",
         },
       };
     }
@@ -175,17 +179,10 @@ export const prepareBook = internalMutation({
       appointmentServiceId: service._id,
       bookingSource: "ai",
       customFieldResponses: collectedFields,
-      ...(gate.kind === "google" ? {
-        externalProvider: "google" as const,
-        externalCalendarId: "primary" as const,
-        externalOwnerUserId: assignedUser._id,
-        externalOrigin: "kilobot" as const,
-        externalStatus: "confirmed" as const,
-        externalTransparency: "opaque" as const,
-        externalCanEdit: true,
-        externalSyncState: "pending" as const,
-        externalOperationKey: googleCalendarBookingOperationKey(session._id, "create"),
-      } : {}),
+      ...(gate.kind === "google" ? await pendingKilobotGoogleEventFields({
+        ownerUserId: assignedUser._id,
+        operationKey: googleCalendarBookingOperationKey(session._id, "create"),
+      }) : {}),
       createdAt: now,
       updatedAt: now,
     });

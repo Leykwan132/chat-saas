@@ -1,6 +1,10 @@
 import { expect, expectTypeOf, test } from 'vitest';
 import type { AppointmentBookingDisplayStatus } from '../../lib/appointmentBookingStatusPresentation';
-import { getMostRecentCustomerBooking, type CustomerBookingHistoryItem } from './customerBookingsModel';
+import {
+  getMostRecentCustomerBooking,
+  upcomingCustomerBookings,
+  type CustomerBookingHistoryItem,
+} from './customerBookingsModel';
 
 function booking(
   startAt: number,
@@ -31,6 +35,17 @@ test('selects the greatest effective update time regardless of schedule or statu
     booking(20, 80, 'completed'),
   ])?.startAt).toBe(10);
   expect(getMostRecentCustomerBooking([])).toBeNull();
+});
+
+test('keeps the appointment in progress and later scheduled appointments', () => {
+  const now = 100;
+  expect(upcomingCustomerBookings([
+    booking(10, 1, 'booked'),
+    booking(80, 2, 'booked'),
+    booking(90, 3, 'cancelled'),
+    booking(120, 4, 'booked'),
+    booking(200, 5, 'no_show'),
+  ], now).map((item) => item.startAt)).toEqual([80, 120]);
 });
 
 test('uses the shared booking display status contract', () => {
