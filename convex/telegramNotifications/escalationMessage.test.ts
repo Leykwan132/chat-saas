@@ -28,5 +28,30 @@ test("human escalation message uses the workspace hostname and includes the requ
   expect(message).toContain("Latest message: I need a person to change my booking.");
   expect(message).toContain("Needs help: Customer wants the Thursday appointment moved.");
   expect(message).toContain("Context: The requested Thursday slot is already taken.");
-  expect(message).toContain(`Open: ${openUrl}`);
+  expect(message).toContain(`Open chat: ${openUrl}`);
+});
+
+test('opens WhatsApp using the known phone when Meta supplies a private user ID', async () => {
+  const { notificationConversationUrl } = await import('./escalationMessage');
+  expect(notificationConversationUrl('https://chat.example.com', 'agent-1', {
+    _id: 'conversation-1' as never, service: 'whatsapp', contactAddress: 'US.13491208655302741918',
+  }, {
+    service: 'whatsapp', contactAddress: 'US.13491208655302741918', phone: '+1 (650) 555-1111',
+  })).toBe('https://wa.me/16505551111');
+});
+
+test('does not turn a private WhatsApp ID into a different phone number', async () => {
+  const { notificationConversationUrl } = await import('./escalationMessage');
+  expect(() => notificationConversationUrl('https://chat.example.com', 'agent-1', {
+    _id: 'conversation-1' as never, service: 'whatsapp', contactAddress: 'US.13491208655302741918',
+  }, null)).toThrow('Customer WhatsApp phone number or username is required');
+});
+
+test('opens a WhatsApp username when the customer has no phone number', async () => {
+  const { notificationConversationUrl } = await import('./escalationMessage');
+  expect(notificationConversationUrl('https://chat.example.com', 'agent-1', {
+    _id: 'conversation-1' as never, service: 'whatsapp', contactAddress: 'US.13491208655302741918',
+  }, {
+    service: 'whatsapp', contactAddress: 'US.13491208655302741918', whatsappUsername: '@alicia.tan',
+  })).toBe('https://wa.me/alicia.tan');
 });

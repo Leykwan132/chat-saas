@@ -15,3 +15,5 @@ export const notificationBotIdValidator = v.union(
   v.literal("kilobot"),
   v.literal("goecho"),
 );
+
+export const notificationButtonsValidator = v.array(v.object({ text: v.string(), url: v.string() }));

@@ -6,7 +6,7 @@ import { telegramNotificationKindValidator } from "./kinds";
 import { telegramNotificationWorkpool } from "./pool";
 import { dashboardOrigin } from "./dashboardOrigin";
 import { reserveTelegramMessage } from "./queue";
-import { formatEventTestPreview } from "./testPreview";
+import { eventTestNotification } from "./testPreview";
 
 const subscriptionIdValidator = v.id("agentTelegramNotificationSubscriptions");
 
@@ -62,7 +62,7 @@ export const sendEventPreview = action({
       internal.telegramNotifications.worker.sendNotification,
       {
         subscriptionId: args.subscriptionId,
-        text: formatEventTestPreview(args.kind, reservation.agentName, reservation.origin, reservation.agentId),
+        ...eventTestNotification(args.kind, reservation.agentName, reservation.origin, reservation.agentId),
       },
       { runAt: reservation.scheduledFor },
     );

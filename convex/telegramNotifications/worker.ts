@@ -1,3 +1,4 @@
+import { notificationButtonsValidator } from './validators';
 import { v } from "convex/values";
 import { internalAction, internalMutation } from "../_generated/server";
 import { internal } from "../_generated/api";
@@ -48,7 +49,7 @@ export const markRecipientBlocked = internalMutation({
 });
 
 export const sendNotification = internalAction({
-  args: { subscriptionId: v.id("agentTelegramNotificationSubscriptions"), text: v.string() },
+  args: { subscriptionId: v.id("agentTelegramNotificationSubscriptions"), text: v.string(), buttons: v.optional(notificationButtonsValidator) },
   returns: v.null(),
   handler: async (ctx, args) => {
     const delivery = await ctx.runMutation(internal.telegramNotifications.worker.getDelivery, {
@@ -68,6 +69,7 @@ export const sendNotification = internalAction({
       await sendTelegramMessage(resolveNotificationBotById(delivery.notificationBot, process.env).token, {
         chatId: delivery.chatId,
         text: args.text,
+        ...(args.buttons ? { replyMarkup: { inline_keyboard: [args.buttons] } } : {}),
       });
     } catch (error) {
       if (error instanceof TelegramDeliveryError && (error.kind === "blocked" || error.kind === "unavailable")) {

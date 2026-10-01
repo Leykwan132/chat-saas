@@ -406,7 +406,6 @@ import type * as teamMembers from "../teamMembers.js";
 import type * as teamRoles from "../teamRoles.js";
 import type * as teamStripePlanResolver from "../teamStripePlanResolver.js";
 import type * as teams from "../teams.js";
-import type * as telegramNotifications_bookingMessage from "../telegramNotifications/bookingMessage.js";
 import type * as telegramNotifications_config from "../telegramNotifications/config.js";
 import type * as telegramNotifications_dashboardOrigin from "../telegramNotifications/dashboardOrigin.js";
 import type * as telegramNotifications_dispatch from "../telegramNotifications/dispatch.js";
@@ -977,7 +976,6 @@ declare const fullApi: ApiFromModules<{
   teamRoles: typeof teamRoles;
   teamStripePlanResolver: typeof teamStripePlanResolver;
   teams: typeof teams;
-  "telegramNotifications/bookingMessage": typeof telegramNotifications_bookingMessage;
   "telegramNotifications/config": typeof telegramNotifications_config;
   "telegramNotifications/dashboardOrigin": typeof telegramNotifications_dashboardOrigin;
   "telegramNotifications/dispatch": typeof telegramNotifications_dispatch;
