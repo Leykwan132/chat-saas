@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internalAction, internalMutation } from "../_generated/server";
 import { internal } from "../_generated/api";
-import { requireNotificationBotToken } from "./config";
+import { resolveNotificationBotById } from "./config";
 import { telegramNotificationWorkpool } from "./pool";
 import { TELEGRAM_CHAT_MESSAGE_DELAY_MS } from "./queue";
 import { TelegramDeliveryError, sendTelegramMessage } from "./telegramApi";
@@ -10,7 +10,11 @@ export const getDelivery = internalMutation({
   args: { subscriptionId: v.id("agentTelegramNotificationSubscriptions") },
   returns: v.union(
     v.null(),
-    v.object({ recipientId: v.id("telegramNotificationRecipients"), chatId: v.string() }),
+    v.object({
+      recipientId: v.id("telegramNotificationRecipients"),
+      chatId: v.string(),
+      notificationBot: v.union(v.literal("kilobot"), v.literal("goecho")),
+    }),
     v.object({ retryAt: v.number() }),
   ),
   handler: async (ctx, args) => {
@@ -26,7 +30,11 @@ export const getDelivery = internalMutation({
       nextTelegramMessageAvailableAt: now + TELEGRAM_CHAT_MESSAGE_DELAY_MS,
       updatedAt: now,
     });
-    return { recipientId: recipient._id, chatId: recipient.telegramChatId };
+    return {
+      recipientId: recipient._id,
+      chatId: recipient.telegramChatId,
+      notificationBot: recipient.notificationBot ?? "kilobot",
+    };
   },
 });
 
@@ -57,7 +65,7 @@ export const sendNotification = internalAction({
       return null;
     }
     try {
-      await sendTelegramMessage(requireNotificationBotToken(process.env), {
+      await sendTelegramMessage(resolveNotificationBotById(delivery.notificationBot, process.env).token, {
         chatId: delivery.chatId,
         text: args.text,
       });

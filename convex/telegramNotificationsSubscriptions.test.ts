@@ -11,6 +11,7 @@ import {
 const modules = import.meta.glob("./**/*.ts");
 
 beforeEach(() => {
+  vi.stubEnv("NOTIFICATION_BOT_TOKEN", "notifications-kilobot-token");
   vi.stubEnv("NOTIFICATION_BOT_USERNAME", "notifications_kilobot");
 });
 afterEach(() => {
@@ -217,6 +218,6 @@ test("spaces queued sends to the same Telegram chat one second apart", async () 
   const firstDelivery = await t.mutation(internal.telegramNotifications.worker.getDelivery, { subscriptionId });
   const delayedDelivery = await t.mutation(internal.telegramNotifications.worker.getDelivery, { subscriptionId });
 
-  expect(firstDelivery).toMatchObject({ chatId: "7499620613" });
+  expect(firstDelivery).toMatchObject({ chatId: "7499620613", notificationBot: "kilobot" });
   expect(delayedDelivery).toMatchObject({ retryAt: expect.any(Number) });
 });

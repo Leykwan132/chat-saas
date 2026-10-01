@@ -1,10 +1,11 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
 import { normalizeTelegramPhone } from "./phone";
+import { notificationBotIdValidator } from "./validators";
 
 export const bindVerificationChat = internalMutation({
-  args: { tokenHash: v.string(), chatId: v.string() },
-  returns: v.object({ accepted: v.boolean() }),
+  args: { tokenHash: v.string(), chatId: v.string(), notificationBot: notificationBotIdValidator },
+  returns: v.object({ accepted: v.boolean(), notificationBot: v.optional(notificationBotIdValidator) }),
   handler: async (ctx, args) => {
     const recipient = await ctx.db
       .query("telegramNotificationRecipients")
@@ -12,7 +13,12 @@ export const bindVerificationChat = internalMutation({
         q.eq("verificationTokenHash", args.tokenHash),
       )
       .unique();
-    if (!recipient || recipient.status !== "pending" || recipient.verificationTokenHash !== args.tokenHash) {
+    if (
+      !recipient ||
+      recipient.status !== "pending" ||
+      recipient.verificationTokenHash !== args.tokenHash ||
+      (recipient.notificationBot ?? "kilobot") !== args.notificationBot
+    ) {
       return { accepted: false };
     }
     const previouslyBound = await ctx.db
@@ -29,7 +35,7 @@ export const bindVerificationChat = internalMutation({
       }
     }
     await ctx.db.patch(recipient._id, { verificationChatId: args.chatId, updatedAt: now });
-    return { accepted: true };
+    return { accepted: true, notificationBot: recipient.notificationBot ?? "kilobot" };
   },
 });
 
@@ -41,8 +47,9 @@ export const verifySharedContact = internalMutation({
     phoneNumber: v.string(),
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
+    notificationBot: notificationBotIdValidator,
   },
-  returns: v.object({ verified: v.boolean() }),
+  returns: v.object({ verified: v.boolean(), notificationBot: v.optional(notificationBotIdValidator) }),
   handler: async (ctx, args) => {
     if (args.contactUserId !== args.senderId) return { verified: false };
     let phoneDigits: string;
@@ -58,8 +65,12 @@ export const verifySharedContact = internalMutation({
       )
       .order("desc")
       .take(1);
-    const recipient = candidates[0];
-    if (!recipient || recipient.status !== "pending" || recipient.phoneDigits !== phoneDigits) {
+    const recipient = candidates.find((candidate) =>
+      candidate.status === "pending" &&
+      candidate.phoneDigits === phoneDigits &&
+      (candidate.notificationBot ?? "kilobot") === args.notificationBot,
+    );
+    if (!recipient) {
       return { verified: false };
     }
     const now = Date.now();
@@ -74,6 +85,6 @@ export const verifySharedContact = internalMutation({
       verificationChatId: undefined,
       updatedAt: now,
     });
-    return { verified: true };
+    return { verified: true, notificationBot: recipient.notificationBot ?? "kilobot" };
   },
 });

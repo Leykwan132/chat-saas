@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { appointmentBookingSessionStatusValidator } from "./appointmentBookingSessionStatus";
 import { appointmentBookingBatchStatusValidator } from "./appointmentBookingBatchStatus";
 import {
+  notificationBotIdValidator,
   telegramRecipientStatusValidator,
   telegramSubscriptionStatusValidator,
 } from "./telegramNotifications/validators";
@@ -2095,6 +2096,7 @@ export default defineSchema({
   telegramNotificationRecipients: defineTable({
     phoneDigits: v.string(),
     status: telegramRecipientStatusValidator,
+    notificationBot: v.optional(notificationBotIdValidator),
     verificationTokenHash: v.optional(v.string()),
     verificationChatId: v.optional(v.string()),
     telegramChatId: v.optional(v.string()),

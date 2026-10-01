@@ -127,4 +127,5 @@ test('keeps pending-recipient verification controls in the recipient row', () =>
   expect(rowSource).toContain('text-xs text-muted-foreground');
   expect(rowSource).toContain('<Copy className="size-3" />');
   expect(hookSource).toContain('ensureVerificationUrl');
+  expect(hookSource).not.toContain('useEffect');
 });

@@ -1,13 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Id } from '../../../convex/_generated/dataModel';
 
-type PendingSubscription = {
-  subscriptionId: Id<'agentTelegramNotificationSubscriptions'>;
-  state: 'pending' | 'connected' | 'disabled' | 'blocked';
-};
-
 export function useTelegramVerificationUrls(
-  subscriptions: PendingSubscription[] | undefined,
   regenerate: (args: {
     subscriptionId: Id<'agentTelegramNotificationSubscriptions'>;
   }) => Promise<{ verificationUrl: string }>,
@@ -39,18 +33,6 @@ export function useTelegramVerificationUrls(
       loadingIds.current.delete(subscriptionId);
     }
   }
-
-  useEffect(() => {
-    if (!subscriptions) return;
-    for (const subscription of subscriptions) {
-      if (
-        (subscription.state === 'pending' || subscription.state === 'blocked')
-        && !verificationUrls[subscription.subscriptionId]
-      ) {
-        void ensureVerificationUrl(subscription.subscriptionId).catch(() => undefined);
-      }
-    }
-  }, [subscriptions, verificationUrls]);
 
   return { verificationUrls, rememberVerificationUrl, ensureVerificationUrl };
 }
