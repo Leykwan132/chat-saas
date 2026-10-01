@@ -1,3 +1,4 @@
+import { googleCalendarBookingUrl, notificationButtons } from '../../shared/telegramNotificationActions';
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import type { TelegramNotificationKind } from "../../shared/telegramNotificationKinds";
@@ -9,7 +10,7 @@ import {
   formatCalendarAllDayDate,
   formatCalendarDateTime,
 } from "../calendarFormatUtils";
-import { bookingCalendarUrl } from "./bookingMessage";
+import { getConversationIdForEvent } from "../calendarEventsHelpers";
 import { dashboardOrigin } from "./dashboardOrigin";
 import { enqueueTelegramAgentNotification } from "./dispatch";
 import { escalationChannelLabel, escalationInboxUrl } from "./escalationMessage";
@@ -50,6 +51,7 @@ export async function notifyHumanEscalation(ctx: MutationCtx, agentId: Id<"agent
   const contact = customer?.email?.trim() || customer?.phone?.trim() || conversation.contactAddress;
   const customerName = customer?.name?.trim() || conversation.contactName?.trim() || contact;
   const origin = await dashboardOrigin(ctx, conversation.orgId);
+  const openUrl = escalationInboxUrl(origin, agentId, conversationId);
   return await enqueueTelegramAgentNotification(
     ctx,
     agentId,
@@ -61,8 +63,9 @@ export async function notifyHumanEscalation(ctx: MutationCtx, agentId: Id<"agent
       latestMessage: latestMessageText(sourceMessage?.content, sourceMessage?.contentType, conversation.lastMessagePreview),
       question: conversation.escalation?.question ?? "",
       context: conversation.escalation?.context ?? "",
-      openUrl: escalationInboxUrl(origin, agentId, conversationId),
+      openUrl,
     }),
+    notificationButtons(openUrl),
   );
 }
 
@@ -94,17 +97,32 @@ export async function notifyAppointmentEvent(ctx: MutationCtx, agentId: Id<"agen
   const when = appointmentWhen(appointment);
   const label = event === "booked" ? "New booking" : event === "updated" ? "Booking updated" : "Booking cancelled";
   const origin = await dashboardOrigin(ctx, agent?.orgId ?? "");
+  const conversationId = await getConversationIdForEvent(ctx, appointment);
+  const openUrl = escalationInboxUrl(origin, agentId, conversationId);
+  const customerName = customer?.displayName?.trim() || customer?.email?.trim() || "Customer";
+  const serviceName = service?.name?.trim() || appointment.title;
+  const calendarUrl = event === "booked" ? googleCalendarBookingUrl({
+    title: `${serviceName} — ${customerName}`,
+    startAt: appointment.startAt,
+    endAt: appointment.endAt,
+    timeZone: appointment.timeZone,
+    allDay: appointment.allDay,
+    location: appointment.location,
+    chatUrl: openUrl,
+  }) : undefined;
   return await enqueueTelegramAgentNotification(
     ctx,
     agentId,
     formatBookingNotificationMessage({
       label,
       agentName,
-      customerName: customer?.displayName?.trim() || customer?.email?.trim() || "Customer",
-      serviceName: service?.name?.trim() || appointment.title,
+      customerName,
+      serviceName,
       date: when.date,
       time: when.time,
-      openUrl: bookingCalendarUrl(origin, agentId, appointmentId),
+      openUrl,
+      calendarUrl,
     }),
+    notificationButtons(openUrl, calendarUrl),
   );
 }

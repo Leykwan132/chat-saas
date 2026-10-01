@@ -2,6 +2,7 @@
 
 # Snapshot
 
+- 2026-10-01 [USER] Approved direct-chat buttons for escalation and booking created/updated/cancelled, Add to Google Calendar on creation, demo/test actions, and a new branch/PR. [CODE] Implemented on `codex/notification-chat-calendar-actions` from `origin/main` after #193 merged. Calendar links prefill exact times/time zone, service/customer/location and chat. Live bookings resolve chat by event or customer; demos open Inbox for fictional customers. Unreleased; no production changelog entry.
 - 2026-10-01 [USER] Human escalation, new booking, booking updated, and booking cancelled Telegram messages on a custom hostname must open that hostname. Escalation includes the customer, contact, channel, latest message, request, and context. Each booking includes the customer, service, date, and time. For all four kinds, the Notification Types sample, the test send, and the live send use the same message template. The test send Open link uses the connected hostname. [CODE] Built on `fix/telegram-human-escalation`. Unshipped.
 - 2026-10-01 [USER] Keep existing Inbox summary/search tables and skip projection work that does not change search or the inbox list. [CODE] Channel status, customer display/search fields, summary identity/name/scope, and message content/type/conversation/time still refresh. Channel counters, customer activity timestamps, preview/unread updates, and delivery receipts do not rebuild unrelated search rows. Customer email/phone/address and conversation-address changes still refresh chat search. [TOOL] Focused inbox suites passed (15 tests). PR on `codex/reduce-inbox-projection-work`. Unshipped. Remaining customer/channel fan-out stays synchronous when those fields actually change.
 - 2026-09-30 [USER] Editing a named booking date or time updates only that appointment, including when its session is marked completed; never cancel or recreate the customer's other appointments. Unshipped.
@@ -23,88 +24,7 @@
 - 2026-09-30 [USER] The six visible `Test - Kwan` calendar rows for conversation `jd7en1znxmvj9v9cdn7crjv54n8fajeb` were permanently removed from the development Convex database with their twelve participant rows. The Google events were already cancelled. [TOOL]
 - 2026-09-30 [USER] Agent diagnostics log raw requests and responses as readable JSON plus each called tool name, call ID, and input; routine Inbox reply/send/persist info logs are removed. Unshipped.
 - 2026-09-30 [USER] SUPERSEDED 2026-09-30T20:36: historical model context excluded all assistant messages (`0ae42b2`). Now reverted to the #188 rule: full history (customer, assistant, tool) is sent; only assistant and tool messages created before `instructionsUpdatedAt` are dropped. `convex/chat/instructionContext.test.ts` passes (3 tests). Uncommitted, unshipped.
-- 2026-09-30 [USER] The agent can list every booking for the customer in the conversation. Unshipped.
-- 2026-09-29 [USER] A batch booking confirmation lists every appointment in one message. Unshipped.
-- 2026-09-29 [USER] Details panel has a bottom Clear Conversation button. It confirms, then clears the thread and deletes the conversation and messages. Unshipped.
-- 2026-09-29 [USER] Delete event confirmation uses a ghost Cancel and a solid red Delete button with white text. Unshipped.
-- 2026-09-29 [CODE] Batch booking test fixture is named so Convex does not bundle convex-test. Unshipped.
-- 2026-09-29 [USER] Inbox Upcoming Bookings count stays a solid badge with white text. Unshipped.
-- 2026-09-29 [USER] Booking detail modal event name is larger, and Mark as completed and Edit booking have more vertical padding. Unshipped.
-- 2026-09-29 [USER] The booking card above the inbox reply box is removed. Unshipped.
-- 2026-09-29 [USER] Inbox booking dates read like Wednesday, 23 Sep · 4:00 – 4:30pm, without the Scheduled label. Unshipped.
-- 2026-09-29 [USER] Inbox Upcoming Bookings lists only scheduled appointments that are in progress or still ahead. Unshipped.
-- 2026-09-29 [USER] Local-only testing: root `index.html` loads AI widget `pub_7190131b74754f789d20f973b6328c82` from `/widget/v1.js` against `https://outstanding-rabbit-215.convex.site` only on loopback hosts. Keep uncommitted and do not push.
-- 2026-09-29 [CODE] Agent batch booking posts each appointment to Google Calendar. A retry finishes pending Kilobot rows instead of leaving them local. The five Multiple-Kwan dev appointments are synced. Unshipped.
-- 2026-09-29 [USER] Goal: show Avatar as its own card on Channels, opening the existing Avatar setup. Same Beta flag and account gate. Sidebar Avatar item is removed. Avatar page has an arrow back to the channel cards. Pushed to PR #189.
-- 2026-09-28 [USER] Goal: after Instructions change, replies must follow the new system prompt. Customer messages stay in the model context; assistant and tool messages written before `instructionsUpdatedAt` are omitted. Inbox history stays visible. Unshipped on `fix-context-rot`.
-- 2026-09-28 [USER] Goal: fix `whatsappWebhook:ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi` failing with "Too many reads (limit 4096)" on long conversations. Branch `fix/inbox-search-read-limit`. Unshipped.
-- 2026-09-28 [CODE] Cause: the `inboxConversationSummaries` trigger rebuilt every message search document in the conversation on each summary change (every incoming message), ~4 reads per message. Fix: rebuild only when the copied scope (`orgId`, `userId`, `assignedAgentId`, `isChannelConnected`) changes or the summary is created or deleted, and run it as a self-rescheduling 100-message paged job (`convex/inboxMessageSearchRefresh.ts`). Unshipped.
-- 2026-09-28 [USER] Goal: allow every account to connect Instagram and Messenger by removing the single-email connection gates. Basic channel OAuth/page selection is available to all eligible users; the separate Comment-to-Inbox webhook allowlist remains unchanged. Unshipped.
-- 2026-09-28 [CODE] Instagram signup and Messenger OAuth now accept a non-allowlisted account; the single-email connection access modules and all call sites are removed. Focused integration regressions pass. Unshipped.
-- 2026-09-28 [CODE] PR #186 follow-up removes stale frontend allowlist exports and channel-card email conditions; Instagram and Messenger cards now rely only on their existing rollout flags. Focused UI tests and `bun run build` pass. Unshipped.
-- 2026-09-27 [USER] Goal: persist Meta WhatsApp outbound webhook pricing on each message and distinguish free versus billable service messages beside the Inbox time. Meta webhook `pricing.billable` is the sole billing authority; no local monthly allowance or counter. Existing outgoing WhatsApp messages without pricing metadata display as Free. Every WhatsApp pricing label has a keyboard-focusable info hover explaining that Meta bills based on the customer's market and linking to Meta's October rate card. No local MYR rate or environment variable is used. Unshipped.
-- 2026-09-27 [CODE] WhatsApp status receipts store complete Meta pricing on the matched outgoing `messages.receiptMetadata.pricing` row. Inbox outgoing WhatsApp timestamps show Free for legacy/missing or non-billable pricing, and Service when Meta marks a service message billable. No message price is stored or displayed because the customer market is unknown. Unshipped.
-- 2026-09-23 [USER] Goal: replace the selectable OpenRouter model `openai/gpt-5.6-luna` with `openai/gpt-6-luna`; persisted GPT-5.6 Luna agent selections migrate in place to GPT-6 Luna. The existing two-credit price is retained. Unshipped.
-- 2026-09-23 [USER] Goal: replace the high-I/O inbox conversation list with a compact, atomically maintained conversation-summary projection, a reconciliation path, and cursor pagination. Unshipped in isolated worktree `inbox-summary-pagination`.
-- 2026-09-23 [CODE] Inbox summary projection and cursor-pagination implementation is committed as `b80a061` and `21f00a9`: source writes update the compact row atomically through triggers; an explicit bounded reconciliation repairs dashboard/import drift; the Inbox loads 50 rows and continues via automatic and manual load-more. Unshipped.
-- 2026-09-23 [CODE] GPT-6 Luna replacement is committed as `975a109`; persisted GPT-5.6 Luna selections migrate to `openai/gpt-6-luna`, with the two-credit rate unchanged. Unshipped.
-- 2026-09-23 [USER] Goal: replace Xiaomi MiMo V2.5 with `xiaomi/mimo-v2.6-pro`; persisted MiMo V2.5 selections migrate in place and the existing one-credit rate is retained. Unshipped.
-- 2026-09-23 [USER] Goal: add `meta/muse-spark-1.3-contributor` as a selectable paid model. It is configured as a one-credit OpenRouter model for Starter and higher plans. Unshipped.
-- 2026-09-23 [TOOL] PR #167 merged as `c8fcac5b`. The production `channelConversationCountMigration` completed successfully for 21 channel documents; development completed for 7. Follow-up makes `channels.conversationCount` required and removes optional-field handling, while keeping the counter in sync on conversation deletion. PR #168 (`f3143db`) is open.
-- 2026-09-23 [CODE] A human inbox reply now persistently pauses AI replies for that conversation. WhatsApp Business, Messenger, and Instagram app outbound echoes are saved into the existing conversation thread and perform the same pause. An in-progress AI worker rechecks that status after generation, and the channel-send action rejects disabled conversations before delivery. Unshipped in PR #166.
-- 2026-09-23 [TOOL] Production I/O findings: remaining top reads are `customers.listForCurrentOrg` (2.76 GB), `channels.listForCurrentOrg` (1.99 GB), `customers.countFilteredForCurrentOrg` (1.85 GB), and `conversations.getTotalUnreadForAgent` (1.17 GB). At measurement, the list preloaded 50 rows and joined conversations/agents; the counter scanned the full workspace per search/filter change; channels counted every conversation per channel across 14 reactive client call sites; the sidebar scanned up to 400 conversations. `agentOverview.getSummary` additionally reads message history per conversation.
-- 2026-09-23 [CODE] Customer-table I/O reduction is ready in PR #166: it fetches 10 initial rows, no longer joins each customer to a conversation/agent for Assignee, removes the row-size control, and uses `Customer → Source → Tags → Phone → Last Active`. Full suite passed (644 files, 2,198 tests). Unshipped.
-- 2026-09-23 [CODE] Customer Detail I/O audit: the page subscribes to 100 enriched customer rows solely to derive tag suggestions, causing up to 100 conversation reads plus agent joins and reactive reruns on customer/conversation changes. Its remaining queries are one customer plus current conversation/agent, every team member, and the full eligible-team summary only to render custom-field definitions. Recommended order: replace tag scan with a workspace tag catalog, add narrow assignee/custom-field queries, then apply the customer-table page-size/assignee removal.
-- 2026-09-23 [CODE] Customer-tag catalog rollout stage 1 is ready: indexed workspace-scoped tags are dual-written from manual create, import, direct tag add, and tag replacement; a resumable migration backfills existing rows. Personal workspaces use a user-scoped key to prevent cross-account tag leakage. Customer Detail stays on the existing scan until the production backfill completes, then switches in stage 2. Development migration dry run processed 25 rows without committing changes.
-- 2026-09-23 [TOOL] Customer-tag catalog rollout completed in production: `customerTags` schema/functions deployed to `strong-chameleon-837`, and `customerTagMigration:backfillCustomerTags` succeeded for 1,422 records. Customer Detail now reads the catalog rather than subscribing to 100 enriched customer rows. The production Worker was redeployed with its Convex binding explicitly set to `strong-chameleon-837` (version `162aaf6c-b111-4798-91b1-ac89c2433e68`).
-- 2026-09-23 [CODE] Messenger customer-list phone defect fixed: the formatter now falls back to `contactAddress` only for WhatsApp or legacy callers without a service. Messenger, Instagram, web, avatar, and manual contacts show a phone only when an explicit valid phone is stored. Deployed in production Worker version `162aaf6c-b111-4798-91b1-ac89c2433e68`; commit pending in PR #166.
-- 2026-09-23 [CODE] Fixed the SiteFooter test's React provider construction so TypeScript receives its required child. Commit `fdd4a5b` is pushed to PR #166; `bun run build` exited successfully.
-- 2026-09-23 [TOOL] Full Vitest suite passed: 639 files and 2,190 tests. Stale fixtures and assertions were aligned to current behavior without changing the affected production features.
-- 2026-09-23 [CODE] The sidebar credit meter now shows the plan-name badge without the redundant generic “Plan” label; Top-ups and Referral labels are unchanged. Unshipped.
-- 2026-09-23 [CODE] Agent-sidebar parent icons now use their filled Phosphor variant when a child route is active (for Conversations, Agent, Bookings, and Outreach); single-link Overview remains unchanged. Unshipped.
-- 2026-09-23 [CODE] WhatsApp coexistence setup copy now states that chat-history syncing is limited to the most recent six months. Unshipped.
-- 2026-09-22 [TOOL] WhatsApp coexistence history for +65 9150 7796 completed in production: Meta delivery finished in seconds, then 1,771 contact threads imported over ~29 minutes. The UI remained at 90% because its post-delivery counter advances only when an entire batch completes; batches span the full import, so it has no intermediate movement. No failure or stuck work remains.
-- 2026-09-11 [USER] Goal: website knowledge uses Perplexity research (markdown), stored in R2, then Convex RAG. Unshipped on `cursor/convex-rag`.
-- 2026-09-12 [CODE] Now: knowledge ingest, search, and backfill use Convex RAG instead of Cloudflare AI Search.
-- 2026-09-12 [TOOL] Next: review/merge [PR #147](https://github.com/Leykwan132/chat-saas/pull/147), then run prod backfill after deploy.
-- 2026-09-11 [CODE] Milestone: partner per-org plan/agents/credits/model shipped via #145/#146; deleted-partner recovery and in-app reset shipped via #144.
-- 2026-09-10 [CODE] Milestone: Agent Setup test-chat scroll, availability presentation, and tool restoration unshipped in PR #140.
-- 2026-09-10 [CODE] Milestone: Web Widget markdown links, Avatar public embed/sandbox, and Q&A fetch-before-search are on `main` or recent PRs; production dates UNCONFIRMED.
-- 2026-09-09 [CODE] Milestone: Instagram Login + Comment-to-Inbox private-reply ingestion unshipped in later PRs; trigger comments do not create Inbox data.
-- 2026-09-08 [CODE] Milestone: native Kilobot onboard (D793/I009) and same-origin password reset (D794) shipped via #117.
-- 2026-09-01 [USER] White-label Partner Programme remains unshipped on `codex/white-label-partner-portal`.
-- 2026-09-15 [TOOL] Web Widget history migration completed on both Convex development and production; production processed 77 conversations successfully.
-- 2026-09-18 [USER] Goal: workflow action matching uses OpenRouter Decisions model `typesafe/jev-1.13`; temporary diagnostic logging is removed for the PR. Unshipped.
-- 2026-09-18 [CODE] Test Your Agent runs the shared JEV workflow decision before streaming. JEV asks binary `noul` questions for every ready non-Start workflow node against recent thread state, with node-specific true/false criteria, and selects every node whose yes probability is at least 0.8. Answer keys use readable normalized node titles with deterministic duplicate suffixes. Existing backend handlers remain the only execution path for send media/text. All `[convex-rag]` informational logs are temporarily removed; errors remain. Unshipped.
-- 2026-09-18 [USER] The temporary localhost widget embed is removed from root `index.html`; the launcher harness remains unchanged.
-- 2026-09-21 [TOOL] I010 DATA REPAIRED: native user `qh7677m2kbx0mbd5tze569y3qn8bnd49` had its Sep 1 period restored from Free/300/3.5 used to Business/20,000/39 used. The 39 is reconstructed from all September `creditLogs` tied to that period; 19,961 remain. Root trigger for Sep 7 Free reset remains UNCONFIRMED between the Free-downgrade finalizer and team-deletion path.
-- 2026-09-21 [CODE] Native usage analytics now resolve Billing period from the active `userCreditPeriods` row, not Stripe’s subscription end date; this prevents annual plans from previewing their final 30 days. AI Agent Usage opens on Last 30 days.
-- 2026-09-21 [CODE] Agent and workspace sidebars share the compact Phosphor-icon treatment: the Workspace landing item uses a briefcase icon, Configuration uses a gear, Broadcast uses a broadcast icon, direct links align with primary triggers, multi-item agent sections retain indented subtabs, and rows use compact padding with matched subtle gaps. The workspace landing item is labeled Workspace, its usage item is labeled Workspace Usage, and the agent page keeps its Agent section with Configuration and Agent Usage labels. Agent Setup’s visible System Prompt label and helper copy now say Instructions in the setup screen and landing preview; the internal systemPrompt data remains unchanged. Routes and permission gates remain unchanged; unshipped.
-- 2026-09-21 [USER] Goal: remove Free from the public pricing, onboarding, and signed-in plan-selection cards without changing existing Free accounts or their entitlement. Replace the landing-header Early Adopter offer with a Starter RM1/month-for-three-months promotion once the exact Stripe promotion code is supplied.
-- 2026-09-21 [CODE] Free is excluded from the shared selectable-plan card list; public pricing, onboarding, and the signed-in plan picker now show only paid plans (plus Enterprise where enabled). Existing Free plan state and backend entitlements are unchanged. Unshipped.
-- 2026-09-21 [CODE] The shared plan-selection wrapper now spans its centered page container, and the public comparison table omits Free while retaining Starter, Growth, Business, and Enterprise. Unshipped.
-- 2026-09-21 [CODE] Pricing-card grids now derive their desktop column count from the number of visible cards; removing Free no longer leaves an empty fifth desktop column that shifts the four paid/Enterprise cards left. Unshipped.
-- 2026-09-21 [USER] Public-only marketing pivot: promote `STARTER1` for Starter at RM1/month for the first three months; keep Ilmu itself unchanged, hide public Leaderboard links, and rename the live-demo CTA to Book a demo.
-- 2026-09-21 [CODE] The public header alone now leads with the copyable `STARTER1` offer: “Use code STARTER1 for 99% off your first 3 months (Starter Plan)” without trailing punctuation. The promo sentence uses normal weight, `STARTER1` remains emphasized without a copy icon, and an indigo `Learn more →` button navigates to `/pricing`. On public pricing cards, Growth no longer has the Popular label or animated shine; Starter carries the animated glow instead. The public monthly Starter card now shows `RM1 / month`, `Valid for 3 months.`, and a red-purple-blue Limited-time offer badge with a white info icon whose hover explains the first three months and highlights `STARTER1` as a code chip; the visible code pill is intentionally omitted, and other intervals and plan pickers retain catalog pricing. The promo bar remains yellow with the code icon aligned 3px down, uses tighter vertical padding on its mobile two-line layout, and the navbar starts at the 40px promo-bar height instead of leaving a fixed gap. Clicking the top bar confirms through a Code copied! toast, and the duplicate landing pill is removed. The pricing-page link and Ilmu landing announcement are removed. Public Leaderboard links are hidden while its route remains, and the landing CTAs now say Get Starter for RM1 and Book a demo. Unshipped.
-- 2026-09-21 [CODE] Every public pricing-card and comparison-table Team members label now opens a hover explanation that it counts members who can log in to the shared inbox to view, assign, or reply to conversations. Unshipped.
-- 2026-09-21 [CODE] The landing-page app preview sidebar now matches the current app sidebar with Phosphor House, Gear Six, and Flow Arrow icons, and the Agent Setup label is aligned to Configuration. Unshipped.
-- 2026-09-21 [USER] Goal: AI-generated replies must remain a single message rather than prompt-directed or automatically split chat bubbles.
-- 2026-09-21 [CODE] Removed the multi-message response prompt and all automatic reply splitting. Inbox, Test Your Agent streaming, and persisted generated replies now retain one normalized message. Unshipped.
-- 2026-09-21 [USER] SUPERSEDED 2026-09-22: temporary local loading of widget `pub_7190131b74754f789d20f973b6328c82` from the root app is removed.
-- 2026-09-22 [USER] Local development must use port 5173, not 5137.
-- 2026-09-22 [CODE] Root `index.html` no longer embeds the local AI-powered widget; Vite still defaults to port 5173. Unshipped.
-- 2026-09-22 [USER] Goal: compact excessive vertical spacing around numbered customer-detail fields in AI web-widget replies.
-- 2026-09-22 [CODE] Assistant Markdown resets inherited `pre-wrap` whitespace inside its message bubble, preventing blank Markdown list whitespace from expanding numbered-list rows; 8px spacing is retained only before and after list blocks, while visitor text still preserves literal newlines. Unshipped.
-- 2026-09-22 [USER] Public calls to action must not imply a free starting plan; use the two-word label “Get Started”.
-- 2026-09-22 [CODE] Public header, landing, landing preview, blog, and legal sign-up CTAs now say “Get Started”; landing comparison copy no longer promotes a free plan. Unshipped.
-- 2026-09-22 [USER] The public landing hero CTA must use “Get Started” instead of “Get Starter for RM1”.
-- 2026-09-22 [CODE] Landing hero CTA now matches the universal “Get Started” label; the separate pricing hover explanation retains its RM1 promotional detail. Unshipped.
-- 2026-09-22 [USER] The top public “Get Started” CTA must have a fully rounded pill shape.
-- 2026-09-22 [CODE] Desktop header “Get Started” now uses a fully rounded pill; the mobile menu action remains text-only. Unshipped.
-- 2026-09-22 [USER] The signed-in desktop Dashboard header CTA must use the same fully rounded treatment.
-- 2026-09-22 [CODE] Desktop Dashboard and Get Started header CTAs now share the same full pill geometry and padding. Unshipped.
-- 2026-09-22 [USER] Pricing-card CTAs must match the fully rounded public header CTA with consistent padding.
-- 2026-09-22 [CODE] Selectable, current-plan, and Enterprise pricing-card actions now match the landing hero CTA’s full pill geometry: `h-11` and `px-6`. Unshipped.
+- 2026-10-01 [CODE] Older active/history briefing is preserved in Git at `33aec5b:CONTINUITY.md`; includes booking cancellation/batch flows, Inbox/UI changes, channel access, local-only widget testing, and prior release/PR receipts. This supersedes the overlong snapshot; consult that briefing before resuming those tasks.
 
 # Decisions
 
@@ -165,48 +85,23 @@
 
 # Done (recent)
 
+- 2026-10-01 [CODE] Added Telegram chat/calendar actions to live and test delivery; samples show their button labels. Unrelated verification/webhook edits excluded from this task.
 - 2026-09-30 [CODE] Booking edits target only the named booked or completed appointment; model-invented cancel/rebook replies during an edit are replaced with a concise update failure. Unshipped.
 - 2026-09-30 [CODE] The agent tool `listCustomerBookings` returns every booking for the customer in the conversation. Unshipped.
 - 2026-09-29 [CODE] A batch confirmation is one message listing every appointment, date, time, and booking reference. Unshipped.
 - 2026-09-29 [CODE] Inbox Upcoming Bookings hides ended, cancelled, completed, and no-show appointments. Unshipped.
 - 2026-09-29 [CODE] Agent batch booking now creates the Google Calendar event. Pending rows are reused and posted on retry. Dev batch Multiple-Kwan is synced. Unshipped.
 - 2026-09-29 [CODE] Business-visible AI replies that contain a system error now show "System reported an error." A thrown batch booking tool returns that same sentence. Unshipped.
-- 2026-09-29 [CODE] Batch Google creates no longer send `kind` or `sessionId` into `googleCalendar/writeStore:prepare`. Unshipped.
-- 2026-09-29 [CODE] Multi-appointment booking is implemented test-first: durable batch state, all-slot availability, exact-list confirmation, atomic child creation, chronological round robin, Google compensation, agent tools, and prompt routing. Unshipped.
-- 2026-09-29 [CODE] Channels shows an Avatar card beside Website for the Beta flag and allowed account. Setup opens the existing Avatar page, which has an arrow back to the channel cards. The sidebar no longer lists Avatar. Unshipped.
-- 2026-09-28 [CODE] Saving a changed system prompt stamps `instructionsUpdatedAt`. Later replies keep customer messages and drop earlier assistant and tool messages from the model context. Inbox transcript is unchanged. Unshipped.
-- 2026-09-22 [CODE] Signed-in Dashboard header CTA now matches the rounded public action. Unshipped.
-- 2026-09-22 [CODE] Pricing-card CTAs use the landing hero’s consistent pill geometry. Unshipped.
-- 2026-09-22 [CODE] Public sign-up CTAs no longer imply a free plan. Unshipped.
-- 2026-09-22 [CODE] Web-widget numbered-list replies render with balanced detail-field spacing: a modest list boundary gap and compact rows. Unshipped.
-- 2026-09-21 [CODE] Local development now loads the supplied AI-powered widget without embedding it on public hosts. Unshipped.
-- 2026-09-21 [CODE] AI replies no longer request or create multiple chat bubbles; focused response-path tests pass. Unshipped.
-- 2026-09-18 [CODE] Web Widget opens saved history at its latest message and scrolls to bottom only for the visitor’s send; manual upward scrolling remains intact. Its top-right reset button and confirmation UI are removed. Thinking state survives host resize updates, detects reply completion by new message ID rather than clocks, and is forcibly cleared when the displayed latest message is outgoing. Unshipped.
-- 2026-09-17 [CODE] WhatsApp Meta temporary full debug-token and exchanged access-token logs were removed after diagnosis.
-- 2026-09-15 [TOOL] Web Widget history migration completed in production: 77 conversations processed successfully; orphaned Agent thread IDs are recreated and relinked before legacy messages are copied.
-- 2026-09-15 [CODE] Web Widget opens saved history at its first message without forcing the latest position. Released.
-- 2026-09-15 [CODE] Knowledge Base accepts `.xls` and `.xlsx`, extracts every worksheet for retrieval, and preserves Excel preview content types. JSON remains accepted. Released.
-- 2026-09-12 [CODE] Knowledge backfill re-embeds all text/Q&A, fetches CF files into Convex RAG, and re-researches parent websites while deleting child scrape rows. Unshipped.
-- 2026-09-12 [CODE] Knowledge Update/Delete enqueue workpools and show row progress instead of blocking the modal. Unshipped.
-- 2026-09-12 [CODE] Website markdown updates store a new unique R2 key and schedule the old object on `mediaDeletePool`. Unshipped.
-- 2026-09-18 [CODE] Workflow selection calls JEV typed `noul` decisions for every ready non-Start node. Each question has node-specific true/false criteria; every node with a yes probability of at least 0.8 is selected. Answer keys are readable normalized node titles with duplicate suffixes. Unshipped.
 
 # Working set
 
-- 2026-09-29 [USER] `docs/superpowers/specs/2026-09-29-multi-appointment-booking-design.md`, `docs/superpowers/plans/2026-09-29-multi-appointment-booking.md`, `convex/appointmentBooking`, `convex/googleCalendar`, `convex/chat/threads.ts`, `convex/schema.ts`
-- 2026-09-29 [CODE] `src/components/channels/AvatarChannelCard.tsx`, `src/pages/ChannelsPage.tsx`, `src/components/app-sidebar-nav.ts`, `src/components/app-sidebar.tsx`
-- 2026-09-28 [CODE] `convex/chat/instructionContext.ts`, `convex/chat/instructionContext.test.ts`, `convex/chat/threads.ts`, `convex/agents.ts`, `convex/schema.ts`
-- 2026-09-12 [CODE] `convex/rag/{backfill,backfillIndex,backfillWeb,backfillPage,backfillPlan,cfFetch,fileBytesText}.ts`
-- 2026-09-12 [CODE] `convex/webResearch/{enqueue,update,persist,worker,prompt,markdown,markdownKey}.ts`
-- 2026-09-12 [CODE] `src/components/knowledge-base/{WebSection,WebKnowledgeModal,WebEntryDetails,TextEntryDetails,QAEntryDetails,FileEntryDetails}.tsx`
-- 2026-09-12 [CODE] `src/components/knowledge-base/{FileSection,FileEntryDetails}.tsx`, `src/lib/knowledgeBaseFileText.ts`
-- 2026-09-18 [CODE] `src/widget/{Widget,WidgetChatHeader,WidgetMessageScroller,WidgetComposer.test,styles,main}.tsx`
-- 2026-09-15 [CODE] `convex/media/{r2.ts}`, `convex/mediaR2.test.ts`, `package.json`, `bun.lock`
-- 2026-09-15 [CODE] `convex/{webThreadHistoryMigration.ts,webThreadHistoryMigration.test.ts,schema.ts}`
-- 2026-09-18 [CODE] `convex/chat/{workflowActionPlanner,workflowDecisions,workflowActionPlanner.test,inbox}.ts`
+- 2026-10-01 [CODE] `shared/telegramNotificationActions.ts`, `shared/telegramNotificationMessages.ts`, `convex/telegramNotifications/events.ts`, `convex/telegramNotifications/worker.ts`, `convex/telegramNotifications/testPreview.ts`, `src/components/agent-setup/TelegramNotificationsPanel.tsx`, `src/components/agent-setup/telegramNotificationOptions.ts`.
+- 2026-10-01 [CODE] Focused notification tests: `convex/telegramNotifications/notificationDelivery.test.ts`, `shared/telegramNotificationActions.test.ts`.
+- 2026-10-01 [CODE] Prior task working sets: `33aec5b:CONTINUITY.md` (Working set).
 
 # Receipts
 
+- 2026-10-01 [TOOL] Notification verification: Node v22.22.0; 11 focused suites / 32 tests passed; `git diff --check` passed. Calendar tests cover UTC instants, all-day exclusive dates, demo/live buttons, Telegram payload, and customer-based chat resolution.
 - 2026-09-30 [TOOL] Agent tool-call diagnostic regression passed; Convex code generation and the full supported Vitest suite completed successfully. Unshipped.
 - 2026-09-30 [TOOL] Historical assistant-context regression passed; Convex code generation and the full supported Vitest suite completed successfully. Unshipped.
 - 2026-09-30 [TOOL] Agent raw request/response logging regression passed; Convex code generation and the full supported Vitest suite completed successfully. Unshipped.
@@ -220,88 +115,9 @@
 - 2026-09-29 [TOOL] Sidebar suites passed after removing Avatar (11 tests). Avatar page test passed (4). Follow-up pushed to https://github.com/Leykwan132/chat-saas/pull/189.
 - 2026-09-28 [TOOL] PR #188 opened from `fix-context-rot`: https://github.com/Leykwan132/chat-saas/pull/188. `convex/chat/instructionContext.test.ts` passed (2 tests).
 - 2026-09-28 [TOOL] PR #187 opened from `fix/inbox-search-read-limit` for the WhatsApp ingest "Too many reads" fix; focused inbox search suites passed (7 tests), and the new no-rescan test fails on the old code.
-
 - 2026-09-28 [TOOL] PR #186 deployment build failure reproduced as missing deleted-module imports from `src/lib/posthogFeatureFlags.ts`; after removing those exports and the dependent Channels email gate, the exact `bun run build` command passed.
-
 - 2026-09-28 [TOOL] PR #186 opened from `codex/open-meta-connections` for universal Instagram and Messenger channel connections; full suite passed with test-only Stripe price identifiers.
-
 - 2026-09-27 [TOOL] WhatsApp pricing verification passed: `bunx tsc --noEmit`, 26 focused tests, and the full supported Vitest suite with test-only Stripe values. `bun test` remains unsuitable because Bun lacks Vite's `import.meta.glob` and no Stripe test variables were set; it failed with 232 tests and 151 setup errors before a usable full-suite result.
 - 2026-09-27 [TOOL] PR #182 build failure diagnosed and corrected: its pricing parser now types optional `WhatsAppChangeValue.statuses` with `NonNullable` before indexing. Direct webhook typecheck passed; root `tsc -b` excludes `convex/`, so it remains insufficient as the sole backend check.
-
 - 2026-09-25 [TOOL] PR #181 opened from isolated branch `codex/whatsapp-ai-disclosure`, cherry-picking only `e62158a` onto main for Meta AI disclosure payloads.
-
 - 2026-09-25 [CODE] PR #180 follow-up: AI-generated WhatsApp text requests include Meta `ai_disclosure: { type: "GEN_AI_CONTENT" }`; human, broadcast, template, and media requests remain unchanged. `bunx tsc --noEmit` passed; commit `e62158a` pushed.
-
-- 2026-09-25 [TOOL] PR #180 merged `origin/main` as `5ee7265`; retained AI-reply persistence diagnostics during the sole conflict. `bunx tsc --noEmit`, focused aggregate test (3 tests), and diff check passed.
-
-- 2026-09-25 [CODE] PR #180 fixes the AI-reply persistence deadlock: `internalPersistAiReplyMessages` no longer nests `triggers.wrapDB` while recording AI-assisted conversation facts. Focused aggregate test (3 tests) and `bunx tsc --noEmit` passed.
-
-- 2026-09-24 [CODE] PR #178 repurposed per [USER]: sweeper/pending/finalize removed (-535/+69); worker persists after send with returned IDs, throw path saves `failed` rows, debug logs on persist/receipt-miss/ID-less send. Suites green (40 tests).
-- 2026-09-24 [CODE] PR #178 opened from `fix/queued-receipt-sweep`: queued persists schedule a 10-minute finalize verification, orphans flip to `failed` with reason, manual sweep clears existing stuck rows/stale parked receipts, loud logs on ID-less sends and dropped statuses. Suites green (15 + 22 tests).
-- 2026-09-24 [CODE] Clarified `wamid` semantics: unique per send, not per conversation; receipt-vs-row mismatch means different bubbles compared, duplicate sends, or app-sent messages. Match check pending [USER].
-- 2026-09-24 [CODE] Unset-`externalId` audit: every WhatsApp write path on current code stores the provider ID except web/avatar (by design), failed sends, transient queued rows, and Meta-200-empty-body. Age/status columns distinguish the buckets; dashboard filter check pending [USER].
-- 2026-09-24 [CODE] Prod `messages` scan shows `externalId` unset on most rows with one `wamid` present; cause split into by-design gaps (web/avatar never have provider IDs) vs finalize gaps (queued WhatsApp rows). Filter check pending [USER].
-- 2026-09-24 [CODE] WhatsApp read/delivered receipts investigated: send→wamid finalize, status-by-externalId patch, and thread join by agentMessageId are all wired on `fix/deleted-icon-size`; likely break is ledger-row/externalId mismatch or silent drop in `handleStatus`. Prod data check pending [USER].
-- 2026-09-24 [TOOL] Receipt chain verified green with the exact prod event (queued→finalize wamid→handleStatus read→status/readAt/agentMessageId all correct); scratch repro deleted. Fall-off is in prod state, not current logic [USER].
-- 2026-09-24 [CODE] PR #177 opened from `fix/deleted-icon-size`: deleted-message prohibit icon shrunk from 32px to 16px in `InboxThreadMessages.tsx`.
-
-- 2026-09-23 [TOOL] Messenger/Instagram manual-app echo regression suite passed; `bunx convex codegen`, `bunx tsc --noEmit`, and full Vitest passed: 640 files, 2,191 tests.
-- 2026-09-22 [TOOL] PR #165 opened from `codex/round-dashboard-header` after PR #164 merged before the Dashboard follow-up could be included; site header suite passed (6 tests).
-- 2026-09-22 [TOOL] Site header suite passed (6 tests); `git diff --check` passed after rounding Dashboard.
-- 2026-09-22 [TOOL] PR #164 opened from `codex/refine-public-ctas` after rebasing the requested changes onto current `origin/main`; focused suite passed 84 tests and the temporary root local-widget embed is absent.
-- 2026-09-22 [TOOL] Pricing-plan action suite passed (10 tests) after matching home CTA dimensions; `git diff --check` passed.
-- 2026-09-22 [TOOL] Site header suite passed (6 tests); `git diff --check` passed after applying the pill CTA radius.
-- 2026-09-22 [TOOL] Landing hero CTA suite passed (6 tests); `git diff --check` passed.
-- 2026-09-22 [TOOL] Public CTA and landing-preview suites passed (25 tests); `git diff --check` passed and no production “Start for free” or “Start with free plan” text remains.
-- 2026-09-22 [TOOL] Widget composer regression suite passed (34 tests); `git diff --check` passed after isolating assistant Markdown whitespace.
-- 2026-09-22 [TOOL] Widget composer regression suite passed (35 tests); `git diff --check` passed after restoring 8px list boundary spacing.
-- 2026-09-21 [TOOL] Development Convex widget config for `pub_7190131b74754f789d20f973b6328c82` returned HTTP 200. The local-widget guard suite passed (6 tests); `git diff --check` passed.
-- 2026-09-21 [TOOL] Local widget host guard test passed (6 tests); `git diff --check` passed.
-- 2026-09-21 [TOOL] Focused AI reply response-path suite passed: `aiReplyMessages`, playground display, double-save persistence, and workflow planner (30 tests). The broad suite exceeded the execution window after unrelated `whatsappCoexistence` fixture failures for missing `wabaIds`.
-- 2026-09-21 [TOOL] Removed the unused `Link` import from `SiteHeader.tsx`; `bunx tsc -b --pretty false`, `bun run build`, and the focused SiteHeader suite (6 tests) pass. The build still reports the existing Wrangler log-file permission warning and large-chunk warnings but exits successfully.
-- 2026-09-21 [TOOL] PR #161 opened: https://github.com/Leykwan132/chat-saas/pull/161 (`codex/fix-usage-data` → `main`) for the annual billing-period resolver, 30-day AI Agent Usage default, and completed scoped data repair.
-- 2026-09-21 [TOOL] Production scoped migration `creditPeriodRepairMigration:repairBusinessCreditPeriod` dry-ran and processed one exact `userCreditPeriods` row, then applied successfully. Readback confirmed `business`, 20,000 granted, and 39 used.
-- 2026-09-21 [TOOL] PR #162 opened: https://github.com/Leykwan132/chat-saas/pull/162 (`codex/sidebar-navigation` → `main`) for the compact agent/workspace sidebar navigation and Agent Setup Instructions label. Focused suite passed 35 tests; unshipped.
-- 2026-09-18 [TOOL] PR #160 build failure fixed: narrowed the auto-scroll helper to its sole `scrollToLatestRequest` prop. Widget regression suite passed 33 tests and `bunx tsc -b --pretty false` completed with exit code 0.
-- 2026-09-18 [TOOL] PR #160 opened: https://github.com/Leykwan132/chat-saas/pull/160 (`codex/jev-imp` → `main`), including JEV workflow decisions, widget stabilization, diagnostic cleanup, and removal of the temporary localhost embed.
-- 2026-09-18 [TOOL] Focused JEV, agent retry, double-save, and widget suites passed 62 tests after removing temporary diagnostics; `git diff --check` passed. Full Vitest has unrelated existing failures in calendar, WhatsApp, dashboard routing, referrals, and lead routing tests. `bun run build` exceeded the 30-second execution window without reporting a compiler error.
-- 2026-09-18 [TOOL] `bunx vitest run --exclude '.worktrees/**' src/widget/WidgetComposer.test.ts`: 33 tests passed; `git diff --check` passed after restoring post-history end scrolling and removing the reset UI.
-- 2026-09-18 [TOOL] Root cause of resize-cleared thinking: `public/widget/ai.js` sends init on resize; `useWidgetReplyPolling` previously reset on the changed init object. Focused Widget suite passed after identity-scoping that reset.
-- 2026-09-18 [TOOL] Root cause of persistent thinking/manual-scroll hijack: reply completion compared browser and server timestamps, while each background refresh retriggered an unconditional end-scroll. Focused Widget suite passed after ID-based reply completion and visitor-send-only scroll requests.
-- 2026-09-18 [TOOL] Focused Widget suite passed after changing its initial transcript position from start to end; manual scroll remains free after open/send.
-- 2026-09-18 [TOOL] Screenshot-confirmed thinking-state race is guarded in the transcript: an outgoing latest message now clears thinking. Focused Widget suite passed (33 tests).
-- 2026-09-18 [TOOL] Repaired incomplete local Bun install with `bun install --force`: restored `@cloudflare/workerd-darwin-arm64/bin/workerd`; Vite started successfully at `http://127.0.0.1:5178/`.
-- 2026-09-18 [TOOL] Test Your Agent JEV planner regression suite passed 54 tests; TypeScript build and `git diff --check` passed.
-- 2026-09-18 [TOOL] Deployed current Convex functions to the configured development deployment with `bunx convex dev --once`; Convex typecheck passed. JEV logs still require an executable workflow action node to run.
-- 2026-09-18 [TOOL] Focused JEV workflow suite passed 57 tests after score-node expansion; `bunx convex dev --once` typechecked and deployed it to development.
-- 2026-09-18 [TOOL] Numeric JEV response regression reproducing the provider score/legend/probability payload passed in the focused 57-test workflow suite; development deployment typechecked successfully.
-- 2026-09-18 [TOOL] Descriptive JEV key suite passed 58 workflow tests, including duplicate-title handling; development deployment typechecked successfully.
-- 2026-09-18 [TOOL] Binary `noul` JEV workflow suite passed 58 tests, including true/false criteria and 0.8 multi-match selection; development deployment completed.
-- 2026-09-18 [TOOL] Focused `workflowActionPlanner` Vitest suite passed 53 tests; `bunx tsc -b --pretty false` passed after Node 22 selection.
-- 2026-09-17 [TOOL] PR #150 opened: https://github.com/Leykwan132/chat-saas/pull/150 (`codex/log-whatsapp-access-token` → `main`); it logs the complete Meta token-exchange response temporarily. Focused WhatsApp signup suite passed 36 tests and `git diff --check origin/main...HEAD` passed.
-- 2026-09-17 [TOOL] PR #149 opened: https://github.com/Leykwan132/chat-saas/pull/149 (`codex/log-whatsapp-waba-payload` → `main`); focused WhatsApp signup suite passed 37 tests and `git diff --check origin/main...HEAD` passed.
-- 2026-09-15 [TOOL] PR #148 merged `origin/main` conflict resolution commit `1da355a`; focused suite passed 53 tests before push.
-- 2026-09-15 [TOOL] PR #148 opened: https://github.com/Leykwan132/chat-saas/pull/148 (`codex/fix-scroll-to-bottom` → `main`).
-- 2026-09-15 [TOOL] Production migration status: `webThreadHistoryMigration:backfillWebConversationThreads` processed 77 conversations and ended with `state: success`; a 200-message guard failure was resolved by increasing the tested bound to 1,000 and resetting the idempotent migration.
-- 2026-09-15 [TOOL] `bunx convex deploy --yes` deployed the migration to `strong-chameleon-837`; no indexes were deleted and Convex generated bindings and ran TypeScript.
-- 2026-09-15 [TOOL] `bunx vitest run --exclude '.worktrees/**' convex/webThreadHistoryMigration.test.ts convex/webWidget.test.ts src/lib/knowledgeBaseFileText.test.ts src/widget/WidgetComposer.test.ts convex/mediaR2.test.ts`: 5 files, 53 tests passed; `git diff --check` passed.
-- 2026-09-15 [TOOL] `bunx convex dev --once` deployed the thread-history migration to `outstanding-rabbit-215` only; Convex typecheck passed and functions were ready.
-- 2026-09-15 [TOOL] Development migration status: `webThreadHistoryMigration:backfillWebConversationThreads` processed 19 conversations and ended with `state: success`.
-- 2026-09-15 [TOOL] `bunx vitest run --exclude '.worktrees/**' convex/webThreadHistoryMigration.test.ts convex/webWidget.test.ts src/lib/knowledgeBaseFileText.test.ts src/widget/WidgetComposer.test.ts convex/mediaR2.test.ts`: 5 files, 52 tests passed; `git diff --check` passed.
-- 2026-09-15 [TOOL] `bunx vitest run src/lib/knowledgeBaseFileText.test.ts src/widget/WidgetComposer.test.ts convex/mediaR2.test.ts`: 5 files, 98 tests passed.
-- 2026-09-15 [TOOL] `bunx vitest run src/widget/WidgetComposer.test.ts`: 3 files, 95 tests passed after the saved-history scroll regression test.
-- 2026-09-12 [TOOL] Margin canvas switched to hypothetical tokens only; live PostHog mix removed. Canvas: `kilobot-plan-base-cost.canvas.tsx`.
-- 2026-09-12 [TOOL] `npx convex run --prod rag/backfill:start` started after #147 deploy. Watch logs and Knowledge Base rows.
-- 2026-09-12 [CODE] Removed unused `uploadWorkspaceFileToCF` so PR #147 `tsc -b` no longer fails TS6133.
-- 2026-09-12 [TOOL] PR #147 opened: https://github.com/Leykwan132/chat-saas/pull/147 (`cursor/convex-rag` → `main`).
-- 2026-09-12 [TOOL] `npx convex run rag/backfill:start` started on `outstanding-rabbit-215` (not prod). Re-embeds text/Q&A, fetches CF files into RAG, re-researches parent websites, deletes child scrape rows.
-- 2026-09-12 [CODE] Web/text/Q&A Update and Delete enqueue existing workpools, close the modal, and show row progress. Q&A delete uses `enqueueDelete`.
-- 2026-09-12 [CODE] Website list rows drop the timestamp; leading status is a green check circle or a red X circle, with no Failed label.
-- 2026-09-12 [CODE] Website markdown update writes a unique R2 key (`…/{uuid}.md`, `personal` when org is empty) and enqueues `mediaDeleteWorker` for the previous key after the row points at the new object.
-- 2026-09-12 [CODE] Website research gated to paid plans; Refresh removed. Free UI shows an upgrade prompt instead of the URL field.
-- 2026-09-12 [CODE] File knowledge items open a preview modal: extracted text is stored on the row, original files go to R2, images/PDFs render from the public URL.
-- 2026-09-11 [TOOL] Convex RAG: `@convex-dev/rag` pinned to `0.7.5`; embeddings use `CLOUDFLARE_API_TOKEN`; PostHog `enable_convex_rag` (ID 879759) soft-deleted.
-- 2026-09-11 [TOOL] PR #146 opened: https://github.com/Leykwan132/chat-saas/pull/146 (`cursor/partner-monthly-credit-timing` → `main`).
-- 2026-09-11 [TOOL] PR #145 Convex typecheck and partner org agent/credit overrides merged lineage on main.
-- 2026-09-11 [TOOL] PR #144 merged to main: in-app reset password and deleted-partner session clear (`c86ee21`).
-- 2026-09-10 [TOOL] Older availability, Avatar, Instagram, and partner receipts compressed; see #117–#140 and prior CONTINUITY history.

@@ -1,3 +1,5 @@
+import { sampleBookingCalendarUrl } from './telegramNotificationActions';
+
 const MESSAGE_LIMIT = 280;
 
 function clip(value: string): string {
@@ -33,7 +35,7 @@ export function formatHumanEscalationMessage(input: {
     line("Needs help", input.question),
     line("Context", input.context),
     "",
-    `Open: ${input.openUrl}`,
+    `Open chat: ${input.openUrl}`,
   ].filter((entry): entry is string => entry !== null);
   return lines.join("\n");
 }
@@ -46,6 +48,7 @@ export function formatBookingNotificationMessage(input: {
   date: string;
   time: string;
   openUrl: string;
+  calendarUrl?: string;
 }): string {
   const lines = [
     `📅 ${input.label}`,
@@ -56,13 +59,13 @@ export function formatBookingNotificationMessage(input: {
     line("Date", input.date),
     line("Time", input.time),
     "",
-    `Open: ${input.openUrl}`,
+    `Open chat: ${input.openUrl}`,
+    input.calendarUrl ? `Add to Google Calendar: ${input.calendarUrl}` : null,
   ].filter((entry): entry is string => entry !== null);
   return lines.join("\n");
 }
 
 const sampleInboxUrl = "https://your-domain/dashboard/…/inbox?conversation=…";
-const sampleCalendarUrl = "https://your-domain/dashboard/…/calendar?eventId=…";
 
 export function humanEscalationSampleMessage(agentName = "Support Agent", openUrl = sampleInboxUrl): string {
   return formatHumanEscalationMessage({
@@ -82,16 +85,17 @@ export type BookingNotificationLabel = "New booking" | "Booking updated" | "Book
 export function bookingSampleMessage(
   label: BookingNotificationLabel,
   agentName = "Support Agent",
-  openUrl = sampleCalendarUrl,
+  openUrl = sampleInboxUrl,
 ): string {
   return formatBookingNotificationMessage({
     label,
     agentName,
     customerName: "Sample Customer",
     serviceName: "Consultation",
-    date: "August 6 (Thursday)",
+    date: "October 2 (Friday)",
     time: "10:00 AM - 10:30 AM",
     openUrl,
+    calendarUrl: label === "New booking" ? sampleBookingCalendarUrl(openUrl) : undefined,
   });
 }
 

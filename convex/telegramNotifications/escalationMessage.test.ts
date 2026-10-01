@@ -28,5 +28,5 @@ test("human escalation message uses the workspace hostname and includes the requ
   expect(message).toContain("Latest message: I need a person to change my booking.");
   expect(message).toContain("Needs help: Customer wants the Thursday appointment moved.");
   expect(message).toContain("Context: The requested Thursday slot is already taken.");
-  expect(message).toContain(`Open: ${openUrl}`);
+  expect(message).toContain(`Open chat: ${openUrl}`);
 });

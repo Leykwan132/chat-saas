@@ -1,3 +1,4 @@
+import type { TelegramNotificationButton } from '../../shared/telegramNotificationActions';
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
@@ -8,6 +9,7 @@ export async function enqueueTelegramAgentNotification(
   ctx: MutationCtx,
   agentId: Id<"agents">,
   text: string,
+  buttons?: TelegramNotificationButton[],
 ): Promise<number> {
   const subscriptions = await ctx.db
     .query("agentTelegramNotificationSubscriptions")
@@ -19,7 +21,7 @@ export async function enqueueTelegramAgentNotification(
     await telegramNotificationWorkpool.enqueueAction(
       ctx,
       internal.telegramNotifications.worker.sendNotification,
-      { subscriptionId: subscription._id, text },
+      { subscriptionId: subscription._id, text, ...(buttons ? { buttons } : {}) },
       { runAt: reservation.scheduledFor },
     );
   }

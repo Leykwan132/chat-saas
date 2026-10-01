@@ -11,8 +11,8 @@ export function escalationChannelLabel(service: string): string {
   return channelLabels[service] ?? service;
 }
 
-export function escalationInboxUrl(origin: string, agentId: string, conversationId: string): string {
+export function escalationInboxUrl(origin: string, agentId: string, conversationId?: string): string {
   const base = origin.replace(/\/$/, "");
-  const params = new URLSearchParams({ conversation: conversationId });
-  return `${base}/dashboard/${agentId}/inbox?${params.toString()}`;
+  const params = new URLSearchParams(conversationId ? { conversation: conversationId } : {});
+  return `${base}/dashboard/${agentId}/inbox${conversationId ? `?${params.toString()}` : ""}`;
 }

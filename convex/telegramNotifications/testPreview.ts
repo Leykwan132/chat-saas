@@ -1,3 +1,4 @@
+import { notificationButtons, sampleBookingCalendarUrl } from '../../shared/telegramNotificationActions';
 import type { TelegramNotificationKind } from "../../shared/telegramNotificationKinds";
 import {
   bookingSampleMessage,
@@ -12,18 +13,25 @@ const bookingLabels: Record<Exclude<TelegramNotificationKind, "humanEscalation">
   bookingCancelled: "Booking cancelled",
 };
 
-export function formatEventTestPreview(
+export function eventTestNotification(
   kind: TelegramNotificationKind,
   agentName: string,
   origin: string,
   agentId: string,
-): string {
+) {
   const base = origin.replace(/\/$/, "");
-  const openUrl = kind === "humanEscalation"
-    ? `${base}/dashboard/${agentId}/inbox`
-    : `${base}/dashboard/${agentId}/calendar`;
+  const openUrl = `${base}/dashboard/${agentId}/inbox`;
   const message = kind === "humanEscalation"
     ? humanEscalationSampleMessage(agentName, openUrl)
     : bookingSampleMessage(bookingLabels[kind], agentName, openUrl);
-  return markNotificationTest(message);
+  return {
+    text: markNotificationTest(message),
+    buttons: notificationButtons(openUrl, kind === "bookingCreated" ? sampleBookingCalendarUrl(openUrl) : undefined),
+  };
+}
+
+export function formatEventTestPreview(
+  kind: TelegramNotificationKind, agentName: string, origin: string, agentId: string,
+): string {
+  return eventTestNotification(kind, agentName, origin, agentId).text;
 }

@@ -238,6 +238,11 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Sample message</p>
                       <pre className="whitespace-pre-wrap rounded-md bg-muted px-3 py-3 font-sans text-sm leading-relaxed text-muted-foreground">{option.preview}</pre>
+                      <div className="flex flex-wrap gap-2" aria-label="Sample notification actions">
+                        {option.actions.map((action) => (
+                          <Button key={action} variant="outline" size="sm" disabled>{action}</Button>
+                        ))}
+                      </div>
                     </div>
                     <div className="flex justify-start pt-1">
                       <DropdownMenu>
