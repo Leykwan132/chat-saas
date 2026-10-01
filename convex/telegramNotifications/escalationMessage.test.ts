@@ -44,5 +44,14 @@ test('does not turn a private WhatsApp ID into a different phone number', async 
   const { notificationConversationUrl } = await import('./escalationMessage');
   expect(() => notificationConversationUrl('https://chat.example.com', 'agent-1', {
     _id: 'conversation-1' as never, service: 'whatsapp', contactAddress: 'US.13491208655302741918',
-  }, null)).toThrow('Customer WhatsApp phone number is required');
+  }, null)).toThrow('Customer WhatsApp phone number or username is required');
+});
+
+test('opens a WhatsApp username when the customer has no phone number', async () => {
+  const { notificationConversationUrl } = await import('./escalationMessage');
+  expect(notificationConversationUrl('https://chat.example.com', 'agent-1', {
+    _id: 'conversation-1' as never, service: 'whatsapp', contactAddress: 'US.13491208655302741918',
+  }, {
+    service: 'whatsapp', contactAddress: 'US.13491208655302741918', whatsappUsername: '@alicia.tan',
+  })).toBe('https://wa.me/alicia.tan');
 });

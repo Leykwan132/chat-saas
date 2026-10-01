@@ -24,12 +24,14 @@ export function notificationConversationUrl(
   origin: string,
   agentId: string,
   conversation: Pick<Doc<"conversations">, "_id" | "service" | "contactAddress"> | null,
-  customer: Pick<Doc<"customers">, "service" | "contactAddress" | "phone"> | null,
+  customer: Pick<Doc<"customers">, "service" | "contactAddress" | "phone" | "whatsappUsername"> | null,
 ): string {
   const service = conversation?.service ?? customer?.service;
   if (service !== "whatsapp") return escalationInboxUrl(origin, agentId, conversation?._id);
   const address = conversation?.contactAddress ?? customer?.contactAddress ?? "";
   const phone = /[A-Za-z]/.test(address) ? customer?.phone : address;
-  if (!phone) throw new Error("Customer WhatsApp phone number is required for the notification chat link");
-  return `https://wa.me/${normalizeTelegramPhone(phone)}`;
+  if (phone?.trim()) return `https://wa.me/${normalizeTelegramPhone(phone)}`;
+  const username = customer?.whatsappUsername?.trim().replace(/^@/, "");
+  if (username) return `https://wa.me/${encodeURIComponent(username)}`;
+  throw new Error("Customer WhatsApp phone number or username is required for the notification chat link");
 }
