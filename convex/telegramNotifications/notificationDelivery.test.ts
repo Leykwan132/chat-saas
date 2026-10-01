@@ -54,7 +54,7 @@ async function notificationFixture() {
   return { t, ...ids };
 }
 
-test('live notifications queue direct chat buttons and calendar only when booked', async () => {
+test.each(['web', 'messenger', 'instagram'] as const)('live %s notifications name the platform and retain Inbox actions', async (platform) => {
   vi.stubEnv('APP_BASE_URL', 'https://chat.example.com');
   const queued: Array<{ text: string; buttons?: Array<{ text: string; url: string }> }> = [];
   vi.spyOn(telegramNotificationWorkpool, 'enqueueAction').mockImplementation(async (_ctx, _fn, args) => {
@@ -63,6 +63,7 @@ test('live notifications queue direct chat buttons and calendar only when booked
   });
   const { t, agentId, conversationId, appointmentId } = await notificationFixture();
   await t.run(async (ctx) => {
+    await ctx.db.patch(conversationId, { service: platform });
     await notifyHumanEscalation(ctx, agentId, conversationId, 'Support Agent');
     for (const event of ['booked', 'updated', 'cancelled'] as const) {
       await notifyAppointmentEvent(ctx, agentId, appointmentId, 'Support Agent', event);
@@ -73,6 +74,7 @@ test('live notifications queue direct chat buttons and calendar only when booked
   for (const message of queued) {
     expect(message.buttons?.[0]).toEqual({ text: 'Open chat', url: chatUrl });
     expect(message.text).toContain(`Open chat: ${chatUrl}`);
+    expect(message.text).toContain(`Platform: ${{ web: 'Web', messenger: 'Messenger', instagram: 'Instagram' }[platform]}`);
   }
   expect(queued.map((message) => message.buttons?.length)).toEqual([1, 2, 1, 1]);
   const calendar = new URL(queued[1].buttons![1].url);
@@ -151,6 +153,7 @@ test.each([
   for (const message of queued) {
     expect(message.buttons?.[0]).toEqual({ text: 'Chat on WhatsApp', url: expected });
     expect(message.text).toContain(`Chat on WhatsApp: ${expected}`);
+    expect(message.text).toContain('Platform: WhatsApp');
     expect(message.text).not.toContain('/dashboard/');
   }
   const calendar = new URL(queued[1].buttons![1].url);
