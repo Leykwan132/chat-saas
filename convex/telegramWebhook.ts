@@ -1,5 +1,6 @@
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { PublicHttpAction } from "convex/server";
 import {
   resolveNotificationBotById,
   type NotificationBotId,
@@ -83,22 +84,22 @@ export async function handleTelegramWebhookRequest(
   return new Response(null, { status: 200 });
 }
 
-function telegramWebhookForBot(sourceBot: NotificationBotId) {
-  return httpAction(async (ctx, request) => await handleTelegramWebhookRequest(
+function telegramWebhookForBot(sourceBot: NotificationBotId): PublicHttpAction {
+  return httpAction(async (ctx, request): Promise<Response> => await handleTelegramWebhookRequest(
     request,
     process.env.TELEGRAM_WEBHOOK_SECRET,
     sourceBot,
     {
-      bindVerificationChat: async (tokenHash, chatId, notificationBot) => {
-        const result = await ctx.runMutation(internal.telegramNotifications.verification.bindVerificationChat, {
+      bindVerificationChat: async (tokenHash, chatId, notificationBot): Promise<NotificationBotId | null> => {
+        const result: { accepted: boolean; notificationBot?: NotificationBotId } = await ctx.runMutation(internal.telegramNotifications.verification.bindVerificationChat, {
           tokenHash,
           chatId,
           notificationBot,
         });
         return result.accepted ? result.notificationBot ?? null : null;
       },
-      verifySharedContact: async (input) => {
-        const result = await ctx.runMutation(internal.telegramNotifications.verification.verifySharedContact, input);
+      verifySharedContact: async (input): Promise<NotificationBotId | null> => {
+        const result: { verified: boolean; notificationBot?: NotificationBotId } = await ctx.runMutation(internal.telegramNotifications.verification.verifySharedContact, input);
         return result.verified ? result.notificationBot ?? null : null;
       },
       sendMessage: async (notificationBot, chatId, text, replyMarkup) => {
