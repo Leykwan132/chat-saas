@@ -1,6 +1,7 @@
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { AppointmentBookingSessionStatus } from "./appointmentBookingSessionStatus";
+import { upsertInboxChatSearchDocument } from "./inboxSearchProjection";
 
 type SummaryCtx = Pick<MutationCtx, "db">;
 
@@ -120,6 +121,7 @@ export async function upsertInboxConversationSummary(
 export async function refreshInboxSummariesForCustomer(
   ctx: SummaryCtx,
   customerId: Id<"customers">,
+  refreshSearchDetails = false,
 ) {
   const summaries = await ctx.db
     .query("inboxConversationSummaries")
@@ -127,6 +129,9 @@ export async function refreshInboxSummariesForCustomer(
     .collect();
   for (const summary of summaries) {
     await upsertInboxConversationSummary(ctx, summary.conversationId);
+    if (refreshSearchDetails) {
+      await upsertInboxChatSearchDocument(ctx, summary.conversationId);
+    }
   }
 }
 
