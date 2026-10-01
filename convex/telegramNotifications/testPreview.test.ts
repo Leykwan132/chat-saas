@@ -1,19 +1,25 @@
 import { expect, test } from 'vitest';
+import {
+  bookingSampleMessage,
+  humanEscalationSampleMessage,
+  markNotificationTest,
+} from '../../shared/telegramNotificationMessages';
 import { formatEventTestPreview } from './testPreview';
 
 test('creates a clearly marked sample message for each notification type', () => {
-  const escalation = formatEventTestPreview('humanEscalation', 'Support Agent');
-  const newBooking = formatEventTestPreview('bookingCreated', 'Support Agent');
-  const updatedBooking = formatEventTestPreview('bookingUpdated', 'Support Agent');
-  const cancelledBooking = formatEventTestPreview('bookingCancelled', 'Support Agent');
+  const origin = 'https://chat.gosolutions.sg';
+  const agentId = 'agent-1';
+  const inboxUrl = `${origin}/dashboard/${agentId}/inbox`;
+  const calendarUrl = `${origin}/dashboard/${agentId}/calendar`;
+  const escalation = formatEventTestPreview('humanEscalation', 'Support Agent', origin, agentId);
+  const newBooking = formatEventTestPreview('bookingCreated', 'Support Agent', origin, agentId);
+  const updatedBooking = formatEventTestPreview('bookingUpdated', 'Support Agent', origin, agentId);
+  const cancelledBooking = formatEventTestPreview('bookingCancelled', 'Support Agent', origin, agentId);
 
-  expect(escalation).toContain('TEST — Human escalation');
-  expect(escalation).toContain('Customer: Sample Customer');
-  expect(escalation).toContain('Needs help: Please review the customer request.');
-  expect(newBooking).toContain('TEST — New booking');
-  expect(newBooking).toContain('Status: Confirmed');
-  expect(updatedBooking).toContain('TEST — Booking updated');
-  expect(updatedBooking).toContain('Status: Updated');
-  expect(cancelledBooking).toContain('TEST — Booking cancelled');
-  expect(cancelledBooking).toContain('Status: Cancelled');
+  expect(escalation).toBe(markNotificationTest(humanEscalationSampleMessage('Support Agent', inboxUrl)));
+  expect(newBooking).toBe(markNotificationTest(bookingSampleMessage('New booking', 'Support Agent', calendarUrl)));
+  expect(updatedBooking).toBe(markNotificationTest(bookingSampleMessage('Booking updated', 'Support Agent', calendarUrl)));
+  expect(cancelledBooking).toBe(markNotificationTest(bookingSampleMessage('Booking cancelled', 'Support Agent', calendarUrl)));
+  expect(escalation).toContain(`Open: ${inboxUrl}`);
+  expect(cancelledBooking).toContain(`Open: ${calendarUrl}`);
 });
