@@ -24,7 +24,7 @@ test("human escalation message uses the workspace hostname and includes the requ
   );
   expect(message).toContain("Customer: Alicia Tan");
   expect(message).toContain("Contact: alicia@example.com");
-  expect(message).toContain("Channel: WhatsApp");
+  expect(message).toContain("Platform: WhatsApp");
   expect(message).toContain("Latest message: I need a person to change my booking.");
   expect(message).toContain("Needs help: Customer wants the Thursday appointment moved.");
   expect(message).toContain("Context: The requested Thursday slot is already taken.");

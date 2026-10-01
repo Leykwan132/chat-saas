@@ -30,7 +30,7 @@ export function formatHumanEscalationMessage(input: {
     line("Agent", input.agentName),
     line("Customer", input.customerName),
     line("Contact", input.contact),
-    line("Channel", input.channel),
+    line("Platform", input.channel),
     line("Latest message", input.latestMessage),
     line("Needs help", input.question),
     line("Context", input.context),
@@ -45,6 +45,7 @@ export function formatBookingNotificationMessage(input: {
   agentName: string;
   customerName: string;
   serviceName: string;
+  platform: string;
   date: string;
   time: string;
   openUrl: string;
@@ -55,6 +56,7 @@ export function formatBookingNotificationMessage(input: {
     "",
     line("Agent", input.agentName),
     line("Customer", input.customerName),
+    line("Platform", input.platform),
     line("Service", input.serviceName),
     line("Date", input.date),
     line("Time", input.time),
@@ -86,12 +88,14 @@ export function bookingSampleMessage(
   label: BookingNotificationLabel,
   agentName = "Support Agent",
   openUrl = sampleWhatsAppChatUrl,
+  platform = "WhatsApp",
 ): string {
   return formatBookingNotificationMessage({
     label,
     agentName,
     customerName: "Sample Customer",
     serviceName: "Consultation",
+    platform,
     date: "October 2 (Friday)",
     time: "10:00 AM - 10:30 AM",
     openUrl,
