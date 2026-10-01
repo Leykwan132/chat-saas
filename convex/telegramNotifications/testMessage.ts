@@ -4,6 +4,7 @@ import { internal } from "../_generated/api";
 import { assertManageableAgent } from "../agentAccess";
 import { telegramNotificationKindValidator } from "./kinds";
 import { telegramNotificationWorkpool } from "./pool";
+import { dashboardOrigin } from "./dashboardOrigin";
 import { reserveTelegramMessage } from "./queue";
 import { formatEventTestPreview } from "./testPreview";
 
@@ -11,7 +12,12 @@ const subscriptionIdValidator = v.id("agentTelegramNotificationSubscriptions");
 
 export const reserve = internalMutation({
   args: { subscriptionId: subscriptionIdValidator },
-  returns: v.object({ agentName: v.string(), scheduledFor: v.number() }),
+  returns: v.object({
+    agentName: v.string(),
+    agentId: v.id("agents"),
+    origin: v.string(),
+    scheduledFor: v.number(),
+  }),
   handler: async (ctx, args) => {
     const subscription = await ctx.db.get(args.subscriptionId);
     if (!subscription) throw new Error("Telegram subscription not found");
@@ -20,7 +26,12 @@ export const reserve = internalMutation({
     if (!reservation) {
       throw new Error("This Telegram recipient is not connected and enabled");
     }
-    return { agentName: agent.name, scheduledFor: reservation.scheduledFor };
+    return {
+      agentName: agent.name,
+      agentId: agent._id,
+      origin: await dashboardOrigin(ctx, agent.orgId),
+      scheduledFor: reservation.scheduledFor,
+    };
   },
 });
 
@@ -49,7 +60,10 @@ export const sendEventPreview = action({
     await telegramNotificationWorkpool.enqueueAction(
       ctx,
       internal.telegramNotifications.worker.sendNotification,
-      { subscriptionId: args.subscriptionId, text: formatEventTestPreview(args.kind, reservation.agentName) },
+      {
+        subscriptionId: args.subscriptionId,
+        text: formatEventTestPreview(args.kind, reservation.agentName, reservation.origin, reservation.agentId),
+      },
       { runAt: reservation.scheduledFor },
     );
     return { sent: true as const };

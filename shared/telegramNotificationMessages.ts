@@ -64,7 +64,7 @@ export function formatBookingNotificationMessage(input: {
 const sampleInboxUrl = "https://your-domain/dashboard/…/inbox?conversation=…";
 const sampleCalendarUrl = "https://your-domain/dashboard/…/calendar?eventId=…";
 
-export function humanEscalationSampleMessage(agentName = "Support Agent"): string {
+export function humanEscalationSampleMessage(agentName = "Support Agent", openUrl = sampleInboxUrl): string {
   return formatHumanEscalationMessage({
     agentName,
     customerName: "Sample Customer",
@@ -73,7 +73,7 @@ export function humanEscalationSampleMessage(agentName = "Support Agent"): strin
     latestMessage: "I need help with my booking.",
     question: "Please review the customer request.",
     context: "The customer asked for a person after the booking could not be changed.",
-    openUrl: sampleInboxUrl,
+    openUrl,
   });
 }
 
@@ -82,6 +82,7 @@ export type BookingNotificationLabel = "New booking" | "Booking updated" | "Book
 export function bookingSampleMessage(
   label: BookingNotificationLabel,
   agentName = "Support Agent",
+  openUrl = sampleCalendarUrl,
 ): string {
   return formatBookingNotificationMessage({
     label,
@@ -90,7 +91,7 @@ export function bookingSampleMessage(
     serviceName: "Consultation",
     date: "August 6 (Thursday)",
     time: "10:00 AM - 10:30 AM",
-    openUrl: sampleCalendarUrl,
+    openUrl,
   });
 }
 

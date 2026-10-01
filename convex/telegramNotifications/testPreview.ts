@@ -12,9 +12,18 @@ const bookingLabels: Record<Exclude<TelegramNotificationKind, "humanEscalation">
   bookingCancelled: "Booking cancelled",
 };
 
-export function formatEventTestPreview(kind: TelegramNotificationKind, agentName: string): string {
+export function formatEventTestPreview(
+  kind: TelegramNotificationKind,
+  agentName: string,
+  origin: string,
+  agentId: string,
+): string {
+  const base = origin.replace(/\/$/, "");
+  const openUrl = kind === "humanEscalation"
+    ? `${base}/dashboard/${agentId}/inbox`
+    : `${base}/dashboard/${agentId}/calendar`;
   const message = kind === "humanEscalation"
-    ? humanEscalationSampleMessage(agentName)
-    : bookingSampleMessage(bookingLabels[kind], agentName);
+    ? humanEscalationSampleMessage(agentName, openUrl)
+    : bookingSampleMessage(bookingLabels[kind], agentName, openUrl);
   return markNotificationTest(message);
 }
