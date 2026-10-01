@@ -74,23 +74,35 @@ export function TelegramRecipientRow({
           <Trash2 className="size-4" />
         </Button>
       </div>
-      {showVerificationLink && verificationUrl ? (
+      {showVerificationLink ? (
         <div className="flex flex-col gap-2 pt-0.5">
           <p className="text-xs font-medium text-muted-foreground">Activation link</p>
-          <div className="flex items-start gap-3 rounded-md bg-muted px-3 py-3">
-            <span className="min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-muted-foreground">
-              {verificationUrl}
-            </span>
+          {verificationUrl ? (
+            <div className="flex items-start gap-3 rounded-md bg-muted px-3 py-3">
+              <span className="min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-muted-foreground">
+                {verificationUrl}
+              </span>
+              <Button
+                variant="secondary"
+                size="xs"
+                className="shrink-0"
+                onClick={onCopyVerificationLink}
+              >
+                <Copy className="size-3" />
+                Copy
+              </Button>
+            </div>
+          ) : (
             <Button
               variant="secondary"
-              size="xs"
-              className="shrink-0"
+              size="sm"
+              className="w-fit"
               onClick={onCopyVerificationLink}
             >
               <Copy className="size-3" />
-              Copy
+              Generate activation link
             </Button>
-          </div>
+          )}
         </div>
       ) : null}
     </div>

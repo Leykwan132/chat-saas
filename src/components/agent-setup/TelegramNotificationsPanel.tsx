@@ -55,7 +55,6 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
   const [testingKind, setTestingKind] = useState<TelegramNotificationKind>();
   const [openNotificationKinds, setOpenNotificationKinds] = useState<TelegramNotificationKind[]>([]);
   const { verificationUrls, rememberVerificationUrl, ensureVerificationUrl } = useTelegramVerificationUrls(
-    subscriptions,
     regenerate,
   );
   const selectedKinds = preferences?.kinds ?? TELEGRAM_NOTIFICATION_KINDS;

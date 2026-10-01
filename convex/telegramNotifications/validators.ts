@@ -10,3 +10,8 @@ export const telegramSubscriptionStatusValidator = v.union(
   v.literal("enabled"),
   v.literal("disabled"),
 );
+
+export const notificationBotIdValidator = v.union(
+  v.literal("kilobot"),
+  v.literal("goecho"),
+);

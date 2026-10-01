@@ -1,21 +1,37 @@
-export function requireNotificationBotUsername(
-  environment: Record<string, string | undefined>,
-): string {
-  const username = environment.NOTIFICATION_BOT_USERNAME?.trim().replace(/^@/, "");
-  if (!username) {
-    throw new Error("NOTIFICATION_BOT_USERNAME is not configured");
-  }
-  return username;
+export type NotificationBotId = "kilobot" | "goecho";
+
+type Environment = Record<string, string | undefined>;
+
+export type NotificationBot = {
+  id: NotificationBotId;
+  token: string;
+  username: string;
+};
+
+export function notificationBotIdForRecipient(notificationBot: NotificationBotId | undefined): NotificationBotId {
+  return notificationBot ?? "kilobot";
 }
 
-export function requireNotificationBotToken(
-  environment: Record<string, string | undefined>,
-): string {
-  const token = environment.NOTIFICATION_BOT_TOKEN?.trim();
-  if (!token) {
-    throw new Error("NOTIFICATION_BOT_TOKEN is not configured");
+function requiredValue(environment: Environment, name: string) {
+  const value = environment[name]?.trim();
+  if (!value) throw new Error(`${name} is not configured`);
+  return value;
+}
+
+export function resolveNotificationBot(hostname: string | undefined, environment: Environment): NotificationBot {
+  if (hostname?.trim().toLowerCase() === "chat.gosolutions.sg") {
+    return resolveNotificationBotById("goecho", environment);
   }
-  return token;
+  return resolveNotificationBotById("kilobot", environment);
+}
+
+export function resolveNotificationBotById(id: NotificationBotId, environment: Environment): NotificationBot {
+  const prefix = id === "goecho" ? "GOECHO_NOTIFICATION_BOT" : "NOTIFICATION_BOT";
+  return {
+    id,
+    token: requiredValue(environment, `${prefix}_TOKEN`),
+    username: requiredValue(environment, `${prefix}_USERNAME`).replace(/^@/, ""),
+  };
 }
 
 export function buildTelegramVerificationUrl(username: string, rawToken: string): string {

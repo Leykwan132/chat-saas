@@ -1,17 +1,22 @@
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { requireNotificationBotToken } from "./telegramNotifications/config";
+import type { PublicHttpAction } from "convex/server";
+import {
+  resolveNotificationBotById,
+  type NotificationBotId,
+} from "./telegramNotifications/config";
 import { sendTelegramMessage } from "./telegramNotifications/telegramApi";
 import { parseTelegramUpdate, startToken } from "./telegramNotifications/updateParser";
 import { hashVerificationToken } from "./telegramNotifications/token";
 
-const invalidLinkMessage = "This verification link is invalid. Please generate a new link from KiloBot.";
+const invalidLinkMessage = "This verification link is invalid. Please generate a new link from your notification bot.";
 
 export async function handleTelegramWebhookRequest(
   request: Request,
   expectedSecret: string | undefined,
+  sourceBot: NotificationBotId,
   operations: {
-    bindVerificationChat: (tokenHash: string, chatId: string) => Promise<boolean>;
+    bindVerificationChat: (tokenHash: string, chatId: string, notificationBot: NotificationBotId) => Promise<NotificationBotId | null>;
     verifySharedContact: (input: {
       chatId: string;
       senderId: string;
@@ -19,8 +24,9 @@ export async function handleTelegramWebhookRequest(
       phoneNumber: string;
       firstName: string | undefined;
       lastName: string | undefined;
-    }) => Promise<boolean>;
-    sendMessage: (chatId: string, text: string, replyMarkup?: Record<string, unknown>) => Promise<void>;
+      notificationBot: NotificationBotId;
+    }) => Promise<NotificationBotId | null>;
+    sendMessage: (notificationBot: NotificationBotId, chatId: string, text: string, replyMarkup?: Record<string, unknown>) => Promise<void>;
   },
 ): Promise<Response> {
   if (!expectedSecret) return new Response("server misconfigured", { status: 500 });
@@ -44,11 +50,16 @@ export async function handleTelegramWebhookRequest(
 
   const rawToken = startToken(parsed.text);
   if (rawToken) {
-    const accepted = await operations.bindVerificationChat(await hashVerificationToken(rawToken), parsed.chatId);
-    if (!accepted) {
-      await operations.sendMessage(parsed.chatId, invalidLinkMessage);
+    const notificationBot = await operations.bindVerificationChat(
+      await hashVerificationToken(rawToken),
+      parsed.chatId,
+      sourceBot,
+    );
+    if (!notificationBot) {
+      await operations.sendMessage(sourceBot, parsed.chatId, invalidLinkMessage);
     } else {
       await operations.sendMessage(
+        notificationBot,
         parsed.chatId,
         "To subscribe to notifications, please share the phone number you want to verify.",
         {
@@ -59,28 +70,48 @@ export async function handleTelegramWebhookRequest(
       );
     }
   } else if (parsed.contact) {
-    const verified = await operations.verifySharedContact({
+    const notificationBot = await operations.verifySharedContact({
       chatId: parsed.chatId,
       senderId: parsed.senderId,
       contactUserId: parsed.contact.userId,
       phoneNumber: parsed.contact.phoneNumber,
       firstName: parsed.contact.firstName,
       lastName: parsed.contact.lastName,
+      notificationBot: sourceBot,
     });
-    if (verified) await operations.sendMessage(parsed.chatId, "Your notifications are ready!");
+    if (notificationBot) await operations.sendMessage(notificationBot, parsed.chatId, "Your notifications are ready!");
   }
   return new Response(null, { status: 200 });
 }
 
-export const telegramWebhook = httpAction(async (ctx, request) => {
-  const botToken = requireNotificationBotToken(process.env);
-  return await handleTelegramWebhookRequest(request, process.env.TELEGRAM_WEBHOOK_SECRET, {
-    bindVerificationChat: async (tokenHash, chatId) =>
-      (await ctx.runMutation(internal.telegramNotifications.verification.bindVerificationChat, { tokenHash, chatId })).accepted,
-    verifySharedContact: async (input) =>
-      (await ctx.runMutation(internal.telegramNotifications.verification.verifySharedContact, input)).verified,
-    sendMessage: async (chatId, text, replyMarkup) => {
-      await sendTelegramMessage(botToken, { chatId, text, replyMarkup });
+function telegramWebhookForBot(sourceBot: NotificationBotId): PublicHttpAction {
+  return httpAction(async (ctx, request): Promise<Response> => await handleTelegramWebhookRequest(
+    request,
+    process.env.TELEGRAM_WEBHOOK_SECRET,
+    sourceBot,
+    {
+      bindVerificationChat: async (tokenHash, chatId, notificationBot): Promise<NotificationBotId | null> => {
+        const result: { accepted: boolean; notificationBot?: NotificationBotId } = await ctx.runMutation(internal.telegramNotifications.verification.bindVerificationChat, {
+          tokenHash,
+          chatId,
+          notificationBot,
+        });
+        return result.accepted ? result.notificationBot ?? null : null;
+      },
+      verifySharedContact: async (input): Promise<NotificationBotId | null> => {
+        const result: { verified: boolean; notificationBot?: NotificationBotId } = await ctx.runMutation(internal.telegramNotifications.verification.verifySharedContact, input);
+        return result.verified ? result.notificationBot ?? null : null;
+      },
+      sendMessage: async (notificationBot, chatId, text, replyMarkup) => {
+        await sendTelegramMessage(resolveNotificationBotById(notificationBot, process.env).token, {
+          chatId,
+          text,
+          replyMarkup,
+        });
+      },
     },
-  });
-});
+  ));
+}
+
+export const telegramWebhook = telegramWebhookForBot("kilobot");
+export const goEchoTelegramWebhook = telegramWebhookForBot("goecho");

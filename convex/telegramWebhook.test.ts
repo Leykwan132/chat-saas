@@ -24,7 +24,7 @@ test("parses private Telegram messages with string identifiers", () => {
 
 test("binds a valid start token and requests a self-contact without logging it", async () => {
   const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-  const bindVerificationChat = vi.fn().mockResolvedValue(true);
+  const bindVerificationChat = vi.fn().mockResolvedValue("goecho");
   const sendMessage = vi.fn().mockResolvedValue(undefined);
   const response = await handleTelegramWebhookRequest(
     new Request("https://example.com/webhook/telegram", {
@@ -40,6 +40,7 @@ test("binds a valid start token and requests a self-contact without logging it",
       }),
     }),
     "test-secret",
+    "goecho",
     {
       bindVerificationChat,
       verifySharedContact: vi.fn(),
@@ -48,8 +49,13 @@ test("binds a valid start token and requests a self-contact without logging it",
   );
 
   expect(response.status).toBe(200);
-  expect(bindVerificationChat).toHaveBeenCalledWith(expect.stringMatching(/^[A-Za-z0-9_-]{43}$/), "301");
+  expect(bindVerificationChat).toHaveBeenCalledWith(
+    expect.stringMatching(/^[A-Za-z0-9_-]{43}$/),
+    "301",
+    "goecho",
+  );
   expect(sendMessage).toHaveBeenCalledWith(
+    "goecho",
     "301",
     "To subscribe to notifications, please share the phone number you want to verify.",
     expect.any(Object),
@@ -59,7 +65,7 @@ test("binds a valid start token and requests a self-contact without logging it",
 
 test("confirms only a verified contact share", async () => {
   const sendMessage = vi.fn().mockResolvedValue(undefined);
-  const verifySharedContact = vi.fn().mockResolvedValue(true);
+  const verifySharedContact = vi.fn().mockResolvedValue("goecho");
   const response = await handleTelegramWebhookRequest(
     new Request("https://example.com/webhook/telegram", {
       method: "POST",
@@ -74,6 +80,7 @@ test("confirms only a verified contact share", async () => {
       }),
     }),
     "test-secret",
+    "goecho",
     { bindVerificationChat: vi.fn(), verifySharedContact, sendMessage },
   );
 
@@ -85,8 +92,40 @@ test("confirms only a verified contact share", async () => {
     phoneNumber: "+60123456789",
     firstName: "Alex",
     lastName: undefined,
+    notificationBot: "goecho",
   });
-  expect(sendMessage).toHaveBeenCalledWith("302", "Your notifications are ready!");
+  expect(sendMessage).toHaveBeenCalledWith("goecho", "302", "Your notifications are ready!");
+});
+
+test("directs invalid GoEcho links to the active notification bot", async () => {
+  const sendMessage = vi.fn().mockResolvedValue(undefined);
+  await handleTelegramWebhookRequest(
+    new Request("https://example.com/webhook/telegram/goecho", {
+      method: "POST",
+      headers: { "x-telegram-bot-api-secret-token": "test-secret" },
+      body: JSON.stringify({
+        update_id: 104,
+        message: {
+          text: "/start invalid-token",
+          chat: { id: 303, type: "private" },
+          from: { id: 403 },
+        },
+      }),
+    }),
+    "test-secret",
+    "goecho",
+    {
+      bindVerificationChat: vi.fn().mockResolvedValue(null),
+      verifySharedContact: vi.fn(),
+      sendMessage,
+    },
+  );
+
+  expect(sendMessage).toHaveBeenCalledWith(
+    "goecho",
+    "303",
+    "This verification link is invalid. Please generate a new link from your notification bot.",
+  );
 });
 
 test("rejects requests with an invalid secret or malformed JSON", async () => {
@@ -98,6 +137,7 @@ test("rejects requests with an invalid secret or malformed JSON", async () => {
   const unauthorized = await handleTelegramWebhookRequest(
     new Request("https://example.com/webhook/telegram", { method: "POST" }),
     "test-secret",
+    "kilobot",
     operations,
   );
   const malformed = await handleTelegramWebhookRequest(
@@ -107,6 +147,7 @@ test("rejects requests with an invalid secret or malformed JSON", async () => {
       body: "{",
     }),
     "test-secret",
+    "kilobot",
     operations,
   );
   expect(unauthorized.status).toBe(401);

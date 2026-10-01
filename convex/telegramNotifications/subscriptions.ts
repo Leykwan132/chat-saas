@@ -2,7 +2,13 @@ import { v } from "convex/values";
 import { mutation, query, type MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { assertManageableAgent } from "../agentAccess";
-import { buildTelegramVerificationUrl, requireNotificationBotUsername } from "./config";
+import { getAuthSurface } from "../whiteLabel/authSurface";
+import {
+  buildTelegramVerificationUrl,
+  notificationBotIdForRecipient,
+  resolveNotificationBot,
+  type NotificationBot,
+} from "./config";
 import { normalizeTelegramPhone } from "./phone";
 import { subscriptionState } from "./subscriptionAccess";
 import { createVerificationToken } from "./token";
@@ -16,15 +22,23 @@ const subscriptionStateValidator = v.union(
   v.literal("blocked"),
 );
 
-async function createVerificationLink() {
+async function createVerificationLink(notificationBot: NotificationBot) {
   const token = await createVerificationToken();
   return {
     verificationTokenHash: token.tokenHash,
-    verificationUrl: buildTelegramVerificationUrl(
-      requireNotificationBotUsername(process.env),
-      token.rawToken,
-    ),
+    verificationUrl: buildTelegramVerificationUrl(notificationBot.username, token.rawToken),
   };
+}
+
+function notificationBotForAuth(auth: Awaited<ReturnType<typeof assertManageableAgent>>["auth"]) {
+  const surface = getAuthSurface(auth.identity);
+  return resolveNotificationBot(surface.kind === "partner" ? surface.hostname : undefined, process.env);
+}
+
+function assertRecipientBot(recipient: { notificationBot?: "kilobot" | "goecho" }, notificationBot: NotificationBot) {
+  if (notificationBotIdForRecipient(recipient.notificationBot) !== notificationBot.id) {
+    throw new Error("This Telegram recipient is connected to a different notification bot");
+  }
 }
 
 export const listForAgent = query({
@@ -80,7 +94,8 @@ export const add = mutation({
     }),
   ),
   handler: async (ctx, args) => {
-    await assertManageableAgent(ctx, args.agentId);
+    const { auth } = await assertManageableAgent(ctx, args.agentId);
+    const notificationBot = notificationBotForAuth(auth);
     const phoneDigits = normalizeTelegramPhone(args.phone);
     let recipient = await ctx.db
       .query("telegramNotificationRecipients")
@@ -88,6 +103,7 @@ export const add = mutation({
       .unique();
 
     if (recipient) {
+      assertRecipientBot(recipient, notificationBot);
       const existingSubscription = await ctx.db
         .query("agentTelegramNotificationSubscriptions")
         .withIndex("by_agentId_and_recipientId", (q) =>
@@ -109,10 +125,11 @@ export const add = mutation({
 
     const now = Date.now();
     if (!recipient) {
-      const verification = await createVerificationLink();
+      const verification = await createVerificationLink(notificationBot);
       const recipientId = await ctx.db.insert("telegramNotificationRecipients", {
         phoneDigits,
         status: "pending",
+        notificationBot: notificationBot.id,
         verificationTokenHash: verification.verificationTokenHash,
         createdAt: now,
         updatedAt: now,
@@ -142,9 +159,10 @@ export const add = mutation({
       return { subscriptionId, state: "connected" as const };
     }
 
-    const verification = await createVerificationLink();
+    const verification = await createVerificationLink(notificationBot);
     await ctx.db.patch(recipient._id, {
       status: "pending",
+      notificationBot: notificationBot.id,
       verificationTokenHash: verification.verificationTokenHash,
       verificationChatId: undefined,
       telegramChatId: undefined,
@@ -178,13 +196,17 @@ export const regenerateVerificationLink = mutation({
   args: { subscriptionId: subscriptionIdValidator },
   returns: v.object({ verificationUrl: v.string() }),
   handler: async (ctx, args) => {
-    const { recipient } = await getManagedSubscription(ctx, args.subscriptionId);
+    const { recipient, subscription } = await getManagedSubscription(ctx, args.subscriptionId);
+    const { auth } = await assertManageableAgent(ctx, subscription.agentId);
+    const notificationBot = notificationBotForAuth(auth);
     if (recipient.status === "verified") {
       throw new Error("This Telegram recipient is already connected");
     }
-    const verification = await createVerificationLink();
+    assertRecipientBot(recipient, notificationBot);
+    const verification = await createVerificationLink(notificationBot);
     await ctx.db.patch(recipient._id, {
       status: "pending",
+      notificationBot: notificationBot.id,
       verificationTokenHash: verification.verificationTokenHash,
       verificationChatId: undefined,
       telegramChatId: undefined,

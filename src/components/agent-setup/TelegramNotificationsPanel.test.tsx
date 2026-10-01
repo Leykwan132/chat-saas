@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, test, vi } from 'vitest';
 import { TelegramNotificationsPanel } from './TelegramNotificationsPanel';
+import { TelegramRecipientRow } from './TelegramRecipientRow';
 
 let queryCount = 0;
 let recipientState: 'connected' | 'pending' = 'connected';
@@ -127,4 +128,20 @@ test('keeps pending-recipient verification controls in the recipient row', () =>
   expect(rowSource).toContain('text-xs text-muted-foreground');
   expect(rowSource).toContain('<Copy className="size-3" />');
   expect(hookSource).toContain('ensureVerificationUrl');
+  expect(hookSource).not.toContain('useEffect');
+});
+
+test('lets a pending recipient explicitly generate an activation link after reopening the panel', () => {
+  const markup = renderToStaticMarkup(
+    <TelegramRecipientRow
+      phoneNumber="+60 12-949 9394"
+      state="pending"
+      enabled
+      onToggleEnabled={() => undefined}
+      onRemove={() => undefined}
+      onCopyVerificationLink={() => undefined}
+    />,
+  );
+
+  expect(markup).toContain('Generate activation link');
 });
