@@ -5,6 +5,7 @@ import { assertManageableAgent } from "../agentAccess";
 import { getAuthSurface } from "../whiteLabel/authSurface";
 import {
   buildTelegramVerificationUrl,
+  notificationBotIdForRecipient,
   resolveNotificationBot,
   type NotificationBot,
 } from "./config";
@@ -35,7 +36,7 @@ function notificationBotForAuth(auth: Awaited<ReturnType<typeof assertManageable
 }
 
 function assertRecipientBot(recipient: { notificationBot?: "kilobot" | "goecho" }, notificationBot: NotificationBot) {
-  if (recipient.notificationBot && recipient.notificationBot !== notificationBot.id) {
+  if (notificationBotIdForRecipient(recipient.notificationBot) !== notificationBot.id) {
     throw new Error("This Telegram recipient is connected to a different notification bot");
   }
 }

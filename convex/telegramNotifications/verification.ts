@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
+import { notificationBotIdForRecipient } from "./config";
 import { normalizeTelegramPhone } from "./phone";
 import { notificationBotIdValidator } from "./validators";
 
@@ -17,7 +18,7 @@ export const bindVerificationChat = internalMutation({
       !recipient ||
       recipient.status !== "pending" ||
       recipient.verificationTokenHash !== args.tokenHash ||
-      (recipient.notificationBot ?? "kilobot") !== args.notificationBot
+      notificationBotIdForRecipient(recipient.notificationBot) !== args.notificationBot
     ) {
       return { accepted: false };
     }
@@ -35,7 +36,7 @@ export const bindVerificationChat = internalMutation({
       }
     }
     await ctx.db.patch(recipient._id, { verificationChatId: args.chatId, updatedAt: now });
-    return { accepted: true, notificationBot: recipient.notificationBot ?? "kilobot" };
+    return { accepted: true, notificationBot: notificationBotIdForRecipient(recipient.notificationBot) };
   },
 });
 
@@ -68,7 +69,7 @@ export const verifySharedContact = internalMutation({
     const recipient = candidates.find((candidate) =>
       candidate.status === "pending" &&
       candidate.phoneDigits === phoneDigits &&
-      (candidate.notificationBot ?? "kilobot") === args.notificationBot,
+      notificationBotIdForRecipient(candidate.notificationBot) === args.notificationBot,
     );
     if (!recipient) {
       return { verified: false };
@@ -85,6 +86,6 @@ export const verifySharedContact = internalMutation({
       verificationChatId: undefined,
       updatedAt: now,
     });
-    return { verified: true, notificationBot: recipient.notificationBot ?? "kilobot" };
+    return { verified: true, notificationBot: notificationBotIdForRecipient(recipient.notificationBot) };
   },
 });

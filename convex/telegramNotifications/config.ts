@@ -8,6 +8,10 @@ export type NotificationBot = {
   username: string;
 };
 
+export function notificationBotIdForRecipient(notificationBot: NotificationBotId | undefined): NotificationBotId {
+  return notificationBot ?? "kilobot";
+}
+
 function requiredValue(environment: Environment, name: string) {
   const value = environment[name]?.trim();
   if (!value) throw new Error(`${name} is not configured`);

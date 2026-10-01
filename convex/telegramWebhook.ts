@@ -8,7 +8,7 @@ import { sendTelegramMessage } from "./telegramNotifications/telegramApi";
 import { parseTelegramUpdate, startToken } from "./telegramNotifications/updateParser";
 import { hashVerificationToken } from "./telegramNotifications/token";
 
-const invalidLinkMessage = "This verification link is invalid. Please generate a new link from KiloBot.";
+const invalidLinkMessage = "This verification link is invalid. Please generate a new link from your notification bot.";
 
 export async function handleTelegramWebhookRequest(
   request: Request,

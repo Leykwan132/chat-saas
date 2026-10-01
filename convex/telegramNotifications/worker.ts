@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internalAction, internalMutation } from "../_generated/server";
 import { internal } from "../_generated/api";
-import { resolveNotificationBotById } from "./config";
+import { notificationBotIdForRecipient, resolveNotificationBotById } from "./config";
 import { telegramNotificationWorkpool } from "./pool";
 import { TELEGRAM_CHAT_MESSAGE_DELAY_MS } from "./queue";
 import { TelegramDeliveryError, sendTelegramMessage } from "./telegramApi";
@@ -33,7 +33,7 @@ export const getDelivery = internalMutation({
     return {
       recipientId: recipient._id,
       chatId: recipient.telegramChatId,
-      notificationBot: recipient.notificationBot ?? "kilobot",
+      notificationBot: notificationBotIdForRecipient(recipient.notificationBot),
     };
   },
 });

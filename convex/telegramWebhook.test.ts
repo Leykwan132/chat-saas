@@ -97,6 +97,37 @@ test("confirms only a verified contact share", async () => {
   expect(sendMessage).toHaveBeenCalledWith("goecho", "302", "Your notifications are ready!");
 });
 
+test("directs invalid GoEcho links to the active notification bot", async () => {
+  const sendMessage = vi.fn().mockResolvedValue(undefined);
+  await handleTelegramWebhookRequest(
+    new Request("https://example.com/webhook/telegram/goecho", {
+      method: "POST",
+      headers: { "x-telegram-bot-api-secret-token": "test-secret" },
+      body: JSON.stringify({
+        update_id: 104,
+        message: {
+          text: "/start invalid-token",
+          chat: { id: 303, type: "private" },
+          from: { id: 403 },
+        },
+      }),
+    }),
+    "test-secret",
+    "goecho",
+    {
+      bindVerificationChat: vi.fn().mockResolvedValue(null),
+      verifySharedContact: vi.fn(),
+      sendMessage,
+    },
+  );
+
+  expect(sendMessage).toHaveBeenCalledWith(
+    "goecho",
+    "303",
+    "This verification link is invalid. Please generate a new link from your notification bot.",
+  );
+});
+
 test("rejects requests with an invalid secret or malformed JSON", async () => {
   const operations = {
     bindVerificationChat: vi.fn(),

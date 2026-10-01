@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { resolveNotificationBot } from "./config";
+import { notificationBotIdForRecipient, resolveNotificationBot } from "./config";
 
 test("uses the GoEcho bot credentials for the GoEcho custom hostname", () => {
   expect(resolveNotificationBot("chat.gosolutions.sg", {
@@ -21,4 +21,8 @@ test("uses the KiloBot credentials for other hostnames", () => {
     token: "kilobot-token",
     username: "notifications_kilobot",
   });
+});
+
+test("treats recipients created before bot routing as KiloBot recipients", () => {
+  expect(notificationBotIdForRecipient(undefined)).toBe("kilobot");
 });
