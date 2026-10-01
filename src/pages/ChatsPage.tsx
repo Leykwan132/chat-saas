@@ -270,6 +270,7 @@ function DetailsPanelSkeleton() {
 export default function ChatsPage() {
   const { agentId } = useParams();
   const [searchParams] = useSearchParams();
+  const linkedConversationId = searchParams.get('conversation')?.trim() || null;
   const typedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading } = usePermissions();
   const connectedChannels = useQuery(
@@ -289,7 +290,7 @@ export default function ChatsPage() {
 
   const [selectedConversationId, setSelectedConversationId] = useState<
     Id<'conversations'> | null
-  >(null);
+  >(linkedConversationId as Id<'conversations'> | null);
   const [pendingMessageFocusId, setPendingMessageFocusId] = useState<Id<'messages'> | null>(null);
   const [highlightedMessageId, setHighlightedMessageId] = useState<Id<'messages'> | null>(null);
   const [mobileConversationSwitcherOpen, setMobileConversationSwitcherOpen] = useState(false);
