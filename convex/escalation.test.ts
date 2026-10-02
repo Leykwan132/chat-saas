@@ -22,7 +22,7 @@ beforeAll(() => {
 
 const modules = import.meta.glob("./**/*.ts");
 
-test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () => {
+test("Smart escalation lifecycle: trigger, reply, and manual resolve", async () => {
   const t = convexTest(schema, modules);
 
   // Register Stripe component
@@ -312,6 +312,18 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
     sourceMessageId: ingestResult.messageIds[0],
   });
 
+  const openEscalation = conv!.escalation;
+  await t.mutation(internal.chat.inbox.internalEscalateConversation, {
+    conversationId,
+    question: "A second attempt",
+    context: "This must not create another escalation.",
+    sourceAgentMessageId: ingestResult.agentMessageId,
+  });
+  conv = await t.run(async (ctx) => {
+    return await ctx.db.get(conversationId);
+  });
+  expect(conv!.escalation).toEqual(openEscalation);
+
   // 3. Resolve Escalation Manually
   await testWithAuth.mutation(api.conversations.resolveEscalation, {
     conversationId,
@@ -328,7 +340,7 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
   await t.mutation(internal.chat.inbox.internalEscalateConversation, {
     conversationId,
     question: "Another unsure query?",
-    context: "Testing auto-resolve on human reply.",
+    context: "Testing that a human reply leaves the escalation open.",
     sourceAgentMessageId: ingestResult.agentMessageId,
   });
 
@@ -337,7 +349,7 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
   });
   expect(conv!.status).toBe("requires_user_input");
 
-  // 5. Auto-resolve on Human Reply
+  // 5. A human reply leaves the escalation open
   await t.mutation(internal.chat.inbox.internalPersistHumanReply, {
     conversationId,
     content: "No worries, I can help you with your refund.",
@@ -347,24 +359,11 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
   conv = await t.run(async (ctx) => {
     return await ctx.db.get(conversationId);
   });
-  expect(conv!.status).toBe("open");
-  expect(conv!.escalation).toBeUndefined();
-  expect(conv!.assignToAiAgent).toBe(false); // Remains false (paused)
-
-  // 6. Toggling AI replies manually back to true should also clear escalation
-  await t.mutation(internal.chat.inbox.internalEscalateConversation, {
-    conversationId,
-    question: "Third unsure query?",
-    context: "Testing clear on AI replies enabled.",
-    sourceAgentMessageId: ingestResult.agentMessageId,
-  });
-
-  conv = await t.run(async (ctx) => {
-    return await ctx.db.get(conversationId);
-  });
   expect(conv!.status).toBe("requires_user_input");
+  expect(conv!.escalation?.question).toBe("Another unsure query?");
+  expect(conv!.assignToAiAgent).toBe(false);
 
-  // Toggle AI replies manually
+  // 6. Turning AI replies back on also leaves the escalation open
   await testWithAuth.mutation(api.conversations.setConversationAiEnabled, {
     conversationId,
     enabled: true,
@@ -373,9 +372,18 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
   conv = await t.run(async (ctx) => {
     return await ctx.db.get(conversationId);
   });
+  expect(conv!.status).toBe("requires_user_input");
+  expect(conv!.escalation?.question).toBe("Another unsure query?");
+  expect(conv!.assignToAiAgent).toBe(true);
+
+  await testWithAuth.mutation(api.conversations.resolveEscalation, {
+    conversationId,
+  });
+  conv = await t.run(async (ctx) => {
+    return await ctx.db.get(conversationId);
+  });
   expect(conv!.status).toBe("open");
   expect(conv!.escalation).toBeUndefined();
-  expect(conv!.assignToAiAgent).toBe(true);
 });
 
 test("escalates without sending a customer message when escalationMessage is unset", async () => {

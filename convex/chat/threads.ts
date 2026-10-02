@@ -83,7 +83,7 @@ type UsageWithTokenAliases = {
 };
 
 export async function sendEscalationMessageThenEscalate(
-  ctx: Pick<ActionCtx, "runAction" | "runMutation">,
+  ctx: Pick<ActionCtx, "runAction" | "runMutation" | "runQuery">,
   args: {
     conversationId: Id<"conversations">;
     question: string;
@@ -91,7 +91,11 @@ export async function sendEscalationMessageThenEscalate(
     sourceAgentMessageId: string;
     message?: string;
   },
-) {
+): Promise<boolean> {
+  const conv = await ctx.runQuery(internal.chat.inbox.internalGetConversation, {
+    conversationId: args.conversationId,
+  });
+  if (conv?.escalation !== undefined) return false;
   if (args.message !== undefined) {
     const sendResult: { ok: boolean; error?: string } = await ctx.runAction(
       internal.chat.inboxActions.internalSendEscalationMessage,
@@ -110,6 +114,7 @@ export async function sendEscalationMessageThenEscalate(
     context: args.context,
     sourceAgentMessageId: args.sourceAgentMessageId,
   });
+  return true;
 }
 
 export async function resolveAssignedAgentName(
@@ -690,13 +695,20 @@ export function buildAgent(
                   workflowRuntimeContext,
                   workflowNodeId,
                 );
-          await sendEscalationMessageThenEscalate(ctx, {
+          const created = await sendEscalationMessageThenEscalate(ctx, {
             conversationId,
             question,
             context,
             sourceAgentMessageId,
             message: escalationMessage,
           });
+          if (!created) {
+            return {
+              success: true,
+              message:
+                "This conversation is already escalated. Do not call this tool again.",
+            };
+          }
         }
         return {
           success: true,
