@@ -48,8 +48,8 @@ export function WhatsAppPricingLabel({
             <Info className="size-3" aria-hidden="true" />
           </button>
         </TooltipTrigger>
-        <TooltipContent className="max-w-72 leading-relaxed">
-          <span>{WHATSAPP_SERVICE_PRICING_TOOLTIP}</span>{' '}
+        <TooltipContent className="max-w-72 flex-col items-start gap-1 text-left leading-relaxed">
+          <span>{WHATSAPP_SERVICE_PRICING_TOOLTIP}</span>
           <a
             href={WHATSAPP_SERVICE_PRICING_RATE_CARD_URL}
             target="_blank"

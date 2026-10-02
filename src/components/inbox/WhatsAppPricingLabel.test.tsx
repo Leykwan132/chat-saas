@@ -31,6 +31,16 @@ test('shows Free for legacy outgoing WhatsApp messages', () => {
   );
 });
 
+test('stacks the pricing note above the rate card link', () => {
+  const source = readFileSync(
+    new URL('./WhatsAppPricingLabel.tsx', import.meta.url),
+    'utf8',
+  );
+
+  expect(source).toContain('flex-col items-start');
+  expect(source).not.toContain("{WHATSAPP_SERVICE_PRICING_TOOLTIP}</span>{' '}");
+});
+
 test('uses a tiny filled circle to separate the time from the pricing label', () => {
   const markup = renderLabel({ service: 'whatsapp' });
 
