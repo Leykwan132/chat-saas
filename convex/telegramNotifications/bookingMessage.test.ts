@@ -28,4 +28,10 @@ test("booking notification names the customer, service, and date on the workspac
   expect(message).toContain("Date: October 2 (Friday)");
   expect(message).toContain("Time: 4:00 PM - 4:30 PM");
   expect(message).toContain(`Open chat: ${openUrl}`);
+  expect(message.split("\n\n")).toEqual([
+    "📅 New booking",
+    "Agent: Support Agent\nCustomer: Alicia Tan\nPlatform: Web",
+    "Service: Consultation\nDate: October 2 (Friday)\nTime: 4:00 PM - 4:30 PM",
+    `Open chat: ${openUrl}`,
+  ]);
 });

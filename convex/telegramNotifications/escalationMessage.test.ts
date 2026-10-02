@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { formatHumanEscalationMessage } from "../../shared/telegramNotificationMessages";
 import { escalationInboxUrl } from "./escalationMessage";
 
-test("human escalation message uses the workspace hostname and includes the request", () => {
+test("human escalation message uses the workspace hostname and groups customer details separately from message context", () => {
   const openUrl = escalationInboxUrl(
     "https://chat.gosolutions.sg",
     "agent-1",
@@ -26,7 +26,14 @@ test("human escalation message uses the workspace hostname and includes the requ
   expect(message).toContain("Contact: alicia@example.com");
   expect(message).toContain("Platform: WhatsApp");
   expect(message).toContain("Latest message: I need a person to change my booking.");
-  expect(message).toContain("Needs help: Customer wants the Thursday appointment moved.");
+  expect(message).not.toContain("Needs help:");
+  expect(message).not.toContain("Customer wants the Thursday appointment moved.");
+  expect(message.split("\n\n")).toEqual([
+    "🚨 Human escalation",
+    "Agent: Support Agent\nCustomer: Alicia Tan\nContact: alicia@example.com\nPlatform: WhatsApp",
+    "Latest message: I need a person to change my booking.\nContext: The requested Thursday slot is already taken.",
+    `Open chat: ${openUrl}`,
+  ]);
   expect(message).toContain("Context: The requested Thursday slot is already taken.");
   expect(message).toContain(`Open chat: ${openUrl}`);
 });
