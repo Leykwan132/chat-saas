@@ -59,44 +59,81 @@ export type InboxEscalationMarker = {
   escalatedAt: number;
 };
 
+// ponytail: a reply more than 2 minutes before the escalation log stays above the divider.
+const ESCALATION_REPLY_WINDOW_MS = 2 * 60 * 1000;
+
+function chronologicalMessages(messages: InboxUIMessage[]): InboxUIMessage[] {
+  return messages
+    .map((message, index) => ({ message, index }))
+    .sort(
+      (a, b) =>
+        a.message._creationTime - b.message._creationTime || a.index - b.index,
+    )
+    .map((entry) => entry.message);
+}
+
+function escalationSlot(
+  messages: InboxUIMessage[],
+  marker: InboxEscalationMarker,
+): number {
+  const sourceIndex = messages.findIndex(
+    (message) => message.ledgerMessageId === marker.sourceMessageId,
+  );
+  let slot = sourceIndex < 0 ? 0 : sourceIndex + 1;
+  while (slot < messages.length) {
+    const next = messages[slot];
+    if (!next || next._creationTime > marker.escalatedAt) break;
+    const sentWithEscalation =
+      next.role === 'assistant' &&
+      marker.escalatedAt - next._creationTime <= ESCALATION_REPLY_WINDOW_MS;
+    if (sentWithEscalation) break;
+    slot += 1;
+  }
+  return slot;
+}
+
 export function buildInboxThreadItems(
   messages: InboxUIMessage[],
   escalationMarkers: InboxEscalationMarker[] = [],
 ): InboxThreadItem[] {
-  const items: InboxThreadItem[] = [];
-  let lastDay: number | null = null;
-  const markersBySourceMessageId = new Map<string, InboxEscalationMarker[]>();
-
+  const ordered = chronologicalMessages(messages);
+  const markersAtSlot = new Map<number, InboxEscalationMarker[]>();
   for (const marker of escalationMarkers) {
-    const markers = markersBySourceMessageId.get(marker.sourceMessageId) ?? [];
+    const slot = escalationSlot(ordered, marker);
+    const markers = markersAtSlot.get(slot) ?? [];
     markers.push(marker);
-    markersBySourceMessageId.set(marker.sourceMessageId, markers);
+    markersAtSlot.set(slot, markers);
   }
-
-  for (const markers of markersBySourceMessageId.values()) {
+  for (const markers of markersAtSlot.values()) {
     markers.sort((a, b) => a.escalatedAt - b.escalatedAt);
   }
 
-  for (const message of messages) {
-    const day = startOfDayMs(message._creationTime);
-    if (day !== lastDay) {
+  const items: InboxThreadItem[] = [];
+  let lastDay: number | null = null;
+  const pushDay = (timestamp: number) => {
+    const day = startOfDayMs(timestamp);
+    if (day === lastDay) return;
+    items.push({
+      type: 'day',
+      key: `day-${day}`,
+      label: formatMessageDayLabel(timestamp),
+    });
+    lastDay = day;
+  };
+
+  for (let index = 0; index <= ordered.length; index += 1) {
+    for (const escalation of markersAtSlot.get(index) ?? []) {
+      pushDay(escalation.escalatedAt);
       items.push({
-        type: 'day',
-        key: `day-${day}`,
-        label: formatMessageDayLabel(message._creationTime),
+        type: 'escalation',
+        key: `escalation-${escalation.id}`,
+        escalation,
       });
-      lastDay = day;
     }
+    const message = ordered[index];
+    if (!message) continue;
+    pushDay(message._creationTime);
     items.push({ type: 'message', message });
-    if (message.ledgerMessageId) {
-      for (const escalation of markersBySourceMessageId.get(message.ledgerMessageId) ?? []) {
-        items.push({
-          type: 'escalation',
-          key: `escalation-${escalation.id}`,
-          escalation,
-        });
-      }
-    }
   }
 
   return items;
