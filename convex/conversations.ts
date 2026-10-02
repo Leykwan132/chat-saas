@@ -431,10 +431,6 @@ async function setConversationAiEnabledHandler(
     assignToAiAgent: enabled,
     updatedAt: Date.now(),
   };
-  if (enabled && conv.status === "requires_user_input") {
-    patch.status = "open";
-    patch.escalation = undefined;
-  }
   await ctx.db.patch(conversationId, patch);
   await logConversationEvent(ctx, {
     conversationId,

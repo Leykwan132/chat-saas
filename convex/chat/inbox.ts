@@ -233,10 +233,6 @@ export const internalPersistHumanReply = internalMutation({
     if (preview && preview.trim() !== "") {
       patch.lastMessagePreview = preview;
     }
-    if (conv.status === "requires_user_input") {
-      patch.status = "open";
-      patch.escalation = undefined;
-    }
     await ctx.db.patch(conv._id, patch);
     await markConversationAnalyticsDirty(ctx, {
       conversationId: conv._id,
@@ -623,6 +619,7 @@ export const internalEscalateConversation = internalMutation({
   handler: async (ctx, args) => {
     const conv = await ctx.db.get(args.conversationId);
     if (!conv?.assignedAgentId) return;
+    if (conv.escalation !== undefined) return;
 
     const agent = await ctx.db.get(conv.assignedAgentId);
     if (agent === null) {
@@ -888,9 +885,7 @@ export const generateAiReplyWorker = internalAction({
       if (
         convAfterGeneration === null ||
         convAfterGeneration.status === "closed" ||
-        !convAfterGeneration.assignToAiAgent ||
-        (convAfterGeneration.status === "requires_user_input" &&
-          convAfterGeneration.escalation)
+        !convAfterGeneration.assignToAiAgent
       ) {
         console.info("[inbox] ai reply worker stopped after generation: conversation gate", {
           conversationId: conv._id,
