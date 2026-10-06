@@ -3,15 +3,13 @@ type MessagingWindowExplanationProps = {
 };
 
 const conversationSections = [
-  { title: 'While open', body: 'Type a reply or let your AI respond.' },
-  { title: 'When it restarts', body: 'Each customer message starts another 24 hours.' },
-  { title: 'After it closes', body: 'Use an approved template to contact them again.' },
+  { title: 'Cost', body: 'Meta charges may apply, depending on the message type and customer’s country.' },
+  { title: 'What you can send', body: 'You and your AI can reply within the 24-hour window. After it closes, use an approved template.' },
 ];
 
 const freeMessagingSections = [
-  { title: 'What’s free', body: 'Meta messaging charges are waived for 72 hours.' },
-  { title: 'When it starts', body: 'Reply within 24 hours to an eligible ad or Facebook Page CTA message.' },
-  { title: 'Reply rules', body: 'If the 24-hour conversation window closes, use an approved template.' },
+  { title: 'Cost', body: 'No Meta messaging charges while this 72-hour window is open.' },
+  { title: 'What you can send', body: 'You and your AI can reply within the 24-hour window. After it closes, use an approved template.' },
 ];
 
 export function MessagingWindowExplanation({ window }: MessagingWindowExplanationProps) {

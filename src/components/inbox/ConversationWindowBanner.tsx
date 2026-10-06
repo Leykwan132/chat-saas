@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Info, Timer, ArrowRight } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { Info, Timer } from 'lucide-react';
+import { useSearchParams } from 'react-router';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { SandboxConversationWindowBanners } from './SandboxConversationWindowBanners';
@@ -73,14 +73,12 @@ type ConversationWindowBannerProps = {
   lastCustomerMessageAt: number | undefined;
   /** The conversation service/platform. Only Meta platforms show the banner. */
   service: string;
-  /** The current agent ID, used for building the outreach link. */
   agentId: string | undefined;
 };
 
 export function ConversationWindowBanner({
   lastCustomerMessageAt,
   service,
-  agentId,
   freeMessagingExpiresAt,
 }: ConversationWindowBannerProps) {
   const [searchParams] = useSearchParams();
@@ -106,7 +104,6 @@ export function ConversationWindowBanner({
       )}
       <ConversationWindowBannerInner
         lastCustomerMessageAt={lastCustomerMessageAt}
-        agentId={agentId}
       />
     </>
   );
@@ -114,10 +111,8 @@ export function ConversationWindowBanner({
 
 function ConversationWindowBannerInner({
   lastCustomerMessageAt,
-  agentId,
 }: {
   lastCustomerMessageAt: number | undefined;
-  agentId: string | undefined;
 }) {
   const [now, setNow] = useState(() => Date.now());
 
@@ -166,41 +161,7 @@ function ConversationWindowBannerInner({
           </button>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-72 p-3 bg-popover text-popover-foreground border border-border shadow-md z-50 text-xs rounded-xl leading-relaxed">
-          <div className="flex flex-col gap-2">
-            <MessagingWindowExplanation window="conversation" />
-              <a
-                href="https://developers.facebook.com/documentation/business-messaging/whatsapp/messages/send-messages"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-              >
-                Learn more
-              </a>
-            {agentId && (
-              <div className="pt-2 border-t border-border/60 flex flex-col gap-2.5">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-muted-foreground font-normal">Need to send a follow-up?</span>
-                  <Link
-                    to={`/dashboard/${agentId}/follow-ups`}
-                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium w-fit inline-flex items-center gap-1"
-                  >
-                    Try Follow-ups
-                    <ArrowRight className="size-3" />
-                  </Link>
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-muted-foreground font-normal">Need to send marketing material?</span>
-                  <Link
-                    to={`/dashboard/${agentId}/broadcast`}
-                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium w-fit inline-flex items-center gap-1"
-                  >
-                    Try Broadcast
-                    <ArrowRight className="size-3" />
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
+          <MessagingWindowExplanation window="conversation" />
         </TooltipContent>
       </Tooltip>
     </div>
