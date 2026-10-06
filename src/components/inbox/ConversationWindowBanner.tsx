@@ -1,22 +1,24 @@
 import { useEffect, useState } from 'react';
 import { Info, Timer, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { SandboxConversationWindowBanners } from './SandboxConversationWindowBanners';
+import { MessagingWindowBanner } from './MessagingWindowBanner';
 
 const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 const WARNING_MS = 60 * 60 * 1000; // 1 hour
 
 type WindowStatus = 'open' | 'closing' | 'closed';
 
-function getWindowStatus(lastCustomerMessageAt: number | undefined): {
+function getWindowStatus(lastCustomerMessageAt: number | undefined, now: number): {
   status: WindowStatus;
   remainingMs: number;
 } {
   if (lastCustomerMessageAt === undefined) {
     return { status: 'closed', remainingMs: 0 };
   }
-  const elapsed = Date.now() - lastCustomerMessageAt;
+  const elapsed = now - lastCustomerMessageAt;
   const remaining = WINDOW_MS - elapsed;
 
   if (remaining <= 0) {
@@ -51,12 +53,12 @@ const STATUS_CONFIG: Record<
   }
 > = {
   open: {
-    bgClass: 'bg-emerald-800 dark:bg-emerald-900',
-    borderClass: 'border-emerald-700/50 dark:border-emerald-800/50',
+    bgClass: 'bg-amber-200 dark:bg-amber-300',
+    borderClass: 'border-amber-300/60 dark:border-amber-600/50',
   },
   closing: {
-    bgClass: 'bg-amber-700 dark:bg-amber-850',
-    borderClass: 'border-amber-600/50 dark:border-amber-750/50',
+    bgClass: 'bg-amber-200 dark:bg-amber-300',
+    borderClass: 'border-amber-300/60 dark:border-amber-600/50',
   },
   closed: {
     bgClass: 'bg-rose-800 dark:bg-rose-900',
@@ -65,6 +67,7 @@ const STATUS_CONFIG: Record<
 };
 
 type ConversationWindowBannerProps = {
+  freeMessagingExpiresAt?: number;
   /** Timestamp (ms) of the customer's most recent inbound message. */
   lastCustomerMessageAt: number | undefined;
   /** The conversation service/platform. Only Meta platforms show the banner. */
@@ -77,17 +80,34 @@ export function ConversationWindowBanner({
   lastCustomerMessageAt,
   service,
   agentId,
+  freeMessagingExpiresAt,
 }: ConversationWindowBannerProps) {
+  const [searchParams] = useSearchParams();
+  if (searchParams.get('isSandbox') === 'true') {
+    return <SandboxConversationWindowBanners />;
+  }
+
   // Only show for Meta platforms
   if (service !== 'whatsapp' && service !== 'instagram' && service !== 'messenger') {
     return null;
   }
 
   return (
-    <ConversationWindowBannerInner
-      lastCustomerMessageAt={lastCustomerMessageAt}
-      agentId={agentId}
-    />
+    <>
+      {service === 'whatsapp' && freeMessagingExpiresAt !== undefined && (
+        <MessagingWindowBanner
+          label="Free messaging"
+          expiresAt={freeMessagingExpiresAt}
+          color="green"
+          hideWhenExpired
+          explanation="Meta messaging charges are waived during this 72-hour window from an eligible ad or Facebook Page call-to-action. After the separate 24-hour conversation window closes, you must still use approved templates."
+        />
+      )}
+      <ConversationWindowBannerInner
+        lastCustomerMessageAt={lastCustomerMessageAt}
+        agentId={agentId}
+      />
+    </>
   );
 }
 
@@ -98,7 +118,7 @@ function ConversationWindowBannerInner({
   lastCustomerMessageAt: number | undefined;
   agentId: string | undefined;
 }) {
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   // Tick every second so the countdown is live
   useEffect(() => {
@@ -106,9 +126,7 @@ function ConversationWindowBannerInner({
     return () => clearInterval(id);
   }, []);
 
-  // Recompute when `now` or the timestamp changes
-  void now; // ensures reactive dependency
-  const { status, remainingMs } = getWindowStatus(lastCustomerMessageAt);
+  const { status, remainingMs } = getWindowStatus(lastCustomerMessageAt, now);
   const config = STATUS_CONFIG[status];
 
   return (
@@ -117,15 +135,16 @@ function ConversationWindowBannerInner({
         'flex items-center gap-2 border-b px-4 py-2 text-xs transition-colors',
         config.bgClass,
         config.borderClass,
+        status === 'closed' ? 'text-white' : 'text-amber-950',
       )}
     >
       {/* Timer icon */}
-      <Timer className="size-3.5 shrink-0 text-white/80" />
+      <Timer className="size-3.5 shrink-0 opacity-80" />
 
       {/* Label & countdown */}
-      <span className="font-light text-white/80">
+      <span className="font-light">
         Conversation window:{' '}
-        <span className="font-semibold tabular-nums text-white">
+        <span className="font-semibold tabular-nums">
           {status === 'closed'
             ? lastCustomerMessageAt === undefined
               ? 'No customer message yet'
@@ -139,7 +158,7 @@ function ConversationWindowBannerInner({
         <TooltipTrigger asChild>
           <button
             type="button"
-            className="inline-flex shrink-0 items-center justify-center text-white/60 transition-colors hover:text-white cursor-help ml-1.5"
+            className="inline-flex shrink-0 items-center justify-center opacity-60 transition-opacity hover:opacity-100 cursor-help ml-1.5"
             aria-label="What is the conversation window?"
           >
             <Info className="size-3" />
