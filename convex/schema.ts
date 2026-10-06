@@ -52,6 +52,7 @@ import {
   googleCalendarTables,
 } from "./googleCalendar/schema";
 import { GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX } from "./googleCalendar/constants";
+import { whatsappReferralValidator, whatsappReferralEntryValidator, whatsappFreeMessagingWindowValidator } from "./whatsappReferral";
 
 const customerSentimentValidator = v.union(
   ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
@@ -1311,6 +1312,8 @@ export default defineSchema({
     lastMessageAt: v.number(),
     /** Last inbound (customer) message time — used for Meta messaging window checks. */
     lastCustomerMessageAt: v.optional(v.number()),
+    whatsappReferralEntry: v.optional(whatsappReferralEntryValidator),
+    whatsappFreeMessagingWindow: v.optional(whatsappFreeMessagingWindowValidator),
     lastMessagePreview: v.optional(v.string()),
     lastMessageSentByAi: v.optional(v.boolean()),
     unreadCount: v.number(),
@@ -1529,6 +1532,7 @@ export default defineSchema({
     editedAt: v.optional(v.number()),
     lastEditEventId: v.optional(v.string()),
     revokedAt: v.optional(v.number()),
+    whatsappReferral: v.optional(whatsappReferralValidator),
     receiptMetadata: v.optional(
       v.object({
         source: v.union(

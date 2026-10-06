@@ -1560,6 +1560,7 @@ export default function ChatsPage() {
                   canReplyFromInbox && 'rounded-2xl border border-border bg-input/50 focus-within:border-ring overflow-hidden [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:border-none [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:ring-0'
                 )}>
                   <ConversationWindowBanner
+                    freeMessagingExpiresAt={selectedConversation?.whatsappFreeMessagingWindow?.expiresAt}
                     lastCustomerMessageAt={selectedConversation?.lastCustomerMessageAt}
                     service={selectedConversation?.service ?? ''}
                     agentId={agentId}

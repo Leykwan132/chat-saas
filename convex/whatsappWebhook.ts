@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { parseWhatsAppReferral, whatsappReferralValidator } from "./whatsappReferral";
 import {
   httpAction,
   internalQuery,
@@ -633,6 +634,7 @@ export async function receive(
               externalId: message.id,
               from,
               timestampMs: parseTimestamp(message.timestamp),
+              referral: parseWhatsAppReferral(message.referral),
               content: extractContent(message),
               caption: message.image?.caption,
               profileName: profile?.name,
@@ -1131,6 +1133,7 @@ async function resolveIncomingWhatsAppChannel(
 export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
   internalMutation({
     args: {
+      referral: v.optional(whatsappReferralValidator),
       phoneNumberId: v.string(),
       externalId: v.string(),
       from: v.string(),
@@ -1190,6 +1193,12 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
         },
       );
       if (result.skipped) return result;
+
+      if (args.referral !== undefined) {
+        for (const messageId of result.messageIds) {
+          await ctx.db.patch(messageId, { whatsappReferral: args.referral });
+        }
+      }
 
       await markConversationAnalyticsDirty(ctx, {
         conversationId: result.conversationId,
