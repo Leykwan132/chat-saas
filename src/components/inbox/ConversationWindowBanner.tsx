@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 import { SandboxConversationWindowBanners } from './SandboxConversationWindowBanners';
 import { MessagingWindowBanner } from './MessagingWindowBanner';
+import { MessagingWindowExplanation } from './MessagingWindowExplanation';
 
 const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 const WARNING_MS = 60 * 60 * 1000; // 1 hour
@@ -100,7 +101,7 @@ export function ConversationWindowBanner({
           expiresAt={freeMessagingExpiresAt}
           color="green"
           hideWhenExpired
-          explanation="Meta messaging charges are waived during this 72-hour window from an eligible ad or Facebook Page call-to-action. After the separate 24-hour conversation window closes, you must still use approved templates."
+          explanation={<MessagingWindowExplanation window="free" />}
         />
       )}
       <ConversationWindowBannerInner
@@ -166,8 +167,7 @@ function ConversationWindowBannerInner({
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-72 p-3 bg-popover text-popover-foreground border border-border shadow-md z-50 text-xs rounded-xl leading-relaxed">
           <div className="flex flex-col gap-2">
-            <p>
-              Meta allows free-form replies within 24 hours of the customer's last message. Once the window closes, <span className="font-semibold text-foreground">messages will not be sent</span> — you must use template messages instead.{' '}
+            <MessagingWindowExplanation window="conversation" />
               <a
                 href="https://developers.facebook.com/documentation/business-messaging/whatsapp/messages/send-messages"
                 target="_blank"
@@ -176,7 +176,6 @@ function ConversationWindowBannerInner({
               >
                 Learn more
               </a>
-            </p>
             {agentId && (
               <div className="pt-2 border-t border-border/60 flex flex-col gap-2.5">
                 <div className="flex flex-col gap-0.5">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Info, Timer } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -7,7 +7,7 @@ type MessagingWindowBannerProps = {
   label: string;
   expiresAt: number;
   color: 'green' | 'yellow';
-  explanation: string;
+  explanation: ReactNode;
   sample?: boolean;
   hideWhenExpired?: boolean;
 };
@@ -69,7 +69,7 @@ export function MessagingWindowBanner({
           side="top"
           className="z-50 max-w-72 rounded-xl border border-border bg-popover p-3 text-xs leading-relaxed text-popover-foreground shadow-md"
         >
-          <p>{explanation}</p>
+          {explanation}
         </TooltipContent>
       </Tooltip>
       {sample && <span className="ml-auto shrink-0 text-[10px] opacity-60">Sample</span>}
