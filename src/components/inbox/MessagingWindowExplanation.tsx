@@ -9,7 +9,7 @@ const conversationSections = [
 
 const freeMessagingSections = [
   { title: 'Cost', body: 'No Meta messaging charges while this 72-hour window is open.' },
-  { title: 'What you can send', body: 'You and your AI can reply within the 24-hour window. After it closes, use an approved template.' },
+  { title: 'What you can send', body: 'After the 24-hour window closes, use an approved template to restart the conversation. The template is free while this 72-hour window is open.' },
 ];
 
 export function MessagingWindowExplanation({ window }: MessagingWindowExplanationProps) {
