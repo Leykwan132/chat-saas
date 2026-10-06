@@ -19,7 +19,9 @@ function renderBanner(props: Partial<Parameters<typeof ConversationWindowBanner>
   );
 }
 
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 test('shows independent timers when the free window and reply window are open', () => {
   const markup = renderBanner({ freeMessagingExpiresAt: now + 50 * HOUR_MS });
