@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Info, Timer } from 'lucide-react';
-import { useSearchParams } from 'react-router';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { SandboxConversationWindowBanners } from './SandboxConversationWindowBanners';
 import { MessagingWindowBanner } from './MessagingWindowBanner';
 import { MessagingWindowExplanation } from './MessagingWindowExplanation';
 
@@ -81,11 +79,6 @@ export function ConversationWindowBanner({
   service,
   freeMessagingExpiresAt,
 }: ConversationWindowBannerProps) {
-  const [searchParams] = useSearchParams();
-  if (searchParams.get('isSandbox') === 'true') {
-    return <SandboxConversationWindowBanners />;
-  }
-
   // Only show for Meta platforms
   if (service !== 'whatsapp' && service !== 'instagram' && service !== 'messenger') {
     return null;

@@ -8,7 +8,6 @@ type MessagingWindowBannerProps = {
   expiresAt: number;
   color: 'green' | 'yellow';
   explanation: ReactNode;
-  sample?: boolean;
   hideWhenExpired?: boolean;
 };
 
@@ -27,7 +26,6 @@ export function MessagingWindowBanner({
   expiresAt,
   color,
   explanation,
-  sample = false,
   hideWhenExpired = false,
 }: MessagingWindowBannerProps) {
   const [now, setNow] = useState(() => Date.now());
@@ -72,7 +70,6 @@ export function MessagingWindowBanner({
           {explanation}
         </TooltipContent>
       </Tooltip>
-      {sample && <span className="ml-auto shrink-0 text-[10px] opacity-60">Sample</span>}
     </div>
   );
 }
