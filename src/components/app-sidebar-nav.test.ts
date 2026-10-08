@@ -18,10 +18,10 @@ describe('agent sidebar navigation', () => {
     ]);
     expect(sections.map((section) => section.items.map((item) => item.label))).toEqual([
       ['Overview'],
-      ['Inbox', 'Contacts', 'Quick Replies'],
+      ['Inbox', 'Contacts'],
       ['Configuration', 'Knowledge Base', 'Workflow', 'Channels'],
       ['Calendar', 'Availability', 'Services', 'Routing'],
-      ['Broadcast', 'Message Templates', 'Notifications', 'Comment-to-Inbox'],
+      ['Broadcast', 'Message Templates', 'Notifications', 'Quick Replies', 'Comment-to-Inbox'],
       ['Agent Usage'],
     ]);
   });

@@ -73,9 +73,6 @@ export function getNavItems(
       items: [
         { to: `/dashboard/${agentId}/inbox`, icon: PiChatCircleText, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
         { to: `/dashboard/${agentId}/customers`, icon: PiUsers, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },
-        ...(showSavedReplies
-          ? [{ to: `/dashboard/${agentId}/quick-replies`, icon: PiChatDots, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ }]
-          : []),
       ],
     },
     {
@@ -108,6 +105,9 @@ export function getNavItems(
         { to: `/dashboard/${agentId}/broadcast`, icon: PiBroadcast, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
         { to: `/dashboard/${agentId}/templates`, icon: PiFileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
         { to: `/dashboard/${agentId}/notifications`, icon: PiBellRinging, label: 'Notifications', requiredPermission: Permission.AGENTS_MANAGE },
+        ...(showSavedReplies
+          ? [{ to: `/dashboard/${agentId}/quick-replies`, icon: PiChatDots, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ }]
+          : []),
         ...(enableCommentToInbox
           ? [{ to: `/dashboard/${agentId}/comment-to-inbox`, icon: PiPaperPlaneTilt, label: 'Comment-to-Inbox', requiredPermission: Permission.AUTOMATION_READ }]
           : []),
