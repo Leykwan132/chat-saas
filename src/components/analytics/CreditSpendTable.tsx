@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { usePaginatedQuery } from 'convex-helpers/react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -34,7 +34,7 @@ function formatDateTime(ms: number) {
   }).format(new Date(ms));
 }
 
-export function CreditSpendTable({
+function CreditSpendTableSession({
   scope = 'agent',
   agentId,
   workspaceId,
@@ -46,6 +46,7 @@ export function CreditSpendTable({
   timeRange: CreditTimeRange;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [referenceTimeMs] = useState(() => Date.now());
 
   const query =
     scope === 'agent'
@@ -56,20 +57,16 @@ export function CreditSpendTable({
 
   const queryArgs =
     scope === 'agent' && agentId
-      ? { agentId, timeRange }
+      ? { agentId, timeRange, referenceTimeMs }
       : scope === 'workspace' && workspaceId
-        ? { workspaceId, timeRange }
-        : { timeRange };
+        ? { workspaceId, timeRange, referenceTimeMs }
+        : { timeRange, referenceTimeMs };
 
   const { results, status, loadMore } = usePaginatedQuery(
-    query as any,
+    query,
     queryArgs,
     { initialNumItems: PAGE_SIZE },
   );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [scope, agentId, workspaceId, timeRange]);
 
   const loadedPageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
   const hasNextPage =
@@ -274,4 +271,8 @@ export function CreditSpendTableSkeleton() {
       </CardContent>
     </Card>
   );
+}
+
+export function CreditSpendTable(props: Parameters<typeof CreditSpendTableSession>[0]) {
+  return <CreditSpendTableSession key={`${props.scope ?? "agent"}:${props.agentId ?? ""}:${props.workspaceId ?? ""}:${props.timeRange}`} {...props} />;
 }

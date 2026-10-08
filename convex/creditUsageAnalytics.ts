@@ -782,10 +782,11 @@ export const getAgentCreditSpendHistory = query({
     agentId: v.id("agents"),
     timeRange: creditTimeRangeValidator,
     paginationOpts: paginationOptsValidator,
+    referenceTimeMs: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     await assertAgentAccess(ctx, args.agentId);
-    const session = await resolveCreditUsageSession(ctx, args.timeRange ?? "period");
+    const session = await resolveCreditUsageSession(ctx, args.timeRange ?? "period", args.referenceTimeMs);
     const { rangeStartMs, rangeEndMs } = session;
     const paginationResult =
       session.kind === "partner"
@@ -1157,9 +1158,10 @@ export const getAccountCreditSpendHistory = query({
   args: {
     timeRange: creditTimeRangeValidator,
     paginationOpts: paginationOptsValidator,
+    referenceTimeMs: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const session = await resolveCreditUsageSession(ctx, args.timeRange ?? "period");
+    const session = await resolveCreditUsageSession(ctx, args.timeRange ?? "period", args.referenceTimeMs);
     const { rangeStartMs, rangeEndMs } = session;
     const paginationOpts = normalizeCreditSpendPaginationOpts(args.paginationOpts);
 
@@ -1359,9 +1361,10 @@ export const getWorkspaceCreditSpendHistory = query({
     workspaceId: v.string(),
     timeRange: creditTimeRangeValidator,
     paginationOpts: paginationOptsValidator,
+    referenceTimeMs: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const session = await resolveCreditUsageSession(ctx, args.timeRange ?? "period");
+    const session = await resolveCreditUsageSession(ctx, args.timeRange ?? "period", args.referenceTimeMs);
     if (session.kind === "partner") {
       if (args.workspaceId !== session.orgId) {
         throw new Error("Unauthorized access to workspace credit usage");

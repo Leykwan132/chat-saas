@@ -1,5 +1,5 @@
 import { convexTest } from "convex-test";
-import { beforeEach, expect, test } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 import { api, components } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -8,6 +8,40 @@ import schema from "./schema";
 const modules = import.meta.glob("/convex/**/*.ts");
 const hostname = "chat.partner.example";
 const issuer = "https://test.convex.site/partner-auth";
+
+test.each(["agent", "workspace", "account"] as const)("%s history keeps rolling range bounds stable across pages", async (scope) => {
+  const t = initTest();
+  const seeded = await seedPartnerCustomer(t);
+  const referenceTimeMs = Date.now();
+  await t.run(async (ctx) => {
+    for (let index = 0; index < 3; index += 1) {
+      const createdAt = referenceTimeMs - (index + 1) * 1000;
+      const creditLogId = await ctx.db.insert("creditLogs", {
+        orgId: seeded.orgId, userId: seeded.userId, amount: -1, type: "deduction", eventType: "usage", balanceBefore: 100, balanceAfter: 99, creditCost: 1, agentId: seeded.agentId, createdAt,
+      });
+      await ctx.db.insert("creditUsageEvents", { userId: seeded.userId, orgId: seeded.orgId, agentId: seeded.agentId, credits: 1, creditLogId, createdAt });
+    }
+  });
+  const partner = t.withIdentity(partnerIdentity(seeded.workosUserId, seeded.partnerId, seeded.partnerOrganizationId));
+  const loadPage = (cursor: string | null) => {
+    const args = { timeRange: "7d" as const, referenceTimeMs, paginationOpts: { numItems: 1, cursor } };
+    if (scope === "agent") return partner.query(api.creditUsageAnalytics.getAgentCreditSpendHistory, { ...args, agentId: seeded.agentId });
+    if (scope === "workspace") return partner.query(api.creditUsageAnalytics.getWorkspaceCreditSpendHistory, { ...args, workspaceId: seeded.orgId });
+    return partner.query(api.creditUsageAnalytics.getAccountCreditSpendHistory, args);
+  };
+  const first = await loadPage(null);
+  expect(first.isDone).toBe(false);
+  const clock = vi.spyOn(Date, "now").mockReturnValue(referenceTimeMs + 60_000);
+  try {
+    const second = await loadPage(first.continueCursor);
+    expect(second.periodStartMs).toBe(first.periodStartMs);
+    expect(second.periodEndMs).toBe(referenceTimeMs);
+    expect(second.page).toHaveLength(1);
+    expect(second.page[0].id).not.toBe(first.page[0].id);
+  } finally {
+    clock.mockRestore();
+  }
+});
 
 beforeEach(() => {
   process.env.CONVEX_SITE_URL = "https://test.convex.site";
