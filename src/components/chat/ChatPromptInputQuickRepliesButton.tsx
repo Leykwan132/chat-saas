@@ -93,7 +93,7 @@ export function ChatPromptInputQuickRepliesButton({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="z-50 flex w-80 flex-col gap-1.5 rounded-xl border border-border bg-popover px-2 py-0 shadow-lg"
+        className="z-50 flex w-80 flex-col gap-1.5 rounded-xl border border-border bg-popover px-2 pb-2 pt-0 shadow-lg"
       >
         <div className="flex items-center justify-between border-b border-border/40 px-1 pb-1 pt-2">
           <span className="text-xs font-medium text-muted-foreground">
