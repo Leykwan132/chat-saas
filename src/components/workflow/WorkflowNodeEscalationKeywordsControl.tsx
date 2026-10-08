@@ -40,7 +40,7 @@ export function WorkflowNodeEscalationKeywordsControl({ agentId, nodeId, enabled
   const isDisabled = disabled || isSaving;
 
   return (
-    <div className="nodrag nopan mt-3 w-full border-t border-border pt-3" onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()}>
+    <div className="nodrag nopan mt-3 w-full" onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()}>
       <div className="flex items-center justify-between gap-3">
         <label htmlFor={`escalation-keywords-${nodeId}`} className="text-xs font-medium text-muted-foreground">Keyword detection</label>
         <Switch id={`escalation-keywords-${nodeId}`} aria-label="Keyword detection" checked={isEnabled} disabled={isDisabled} onCheckedChange={(nextEnabled) => { void save(nextEnabled, values); }} />
