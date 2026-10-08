@@ -3,7 +3,6 @@ import { Link, useParams, useSearchParams } from 'react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { usePaginatedQuery } from 'convex-helpers/react';
 import {
-  Bot,
   ChevronDown,
   Clock,
   Contact,
@@ -22,12 +21,12 @@ import {
   Check,
   AlertCircle,
   Plus,
-  Trash2,
   ScanFace,
   type LucideIcon,
 } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle, isReservedTemperatureTag, type LeadTemperature } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
+import { PiRobot } from 'react-icons/pi';
 import { toast } from 'sonner';
 import { type Chat, type ConversationPlatform } from '@/components/ChatRow';
 import { Button } from '@/components/ui/button';
@@ -105,8 +104,8 @@ import {
   inboxColumnHeaderClassName,
   inboxColumnScrollClassName,
 } from '@/components/inbox/inboxLayout';
-import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
-import { ConversationWindowBanner } from '@/components/inbox/ConversationWindowBanner';
+import { InboxConversationComposer } from '@/components/inbox/InboxConversationComposer';
+import { optimisticallySetInboxAiEnabled } from '@/components/inbox/inboxAiAssignment';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
 import { InboxActionHistory } from '@/components/inbox/InboxActionHistory';
 import { AvatarConversationTag } from '@/components/inbox/AvatarConversationTag';
@@ -364,7 +363,8 @@ export default function ChatsPage() {
     }>
   >([]);
   const markRead = useAction(api.conversations.markReadAndSendSeen);
-  const setConversationAiEnabled = useMutation(api.conversations.setConversationAiEnabled);
+  const setConversationAiEnabled = useMutation(api.conversations.setConversationAiEnabled)
+    .withOptimisticUpdate(optimisticallySetInboxAiEnabled);
   const setConversationLeadOwner = useMutation(api.conversations.setConversationLeadOwner);
   const resolveEscalation = useMutation(api.conversations.resolveEscalation);
   const deleteConversation = useMutation(api.conversationDeletion.remove);
@@ -1449,18 +1449,6 @@ export default function ChatsPage() {
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2.5">
-                  {selectedConversationId ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      aria-label="Delete conversation"
-                      onClick={() => setDeleteConversationId(selectedConversationId)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  ) : null}
                   {selectedConversation ? (
                     <div className="inline-flex h-8 w-fit shrink-0 items-center gap-1 px-0 shadow-none">
                       <label
@@ -1470,7 +1458,7 @@ export default function ChatsPage() {
                           (assigneeSaving || !can(Permission.CHATS_ASSIGN)) && 'cursor-not-allowed',
                         )}
                       >
-                        <Bot className="size-3.5 shrink-0" />
+                        <PiRobot className="size-3.5 shrink-0" aria-hidden />
                         <span>AI</span>
                       </label>
                       <Switch
@@ -1487,7 +1475,7 @@ export default function ChatsPage() {
                           (assigneeSaving || !can(Permission.CHATS_ASSIGN)) && 'cursor-not-allowed',
                         )}
                       >
-                        <Bot className="size-3.5 shrink-0" />
+                        <PiRobot className="size-3.5 shrink-0" aria-hidden />
                         AI replies
                       </label>
                       <Switch
@@ -1555,33 +1543,31 @@ export default function ChatsPage() {
                     </Button>
                   </div>
                 )}
-                <div className={cn(
-                  'flex flex-col w-full',
-                  canReplyFromInbox && 'rounded-2xl border border-border bg-input/50 focus-within:border-ring overflow-hidden [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:border-none [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:ring-0'
-                )}>
-                  <ConversationWindowBanner
-                    freeMessagingExpiresAt={selectedConversation?.whatsappFreeMessagingWindow?.expiresAt}
-                    lastCustomerMessageAt={selectedConversation?.lastCustomerMessageAt}
-                    service={selectedConversation?.service ?? ''}
-                    agentId={agentId}
-                  />
-                  <InboxReplyInput
-                    busy={sendBusy}
-                    disabled={threadDataLoading || !canReplyFromInbox || !can(Permission.CHATS_REPLY)}
-                    onChange={setDraftReply}
-                    onSubmit={(message) => void handleSendReply(message)}
-                    placeholder={
-                      threadDataLoading
-                        ? 'Loading conversation…'
-                        : !can(Permission.CHATS_REPLY)
-                          ? 'You do not have permission to reply to chats'
-                          : canReplyFromInbox
-                            ? `Reply to ${displayHeaderName ?? 'customer'}…`
-                            : 'Replies from the inbox are supported on WhatsApp, Instagram, and Messenger only'
-                    }
-                    value={draftReply}
-                  />
-                </div>
+                <InboxConversationComposer
+                  agentId={selectedConversation?.assignedAgentId ?? typedAgentId}
+                  aiHandling={conversationDocMatchesSelection && selectedConversation?.assignToAiAgent === true}
+                  canTakeControl={!threadDataLoading && can(Permission.CHATS_ASSIGN)}
+                  takingControl={assigneeSaving}
+                  onTakeControl={() => void handleAiToggle(false)}
+                  canReplyFromInbox={canReplyFromInbox}
+                  freeMessagingExpiresAt={selectedConversation?.whatsappFreeMessagingWindow?.expiresAt}
+                  lastCustomerMessageAt={selectedConversation?.lastCustomerMessageAt}
+                  service={selectedConversation?.service ?? ''}
+                  busy={sendBusy}
+                  disabled={threadDataLoading || !canReplyFromInbox || !can(Permission.CHATS_REPLY)}
+                  onChange={setDraftReply}
+                  onSubmit={(message) => void handleSendReply(message)}
+                  placeholder={
+                    threadDataLoading
+                      ? 'Loading conversation…'
+                      : !can(Permission.CHATS_REPLY)
+                        ? 'You do not have permission to reply to chats'
+                        : canReplyFromInbox
+                          ? `Reply to ${displayHeaderName ?? 'customer'}…`
+                          : 'Replies from the inbox are supported on WhatsApp, Instagram, and Messenger only'
+                  }
+                  value={draftReply}
+                />
               </div>
             </div>
           ) : conversationsStillLoading ? (

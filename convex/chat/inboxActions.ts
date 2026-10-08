@@ -25,14 +25,13 @@ import {
   throwIfChannelSendFailed,
   type ChannelSendResult,
   type ChannelSendPolicy,
-  type ChannelMediaItem,
   type MetaIndicatorResult,
 } from "./channelSend";
 import {
   INBOX_REACTION_EMOJIS,
   isAllowedInboxReactionEmoji,
 } from "../../shared/messageReactions";
-import { normalizeCustomerFacingResponseFormatting } from "./responseFormatting";
+import { sendAiReplyContent, type AiReplySendResult } from "./aiReplyDelivery";
 import { normalizeAiReplyMessages } from "./aiReplyMessages";
 
 type MetaIndicatorActionResult =
@@ -601,77 +600,6 @@ export const internalRemoveAndPersistReaction = internalAction({
   },
 });
 
-type AiReplySendResult = {
-  ok: boolean;
-  error?: string;
-  policy?: ChannelSendPolicy;
-  textExternalId?: string;
-  mediaExternalIds?: string[];
-};
-
-async function sendAiReplyContent(
-  conversation: Doc<"conversations">,
-  channel: Doc<"channels">,
-  customer: Doc<"customers"> | null,
-  args: {
-    content: string;
-    mediaUrls: string[];
-    mediaItems?: ChannelMediaItem[];
-    allowHumanAgentTag?: boolean;
-  },
-): Promise<AiReplySendResult> {
-  const options = {
-    allowHumanAgentTag: args.allowHumanAgentTag ?? false,
-    isAiGenerated: true,
-    whatsappCustomer: customer ?? undefined,
-  };
-  const content = normalizeCustomerFacingResponseFormatting(args.content);
-  const mediaItems = args.mediaItems ?? args.mediaUrls.map((url) => ({ url }));
-
-  if (content.trim() && mediaItems.length > 0) {
-    const result = await sendMediaToChannel(conversation, channel, {
-      text: content,
-      mediaItems,
-      ...options,
-    });
-    if (!result.ok)
-      return { ok: false, error: result.error, policy: result.policy };
-    return {
-      ok: true,
-      textExternalId: result.textConsumed ? undefined : result.externalId,
-      mediaExternalIds: result.externalIds ?? [],
-    };
-  }
-
-  if (content.trim()) {
-    const result = await sendTextToChannel(
-      conversation,
-      channel,
-      content,
-      options,
-    );
-    if (!result.ok)
-      return { ok: false, error: result.error, policy: result.policy };
-    return { ok: true, textExternalId: result.externalId };
-  }
-
-  if (mediaItems.length > 0) {
-    const result = await sendMediaToChannel(conversation, channel, {
-      mediaItems,
-      ...options,
-    });
-    if (!result.ok)
-      return { ok: false, error: result.error, policy: result.policy };
-    return {
-      ok: true,
-      mediaExternalIds:
-        result.externalIds ?? (result.externalId ? [result.externalId] : []),
-    };
-  }
-
-  return { ok: false, error: "Nothing to send", policy: "generic" };
-}
-
 export const internalSendAiReply = internalAction({
   args: {
     conversationId: v.id("conversations"),
@@ -689,6 +617,7 @@ export const internalSendAiReply = internalAction({
       return { ok: false, error: "Conversation not found", policy: "generic" };
     }
     return await sendAiReplyContent(
+      ctx,
       ctxData.conversation,
       ctxData.channel,
       ctxData.customer,
@@ -753,6 +682,7 @@ export const internalSendAiReplyMessages = internalAction({
 
     if (mediaItems.length > 0) {
       const mediaResult = await sendAiReplyContent(
+        ctx,
         ctxData.conversation,
         ctxData.channel,
         ctxData.customer,
@@ -766,7 +696,7 @@ export const internalSendAiReplyMessages = internalAction({
       if (!mediaResult.ok) {
         return {
           ...mediaResult,
-          mediaSent: false,
+          mediaSent: (mediaResult.mediaExternalIds?.length ?? 0) > 0,
           sentTextCount: 0,
           textExternalIds,
           mediaExternalIds: mediaResult.mediaExternalIds ?? [],
@@ -778,6 +708,7 @@ export const internalSendAiReplyMessages = internalAction({
 
     for (const content of contents) {
       const result = await sendAiReplyContent(
+        ctx,
         ctxData.conversation,
         ctxData.channel,
         ctxData.customer,
