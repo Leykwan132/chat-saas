@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { isWorkflowTerminalNodeKind } from "../../../shared/workflows";
 import { WorkflowNodeDirectControls } from "./WorkflowNodeDirectControls";
+import { WorkflowAddNodeMenu } from "./WorkflowAddNodeMenu";
 import { workflowKindIcons } from "./workflowCatalog";
 import type { WorkflowPersistedFlowNode } from "./workflowTypes";
 
@@ -158,6 +159,20 @@ export function WorkflowNode({
               : horizontalSourceHandleClassName,
           )}
         />
+      ) : null}
+      {isEntry ? (
+        <div
+          className={cn(
+            "nodrag nopan absolute left-full top-1/2 z-20 flex -translate-y-1/2 items-center",
+            isCompact ? "ml-3.5" : "ml-4",
+          )}
+        >
+          <WorkflowAddNodeMenu
+            compact={isCompact}
+            disabled={data.disabled}
+            onSelect={(kind) => data.onAddNode(data.nodeId, kind)}
+          />
+        </div>
       ) : null}
       {!isProtected ? (
         <div
