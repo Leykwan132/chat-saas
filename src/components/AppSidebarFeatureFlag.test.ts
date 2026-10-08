@@ -16,8 +16,8 @@ describe('sidebar feature flags', () => {
       showSavedReplies: false,
     });
 
-    expect(enabled.find((section) => section.label === 'Conversations')?.items.map((item) => item.label)).toContain('Quick Replies');
-    expect(disabled.find((section) => section.label === 'Conversations')?.items.map((item) => item.label)).not.toContain('Quick Replies');
+    expect(enabled.find((section) => section.label === 'Outreach')?.items.map((item) => item.label)).toContain('Quick Replies');
+    expect(disabled.find((section) => section.label === 'Outreach')?.items.map((item) => item.label)).not.toContain('Quick Replies');
   });
 
   test('keeps Avatar out of the Agent section', () => {
