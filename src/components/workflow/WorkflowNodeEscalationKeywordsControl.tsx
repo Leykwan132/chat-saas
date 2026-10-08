@@ -51,14 +51,6 @@ export function WorkflowNodeEscalationKeywordsControl({ agentId, nodeId, enabled
       {isEnabled ? (
         <div className="mt-3 flex flex-col gap-2">
           <p className="text-xs text-muted-foreground">Escalate immediately when a customer message contains any keyword. Letter case doesn’t matter.</p>
-          <div className="flex flex-wrap gap-1.5">
-            {values.map((keyword) => (
-              <Badge key={keyword} variant="secondary">
-                <span className="max-w-48 truncate">{keyword}</span>
-                <button type="button" data-icon="inline-end" className="flex shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50" aria-label={`Remove keyword ${keyword}`} disabled={isDisabled} onClick={() => { void save(true, values.filter((value) => value !== keyword)); }}><X className="size-3" /></button>
-              </Badge>
-            ))}
-          </div>
           <InputGroup>
             <InputGroupInput aria-label="Escalation keyword" placeholder="e.g. human or talk to someone" value={input} maxLength={100} disabled={isDisabled || values.length >= 50} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => {
               if (event.key === "Enter") {
@@ -70,6 +62,14 @@ export function WorkflowNodeEscalationKeywordsControl({ agentId, nodeId, enabled
               <InputGroupButton size="icon-xs" aria-label="Add keyword" disabled={isDisabled || !input.trim() || values.length >= 50} onClick={() => { void save(true, [...values, input]); }}><Plus /></InputGroupButton>
             </InputGroupAddon>
           </InputGroup>
+          <div className="flex flex-wrap gap-1.5">
+            {values.map((keyword) => (
+              <Badge key={keyword} variant="outline" className="bg-background">
+                <span className="max-w-48 truncate">{keyword}</span>
+                <button type="button" data-icon="inline-end" className="flex shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50" aria-label={`Remove keyword ${keyword}`} disabled={isDisabled} onClick={() => { void save(true, values.filter((value) => value !== keyword)); }}><X className="size-3" /></button>
+              </Badge>
+            ))}
+          </div>
         </div>
       ) : null}
     </div>
