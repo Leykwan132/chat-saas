@@ -3,7 +3,6 @@ import { Link, useParams, useSearchParams } from 'react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { usePaginatedQuery } from 'convex-helpers/react';
 import {
-  Bot,
   ChevronDown,
   Clock,
   Contact,
@@ -22,12 +21,12 @@ import {
   Check,
   AlertCircle,
   Plus,
-  Trash2,
   ScanFace,
   type LucideIcon,
 } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle, isReservedTemperatureTag, type LeadTemperature } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
+import { PiRobot } from 'react-icons/pi';
 import { toast } from 'sonner';
 import { type Chat, type ConversationPlatform } from '@/components/ChatRow';
 import { Button } from '@/components/ui/button';
@@ -1450,18 +1449,6 @@ export default function ChatsPage() {
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2.5">
-                  {selectedConversationId ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8"
-                      aria-label="Delete conversation"
-                      onClick={() => setDeleteConversationId(selectedConversationId)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  ) : null}
                   {selectedConversation ? (
                     <div className="inline-flex h-8 w-fit shrink-0 items-center gap-1 px-0 shadow-none">
                       <label
@@ -1471,7 +1458,7 @@ export default function ChatsPage() {
                           (assigneeSaving || !can(Permission.CHATS_ASSIGN)) && 'cursor-not-allowed',
                         )}
                       >
-                        <Bot className="size-3.5 shrink-0" />
+                        <PiRobot className="size-3.5 shrink-0" aria-hidden />
                         <span>AI</span>
                       </label>
                       <Switch
@@ -1488,7 +1475,7 @@ export default function ChatsPage() {
                           (assigneeSaving || !can(Permission.CHATS_ASSIGN)) && 'cursor-not-allowed',
                         )}
                       >
-                        <Bot className="size-3.5 shrink-0" />
+                        <PiRobot className="size-3.5 shrink-0" aria-hidden />
                         AI replies
                       </label>
                       <Switch

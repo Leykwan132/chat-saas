@@ -1,4 +1,5 @@
-import { Bot, FlaskConical } from 'lucide-react';
+import { FlaskConical } from 'lucide-react';
+import { PiRobot } from 'react-icons/pi';
 import { useMemo, useState } from 'react';
 import { Conversation } from '@/components/ai-elements/conversation';
 import { Switch } from '@/components/ui/switch';
@@ -87,7 +88,7 @@ export function InboxDemoPreview() {
           />
         </InboxMobileConversationSwitcher>
         <div className="ml-auto flex items-center gap-1.5 px-0 py-0">
-          <Bot className="size-3.5 text-muted-foreground" aria-hidden />
+          <PiRobot className="size-3.5 text-muted-foreground" aria-hidden />
           <span className="text-xs text-muted-foreground">AI replies</span>
           <Switch
             aria-label="Turn off AI replies"
