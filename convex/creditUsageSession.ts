@@ -27,6 +27,7 @@ export type CreditUsageSession = {
 export async function resolveCreditUsageSession(
   ctx: QueryCtx,
   timeRange: AnalyticsTimeRange,
+  referenceTimeMs?: number,
 ): Promise<CreditUsageSession> {
   const scope = await getEntitlementScope(ctx);
   if (scope.kind === "partner") {
@@ -43,6 +44,7 @@ export async function resolveCreditUsageSession(
       timeRange,
       balance.period.periodStart,
       balance.period.periodEnd,
+      referenceTimeMs,
     );
     return {
       kind: "partner",
@@ -71,6 +73,7 @@ export async function resolveCreditUsageSession(
     timeRange,
     creditSnapshot.period.periodStart,
     creditSnapshot.period.periodEnd,
+    referenceTimeMs,
   );
   return {
     kind: "native",
