@@ -1545,7 +1545,7 @@ export default function ChatsPage() {
                 )}
                 <InboxConversationComposer
                   agentId={selectedConversation?.assignedAgentId ?? typedAgentId}
-                  aiHandling={conversationDocMatchesSelection && selectedConversation?.assignToAiAgent === true}
+                  aiHandling={conversationDocMatchesSelection && selectedConversation?.assignToAiAgent === true && selectedConversation.aiReplyAudienceEligible}
                   canTakeControl={!threadDataLoading && can(Permission.CHATS_ASSIGN)}
                   takingControl={assigneeSaving}
                   onTakeControl={() => void handleAiToggle(false)}

@@ -13,6 +13,11 @@ async function createConversation(assignToAiAgent = false) {
   const now = Date.now();
 
   const conversationId = await t.run(async (ctx) => {
+    const agentId = await ctx.db.insert("agents", {
+      name: "Reply agent", provider: "openrouter", model: "test", systemPrompt: "Test",
+      templateKey: "blank", fileSize: 0, userId: "user-takeover", orgId: "org-takeover",
+      createdAt: now, updatedAt: now,
+    });
     const customerId = await ctx.db.insert("customers", {
       orgId: "org-takeover",
       userId: "user-takeover",
@@ -47,6 +52,7 @@ async function createConversation(assignToAiAgent = false) {
       contactAddress: "+60123456789",
       status: "open",
       assignToAiAgent,
+      assignedAgentId: agentId,
       lastCustomerMessageAt: now,
       threadId: "thread-takeover",
       lastMessageAt: now,
@@ -78,6 +84,41 @@ test("AI channel delivery is blocked after a conversation is taken over", async 
     textExternalIds: [],
     mediaExternalIds: [],
   });
+});
+
+test("a restricted customer cannot receive AI text or media", async () => {
+  const { t, conversationId } = await createConversation(true);
+  await t.run(async (ctx) => {
+    const conversation = await ctx.db.get(conversationId);
+    if (!conversation?.assignedAgentId) throw new Error("Missing test agent");
+    await ctx.db.insert("leadAssignmentSettings", { agentId: conversation.assignedAgentId,
+      method: "manual", aiEnabledOnInbound: true, aiReplyAudience: "ads", updatedAt: Date.now() });
+  });
+  vi.stubGlobal("fetch", () => { throw new Error("Excluded customer must not reach the provider"); });
+  const result = await t.action(internal.chat.inboxActions.internalSendAiReplyMessages, {
+    conversationId, contents: ["Must not send"], mediaUrls: ["https://example.com/photo.png"],
+  });
+  expect(result).toMatchObject({ ok: false, mediaSent: false, sentTextCount: 0, mediaExternalIds: [] });
+});
+
+test("changing audience during delivery stops remaining messages", async () => {
+  const { t, conversationId } = await createConversation(true);
+  let delivered = 0;
+  vi.stubGlobal("fetch", async () => {
+    delivered += 1;
+    await t.run(async (ctx) => {
+      const conversation = await ctx.db.get(conversationId);
+      if (!conversation?.assignedAgentId) throw new Error("Missing test agent");
+      await ctx.db.insert("leadAssignmentSettings", { agentId: conversation.assignedAgentId,
+        method: "manual", aiEnabledOnInbound: true, aiReplyAudience: "ads", updatedAt: Date.now() });
+    });
+    return new Response(JSON.stringify({ messages: [{ id: "first-sent" }] }), { status: 200 });
+  });
+  const result = await t.action(internal.chat.inboxActions.internalSendAiReplyMessages, {
+    conversationId, contents: ["Must stop"], mediaUrls: ["https://example.com/photo.png"],
+  });
+  expect(result).toMatchObject({ ok: false, mediaSent: true, sentTextCount: 0, mediaExternalIds: ["first-sent"] });
+  expect(delivered).toBe(1);
 });
 
 test.each([

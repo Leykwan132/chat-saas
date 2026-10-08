@@ -8,6 +8,7 @@ import { getAuthContext } from "./authUtils";
 import { metaIndicatorPool } from "./inboxPools";
 import { logConversationEvent } from "./conversationLogs";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
+import { isConversationInAiReplyAudience } from "./leadRouting/audience";
 
 export async function getLinkedInboxConversationDocs(
   ctx: QueryCtx,
@@ -272,6 +273,7 @@ export const get = query({
     }
     return {
       ...conv,
+      aiReplyAudienceEligible: await isConversationInAiReplyAudience(ctx, conv),
       tags,
       leadTemperature,
     };
