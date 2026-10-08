@@ -19,6 +19,7 @@ test("matching customer messages exit before credits, typing or agent generation
       queries.push(name);
       if (name === "chat/inbox:internalGetConversation") return { _id: conversationId, status: "open", assignToAiAgent: true, assignedAgentId: "agent", orgId: "org" };
       if (name === "teamDeletion/access:canProcess") return true;
+      if (name === "leadRouting/audience:canReplyToConversation") return true;
       if (name === "chat/keywordEscalation:match") return { keyword: "human", question: "HUMAN please", sourceAgentMessageId: "customer" };
       throw new Error(`Unexpected query: ${name}`);
     }),
@@ -26,5 +27,5 @@ test("matching customer messages exit before credits, typing or agent generation
     runAction: vi.fn(),
   } as unknown as ActionCtx;
   await generateAiReplyWorker._handler(ctx, { conversationId, promptMessageId: "customer" });
-  expect(queries).toEqual(["chat/inbox:internalGetConversation", "teamDeletion/access:canProcess", "chat/keywordEscalation:match"]);
+  expect(queries).toEqual(["chat/inbox:internalGetConversation", "teamDeletion/access:canProcess", "leadRouting/audience:canReplyToConversation", "chat/keywordEscalation:match"]);
 });

@@ -1,4 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import type { AiReplyAudience } from '../../../shared/aiReplyAudience';
+import { AgentSetupAudiencePanel } from './AgentSetupAudiencePanel';
 import {
   Select,
   SelectContent,
@@ -18,6 +20,8 @@ type AgentSetupRoutingPanelProps = {
   isLoading: boolean;
   isPublishing: boolean;
   replyMode: ReplyMode;
+  replyAudience: AiReplyAudience;
+  onReplyAudienceChange: (value: AiReplyAudience) => void;
   onReplyModeChange: (value: ReplyMode) => void;
 };
 
@@ -27,6 +31,8 @@ export function AgentSetupRoutingPanel({
   isLoading,
   isPublishing,
   replyMode,
+  replyAudience,
+  onReplyAudienceChange,
   onReplyModeChange,
 }: AgentSetupRoutingPanelProps) {
   const selectedOption = REPLY_MODE_OPTIONS.find((option) => option.value === replyMode);
@@ -79,6 +85,11 @@ export function AgentSetupRoutingPanel({
                 </SelectGroup>
               </SelectContent>
             </Select>
+            <AgentSetupAudiencePanel
+              value={replyAudience}
+              onChange={onReplyAudienceChange}
+              disabled={!canManageRouting || isPublishing}
+            />
           </div>
         )
       ) : (
