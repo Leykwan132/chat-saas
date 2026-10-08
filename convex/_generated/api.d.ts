@@ -154,6 +154,7 @@ import type * as chat_inboxImageIngest from "../chat/inboxImageIngest.js";
 import type * as chat_inboxMessageMapping from "../chat/inboxMessageMapping.js";
 import type * as chat_instructionContext from "../chat/instructionContext.js";
 import type * as chat_keywordEscalation from "../chat/keywordEscalation.js";
+import type * as chat_keywordEscalationIngest from "../chat/keywordEscalationIngest.js";
 import type * as chat_keywordEscalationPreflight from "../chat/keywordEscalationPreflight.js";
 import type * as chat_mediaManifest from "../chat/mediaManifest.js";
 import type * as chat_mediaSendLogs from "../chat/mediaSendLogs.js";
@@ -730,6 +731,7 @@ declare const fullApi: ApiFromModules<{
   "chat/inboxMessageMapping": typeof chat_inboxMessageMapping;
   "chat/instructionContext": typeof chat_instructionContext;
   "chat/keywordEscalation": typeof chat_keywordEscalation;
+  "chat/keywordEscalationIngest": typeof chat_keywordEscalationIngest;
   "chat/keywordEscalationPreflight": typeof chat_keywordEscalationPreflight;
   "chat/mediaManifest": typeof chat_mediaManifest;
   "chat/mediaSendLogs": typeof chat_mediaSendLogs;

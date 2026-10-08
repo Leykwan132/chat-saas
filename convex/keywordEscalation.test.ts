@@ -2,6 +2,8 @@ import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import schema from "./schema";
 import { internal } from "./_generated/api";
+import { scheduleIncomingKeywordEscalation } from "./chat/keywordEscalationIngest";
+import { getFunctionName } from "convex/server";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -52,6 +54,12 @@ test("outgoing and missing messages cannot trigger keywords", async () => {
   expect(await t.query(internal.chat.keywordEscalation.match, { conversationId, promptMessageId: "source" })).toBeNull();
 });
 
+test("media transport URLs are not treated as customer keywords", async () => {
+  const { t, conversationId, messageId } = await fixture();
+  await t.run((ctx) => ctx.db.patch(messageId, { contentType: "image", content: "https://example.com/human.jpg", mediaUrl: "https://example.com/human.jpg" }));
+  expect(await t.query(internal.chat.keywordEscalation.match, { conversationId, promptMessageId: "source" })).toBeNull();
+});
+
 test("closed or manually handled conversations do not trigger keywords", async () => {
   const { t, conversationId } = await fixture();
   await t.run((ctx) => ctx.db.patch(conversationId, { assignToAiAgent: false }));
@@ -78,4 +86,22 @@ test("a source message from a different conversation cannot trigger escalation",
     await ctx.db.patch(messageId, { conversationId: otherConversationId });
   });
   expect(await t.query(internal.chat.keywordEscalation.match, { conversationId, promptMessageId: "source" })).toBeNull();
+});
+
+test("caption keywords schedule an immediate handoff before media batches", async () => {
+  const { t, conversationId, messageId } = await fixture();
+  await t.run((ctx) => ctx.db.patch(messageId, { content: "HUMAN please", contentType: "text" }));
+  const scheduled: string[] = [];
+  const matched = await t.run((ctx) => scheduleIncomingKeywordEscalation({ ...ctx, scheduler: {
+    runAfter: async (delay, reference, args) => {
+      expect(delay).toBe(0);
+      expect(args).toEqual({ conversationId, keyword: "human", question: "HUMAN please", sourceAgentMessageId: "source", message: "A teammate will help." });
+      scheduled.push(getFunctionName(reference));
+      return "scheduled" as never;
+    },
+    runAt: async () => { throw new Error("Unexpected scheduling"); },
+    cancel: async () => { throw new Error("Unexpected cancellation"); },
+  } }, { conversationId, promptMessageId: "source" }));
+  expect(matched).toBe(true);
+  expect(scheduled).toEqual(["chat/keywordEscalationPreflight:execute"]);
 });

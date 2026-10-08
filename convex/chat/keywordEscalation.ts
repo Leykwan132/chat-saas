@@ -1,27 +1,20 @@
 import { v } from "convex/values";
-import { internalQuery } from "../_generated/server";
+import { internalQuery, type QueryCtx, type MutationCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 import { getWorkflowForAgent, listWorkflowNodes } from "../workflowCore";
 import { findEscalationKeyword } from "../../shared/escalationKeywords";
 
-export const match = internalQuery({
-  args: {
-    conversationId: v.id("conversations"),
-    promptMessageId: v.optional(v.string()),
-  },
-  returns: v.union(v.null(), v.object({
-    keyword: v.string(),
-    question: v.string(),
-    sourceAgentMessageId: v.string(),
-    message: v.optional(v.string()),
-  })),
-  handler: async (ctx, args) => {
+export async function getIncomingKeywordMatch(ctx: QueryCtx | MutationCtx, args: {
+  conversationId: Id<"conversations">;
+  promptMessageId?: string;
+}) {
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation?.assignedAgentId || !conversation.assignToAiAgent || conversation.status === "closed" || conversation.escalation !== undefined) return null;
     if (!args.promptMessageId) return null;
     const source = await ctx.db.query("messages")
       .withIndex("by_agentMessageId", (q) => q.eq("agentMessageId", args.promptMessageId))
       .order("desc").first();
-    if (!source || source.conversationId !== conversation._id || source.direction !== "incoming") return null;
+    if (!source || source.conversationId !== conversation._id || source.direction !== "incoming" || source.mediaUrl !== undefined) return null;
     const workflow = await getWorkflowForAgent(ctx, conversation.assignedAgentId);
     if (!workflow) return null;
     const nodes = await listWorkflowNodes(ctx, workflow._id);
@@ -38,5 +31,18 @@ export const match = internalQuery({
       }
     }
     return null;
+}
+
+export const match = internalQuery({
+  args: {
+    conversationId: v.id("conversations"),
+    promptMessageId: v.optional(v.string()),
   },
+  returns: v.union(v.null(), v.object({
+    keyword: v.string(),
+    question: v.string(),
+    sourceAgentMessageId: v.string(),
+    message: v.optional(v.string()),
+  })),
+  handler: getIncomingKeywordMatch,
 });
