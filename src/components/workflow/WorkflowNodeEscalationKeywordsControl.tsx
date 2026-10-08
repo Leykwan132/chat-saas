@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useMutation } from "convex/react";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { normalizeEscalationKeywords } from "../../../shared/escalationKeywords";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Badge } from "@/components/ui/badge";
 import { FieldLabel } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
@@ -60,15 +59,17 @@ export function WorkflowNodeEscalationKeywordsControl({ agentId, nodeId, enabled
               </Badge>
             ))}
           </div>
-          <div className="flex gap-2">
-            <Input aria-label="Escalation keyword" placeholder="e.g. human or talk to someone" value={input} maxLength={100} disabled={isDisabled || values.length >= 50} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => {
+          <InputGroup>
+            <InputGroupInput aria-label="Escalation keyword" placeholder="e.g. human or talk to someone" value={input} maxLength={100} disabled={isDisabled || values.length >= 50} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => {
               if (event.key === "Enter") {
                 event.preventDefault();
                 if (input.trim() && !isDisabled) void save(true, [...values, input]);
               }
             }} />
-            <Button type="button" variant="outline" size="sm" disabled={isDisabled || !input.trim() || values.length >= 50} onClick={() => { void save(true, [...values, input]); }}>Add keyword</Button>
-          </div>
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton size="icon-xs" aria-label="Add keyword" disabled={isDisabled || !input.trim() || values.length >= 50} onClick={() => { void save(true, [...values, input]); }}><Plus /></InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
         </div>
       ) : null}
     </div>
