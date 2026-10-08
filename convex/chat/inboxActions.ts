@@ -25,7 +25,6 @@ import {
   throwIfChannelSendFailed,
   type ChannelSendResult,
   type ChannelSendPolicy,
-  type ChannelMediaItem,
   type MetaIndicatorResult,
 } from "./channelSend";
 import {
