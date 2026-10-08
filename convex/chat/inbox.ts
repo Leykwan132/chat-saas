@@ -1009,6 +1009,7 @@ export const generateAiReplyWorker = internalAction({
       };
 
       if (sendResult.mediaSent && allMediaUrls.length > 0) {
+        const sentMediaCount = sendResult.ok ? allMediaUrls.length : sendResult.mediaExternalIds.length;
         const persistResult: {
           markedRead: boolean;
           latestInboundExternalId?: string;
@@ -1017,8 +1018,8 @@ export const generateAiReplyWorker = internalAction({
           {
             conversationId: conv._id,
             threadId: conv.threadId,
-            mediaUrls: allMediaUrls,
-            mediaItems: channelMediaItems,
+            mediaUrls: allMediaUrls.slice(0, sentMediaCount),
+            mediaItems: channelMediaItems.slice(0, sentMediaCount),
             externalIds: sendResult.mediaExternalIds ?? [],
           },
         );
