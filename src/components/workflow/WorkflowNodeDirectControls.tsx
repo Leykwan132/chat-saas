@@ -2,6 +2,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import type { WorkflowNodeKind } from "../../../shared/workflows";
 import { WorkflowBookingNodeServices } from "./WorkflowBookingNodeServices";
 import { WorkflowNodeConditionControl } from "./WorkflowNodeConditionControl";
+import { WorkflowNodeEscalationKeywordsControl } from "./WorkflowNodeEscalationKeywordsControl";
 import { WorkflowNodeEscalationMessageControl } from "./WorkflowNodeEscalationMessageControl";
 import { WorkflowNodeMessageControl } from "./WorkflowNodeMessageControl";
 import { WorkflowSendMediaSection } from "./WorkflowSendMediaSection";
@@ -13,6 +14,8 @@ type WorkflowNodeDirectControlsProps = {
   description?: string;
   escalationMessageEnabled?: boolean;
   escalationMessage?: string;
+  escalationKeywordsEnabled?: boolean;
+  escalationKeywords?: string[];
   incomingCondition?: {
     edgeId: Id<"workflowEdges">;
     detail?: string;
@@ -28,6 +31,8 @@ export function WorkflowNodeDirectControls({
   description,
   escalationMessageEnabled,
   escalationMessage,
+  escalationKeywordsEnabled,
+  escalationKeywords,
   incomingCondition,
   allowedServiceIds,
   disabled,
@@ -75,6 +80,13 @@ export function WorkflowNodeDirectControls({
             disabled={disabled}
           />
         ) : null}
+        <WorkflowNodeEscalationKeywordsControl
+          agentId={agentId}
+          nodeId={nodeId}
+          enabled={escalationKeywordsEnabled}
+          keywords={escalationKeywords}
+          disabled={disabled}
+        />
         <WorkflowNodeEscalationMessageControl
           agentId={agentId}
           nodeId={nodeId}

@@ -12,7 +12,7 @@ const sourcePath = fileURLToPath(
 );
 const source = readFileSync(sourcePath, "utf8");
 
-function renderActionNode() {
+function renderActionNode(kind: "sendText" | "start" | "end" = "sendText", disabled = false) {
   return renderToStaticMarkup(
     createElement(
       ReactFlowProvider,
@@ -31,12 +31,12 @@ function renderActionNode() {
         positionAbsoluteY: 0,
         data: {
           nodeId: "workflow-action-node" as Id<"workflowNodes">,
-          kind: "sendText",
+          kind,
           title: "Send message",
           isReady: true,
           readinessIssueCount: 0,
           layoutOrientation: "horizontal",
-          disabled: false,
+          disabled,
           onAddNode: () => undefined,
           onRemoveNode: () => undefined,
         },
@@ -105,6 +105,24 @@ test("workflow action nodes expose deletion without an add-node control", () => 
 
   expect(markup).toContain("Delete node");
   expect(markup).not.toContain("Add workflow node");
+});
+
+test("message entry exposes node creation without deletion", () => {
+  const markup = renderActionNode("start");
+
+  expect(markup).toContain("Add workflow node");
+  expect(markup).not.toContain("Delete node");
+});
+
+test("message entry disables node creation while the graph is mutating", () => {
+  expect(renderActionNode("start", true)).toMatch(/<button[^>]*disabled=""[^>]*aria-label="Add workflow node"/);
+});
+
+test("workflow end exposes neither node creation nor deletion", () => {
+  const markup = renderActionNode("end");
+
+  expect(markup).not.toContain("Add workflow node");
+  expect(markup).not.toContain("Delete node");
 });
 
 test("workflow node only embeds direct controls for standard nodes with an agent", () => {

@@ -47,6 +47,7 @@ import { canProcessWorkspaceActivity } from "../teamDeletion/access";
 import { notifyHumanEscalation } from "../telegramNotifications/events";
 import { splitAiReplyMessages } from "./aiReplyMessages";
 import { applyBookingReplyGate } from "./applyBookingReply";
+import { escalateKeywordMatch } from "./keywordEscalationPreflight";
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
@@ -733,6 +734,11 @@ export const generateAiReplyWorker = internalAction({
       });
       return;
     }
+
+    if (await escalateKeywordMatch(ctx, {
+      conversationId: conv._id,
+      promptMessageId: args.promptMessageId,
+    })) return;
 
     const agent = await ctx.runQuery(internal.agents.internalGet, {
       agentId: conv.assignedAgentId,

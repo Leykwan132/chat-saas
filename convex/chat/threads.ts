@@ -69,6 +69,7 @@ import { broadcastAgentMetadata } from "./broadcastMessageMetadata";
 import { isTeamDeletionActive } from "../teamDeletion/access";
 import { parseAvailabilityIso } from "../appointmentBooking/availabilityDateTime";
 import { logAgentRequestResponse } from "./agentRequestResponseLogging";
+import { scheduleIncomingKeywordEscalation } from "./keywordEscalationIngest";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -1649,11 +1650,16 @@ export async function ingestChannelMessage(
     conversationId,
   });
 
+  const keywordEscalationScheduled = !args.isHistorical && args.direction === "incoming" && assignToAiAgent && agentMessageId !== undefined
+    ? await scheduleIncomingKeywordEscalation(ctx, { conversationId, promptMessageId: agentMessageId })
+    : false;
+
   return {
     conversationId,
     messageIds,
     skipped: false,
     shouldEnqueueAi:
+      !keywordEscalationScheduled &&
       !args.isHistorical &&
       args.direction === "incoming" &&
       assignToAiAgent &&

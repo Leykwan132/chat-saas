@@ -725,6 +725,8 @@ export default defineSchema({
     description: v.optional(v.string()),
     escalationMessageEnabled: v.optional(v.boolean()),
     escalationMessage: v.optional(v.string()),
+    escalationKeywordsEnabled: v.optional(v.boolean()),
+    escalationKeywords: v.optional(v.array(v.string())),
     notes: v.optional(v.string()),
     allowedAppointmentServiceIds: v.optional(
       v.array(v.id("appointmentServices")),

@@ -8,6 +8,38 @@ import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/sche
 
 const modules = import.meta.glob("./**/*.ts");
 
+test("keyword settings are saved only on manageable human escalation nodes", async () => {
+  const t = initTest();
+  const { agentId, authed, node } = await createWorkflowNode(t, "keyword-owner", "humanEscalation");
+  await authed.mutation(api.workflowEscalationKeywords.update, {
+    agentId, nodeId: node._id, enabled: true, keywords: [" Human ", "human", "refund"],
+  });
+  expect(await t.run((ctx) => ctx.db.get(node._id))).toMatchObject({
+    escalationKeywordsEnabled: true, escalationKeywords: ["Human", "refund"],
+  });
+  await expect(t.withIdentity({ subject: "other-user" }).mutation(api.workflowEscalationKeywords.update, {
+    agentId, nodeId: node._id, enabled: true, keywords: ["human"],
+  })).rejects.toThrow();
+  await authed.mutation(api.workflowEscalationKeywords.update, {
+    agentId, nodeId: node._id, enabled: false, keywords: ["Human", "refund"],
+  });
+  expect(await t.run((ctx) => ctx.db.get(node._id))).toMatchObject({
+    escalationKeywordsEnabled: false, escalationKeywords: ["Human", "refund"],
+  });
+});
+
+test("keyword settings reject other node kinds and oversized keywords", async () => {
+  const t = initTest();
+  const action = await createWorkflowNode(t, "keyword-action-owner", "sendText");
+  await expect(action.authed.mutation(api.workflowEscalationKeywords.update, {
+    agentId: action.agentId, nodeId: action.node._id, enabled: true, keywords: ["human"],
+  })).rejects.toThrow("Human escalation");
+  const escalation = await createWorkflowNode(t, "keyword-escalation-owner", "humanEscalation");
+  await expect(escalation.authed.mutation(api.workflowEscalationKeywords.update, {
+    agentId: escalation.agentId, nodeId: escalation.node._id, enabled: true, keywords: ["x".repeat(101)],
+  })).rejects.toThrow("100 characters");
+});
+
 function initTest() {
   const t = convexTest(schema, modules);
   t.registerComponent("stripe", stripeSchema, {

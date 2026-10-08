@@ -153,6 +153,9 @@ import type * as chat_inboxAudioIngest from "../chat/inboxAudioIngest.js";
 import type * as chat_inboxImageIngest from "../chat/inboxImageIngest.js";
 import type * as chat_inboxMessageMapping from "../chat/inboxMessageMapping.js";
 import type * as chat_instructionContext from "../chat/instructionContext.js";
+import type * as chat_keywordEscalation from "../chat/keywordEscalation.js";
+import type * as chat_keywordEscalationIngest from "../chat/keywordEscalationIngest.js";
+import type * as chat_keywordEscalationPreflight from "../chat/keywordEscalationPreflight.js";
 import type * as chat_mediaManifest from "../chat/mediaManifest.js";
 import type * as chat_mediaSendLogs from "../chat/mediaSendLogs.js";
 import type * as chat_mediaToolResults from "../chat/mediaToolResults.js";
@@ -538,6 +541,7 @@ import type * as workflowAutomationValidators from "../workflowAutomationValidat
 import type * as workflowCore from "../workflowCore.js";
 import type * as workflowDraftSave from "../workflowDraftSave.js";
 import type * as workflowDraftValidation from "../workflowDraftValidation.js";
+import type * as workflowEscalationKeywords from "../workflowEscalationKeywords.js";
 import type * as workflowFollowUpPool from "../workflowFollowUpPool.js";
 import type * as workflowFollowUpRuntime from "../workflowFollowUpRuntime.js";
 import type * as workflowFollowUpStartAfterMigration from "../workflowFollowUpStartAfterMigration.js";
@@ -726,6 +730,9 @@ declare const fullApi: ApiFromModules<{
   "chat/inboxImageIngest": typeof chat_inboxImageIngest;
   "chat/inboxMessageMapping": typeof chat_inboxMessageMapping;
   "chat/instructionContext": typeof chat_instructionContext;
+  "chat/keywordEscalation": typeof chat_keywordEscalation;
+  "chat/keywordEscalationIngest": typeof chat_keywordEscalationIngest;
+  "chat/keywordEscalationPreflight": typeof chat_keywordEscalationPreflight;
   "chat/mediaManifest": typeof chat_mediaManifest;
   "chat/mediaSendLogs": typeof chat_mediaSendLogs;
   "chat/mediaToolResults": typeof chat_mediaToolResults;
@@ -1111,6 +1118,7 @@ declare const fullApi: ApiFromModules<{
   workflowCore: typeof workflowCore;
   workflowDraftSave: typeof workflowDraftSave;
   workflowDraftValidation: typeof workflowDraftValidation;
+  workflowEscalationKeywords: typeof workflowEscalationKeywords;
   workflowFollowUpPool: typeof workflowFollowUpPool;
   workflowFollowUpRuntime: typeof workflowFollowUpRuntime;
   workflowFollowUpStartAfterMigration: typeof workflowFollowUpStartAfterMigration;
