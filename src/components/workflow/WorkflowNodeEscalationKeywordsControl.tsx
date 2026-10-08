@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FieldLabel } from "@/components/ui/field";
+import { cn } from "@/lib/utils";
 
 type Props = {
   agentId: Id<"agents">;
@@ -16,9 +18,10 @@ type Props = {
   enabled?: boolean;
   keywords?: string[];
   disabled: boolean;
+  presentation?: "node" | "inspector";
 };
 
-export function WorkflowNodeEscalationKeywordsControl({ agentId, nodeId, enabled = false, keywords, disabled }: Props) {
+export function WorkflowNodeEscalationKeywordsControl({ agentId, nodeId, enabled = false, keywords, disabled, presentation = "node" }: Props) {
   const update = useMutation(api.workflowEscalationKeywords.update);
   const isEnabled = enabled;
   const values = keywords ?? [];
@@ -38,11 +41,12 @@ export function WorkflowNodeEscalationKeywordsControl({ agentId, nodeId, enabled
     }
   };
   const isDisabled = disabled || isSaving;
+  const KeywordLabel = presentation === "inspector" ? FieldLabel : "label";
 
   return (
-    <div className="nodrag nopan mt-3 w-full" onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()}>
+    <div className={cn("nodrag nopan w-full", presentation === "node" && "mt-3")} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()}>
       <div className="flex items-center justify-between gap-3">
-        <label htmlFor={`escalation-keywords-${nodeId}`} className="text-xs font-medium text-muted-foreground">Keyword detection</label>
+        <KeywordLabel htmlFor={`escalation-keywords-${nodeId}`} className={presentation === "node" ? "text-xs font-medium text-muted-foreground" : undefined}>Keyword detection</KeywordLabel>
         <Switch id={`escalation-keywords-${nodeId}`} aria-label="Keyword detection" checked={isEnabled} disabled={isDisabled} onCheckedChange={(nextEnabled) => { void save(nextEnabled, values); }} />
       </div>
       {isEnabled ? (

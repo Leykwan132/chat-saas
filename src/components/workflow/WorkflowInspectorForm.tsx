@@ -191,6 +191,7 @@ export function WorkflowInspectorForm({
                     enabled={node.escalationKeywordsEnabled}
                     keywords={node.escalationKeywords}
                     disabled={isSaving}
+                    presentation="inspector"
                   />
                 ) : null}
                 {isHumanEscalationAction && agentId ? (
