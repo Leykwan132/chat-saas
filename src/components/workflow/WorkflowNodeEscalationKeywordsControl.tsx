@@ -54,9 +54,9 @@ export function WorkflowNodeEscalationKeywordsControl({ agentId, nodeId, enabled
           <p className="text-xs text-muted-foreground">Escalate immediately when a customer message contains any keyword. Letter case doesn’t matter.</p>
           <div className="flex flex-wrap gap-1.5">
             {values.map((keyword) => (
-              <Badge key={keyword} variant="secondary" className="gap-1">
+              <Badge key={keyword} variant="secondary">
                 <span className="max-w-48 truncate">{keyword}</span>
-                <Button type="button" variant="ghost" size="icon-xs" aria-label={`Remove keyword ${keyword}`} disabled={isDisabled} onClick={() => { void save(true, values.filter((value) => value !== keyword)); }}><X className="size-3" /></Button>
+                <button type="button" data-icon="inline-end" className="flex shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50" aria-label={`Remove keyword ${keyword}`} disabled={isDisabled} onClick={() => { void save(true, values.filter((value) => value !== keyword)); }}><X className="size-3" /></button>
               </Badge>
             ))}
           </div>
