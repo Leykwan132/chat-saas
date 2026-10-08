@@ -132,6 +132,8 @@ export function WorkflowNode({
             incomingCondition={data.incomingCondition}
             escalationMessageEnabled={data.escalationMessageEnabled}
             escalationMessage={data.escalationMessage}
+            escalationKeywordsEnabled={data.escalationKeywordsEnabled}
+            escalationKeywords={data.escalationKeywords}
             allowedServiceIds={data.allowedAppointmentServiceIds}
             disabled={data.disabled}
           />

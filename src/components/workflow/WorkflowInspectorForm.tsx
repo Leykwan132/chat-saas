@@ -19,6 +19,7 @@ import { conditionDetailBlocksApply, getWorkflowInspectorBehavior } from './work
 import { WorkflowRequiredLabel } from './WorkflowRequiredLabel';
 import { WorkflowBookingNodeServices } from './WorkflowBookingNodeServices';
 import { WorkflowNodeEscalationMessageControl } from './WorkflowNodeEscalationMessageControl';
+import { WorkflowNodeEscalationKeywordsControl } from './WorkflowNodeEscalationKeywordsControl';
 import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
 
 const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
@@ -183,6 +184,15 @@ export function WorkflowInspectorForm({
                     </div>
                   ) : null}
                 </Field>
+                {isHumanEscalationAction && agentId ? (
+                  <WorkflowNodeEscalationKeywordsControl
+                    agentId={agentId}
+                    nodeId={node._id}
+                    enabled={node.escalationKeywordsEnabled}
+                    keywords={node.escalationKeywords}
+                    disabled={isSaving}
+                  />
+                ) : null}
                 {isHumanEscalationAction && agentId ? (
                   <WorkflowNodeEscalationMessageControl
                     agentId={agentId}

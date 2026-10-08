@@ -26,6 +26,8 @@ export type WorkflowNodeData = Record<string, unknown> & {
   description?: string;
   escalationMessageEnabled?: boolean;
   escalationMessage?: string;
+  escalationKeywordsEnabled?: boolean;
+  escalationKeywords?: string[];
   allowedAppointmentServiceIds?: Id<"appointmentServices">[];
   agentId?: Id<"agents">;
   incomingCondition?: {

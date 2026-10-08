@@ -186,6 +186,8 @@ export function workflowGraphToFlow(
           description: node.description,
           escalationMessageEnabled: node.escalationMessageEnabled,
           escalationMessage: node.escalationMessage,
+          escalationKeywordsEnabled: node.escalationKeywordsEnabled,
+          escalationKeywords: node.escalationKeywords,
           allowedAppointmentServiceIds: node.allowedAppointmentServiceIds,
           agentId,
           incomingCondition:

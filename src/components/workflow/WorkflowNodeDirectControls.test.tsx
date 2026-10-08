@@ -76,3 +76,9 @@ test("Human escalation offers an optional customer message before handoff", () =
   expect(markup).toContain("Message to send before escalating");
   expect(markup).toContain("A teammate will be with you shortly.");
 });
+
+test("keyword detection appears below When and above the handoff message", () => {
+  const markup = renderControls("humanEscalation", "Customer asks for help");
+  expect(markup.indexOf("Keyword detection")).toBeGreaterThan(markup.indexOf("Customer asks for help"));
+  expect(markup.indexOf("Send message before escalating")).toBeGreaterThan(markup.indexOf("Keyword detection"));
+});
