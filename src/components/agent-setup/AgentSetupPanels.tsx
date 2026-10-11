@@ -13,6 +13,7 @@ import type {
   ResponseLength,
 } from '@/components/agent-setup/agentSetupOptions';
 import { cn } from '@/lib/utils';
+import type { AiReplyAudience } from '../../../shared/aiReplyAudience';
 
 type AgentSetupPanelsProps = {
   name: string;
@@ -28,6 +29,8 @@ type AgentSetupPanelsProps = {
   isRoutingSettingsLoading: boolean;
   isPublishing: boolean;
   replyMode: ReplyMode;
+  replyAudience: AiReplyAudience;
+  onReplyAudienceChange: (value: AiReplyAudience) => void;
   agentId: Id<'agents'>;
   isTestOpen: boolean;
   onNameChange: (value: string) => void;
@@ -57,6 +60,8 @@ export function AgentSetupPanels({
   isRoutingSettingsLoading,
   isPublishing,
   replyMode,
+  replyAudience,
+  onReplyAudienceChange,
   agentId,
   isTestOpen,
   onNameChange,
@@ -109,6 +114,8 @@ export function AgentSetupPanels({
           isLoading={isRoutingSettingsLoading}
           isPublishing={isPublishing}
           replyMode={replyMode}
+          replyAudience={replyAudience}
+          onReplyAudienceChange={onReplyAudienceChange}
           onReplyModeChange={onReplyModeChange}
         />
       </aside>

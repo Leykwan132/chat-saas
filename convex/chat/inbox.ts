@@ -719,6 +719,9 @@ export const generateAiReplyWorker = internalAction({
       });
       return;
     }
+    if (!(await ctx.runQuery(internal.leadRouting.audience.canReplyToConversation, {
+      conversationId: conv._id,
+    }))) return;
     if (
       args.promptMessageId !== undefined &&
       args.sourceMessageUpdatedAt !== undefined &&
@@ -888,6 +891,9 @@ export const generateAiReplyWorker = internalAction({
         internal.chat.inbox.internalGetConversation,
         { conversationId: args.conversationId },
       );
+      if (!(await ctx.runQuery(internal.leadRouting.audience.canReplyToConversation, {
+        conversationId: conv._id,
+      }))) return;
       if (
         convAfterGeneration === null ||
         convAfterGeneration.status === "closed" ||

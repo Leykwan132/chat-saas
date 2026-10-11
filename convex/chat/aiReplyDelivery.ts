@@ -36,7 +36,10 @@ export async function sendAiReplyContent(
       internal.chat.inbox.internalGetConversation,
       { conversationId: conversation._id },
     );
-    return currentConversation?.assignToAiAgent === true;
+    return currentConversation?.assignToAiAgent === true &&
+      await ctx.runQuery(internal.leadRouting.audience.canReplyToConversation, {
+        conversationId: conversation._id,
+      });
   };
   const options = {
     allowHumanAgentTag: args.allowHumanAgentTag ?? false,

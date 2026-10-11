@@ -8,6 +8,7 @@ import {
 } from "./_generated/server";
 import { inboundMediaUnderstandingPool, inboxAiReplyPool } from "./inboxPools";
 import { checkAiFeature, getTeamStripePlanHelper } from "./plans";
+import { isConversationInAiReplyAudience } from "./leadRouting/audience";
 
 const QUIET_WINDOW_MS = 2_000;
 const MAX_BATCH_WAIT_MS = 5_000;
@@ -62,6 +63,7 @@ export async function queueInboundMediaBatch(
     return false;
   }
   const agent = await ctx.db.get(conversation.assignedAgentId);
+  if (!(await isConversationInAiReplyAudience(ctx, conversation))) return false;
   if (!agent) return false;
   const stripeInfo = await getTeamStripePlanHelper(ctx, {
     workosOrgId: agent.orgId,
@@ -186,6 +188,10 @@ export const claimBatch = internalMutation({
       ? await ctx.db.get(conversation.channelId)
       : null;
     if (!conversation || !agent || items.length === 0) return null;
+    if (!(await isConversationInAiReplyAudience(ctx, conversation))) {
+      await ctx.db.patch(batch._id, { state: "completed", workId: undefined, updatedAt: Date.now() });
+      return null;
+    }
     await ctx.db.patch(batch._id, {
       state: "processing",
       workId: undefined,

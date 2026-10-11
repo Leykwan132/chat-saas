@@ -61,7 +61,7 @@ export const REPLY_MODE_OPTIONS: Array<{
   {
     value: 'automatic',
     label: 'Automatic',
-    description: 'AI replies instantly to every customer message.',
+    description: 'AI replies instantly to messages from your selected customers.',
     selectedDescription: 'AI replies instantly',
     whenToUse: [
       {

@@ -30,6 +30,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/usePermissions';
 import { usePartnerManagedWorkspace } from '@/hooks/usePartnerManagedWorkspace';
 import { Permission } from '../../shared/permissions';
+import type { AiReplyAudience } from '../../shared/aiReplyAudience';
 
 export default function InstructionsPage() {
   const { agentId } = useParams();
@@ -58,6 +59,7 @@ export default function InstructionsPage() {
   const [formality, setFormality] = useState<Formality>('conversational');
   const [humorLevel, setHumorLevel] = useState<HumorLevel>('light');
   const [replyMode, setReplyMode] = useState<ReplyMode>('automatic');
+  const [replyAudience, setReplyAudience] = useState<AiReplyAudience>('all');
   const [isPublishing, setIsPublishing] = useState(false);
   const [isTestOpen, setIsTestOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +91,7 @@ export default function InstructionsPage() {
   useEffect(() => {
     if (!routingSettings) return;
     setReplyMode(routingSettings.aiEnabledOnInbound ? 'automatic' : 'manual');
+    setReplyAudience(routingSettings.aiReplyAudience);
   }, [routingSettings]);
 
   const hasBasicChanges = agent ? (
@@ -107,12 +110,14 @@ export default function InstructionsPage() {
       : 'manual'
     : null;
   const hasReplyModeChanges = savedReplyMode !== null && replyMode !== savedReplyMode;
-  const isDirty = hasBasicChanges || hasReplyModeChanges;
+  const hasAudienceChanges = routingSettings !== undefined && replyAudience !== routingSettings.aiReplyAudience;
+  const hasRoutingChanges = hasReplyModeChanges || hasAudienceChanges;
+  const isDirty = hasBasicChanges || hasRoutingChanges;
   const canPublish = Boolean(
     isDirty &&
     name.trim() &&
     systemPrompt.trim() &&
-    (!hasReplyModeChanges || canManageRouting),
+    (!hasRoutingChanges || canManageRouting),
   );
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
@@ -153,10 +158,11 @@ export default function InstructionsPage() {
           humorLevel,
         });
       }
-      if (hasReplyModeChanges && canManageRouting && routingSettings) {
+      if (hasRoutingChanges && canManageRouting && routingSettings) {
         await updateRoutingSettings({
           agentId: selectedAgentId,
           aiEnabledOnInbound: replyMode === 'automatic',
+          aiReplyAudience: replyAudience,
         });
       }
       toast.success('Configuration published');
@@ -220,6 +226,7 @@ export default function InstructionsPage() {
         isRoutingSettingsLoading={isRoutingSettingsLoading}
         isPublishing={isPublishing}
         replyMode={replyMode}
+        replyAudience={replyAudience}
         isTestOpen={isTestOpen}
         onNameChange={setName}
         onModelChange={setModel}
@@ -230,6 +237,7 @@ export default function InstructionsPage() {
         onFormalityChange={setFormality}
         onHumorLevelChange={setHumorLevel}
         onReplyModeChange={setReplyMode}
+        onReplyAudienceChange={setReplyAudience}
         onTestOpenChange={setIsTestOpen}
         showModelPicker={isPartnerManagedWorkspace === false}
       />

@@ -3,6 +3,7 @@ import { Triggers } from "convex-helpers/server/triggers";
 import { mutation as rawMutation, internalMutation as rawInternalMutation } from "./_generated/server";
 import type { DataModel } from "./_generated/dataModel";
 import { syncWhatsAppFreeMessagingWindow } from "./whatsappFreeMessagingWindow";
+import { syncCustomerReferral } from "./customerReferral";
 import {
   lifetimeAggregator,
   monthlyAggregator,
@@ -96,6 +97,7 @@ triggers.register("messages", async (ctx, change) => {
     return;
   }
   await syncWhatsAppFreeMessagingWindow(ctx, change.oldDoc, change.newDoc);
+  await syncCustomerReferral(ctx, change.oldDoc, change.newDoc);
   if (messageSearchFieldsChanged(change.oldDoc, change.newDoc)) {
     await upsertInboxMessageSearchDocument(ctx, change.id);
   }

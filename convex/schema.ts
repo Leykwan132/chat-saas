@@ -53,6 +53,8 @@ import {
 } from "./googleCalendar/schema";
 import { GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX } from "./googleCalendar/constants";
 import { whatsappReferralValidator, whatsappReferralEntryValidator, whatsappFreeMessagingWindowValidator } from "./whatsappReferral";
+import { customerReferralValidator } from "./customerReferral";
+import { aiReplyAudienceValidator } from "./leadRouting/audience";
 
 const customerSentimentValidator = v.union(
   ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
@@ -1234,6 +1236,9 @@ export default defineSchema({
     ),
     notes: v.optional(v.string()),
     source: customerServiceValidator,
+    firstReferral: v.optional(customerReferralValidator),
+    latestReferral: v.optional(customerReferralValidator),
+    latestAdReferral: v.optional(customerReferralValidator),
     firstSeenAt: v.number(),
     lastSeenAt: v.number(),
     lastConversationId: v.optional(v.id("conversations")),
@@ -1969,6 +1974,8 @@ export default defineSchema({
       v.literal("manual"),
     ),
     aiEnabledOnInbound: v.boolean(),
+    aiReplyAudience: v.optional(aiReplyAudienceValidator),
+    aiNewCustomersSince: v.optional(v.number()),
     aiWhenOutsideSchedule: v.optional(v.boolean()),
     tagRules: v.optional(
       v.array(

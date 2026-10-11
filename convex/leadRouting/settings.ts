@@ -8,6 +8,7 @@ import {
 } from "./helpers";
 import { isUserEligible } from "./eligibility";
 import { getAuthContext, resolveChannelOrgId } from "../authUtils";
+import { aiReplyAudienceValidator } from "./audience";
 
 const assignmentMethodValidator = v.union(
   v.literal("balanced"),
@@ -36,6 +37,8 @@ export const getForAgent = query({
         agentId: args.agentId,
         method: "round_robin" as const,
         aiEnabledOnInbound: true,
+        aiReplyAudience: "all" as const,
+        aiNewCustomersSince: undefined,
         aiWhenOutsideSchedule: false,
         tagRules: [] as Array<{ tag: string; workosUserId: string }>,
         lastAssignedWorkosUserId: undefined,
@@ -44,6 +47,7 @@ export const getForAgent = query({
     }
     return {
       ...row,
+      aiReplyAudience: row.aiReplyAudience ?? "all",
       method: normalizeAssignmentMethod(row.method),
       tagRules: row.tagRules ?? [],
     };
@@ -55,12 +59,19 @@ export const updateForAgent = mutation({
     agentId: v.id("agents"),
     method: v.optional(assignmentMethodValidator),
     aiEnabledOnInbound: v.optional(v.boolean()),
+    aiReplyAudience: v.optional(aiReplyAudienceValidator),
     aiWhenOutsideSchedule: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     await assertRoutingManage(ctx, args.agentId);
     const row = await getOrCreateLeadAssignmentSettings(ctx, args.agentId);
     const patch: Record<string, unknown> = { updatedAt: Date.now() };
+    if (args.aiReplyAudience !== undefined) {
+      patch.aiReplyAudience = args.aiReplyAudience;
+      if (args.aiReplyAudience === "new" && row.aiNewCustomersSince === undefined) {
+        patch.aiNewCustomersSince = Date.now();
+      }
+    }
     if (args.method !== undefined) patch.method = args.method;
     if (args.aiEnabledOnInbound !== undefined) {
       patch.aiEnabledOnInbound = args.aiEnabledOnInbound;
