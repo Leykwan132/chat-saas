@@ -21,6 +21,7 @@ import { mutation, query, internalQuery } from "./_generated/server";
 import { agentGoalValidator, templateKeyValidator } from "./agentValidators";
 import { listAgentsForCreationContext } from "./agentCreationAccess";
 import { resolveAgentWriteModel } from "./agentModelAccess";
+import { applyPartnerAssetLinkPrivacy } from "./partnerAssetLinkPrivacy";
 
 export const list = query({
   args: {},
@@ -268,7 +269,7 @@ export const internalGet = internalQuery({
     agentId: v.id("agents"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.agentId);
+    return await applyPartnerAssetLinkPrivacy(ctx, await ctx.db.get(args.agentId));
   },
 });
 
