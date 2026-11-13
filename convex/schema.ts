@@ -1357,6 +1357,11 @@ export default defineSchema({
       "assignedAgentId",
       "assignedUserId",
     ]),
+  inboxEscalationCounts: defineTable({ scopeKey: v.string(), count: v.number() })
+    .index("by_scopeKey", ["scopeKey"]),
+  inboxEscalationCountMemberships: defineTable({
+    summaryId: v.id("inboxConversationSummaries"), scopeKeys: v.array(v.string()),
+  }).index("by_summaryId", ["summaryId"]),
   inboxConversationSummaries: defineTable({
     conversationId: v.id("conversations"),
     customerId: v.optional(v.id("customers")),
@@ -1387,6 +1392,10 @@ export default defineSchema({
     isChannelConnected: v.boolean(),
     updatedAt: v.number(),
   })
+    .index("by_orgId_connected_status_lastMessageAt", ["orgId", "isChannelConnected", "status", "lastMessageAt"])
+    .index("by_orgId_assignedAgentId_connected_status_lastMessageAt", ["orgId", "assignedAgentId", "isChannelConnected", "status", "lastMessageAt"])
+    .index("by_userId_orgId_connected_status_lastMessageAt", ["userId", "orgId", "isChannelConnected", "status", "lastMessageAt"])
+    .index("by_userId_orgId_assignedAgentId_connected_status_lastMessageAt", ["userId", "orgId", "assignedAgentId", "isChannelConnected", "status", "lastMessageAt"])
     .index("by_conversationId", ["conversationId"])
     .index("by_customerId", ["customerId"])
     .index("by_channelId", ["channelId"])

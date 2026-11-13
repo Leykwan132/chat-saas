@@ -1,3 +1,4 @@
+import { syncEscalationCount } from "./inboxEscalationCounts";
 import { Migrations } from "@convex-dev/migrations";
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
@@ -68,10 +69,14 @@ export async function reconcileInboxConversationSummaryPage(
       continue;
     }
     for (const summary of stored) {
+      await syncEscalationCount(ctx, summary._id, null);
       await ctx.db.delete(summary._id);
     }
     if (expected !== null) {
-      await ctx.db.insert("inboxConversationSummaries", expected);
+      const summaryId = await ctx.db.insert("inboxConversationSummaries", expected);
+      const inserted = await ctx.db.get(summaryId);
+      if (inserted === null) throw new Error("Inbox summary missing after repair");
+      await syncEscalationCount(ctx, summaryId, inserted);
     }
     repaired += 1;
   }

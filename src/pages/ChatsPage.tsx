@@ -276,15 +276,30 @@ export default function ChatsPage() {
     api.channels.getConnectedForCurrentOrg,
     typedAgentId ? { agentId: typedAgentId } : {},
   );
+  const [escalatedActive, setEscalatedActive] = useState(false);
+  const escalationCount = useQuery(
+    api.inboxEscalationCounts.getForCurrentOrg,
+    typedAgentId ? { agentId: typedAgentId } : {},
+  );
   const {
-    results: inboxSummaries,
-    status: inboxSummaryStatus,
-    loadMore: loadMoreInboxSummaries,
+    results: allInboxSummaries,
+    status: allInboxSummaryStatus,
+    loadMore: loadMoreAllInboxSummaries,
   } = usePaginatedQuery(
     api.conversations.listInboxSummariesForCurrentOrg,
     typedAgentId ? { agentId: typedAgentId } : {},
     { initialNumItems: 50 },
   );
+  const escalatedInbox = usePaginatedQuery(
+    api.conversations.listInboxSummariesForCurrentOrg,
+    escalatedActive
+      ? { ...(typedAgentId ? { agentId: typedAgentId } : {}), escalatedOnly: true }
+      : 'skip',
+    { initialNumItems: 50 },
+  );
+  const inboxSummaries = escalatedActive ? escalatedInbox.results : allInboxSummaries;
+  const inboxSummaryStatus = escalatedActive ? escalatedInbox.status : allInboxSummaryStatus;
+  const loadMoreInboxSummaries = escalatedActive ? escalatedInbox.loadMore : loadMoreAllInboxSummaries;
   const currentUser = useQuery(api.users.currentUser);
 
   const [selectedConversationId, setSelectedConversationId] = useState<
@@ -296,7 +311,6 @@ export default function ChatsPage() {
   const [mobileConversationSearchQuery, setMobileConversationSearchQuery] = useState('');
   const [platformFilter, setPlatformFilter] = useState<'all' | ConversationPlatform>('all');
   const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>('all');
-  const [escalatedActive, setEscalatedActive] = useState(false);
   const [bookingActive, setBookingActive] = useState(false);
   const [activeLeads, setActiveLeads] = useState<LeadTemperature[]>([]);
   const [activeTags, setActiveTags] = useState<string[]>([]);
@@ -549,8 +563,8 @@ export default function ChatsPage() {
     />
   ) : undefined;
 
-  const chatItems = useMemo((): InboxChatListItem[] => {
-    return inboxSummaries.map((conv) => ({
+  const { chatItems, allChatItems } = useMemo(() => {
+    const mapChat = (conv: (typeof inboxSummaries)[number]): InboxChatListItem => ({
       id: conv.conversationId,
       name: conv.contactName ?? 'Unknown contact',
       message: conv.lastMessagePreview && conv.lastMessagePreview.trim() !== ''
@@ -568,32 +582,34 @@ export default function ChatsPage() {
       leadTemperature: conv.leadTemperature,
       hasBooking: conv.hasBooking,
       isEscalated: conv.isEscalated,
-    }));
-  }, [inboxSummaries]);
+    });
+    const allChatItems = allInboxSummaries.map(mapChat);
+    return { allChatItems, chatItems: escalatedActive ? inboxSummaries.map(mapChat) : allChatItems };
+  }, [allInboxSummaries, inboxSummaries, escalatedActive]);
 
   const allExistingTags = useMemo(() => {
     const tagsSet = new Set<string>();
-    for (const conv of inboxSummaries) {
+    for (const conv of allInboxSummaries) {
       for (const tag of conv.tags) {
         tagsSet.add(tag);
       }
     }
     return Array.from(tagsSet).sort();
-  }, [inboxSummaries]);
+  }, [allInboxSummaries]);
 
   const filterCounts = useMemo(() => {
     const counts = {
-      all: chatItems.length,
+      all: allChatItems.length,
       unread: 0,
       assigned_me: 0,
       unassigned: 0,
-      escalated: 0,
+      escalated: escalationCount ?? undefined,
       booking: 0,
       byPlatform: {} as Partial<Record<ConversationPlatform, number>>,
       byLead: {} as Partial<Record<LeadTemperature, number>>,
       byTag: {} as Record<string, number>,
     };
-    for (const chat of chatItems) {
+    for (const chat of allChatItems) {
       if (chat.unread > 0) {
         counts.unread += 1;
       }
@@ -602,9 +618,6 @@ export default function ChatsPage() {
       }
       if (!chat.assignedUserId) {
         counts.unassigned += 1;
-      }
-      if (chat.conversationStatus === 'requires_user_input') {
-        counts.escalated += 1;
       }
       if (chat.hasBooking) {
         counts.booking += 1;
@@ -619,7 +632,7 @@ export default function ChatsPage() {
       }
     }
     return counts;
-  }, [chatItems, currentUser?.workosUserId]);
+  }, [allChatItems, currentUser?.workosUserId, escalationCount]);
 
   const filteredChats = useMemo(() => {
     let list = chatItems;
@@ -684,6 +697,7 @@ export default function ChatsPage() {
 
   useEffect(() => {
     if (mobileConversationSwitcherOpen) return;
+    if (inboxSummaryStatus === 'LoadingFirstPage') return;
     if (debouncedSearchQuery) return;
     if (
       selectedConversationId &&
@@ -691,7 +705,7 @@ export default function ChatsPage() {
     ) {
       setSelectedConversationId(null);
     }
-  }, [debouncedSearchQuery, filteredChats, mobileConversationSwitcherOpen, selectedConversationId]);
+  }, [debouncedSearchQuery, filteredChats, inboxSummaryStatus, mobileConversationSwitcherOpen, selectedConversationId]);
 
   const togglePin = (id: Id<'conversations'>) => {
     const key = id as string;
