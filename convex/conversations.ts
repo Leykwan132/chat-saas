@@ -1,3 +1,4 @@
+import { escalatedInboxQuery } from "./inboxEscalationQuery";
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
 import { action, internalQuery, query, type MutationCtx, type QueryCtx } from "./_generated/server";
@@ -137,10 +138,15 @@ export const listLinkedForCurrentOrg = query({
 export const listInboxSummariesForCurrentOrg = query({
   args: {
     agentId: v.optional(v.id("agents")),
+    escalatedOnly: v.optional(v.boolean()),
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
+    if (args.escalatedOnly) {
+      return await escalatedInboxQuery(ctx, orgId, userId, args.agentId)
+        .order("desc").paginate(args.paginationOpts);
+    }
     const isPersonal = !orgId || orgId === "personal";
     if (isPersonal && args.agentId !== undefined) {
       return await ctx.db

@@ -180,7 +180,7 @@ export type InboxFilterCounts = {
   unread: number;
   assigned_me: number;
   unassigned: number;
-  escalated: number;
+  escalated?: number;
   booking: number;
   byPlatform: Partial<Record<ConversationPlatform, number>>;
   byLead: Partial<Record<LeadTemperature, number>>;

@@ -304,6 +304,8 @@ import type * as googleCalendarBookingSyncTestHelpers from "../googleCalendarBoo
 import type * as http from "../http.js";
 import type * as inboundMediaBatch from "../inboundMediaBatch.js";
 import type * as inboundMediaUnderstanding from "../inboundMediaUnderstanding.js";
+import type * as inboxEscalationCounts from "../inboxEscalationCounts.js";
+import type * as inboxEscalationQuery from "../inboxEscalationQuery.js";
 import type * as inboxConversationSummary from "../inboxConversationSummary.js";
 import type * as inboxConversationSummaryMigration from "../inboxConversationSummaryMigration.js";
 import type * as inboxMessageSearchRefresh from "../inboxMessageSearchRefresh.js";
@@ -883,6 +885,8 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   inboundMediaBatch: typeof inboundMediaBatch;
   inboundMediaUnderstanding: typeof inboundMediaUnderstanding;
+  inboxEscalationCounts: typeof inboxEscalationCounts;
+  inboxEscalationQuery: typeof inboxEscalationQuery;
   inboxConversationSummary: typeof inboxConversationSummary;
   inboxConversationSummaryMigration: typeof inboxConversationSummaryMigration;
   inboxMessageSearchRefresh: typeof inboxMessageSearchRefresh;

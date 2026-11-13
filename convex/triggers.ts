@@ -1,3 +1,4 @@
+import { syncEscalationCount } from "./inboxEscalationCounts";
 import { customMutation, customCtx } from "convex-helpers/server/customFunctions";
 import { Triggers } from "convex-helpers/server/triggers";
 import { mutation as rawMutation, internalMutation as rawInternalMutation } from "./_generated/server";
@@ -74,6 +75,7 @@ triggers.register("conversations", async (ctx, change) => {
   }
 });
 triggers.register("inboxConversationSummaries", async (ctx, change) => {
+  await syncEscalationCount(ctx, change.id, change.newDoc);
   const conversationId = change.newDoc?.conversationId ?? change.oldDoc?.conversationId;
   if (conversationId === undefined) {
     return;

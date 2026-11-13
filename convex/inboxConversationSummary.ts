@@ -1,3 +1,4 @@
+import { syncEscalationCount } from "./inboxEscalationCounts";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { AppointmentBookingSessionStatus } from "./appointmentBookingSessionStatus";
@@ -37,6 +38,7 @@ export async function removeInboxConversationSummary(
     .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
     .unique();
   if (existing !== null) {
+    await syncEscalationCount(ctx, existing._id, null);
     await ctx.db.delete(existing._id);
   }
 }
@@ -112,10 +114,14 @@ export async function upsertInboxConversationSummary(
     .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
     .unique();
   if (existing === null) {
-    await ctx.db.insert("inboxConversationSummaries", summary);
+    const summaryId = await ctx.db.insert("inboxConversationSummaries", summary);
+    const inserted = await ctx.db.get(summaryId);
+    if (inserted === null) throw new Error("Inbox summary missing after insert");
+    await syncEscalationCount(ctx, summaryId, inserted);
     return;
   }
   await ctx.db.replace(existing._id, summary);
+  await syncEscalationCount(ctx, existing._id, { _id: existing._id, _creationTime: existing._creationTime, ...summary });
 }
 
 export async function refreshInboxSummariesForCustomer(
