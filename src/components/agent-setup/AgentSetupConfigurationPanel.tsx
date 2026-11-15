@@ -137,9 +137,12 @@ export function AgentSetupConfigurationPanel({
 }: AgentSetupConfigurationPanelProps) {
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="m-0 text-lg font-semibold tracking-tight text-foreground">
-        {showModelPicker ? "Model & Style" : "Style"}
-      </h2>
+      <div className="flex flex-col gap-0.5">
+        <h2 className="m-0 text-lg font-semibold tracking-tight text-foreground">
+          {showModelPicker ? "Model & Style" : "Style"}
+        </h2>
+        <p className="m-0 text-xs leading-5 text-muted-foreground">{showModelPicker ? 'Choose the AI model and shape how your agent sounds.' : 'Shape your agent’s tone and response style.'}</p>
+      </div>
       <FieldGroup className="gap-5">
         <Field className="gap-2.5">
           <FieldLabel className="flex items-center gap-2" htmlFor="agent-name">

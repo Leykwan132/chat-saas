@@ -744,6 +744,8 @@ export const internalSendEscalationMessage = internalAction({
   args: {
     conversationId: v.id("conversations"),
     content: v.string(),
+    llmModel: v.optional(v.string()),
+    creditsCharged: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<{ ok: boolean; error?: string }> => {
     const sendResult = await ctx.runAction(
@@ -782,8 +784,8 @@ export const internalSendEscalationMessage = internalAction({
         threadId: conv.threadId,
         content: args.content,
         externalId: sendResult.textExternalId,
-        llmModel: "escalation",
-        creditsCharged: 0,
+        llmModel: args.llmModel ?? "escalation",
+        creditsCharged: args.creditsCharged ?? 0,
       },
     );
     await enqueueMetaMarkSeenIfRead(ctx, args.conversationId, persistResult);

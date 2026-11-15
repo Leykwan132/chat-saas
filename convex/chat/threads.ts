@@ -1,5 +1,6 @@
+import { sendEscalationMessageThenEscalate } from "./escalationDelivery";
 import { v } from "convex/values";
-import type { ActionCtx, MutationCtx } from "../_generated/server";
+import type { MutationCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { components } from "../_generated/api";
 import { captureAIGeneration } from "../posthog";
@@ -43,7 +44,6 @@ import {
   buildWorkflowRuntimeBlock,
   type WorkflowRuntimeContextForPrompt,
 } from "./workflowPrompt";
-import { getEscalationMessageForWorkflowNode } from "../workflowRuntimeContext";
 import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildToolUsageBlock } from "./toolPrompt";
 import { buildIdentityPriorityBlock } from "./identityPriorityPrompt";
@@ -83,40 +83,7 @@ type UsageWithTokenAliases = {
   cachedInputTokens?: number;
 };
 
-export async function sendEscalationMessageThenEscalate(
-  ctx: Pick<ActionCtx, "runAction" | "runMutation" | "runQuery">,
-  args: {
-    conversationId: Id<"conversations">;
-    question: string;
-    context: string;
-    sourceAgentMessageId: string;
-    message?: string;
-  },
-): Promise<boolean> {
-  const conv = await ctx.runQuery(internal.chat.inbox.internalGetConversation, {
-    conversationId: args.conversationId,
-  });
-  if (conv?.escalation !== undefined) return false;
-  if (args.message !== undefined) {
-    const sendResult: { ok: boolean; error?: string } = await ctx.runAction(
-      internal.chat.inboxActions.internalSendEscalationMessage,
-      {
-        conversationId: args.conversationId,
-        content: args.message,
-      },
-    );
-    if (!sendResult.ok) {
-      throw new Error(sendResult.error ?? "Could not send escalation message");
-    }
-  }
-  await ctx.runMutation(internal.chat.inbox.internalEscalateConversation, {
-    conversationId: args.conversationId,
-    question: args.question,
-    context: args.context,
-    sourceAgentMessageId: args.sourceAgentMessageId,
-  });
-  return true;
-}
+export { sendEscalationMessageThenEscalate };
 
 export async function resolveAssignedAgentName(
   ctx: MutationCtx,
@@ -689,19 +656,12 @@ export function buildAgent(
               "Human escalation requires a source customer message",
             );
           }
-          const escalationMessage =
-            workflowNodeId === undefined
-              ? undefined
-              : getEscalationMessageForWorkflowNode(
-                  workflowRuntimeContext,
-                  workflowNodeId,
-                );
           const created = await sendEscalationMessageThenEscalate(ctx, {
             conversationId,
             question,
             context,
             sourceAgentMessageId,
-            message: escalationMessage,
+            workflowNodeId: workflowNodeId as Id<"workflowNodes"> | undefined,
           });
           if (!created) {
             return {

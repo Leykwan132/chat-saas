@@ -89,13 +89,13 @@ test("a source message from a different conversation cannot trigger escalation",
 });
 
 test("caption keywords schedule an immediate handoff before media batches", async () => {
-  const { t, conversationId, messageId } = await fixture();
+  const { t, conversationId, messageId, nodeId } = await fixture();
   await t.run((ctx) => ctx.db.patch(messageId, { content: "HUMAN please", contentType: "text" }));
   const scheduled: string[] = [];
   const matched = await t.run((ctx) => scheduleIncomingKeywordEscalation({ ...ctx, scheduler: {
     runAfter: async (delay, reference, args) => {
       expect(delay).toBe(0);
-      expect(args).toEqual({ conversationId, keyword: "human", question: "HUMAN please", sourceAgentMessageId: "source", message: "A teammate will help." });
+      expect(args).toEqual({ conversationId, workflowNodeId: nodeId, keyword: "human", question: "HUMAN please", sourceAgentMessageId: "source", message: "A teammate will help." });
       scheduled.push(getFunctionName(reference));
       return "scheduled" as never;
     },

@@ -163,7 +163,10 @@ export function workflowGraphToFlow(
   nodeDensity: WorkflowNodeDensity = "standard",
   agentId?: Id<"agents">,
 ): { nodes: WorkflowFlowNode[]; edges: WorkflowFlowEdge[] } {
-  const edgeRoutes = getWorkflowEdgeRoutes(graph, layoutOrientation);
+  const visibleNodes = graph.nodes.filter((node) => node.kind !== "humanEscalation");
+  const visibleNodeIds = new Set(visibleNodes.map((node) => node._id));
+  const visibleEdges = graph.edges.filter((edge) => visibleNodeIds.has(edge.sourceNodeId) && visibleNodeIds.has(edge.targetNodeId));
+  const edgeRoutes = getWorkflowEdgeRoutes({ ...graph, nodes: visibleNodes, edges: visibleEdges }, layoutOrientation);
   const handlePositions = getPersistedNodeHandlePositions(layoutOrientation);
   const incomingEdgesByTargetNodeId = new Map(
     graph.edges.map((edge) => [edge.targetNodeId, edge]),
@@ -172,7 +175,7 @@ export function workflowGraphToFlow(
   return {
     nodes: [
       ...getAutomationFlowNodes(graph),
-      ...graph.nodes.map((node) => ({
+      ...visibleNodes.map((node) => ({
         id: node._id,
         type: "workflow" as const,
         position: {
@@ -185,6 +188,7 @@ export function workflowGraphToFlow(
           title: workflowNodeDisplayTitle(node.kind, node.title),
           description: node.description,
           escalationMessageEnabled: node.escalationMessageEnabled,
+          escalationMessageMode: node.escalationMessageMode,
           escalationMessage: node.escalationMessage,
           escalationKeywordsEnabled: node.escalationKeywordsEnabled,
           escalationKeywords: node.escalationKeywords,
@@ -221,7 +225,7 @@ export function workflowGraphToFlow(
       })),
     ],
     edges: [
-      ...graph.edges.map((edge) => {
+      ...visibleEdges.map((edge) => {
         const conditionLabel = workflowConditionDisplayLabel(edge.label);
         return {
           id: edge._id,

@@ -67,12 +67,12 @@ test('limits Human escalation editing to condition detail and its send-message c
   );
 });
 
-test('gives Human escalation a narrower modal and a heading for its message section', () => {
+test('uses the standard field label for the optional custom escalation message', () => {
   expect(inspectorSource).toContain('sm:max-w-[820px]');
   expect(source).toContain('presentation="inspector"');
-  expect(escalationMessageControlSource).toMatch(/presentation === ["']inspector["']/);
-  expect(escalationMessageControlSource).toContain('text-base font-semibold text-foreground');
-  expect(escalationMessageControlSource).toContain('nodrag nopan mt-3 w-full');
+  expect(escalationMessageControlSource).toContain('<FieldLabel');
+  expect(escalationMessageControlSource).toContain('Custom escalation message');
+  expect(escalationMessageControlSource).toContain('nodrag nopan w-full');
 });
 
 test('explains incomplete requirements when Apply is attempted', () => {

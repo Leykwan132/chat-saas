@@ -72,6 +72,8 @@ export async function workflowHasHumanEscalationNode(
   ctx: DbCtx,
   workflowId: Id<"workflows">,
 ) {
+  const workflow = await ctx.db.get(workflowId);
+  if (!workflow || workflow.humanEscalationEnabled === false) return false;
   const nodes = await listWorkflowNodes(ctx, workflowId);
   return nodes.some((node) => node.kind === "humanEscalation");
 }

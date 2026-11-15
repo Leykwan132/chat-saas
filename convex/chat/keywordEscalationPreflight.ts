@@ -1,3 +1,4 @@
+import { inboxAiReplyPool } from "../inboxPools";
 import type { ActionCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
@@ -12,16 +13,23 @@ export const execute = internalAction({
     question: v.string(),
     sourceAgentMessageId: v.string(),
     message: v.optional(v.string()),
+    workflowNodeId: v.optional(v.id("workflowNodes")),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    await sendEscalationMessageThenEscalate(ctx, {
+    const created = await sendEscalationMessageThenEscalate(ctx, {
       conversationId: args.conversationId,
       question: args.question,
       context: `Customer message contains escalation keyword: ${args.keyword}`,
       sourceAgentMessageId: args.sourceAgentMessageId,
       message: args.message,
+      workflowNodeId: args.workflowNodeId,
     });
+    if (!created) {
+      await inboxAiReplyPool.enqueueAction(ctx, internal.chat.inbox.generateAiReplyWorker, {
+        conversationId: args.conversationId, promptMessageId: args.sourceAgentMessageId,
+      });
+    }
     return null;
   },
 });
@@ -32,12 +40,12 @@ export async function escalateKeywordMatch(
 ): Promise<boolean> {
   const match = await ctx.runQuery(internal.chat.keywordEscalation.match, args);
   if (!match) return false;
-  await sendEscalationMessageThenEscalate(ctx, {
+  return await sendEscalationMessageThenEscalate(ctx, {
     conversationId: args.conversationId,
     question: match.question,
     context: `Customer message contains escalation keyword: ${match.keyword}`,
     sourceAgentMessageId: match.sourceAgentMessageId,
     message: match.message,
+    workflowNodeId: match.workflowNodeId,
   });
-  return true;
 }

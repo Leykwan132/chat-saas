@@ -12,3 +12,10 @@ test("builds a graph-only replacement payload with entirely new nodes", () => {
   ).toBe(true);
   expect(payload.baselineUpdatedAt).toBe(graph.workflow.updatedAt);
 });
+
+test("template replacement does not create escalation settings through the workflow canvas", () => {
+  const payload = toWorkflowTemplateReplacementPayload(WORKFLOW_TEMPLATES[0].graph);
+  expect(payload.nodes.some((node) => node.kind === 'humanEscalation')).toBe(false);
+  const nodeIds = new Set(payload.nodes.map((node) => node.clientId));
+  expect(payload.edges.every((edge) => nodeIds.has(edge.sourceClientId) && nodeIds.has(edge.targetClientId))).toBe(true);
+});

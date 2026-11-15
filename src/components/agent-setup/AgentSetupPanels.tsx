@@ -1,3 +1,5 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { HumanEscalationPanel } from './HumanEscalationPanel';
 import type { AgentGoal } from '../../../shared/agentCreationGoals';
 import type { Id } from '../../../convex/_generated/dataModel';
 import type { ModelPickerOption } from '@/components/ModelPicker';
@@ -80,45 +82,59 @@ export function AgentSetupPanels({
     <div
       className={cn(
         'grid min-w-0 gap-6',
-        isTestOpen
-          ? 'xl:grid-cols-[minmax(0,1fr)_380px_380px] 2xl:grid-cols-[minmax(0,1fr)_420px_420px]'
-          : 'xl:grid-cols-[minmax(0,1fr)_380px] 2xl:grid-cols-[minmax(0,1fr)_420px]',
+        isTestOpen && 'xl:grid-cols-[minmax(0,1fr)_380px] 2xl:grid-cols-[minmax(0,1fr)_420px]',
       )}
     >
-      <AgentSetupSystemPromptPanel
-        value={systemPrompt}
-        onChange={onSystemPromptChange}
-        onApplyTemplate={onApplyTemplate}
-        workflowHref={`/dashboard/${agentId}/workflow`}
-      />
-      <aside className="flex min-w-0 flex-col gap-6">
-        <AgentSetupConfigurationPanel
-          name={name}
-          model={model}
-          models={models}
-          responseLength={responseLength}
-          emojiUse={emojiUse}
-          formality={formality}
-          humorLevel={humorLevel}
-          onNameChange={onNameChange}
-          onModelChange={onModelChange}
-          onResponseLengthChange={onResponseLengthChange}
-          onEmojiUseChange={onEmojiUseChange}
-          onFormalityChange={onFormalityChange}
-          onHumorLevelChange={onHumorLevelChange}
-          showModelPicker={showModelPicker}
-        />
-        <AgentSetupRoutingPanel
-          canReadRouting={canReadRouting}
-          canManageRouting={canManageRouting}
-          isLoading={isRoutingSettingsLoading}
-          isPublishing={isPublishing}
-          replyMode={replyMode}
-          replyAudience={replyAudience}
-          onReplyAudienceChange={onReplyAudienceChange}
-          onReplyModeChange={onReplyModeChange}
-        />
-      </aside>
+      <Tabs defaultValue="instructions" className="min-w-0 gap-6">
+        <TabsList variant="pill" aria-label="Configuration settings">
+          <TabsTrigger value="instructions">Instructions</TabsTrigger>
+          <TabsTrigger value="model-style">Model &amp; Style</TabsTrigger>
+          <TabsTrigger value="human-escalation">Human Escalation</TabsTrigger>
+        </TabsList>
+        <TabsContent value="instructions" forceMount className="max-w-4xl data-[state=inactive]:hidden">
+          <AgentSetupSystemPromptPanel
+            value={systemPrompt}
+            onChange={onSystemPromptChange}
+            onApplyTemplate={onApplyTemplate}
+            workflowHref={`/dashboard/${agentId}/workflow`}
+          />
+        </TabsContent>
+        <TabsContent value="model-style" forceMount className="@container data-[state=inactive]:hidden">
+          <div className="grid min-w-0 gap-6 @3xl:grid-cols-2">
+            <AgentSetupConfigurationPanel
+              name={name}
+              model={model}
+              models={models}
+              responseLength={responseLength}
+              emojiUse={emojiUse}
+              formality={formality}
+              humorLevel={humorLevel}
+              onNameChange={onNameChange}
+              onModelChange={onModelChange}
+              onResponseLengthChange={onResponseLengthChange}
+              onEmojiUseChange={onEmojiUseChange}
+              onFormalityChange={onFormalityChange}
+              onHumorLevelChange={onHumorLevelChange}
+              showModelPicker={showModelPicker}
+            />
+            <aside className="flex min-w-0 flex-col gap-6">
+              <AgentSetupRoutingPanel
+                canReadRouting={canReadRouting}
+                canManageRouting={canManageRouting}
+                isLoading={isRoutingSettingsLoading}
+                isPublishing={isPublishing}
+                replyMode={replyMode}
+                replyAudience={replyAudience}
+                onReplyAudienceChange={onReplyAudienceChange}
+                onReplyModeChange={onReplyModeChange}
+              />
+            </aside>
+          </div>
+        </TabsContent>
+        <TabsContent value="human-escalation" forceMount className="data-[state=inactive]:hidden">
+          <HumanEscalationPanel agentId={agentId} />
+        </TabsContent>
+      </Tabs>
       <AgentPlaygroundPanel
         agentId={agentId}
         mode="inline"

@@ -88,6 +88,7 @@ export const updateEscalationMessage = mutation({
     nodeId: v.id("workflowNodes"),
     enabled: v.boolean(),
     message: v.string(),
+    mode: v.optional(v.union(v.literal("ai"), v.literal("manual"))),
   },
   handler: async (ctx, args) => {
     const { agent } = await assertManageableAgent(ctx, args.agentId);
@@ -107,7 +108,8 @@ export const updateEscalationMessage = mutation({
     }
 
     const message = args.message.trim();
-    if (args.enabled && !message) {
+    const mode = args.mode ?? "manual";
+    if (args.enabled && mode === "manual" && !message) {
       throw new Error(
         "Escalation message is required when sending before escalation",
       );
@@ -116,7 +118,8 @@ export const updateEscalationMessage = mutation({
     const now = Math.max(Date.now(), workflow.updatedAt + 1);
     await ctx.db.patch(node._id, {
       escalationMessageEnabled: args.enabled || undefined,
-      escalationMessage: args.enabled ? message : undefined,
+      escalationMessageMode: mode,
+      escalationMessage: message || undefined,
       updatedAt: now,
     });
     await ctx.db.patch(workflow._id, { updatedAt: now });

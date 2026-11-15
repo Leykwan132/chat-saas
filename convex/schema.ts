@@ -1,3 +1,4 @@
+import { autoDeescalationConfigValidator, autoDeescalationTimersTable } from "./autoDeescalationSchema";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { appointmentBookingSessionStatusValidator } from "./appointmentBookingSessionStatus";
@@ -647,6 +648,7 @@ export default defineSchema({
     requestCount: v.number(),
     updatedAt: v.number(),
   }).index("by_partnerId", ["partnerId"]),
+  autoDeescalationTimers: autoDeescalationTimersTable,
   agents: defineTable({
     name: v.string(),
     provider: v.union(
@@ -670,6 +672,7 @@ export default defineSchema({
     fileSize: v.number(),
     userId: v.string(),
     orgId: v.string(),
+    autoDeescalation: v.optional(autoDeescalationConfigValidator),
     escalationEnabled: v.optional(v.boolean()),
     escalationMessage: v.optional(v.string()),
     responseLength: v.optional(
@@ -701,6 +704,7 @@ export default defineSchema({
     .index("by_orgId", ["orgId"])
     .index("by_userId_and_orgId", ["userId", "orgId"]),
   workflows: defineTable({
+    humanEscalationEnabled: v.optional(v.boolean()),
     agentId: v.id("agents"),
     orgId: v.string(),
     userId: v.string(),
@@ -726,6 +730,7 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     escalationMessageEnabled: v.optional(v.boolean()),
+    escalationMessageMode: v.optional(v.union(v.literal("ai"), v.literal("manual"))),
     escalationMessage: v.optional(v.string()),
     escalationKeywordsEnabled: v.optional(v.boolean()),
     escalationKeywords: v.optional(v.array(v.string())),
