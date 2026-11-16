@@ -102,6 +102,7 @@ function FilterRow({
   return (
     <button
       type="button"
+      aria-pressed={isActive}
       onClick={onClick}
       className={cn(
         inboxSidebarItemClassName,
@@ -192,8 +193,8 @@ export type InboxFilterSidebarProps = {
   onOpenChange: (open: boolean) => void;
   assignmentFilter: AssignmentFilter;
   onAssignmentFilterChange: (filter: AssignmentFilter) => void;
-  platformFilter: 'all' | ConversationPlatform;
-  onPlatformFilterChange: (platform: 'all' | ConversationPlatform) => void;
+  platformFilters: ConversationPlatform[];
+  onTogglePlatform: (platform: ConversationPlatform) => void;
   escalatedActive: boolean;
   onEscalatedActiveChange: (active: boolean) => void;
   bookingActive: boolean;
@@ -214,8 +215,8 @@ export function InboxFilterSidebar({
   onOpenChange,
   assignmentFilter,
   onAssignmentFilterChange,
-  platformFilter,
-  onPlatformFilterChange,
+  platformFilters,
+  onTogglePlatform,
   escalatedActive,
   onEscalatedActiveChange,
   bookingActive,
@@ -278,7 +279,7 @@ export function InboxFilterSidebar({
             icon={Inbox}
             isActive={
               assignmentFilter === 'all' &&
-              platformFilter === 'all' &&
+              platformFilters.length === 0 &&
               !escalatedActive &&
               !bookingActive
             }
@@ -318,7 +319,7 @@ export function InboxFilterSidebar({
           <RailButton
             label="Platforms"
             icon={LayoutGrid}
-            isActive={platformFilter !== 'all'}
+            isActive={platformFilters.length > 0}
             onClick={() => onOpenChange(true)}
           />
           {userTags.length > 0 ? (
@@ -364,21 +365,14 @@ export function InboxFilterSidebar({
           </FilterSection>
 
           <FilterSection title="Platform">
-            <FilterRow
-              label="All platforms"
-              icon={<LayoutGrid className="text-muted-foreground" />}
-              isActive={platformFilter === 'all'}
-              showCount={false}
-              onClick={() => onPlatformFilterChange('all')}
-            />
             {connectedPlatforms.map((platform) => (
               <FilterRow
                 key={platform}
                 label={PLATFORM_LABEL[platform]}
                 icon={<PlatformIcon platform={platform} />}
-                isActive={platformFilter === platform}
+                isActive={platformFilters.includes(platform)}
                 count={counts.byPlatform[platform] ?? 0}
-                onClick={() => onPlatformFilterChange(platform)}
+                onClick={() => onTogglePlatform(platform)}
               />
             ))}
           </FilterSection>
