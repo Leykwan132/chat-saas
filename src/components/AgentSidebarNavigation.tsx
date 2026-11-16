@@ -92,7 +92,7 @@ export function AgentSidebarNavigation({
         if (section.items.length === 1) {
           return (
             <SidebarGroup key={section.label} className="py-[0.15rem]">
-              <SidebarMenu className="gap-0">{renderItems(section.items, 'px-[0.45rem] group-data-[collapsible=icon]:mx-[0.45rem] group-data-[collapsible=icon]:w-auto')}</SidebarMenu>
+              <SidebarMenu className="gap-0">{renderItems(section.items, 'px-[0.45rem] group-data-[collapsible=icon]:self-center')}</SidebarMenu>
             </SidebarGroup>
           );
         }
@@ -114,7 +114,7 @@ export function AgentSidebarNavigation({
           >
             <SidebarGroup className="py-[0.15rem]">
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={section.label} className="px-[0.45rem] group-data-[collapsible=icon]:mx-[0.45rem] group-data-[collapsible=icon]:w-auto">
+                <SidebarMenuButton tooltip={section.label} className="px-[0.45rem] group-data-[collapsible=icon]:self-center">
                   <SectionIcon />
                   <span>{section.label}</span>
                   <PiCaretDown className="ml-auto transition-transform group-data-[state=closed]/section:rotate-[-90deg] group-data-[collapsible=icon]:hidden" />

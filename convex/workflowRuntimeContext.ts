@@ -130,7 +130,7 @@ export function getEscalationMessageForWorkflowNode(
   );
   if (
     node?.kind !== "humanEscalation" ||
-    node.escalationMessageEnabled !== true
+    node.escalationMessageEnabled !== true || node.escalationMessageMode === "ai"
   ) {
     return undefined;
   }
@@ -147,7 +147,8 @@ export const loadForAgent = internalQuery({
 
     const nodes = await listWorkflowNodes(ctx, workflow._id);
     const edges = await listWorkflowEdges(ctx, workflow._id);
-    const readyGraph = getReadyWorkflowGraph(nodes, edges);
+    const activeNodes = nodes.filter((node) => workflow.humanEscalationEnabled !== false || node.kind !== "humanEscalation");
+    const readyGraph = getReadyWorkflowGraph(activeNodes, edges);
     const activeServices = await listActiveServices(ctx, args.agentId);
     const serviceById = new Map(
       activeServices.map((service) => [service._id, service]),
@@ -166,6 +167,7 @@ export const loadForAgent = internalQuery({
         goal: goalForNode(node),
         textToSend: textToSendForNode(node),
         escalationMessageEnabled: node.escalationMessageEnabled,
+        escalationMessageMode: node.escalationMessageMode,
         escalationMessage: node.escalationMessage,
         notes: node.notes,
         incomingConditions: readyGraph.edges

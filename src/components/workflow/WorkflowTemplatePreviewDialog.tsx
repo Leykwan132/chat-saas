@@ -104,7 +104,7 @@ export function WorkflowTemplatePreviewDialog({
         <DialogHeader className="shrink-0 border-b p-6">
           <DialogTitle>Preview {preview.template.name}</DialogTitle>
           <DialogDescription>
-            Review this read-only workflow before replacing your current map.
+            Review this read-only workflow before replacing your current map. Human Escalation settings in Instructions stay unchanged.
           </DialogDescription>
         </DialogHeader>
         <div className="min-h-0 flex-1 bg-muted/35">

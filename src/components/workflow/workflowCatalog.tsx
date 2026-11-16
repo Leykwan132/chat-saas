@@ -42,7 +42,7 @@ export const workflowKindIcons = {
   end: Scissors,
 } satisfies Record<WorkflowNodeKind, typeof MessageCircle>;
 
-export const workflowAddOptions = ADDABLE_WORKFLOW_NODE_KINDS.map((kind) => ({
+export const workflowAddOptions = ADDABLE_WORKFLOW_NODE_KINDS.filter((kind) => kind !== 'humanEscalation').map((kind) => ({
   kind,
   label: WORKFLOW_NODE_META[kind].label,
   Icon: workflowKindIcons[kind],

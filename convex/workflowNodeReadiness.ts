@@ -47,6 +47,7 @@ export function getWorkflowNodeReadinessIssueCount(
   if (node.kind === "start") return 0;
   if (node.kind === "humanEscalation") {
     return node.escalationMessageEnabled === true &&
+      node.escalationMessageMode !== "ai" &&
       !node.escalationMessage?.trim()
       ? 1
       : 0;

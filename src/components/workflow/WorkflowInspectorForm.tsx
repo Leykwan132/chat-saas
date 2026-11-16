@@ -199,6 +199,7 @@ export function WorkflowInspectorForm({
                     agentId={agentId}
                     nodeId={node._id}
                     enabled={node.escalationMessageEnabled}
+                    mode={node.escalationMessageMode}
                     message={node.escalationMessage}
                     disabled={isSaving}
                     presentation="inspector"

@@ -29,6 +29,7 @@ export type WorkflowRuntimeContextForPrompt = {
     goal?: string;
     textToSend?: string;
     escalationMessageEnabled?: boolean;
+    escalationMessageMode?: "ai" | "manual";
     escalationMessage?: string;
     notes?: string;
     incomingConditions: Array<{
@@ -144,7 +145,7 @@ export function buildWorkflowRuntimeBlock(
           : undefined;
       const escalationMessage =
         node.kind === "humanEscalation" &&
-        node.escalationMessageEnabled === true
+        node.escalationMessageEnabled === true && node.escalationMessageMode !== "ai"
           ? "- Send the configured customer message before escalating."
           : undefined;
       const notes = node.notes ? `- Notes: ${node.notes}` : undefined;

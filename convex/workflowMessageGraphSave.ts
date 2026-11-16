@@ -1,3 +1,4 @@
+import { getPreservedEscalationRules, reconnectPreservedEscalationRules } from "./workflowEscalationPreservation";
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
@@ -45,6 +46,8 @@ export const replace = mutation({
     validateWorkflowDraft(args.nodes, args.edges);
     const existingNodes = await listWorkflowNodes(ctx, workflow._id);
     const existingEdges = await listWorkflowEdges(ctx, workflow._id);
+    const preserved = getPreservedEscalationRules(existingNodes, existingEdges, args.nodes, args.edges.length);
+    const preservedEdgeIds = new Set(preserved.edges.map((edge) => edge._id));
     const existingNodeById = new Map(
       existingNodes.map((node) => [node._id, node]),
     );
@@ -73,6 +76,7 @@ export const replace = mutation({
     const now = Math.max(Date.now(), workflow.updatedAt + 1);
     const nodeIdByClientId = new Map<string, Id<"workflowNodes">>();
     for (const edge of existingEdges) {
+      if (preservedEdgeIds.has(edge._id)) continue;
       await ctx.db.delete(edge._id);
     }
     for (const node of args.nodes) {
@@ -102,7 +106,7 @@ export const replace = mutation({
       }
     }
     for (const node of existingNodes) {
-      if (retainedNodeIds.has(node._id)) continue;
+      if (retainedNodeIds.has(node._id) || preserved.nodeIds.has(node._id)) continue;
       await deleteOrQueueWorkflowNodeMedia(ctx, agent, node._id);
       await ctx.db.delete(node._id);
     }
@@ -117,6 +121,8 @@ export const replace = mutation({
         updatedAt: now,
       });
     }
+    const start = args.nodes.find((node) => node.kind === "start")!;
+    await reconnectPreservedEscalationRules(ctx, preserved, retainedNodeIds, nodeIdByClientId.get(start.clientId)!, now);
     await ctx.db.patch(workflow._id, {
       layoutOrientation: args.layoutOrientation,
       updatedAt: now,

@@ -16,7 +16,7 @@ export async function getIncomingKeywordMatch(ctx: QueryCtx | MutationCtx, args:
       .order("desc").first();
     if (!source || source.conversationId !== conversation._id || source.direction !== "incoming" || source.mediaUrl !== undefined) return null;
     const workflow = await getWorkflowForAgent(ctx, conversation.assignedAgentId);
-    if (!workflow) return null;
+    if (!workflow || workflow.humanEscalationEnabled === false) return null;
     const nodes = await listWorkflowNodes(ctx, workflow._id);
     for (const node of nodes) {
       if (node.kind !== "humanEscalation" || node.escalationKeywordsEnabled !== true || node.isReady !== true) continue;
@@ -24,6 +24,7 @@ export async function getIncomingKeywordMatch(ctx: QueryCtx | MutationCtx, args:
       if (keyword !== undefined) {
         return {
           keyword,
+          workflowNodeId: node._id,
           question: source.content,
           sourceAgentMessageId: args.promptMessageId,
           message: node.escalationMessageEnabled === true ? node.escalationMessage?.trim() : undefined,
@@ -40,6 +41,7 @@ export const match = internalQuery({
   },
   returns: v.union(v.null(), v.object({
     keyword: v.string(),
+    workflowNodeId: v.optional(v.id("workflowNodes")),
     question: v.string(),
     sourceAgentMessageId: v.string(),
     message: v.optional(v.string()),

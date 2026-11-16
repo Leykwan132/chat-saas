@@ -13,6 +13,7 @@ type WorkflowNodeDirectControlsProps = {
   kind: WorkflowNodeKind;
   description?: string;
   escalationMessageEnabled?: boolean;
+  escalationMessageMode?: "ai" | "manual";
   escalationMessage?: string;
   escalationKeywordsEnabled?: boolean;
   escalationKeywords?: string[];
@@ -30,6 +31,7 @@ export function WorkflowNodeDirectControls({
   kind,
   description,
   escalationMessageEnabled,
+  escalationMessageMode,
   escalationMessage,
   escalationKeywordsEnabled,
   escalationKeywords,
@@ -91,6 +93,7 @@ export function WorkflowNodeDirectControls({
           agentId={agentId}
           nodeId={nodeId}
           enabled={escalationMessageEnabled}
+          mode={escalationMessageMode}
           message={escalationMessage}
           disabled={disabled}
         />

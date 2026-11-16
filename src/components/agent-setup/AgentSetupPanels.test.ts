@@ -12,3 +12,13 @@ test('system prompt panel receives the agent workflow route', () => {
 test('forwards the model picker visibility into configuration', () => {
   expect(source).toContain('showModelPicker={showModelPicker}');
 });
+
+
+test('Configuration has three tabs while keeping their drafts mounted', () => {
+  expect(source).toContain('<TabsList variant="pill"');
+  expect(source).toContain('<TabsTrigger value="instructions">Instructions</TabsTrigger>');
+  expect(source).toContain('<TabsTrigger value="model-style">Model &amp; Style</TabsTrigger>');
+  expect(source).toContain('<TabsTrigger value="human-escalation">Human Escalation</TabsTrigger>');
+  expect(source.match(/<TabsContent[^>]*forceMount/g)).toHaveLength(3);
+  expect(source).toContain('defaultValue="instructions"');
+});

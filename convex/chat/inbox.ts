@@ -617,19 +617,20 @@ export const internalEscalateConversation = internalMutation({
     context: v.string(),
     sourceAgentMessageId: v.string(),
   },
+  returns: v.boolean(),
   handler: async (ctx, args) => {
     const conv = await ctx.db.get(args.conversationId);
-    if (!conv?.assignedAgentId) return;
-    if (conv.escalation !== undefined) return;
+    if (!conv?.assignedAgentId) return false;
+    if (conv.escalation !== undefined) return false;
 
     const agent = await ctx.db.get(conv.assignedAgentId);
     if (agent === null) {
-      return;
+      return false;
     }
     const workflow = await ensureWorkflowForAgent(ctx, agent);
     const escalationAvailable = await workflowHasHumanEscalationNode(ctx, workflow._id);
     if (!escalationAvailable) {
-      return;
+      return false;
     }
     const sourceMessage = await ctx.db
       .query("messages")
@@ -674,6 +675,7 @@ export const internalEscalateConversation = internalMutation({
       conversationId: args.conversationId,
     });
     await notifyHumanEscalation(ctx, agent._id, args.conversationId, agent.name);
+    return true;
   },
 });
 

@@ -7,7 +7,6 @@ test('workflow add options start with business-controlled send message', () => {
     'sendImage',
     'sendFile',
     'bookAppointment',
-    'humanEscalation',
     'closeConversation',
   ]);
   expect(workflowAddOptions[0]).toMatchObject({

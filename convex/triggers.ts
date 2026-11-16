@@ -1,3 +1,4 @@
+import { observeEscalationChange, observeHumanReply } from "./autoDeescalationRuntime";
 import { syncEscalationCount } from "./inboxEscalationCounts";
 import { customMutation, customCtx } from "convex-helpers/server/customFunctions";
 import { Triggers } from "convex-helpers/server/triggers";
@@ -62,6 +63,7 @@ triggers.register(
   agentOverviewHumanEscalationsDailyAggregator.idempotentTrigger(),
 );
 triggers.register("conversations", async (ctx, change) => {
+  await observeEscalationChange(ctx, change.oldDoc, change.newDoc);
   if (change.operation === "delete") {
     await removeInboxConversationSummary(ctx, change.id);
     return;
@@ -98,6 +100,7 @@ triggers.register("messages", async (ctx, change) => {
     await removeInboxMessageSearchDocument(ctx, change.id);
     return;
   }
+  await observeHumanReply(ctx, change.oldDoc, change.newDoc);
   await syncWhatsAppFreeMessagingWindow(ctx, change.oldDoc, change.newDoc);
   await syncCustomerReferral(ctx, change.oldDoc, change.newDoc);
   if (messageSearchFieldsChanged(change.oldDoc, change.newDoc)) {

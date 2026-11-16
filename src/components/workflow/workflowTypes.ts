@@ -25,6 +25,7 @@ export type WorkflowNodeData = Record<string, unknown> & {
   title: string;
   description?: string;
   escalationMessageEnabled?: boolean;
+  escalationMessageMode?: "ai" | "manual";
   escalationMessage?: string;
   escalationKeywordsEnabled?: boolean;
   escalationKeywords?: string[];
