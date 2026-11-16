@@ -8,7 +8,7 @@ import type { Doc } from "./_generated/dataModel";
 const modules = import.meta.glob("./**/*.ts");
 afterEach(() => vi.useRealTimers());
 
-async function fixture(enabled = true) {
+async function fixture(enabled = true, startWithHumanReply = true) {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-11-15T01:00:00Z"));
   const t = convexTest(schema, modules);
@@ -48,8 +48,20 @@ async function fixture(enabled = true) {
     if (!message) throw new Error("Missing reply");
     await t.mutation(internal.autoDeescalation.processHumanReply, { messageId, timerId: (await timer())!._id, sentAt: message.statusUpdatedAt ?? message.createdAt, activationRevision: (await timer())!.configRevision });
   };
+  if (startWithHumanReply) await reply();
   return { t, ...ids, timer, conversation, reply, expire, process };
 }
+
+test("escalation and the AI handoff never start the inactivity timer", async () => {
+  const f = await fixture(true, false);
+  await f.reply({ agentId: f.agentId, authorUserId: undefined, content: "Passing you to a teammate" });
+  expect(await f.timer()).toBeNull();
+  vi.advanceTimersByTime(600_000);
+  await f.t.finishInProgressScheduledFunctions();
+  expect(await f.conversation()).toMatchObject({ status: "requires_user_input", assignToAiAgent: false });
+  await f.reply();
+  expect((await f.timer())?.dueAt).toBe(Date.now() + 600_000);
+});
 
 test("timer opens escalation and enables AI without changing assignments or sending messages", async () => {
   const f = await fixture();
@@ -57,7 +69,7 @@ test("timer opens escalation and enables AI without changing assignments or send
   await f.expire();
   expect(await f.conversation()).toMatchObject({ status: "open", assignToAiAgent: true, assignedAgentId: f.agentId, assignedUserId: "teammate" });
   expect((await f.conversation())?.escalation).toBeUndefined();
-  expect(await f.t.run((ctx) => ctx.db.query("messages").take(10))).toEqual([]);
+  expect(await f.t.run((ctx) => ctx.db.query("messages").take(10))).toHaveLength(1);
   expect(await f.t.run((ctx) => ctx.db.query("conversationLogs").take(10))).toHaveLength(2);
 });
 
@@ -73,6 +85,14 @@ test("successful human replies reset the timer and stale timer invocations canno
   vi.setSystemTime(Date.now() + 300_000);
   await f.expire();
   expect((await f.conversation())?.assignToAiAgent).toBe(true);
+});
+
+test("AI replies never restart a timer started by a teammate", async () => {
+  const f = await fixture();
+  const original = await f.timer();
+  vi.setSystemTime(Date.now() + 300_000);
+  await f.reply({ agentId: f.agentId, authorUserId: undefined });
+  expect(await f.timer()).toEqual(original);
 });
 
 test("only a successful teammate text phrase resolves, ignoring case", async () => {
@@ -146,7 +166,7 @@ test("message trigger resumes after the human persistence transaction finishes",
   expect((await f.conversation())?.escalation).toBeUndefined();
 });
 
-test("conversation trigger arms new escalations and cancels timers on manual resolve", async () => {
+test("conversation trigger cancels old timers and waits for a human reply on new escalations", async () => {
   const f = await fixture();
   const { triggers } = await import("./triggers");
   await f.t.run(async (raw) => {
@@ -158,7 +178,10 @@ test("conversation trigger arms new escalations and cancels timers on manual res
     const ctx = triggers.wrapDB(raw);
     await ctx.db.patch(f.conversationId, { escalation: { question: "again", context: "again", escalatedAt: Date.now() + 1 }, status: "requires_user_input" });
   });
-  expect((await f.timer())?.escalatedAt).toBe(Date.now() + 1);
+  expect(await f.timer()).toBeNull();
+  vi.setSystemTime(Date.now() + 1);
+  await f.reply();
+  expect((await f.timer())?.escalatedAt).toBe(Date.now());
 });
 
 test("queued to sent transition processes once and delivery receipts never reset inactivity", async () => {

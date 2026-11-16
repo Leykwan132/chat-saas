@@ -56,16 +56,16 @@ test("custom message off uses an AI-written handoff", async () => {
   expect(f.events).toEqual(["generate", "charge", "send-message", "escalate"]);
 });
 
-test("generation failure never sends or pauses AI", async () => {
+test("generation failure escalates before surfacing the error without sending a default reply", async () => {
   const f = fixture("ai", { generationFailure: true });
   await expect(sendEscalationMessageThenEscalate(f.ctx, args)).rejects.toThrow("Generation failed");
-  expect(f.events).toEqual(["generate"]);
+  expect(f.events).toEqual(["generate", "escalate"]);
 });
 
-test("delivery failure never pauses AI", async () => {
+test("delivery failure escalates before surfacing the channel error", async () => {
   const f = fixture("manual", { deliveryFailure: true });
   await expect(sendEscalationMessageThenEscalate(f.ctx, args)).rejects.toThrow("Channel unavailable");
-  expect(f.events).toEqual(["send-message"]);
+  expect(f.events).toEqual(["send-message", "escalate"]);
 });
 
 test("closed, already escalated or disabled handoffs do nothing", async () => {

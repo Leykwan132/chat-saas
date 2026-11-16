@@ -42,7 +42,7 @@ export const generate = internalAction({
       model: model.languageModel,
       system: handoffInstructions,
       prompt: JSON.stringify({ agentInstructions: input.instructions.slice(0, 12000), formality: input.formality, emojiUse: input.emojiUse, latestCustomerMessage: input.customerMessage.slice(0, 4000), conversation: input.conversation }),
-      maxOutputTokens: 220,
+      maxOutputTokens: 4096,
       maxRetries: AI_GENERATION_MAX_RETRIES,
     });
     const { inputTokens, outputTokens, totalTokens } = result.usage;

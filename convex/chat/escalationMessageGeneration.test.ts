@@ -42,6 +42,15 @@ test("empty generation fails explicitly without returning a default message", as
   await expect(generate._handler(f.ctx, f.args)).rejects.toThrow("empty");
 });
 
+test("reasoning models can finish the handoff before exhausting the output budget", async () => {
+  vi.mocked(generateText).mockImplementation(async (options) => ({
+    text: (options.maxOutputTokens ?? 0) > 1024 ? "我会请同事协助您。" : "",
+    usage: { inputTokens: 80, outputTokens: 1050, totalTokens: 1130 },
+  }) as never);
+  const f = fixture();
+  expect(await generate._handler(f.ctx, f.args)).toMatchObject({ content: "我会请同事协助您。" });
+});
+
 test.each([[false, true], [true, false]])("credits and workspace status gate AI generation", async (credits, active) => {
   const f = fixture(credits, active);
   vi.mocked(generateText).mockClear();
