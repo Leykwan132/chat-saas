@@ -1,0 +1,30 @@
+--- a/src/client/index.ts
++++ b/src/client/index.ts
+@@ -85 +85 @@
+-  runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
++  runQuery: GenericActionCtx<GenericDataModel>["runQuery"];
+@@ -88,2 +88,2 @@
+-  runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
+-  runMutation: GenericMutationCtx<GenericDataModel>["runMutation"];
++  runQuery: GenericActionCtx<GenericDataModel>["runQuery"];
++  runMutation: GenericActionCtx<GenericDataModel>["runMutation"];
+@@ -93,2 +93,2 @@
+-  runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
+-  runMutation: GenericMutationCtx<GenericDataModel>["runMutation"];
++  runQuery: GenericActionCtx<GenericDataModel>["runQuery"];
++  runMutation: GenericActionCtx<GenericDataModel>["runMutation"];
+--- a/dist/client/index.d.ts
++++ b/dist/client/index.d.ts
+@@ -18 +18 @@
+-    runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
++    runQuery: GenericActionCtx<GenericDataModel>["runQuery"];
+@@ -21,2 +21,2 @@
+-    runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
+-    runMutation: GenericMutationCtx<GenericDataModel>["runMutation"];
++    runQuery: GenericActionCtx<GenericDataModel>["runQuery"];
++    runMutation: GenericActionCtx<GenericDataModel>["runMutation"];
+@@ -26,2 +26,2 @@
+-    runQuery: GenericQueryCtx<GenericDataModel>["runQuery"];
+-    runMutation: GenericMutationCtx<GenericDataModel>["runMutation"];
++    runQuery: GenericActionCtx<GenericDataModel>["runQuery"];
++    runMutation: GenericActionCtx<GenericDataModel>["runMutation"];

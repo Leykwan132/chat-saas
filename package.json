@@ -48,7 +48,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "cobe": "^0.6.4",
-    "convex": "^1.36.1",
+    "convex": "^1.50.0",
     "convex-helpers": "^0.1.118",
     "date-fns": "^4.3.0",
     "embla-carousel-react": "^8.6.0",
@@ -105,5 +105,8 @@
     "vite": "^8.0.10",
     "vitest": "1.6.0",
     "wrangler": "^4.103.0"
+  },
+  "patchedDependencies": {
+    "@convex-dev/r2@0.10.1": "patches/@convex-dev%2Fr2@0.10.1.patch"
   }
 }
