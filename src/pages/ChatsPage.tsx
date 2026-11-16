@@ -62,6 +62,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
+import { filterUnreadChats } from '@/lib/inboxUnreadFilter';
+import { filterInboxPlatforms, toggleInboxPlatform } from '@/lib/inboxPlatformFilter';
 import { getPlatformIconClassName } from '@/lib/platformIconStyles';
 import {
   hasVisibleInboxContent,
@@ -309,8 +311,17 @@ export default function ChatsPage() {
   const [highlightedMessageId, setHighlightedMessageId] = useState<Id<'messages'> | null>(null);
   const [mobileConversationSwitcherOpen, setMobileConversationSwitcherOpen] = useState(false);
   const [mobileConversationSearchQuery, setMobileConversationSearchQuery] = useState('');
-  const [platformFilter, setPlatformFilter] = useState<'all' | ConversationPlatform>('all');
+  const [platformFilters, setPlatformFilters] = useState<ConversationPlatform[]>([]);
+  const handleTogglePlatform = (platform: ConversationPlatform) => {
+    setPlatformFilters((selected) => toggleInboxPlatform(selected, platform));
+  };
   const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>('all');
+  const handleAssignmentFilterChange = (filter: AssignmentFilter) => {
+    if (filter === 'unread' && assignmentFilter !== 'unread') {
+      setSelectedConversationId(null);
+    }
+    setAssignmentFilter(filter);
+  };
   const [bookingActive, setBookingActive] = useState(false);
   const [activeLeads, setActiveLeads] = useState<LeadTemperature[]>([]);
   const [activeTags, setActiveTags] = useState<string[]>([]);
@@ -489,10 +500,11 @@ export default function ChatsPage() {
   }, [connectedChannels]);
 
   useEffect(() => {
-    if (platformFilter !== 'all' && !connectedPlatforms.includes(platformFilter)) {
-      setPlatformFilter('all');
-    }
-  }, [connectedPlatforms, platformFilter]);
+    setPlatformFilters((selected) => {
+      const connected = selected.filter((platform) => connectedPlatforms.includes(platform));
+      return connected.length === selected.length ? selected : connected;
+    });
+  }, [connectedPlatforms]);
 
   useEffect(() => {
     if (!selectedConversationId) return;
@@ -644,11 +656,9 @@ export default function ChatsPage() {
           c.message.toLowerCase().includes(q),
       );
     }
-    if (platformFilter !== 'all') {
-      list = list.filter((c) => c.platform === platformFilter);
-    }
+    list = filterInboxPlatforms(list, platformFilters);
     if (assignmentFilter === 'unread') {
-      list = list.filter((c) => c.unread > 0);
+      list = filterUnreadChats(list, selectedConversationId);
     } else if (assignmentFilter === 'assigned_me') {
       list = list.filter((c) => c.assignedUserId === currentUser?.workosUserId);
     } else if (assignmentFilter === 'unassigned') {
@@ -675,8 +685,9 @@ export default function ChatsPage() {
     return list;
   }, [
     chatItems,
+    selectedConversationId,
     searchQuery,
-    platformFilter,
+    platformFilters,
     assignmentFilter,
     escalatedActive,
     bookingActive,
@@ -778,13 +789,17 @@ export default function ChatsPage() {
         icon: <UserX className="text-muted-foreground" />,
       });
     }
-    if (platformFilter !== 'all') {
+    for (const platformFilter of platformFilters) {
       const PlatformIcon =
         platformFilter === 'whatsapp'
           ? SiWhatsapp
           : platformFilter === 'instagram'
             ? SiInstagram
-            : SiMessenger;
+            : platformFilter === 'messenger'
+              ? SiMessenger
+              : platformFilter === 'avatar'
+                ? ScanFace
+                : Globe;
       filters.push({
         id: `platform:${platformFilter}`,
         label: INBOX_PLATFORM_LABEL[platformFilter],
@@ -826,7 +841,7 @@ export default function ChatsPage() {
     return filters;
   }, [
     assignmentFilter,
-    platformFilter,
+    platformFilters,
     escalatedActive,
     bookingActive,
     activeLeads,
@@ -843,7 +858,7 @@ export default function ChatsPage() {
       return;
     }
     if (id.startsWith('platform:')) {
-      setPlatformFilter('all');
+      setPlatformFilters((selected) => selected.filter((platform) => platform !== id.slice('platform:'.length)));
       return;
     }
     if (id === 'status:escalated') {
@@ -1318,9 +1333,9 @@ export default function ChatsPage() {
             open={filterSidebarOpen}
             onOpenChange={setFilterSidebarOpen}
             assignmentFilter={assignmentFilter}
-            onAssignmentFilterChange={setAssignmentFilter}
-            platformFilter={platformFilter}
-            onPlatformFilterChange={setPlatformFilter}
+            onAssignmentFilterChange={handleAssignmentFilterChange}
+            platformFilters={platformFilters}
+            onTogglePlatform={handleTogglePlatform}
             escalatedActive={escalatedActive}
             onEscalatedActiveChange={setEscalatedActive}
             bookingActive={bookingActive}
