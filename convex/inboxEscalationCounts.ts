@@ -1,3 +1,4 @@
+import { inboxCountScope, sidebarCountKeys, sidebarCountPrefix } from "./inboxSidebarCountKeys";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { query, internalMutation, type MutationCtx } from "./_generated/server";
@@ -20,7 +21,7 @@ export async function syncEscalationCount(
   const membership = await ctx.db.query("inboxEscalationCountMemberships")
     .withIndex("by_summaryId", (q) => q.eq("summaryId", summaryId)).unique();
   const previousKeys = membership?.scopeKeys ?? [];
-  const nextKeys = [...new Set(scopeKeys(summary))];
+  const nextKeys = [...new Set([...scopeKeys(summary), ...sidebarCountKeys(summary)])];
   for (const key of new Set([...previousKeys, ...nextKeys])) {
     const delta = Number(nextKeys.includes(key)) - Number(previousKeys.includes(key));
     if (delta === 0) continue;
@@ -71,7 +72,47 @@ export const backfill = internalMutation({
       const ready = await ctx.db.query("inboxEscalationCounts")
         .withIndex("by_scopeKey", (q) => q.eq("scopeKey", "backfill-complete")).unique();
       if (!ready) await ctx.db.insert("inboxEscalationCounts", { scopeKey: "backfill-complete", count: 0 });
+      const sidebarReady = await ctx.db.query("inboxEscalationCounts")
+        .withIndex("by_scopeKey", (q) => q.eq("scopeKey", "sidebar-backfill-complete")).unique();
+      if (!sidebarReady) await ctx.db.insert("inboxEscalationCounts", { scopeKey: "sidebar-backfill-complete", count: 0 });
     }
     return null;
+  },
+});
+
+export const getSidebarCounts = query({
+  args: { agentId: v.optional(v.id("agents")) },
+  returns: v.union(v.null(), v.object({
+    all: v.number(), unread: v.number(), assigned_me: v.number(), unassigned: v.number(),
+    escalated: v.number(), booking: v.number(),
+    byPlatform: v.record(v.string(), v.number()), byLead: v.record(v.string(), v.number()),
+    byTag: v.array(v.object({ tag: v.string(), count: v.number() })),
+  })),
+  handler: async (ctx, args) => {
+    const { orgId, userId } = await getAuthContext(ctx);
+    const ready = await ctx.db.query("inboxEscalationCounts")
+      .withIndex("by_scopeKey", (q) => q.eq("scopeKey", "sidebar-backfill-complete")).unique();
+    if (!ready) return null;
+    const scope = inboxCountScope(orgId, userId);
+    const prefix = sidebarCountPrefix(args.agentId === undefined ? scope : [...scope, args.agentId]);
+    const counts = {
+      all: 0, unread: 0, assigned_me: 0, unassigned: 0, escalated: 0, booking: 0,
+      byPlatform: {} as Record<string, number>, byLead: {} as Record<string, number>,
+      byTag: [] as { tag: string; count: number }[],
+    };
+    for await (const counter of ctx.db.query("inboxEscalationCounts")
+      .withIndex("by_scopeKey", (q) => q.gte("scopeKey", prefix).lt("scopeKey", `${prefix}\uffff`))) {
+      const [metric, value] = JSON.parse(counter.scopeKey.slice(prefix.length)) as [string, string];
+      if (metric === "assigned") {
+        if (value === userId) counts.assigned_me = counter.count;
+      } else if (metric === "byTag") {
+        if (counter.count > 0) counts.byTag.push({ tag: value, count: counter.count });
+      } else if (metric === "byPlatform" || metric === "byLead") {
+        if (counter.count > 0) counts[metric][value] = counter.count;
+      } else if (metric === "all" || metric === "unread" || metric === "unassigned" || metric === "escalated" || metric === "booking") {
+        counts[metric] = counter.count;
+      }
+    }
+    return counts;
   },
 });
