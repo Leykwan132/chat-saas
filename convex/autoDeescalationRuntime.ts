@@ -81,7 +81,8 @@ export async function observeEscalationChange(ctx: MutationCtx, before: Conversa
     return;
   }
   if (before?.escalation?.escalatedAt !== after.escalation.escalatedAt || before?.escalation?.sourceMessageId !== after.escalation.sourceMessageId) {
-    await scheduleTimer(ctx, after, after.escalation.escalatedAt);
+    const timer = await getTimer(ctx, conversationId);
+    if (timer) await removeTimer(ctx, timer);
   }
 }
 
