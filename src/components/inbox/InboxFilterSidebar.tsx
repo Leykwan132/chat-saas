@@ -205,7 +205,7 @@ export type InboxFilterSidebarProps = {
   onToggleTag: (tag: string) => void;
   connectedPlatforms: ConversationPlatform[];
   userTags: string[];
-  counts: InboxFilterCounts;
+  counts?: InboxFilterCounts;
   canCreateTag?: boolean;
   onCreateTagClick?: () => void;
 };
@@ -338,28 +338,28 @@ export function InboxFilterSidebar({
               label="All"
               icon={<Inbox className="text-muted-foreground" />}
               isActive={assignmentFilter === 'all'}
-              count={counts.all}
+              count={counts?.all}
               onClick={() => onAssignmentFilterChange('all')}
             />
             <FilterRow
               label="Unread"
               icon={<MessageSquareDot className="text-muted-foreground" />}
               isActive={assignmentFilter === 'unread'}
-              count={counts.unread}
+              count={counts?.unread}
               onClick={() => onAssignmentFilterChange('unread')}
             />
             <FilterRow
               label="Assigned to me"
               icon={<User className="text-muted-foreground" />}
               isActive={assignmentFilter === 'assigned_me'}
-              count={counts.assigned_me}
+              count={counts?.assigned_me}
               onClick={() => onAssignmentFilterChange('assigned_me')}
             />
             <FilterRow
               label="Unassigned"
               icon={<UserX className="text-muted-foreground" />}
               isActive={assignmentFilter === 'unassigned'}
-              count={counts.unassigned}
+              count={counts?.unassigned}
               onClick={() => onAssignmentFilterChange('unassigned')}
             />
           </FilterSection>
@@ -371,7 +371,7 @@ export function InboxFilterSidebar({
                 label={PLATFORM_LABEL[platform]}
                 icon={<PlatformIcon platform={platform} />}
                 isActive={platformFilters.includes(platform)}
-                count={counts.byPlatform[platform] ?? 0}
+                count={counts ? counts.byPlatform[platform] ?? 0 : undefined}
                 onClick={() => onTogglePlatform(platform)}
               />
             ))}
@@ -382,14 +382,14 @@ export function InboxFilterSidebar({
               label="Escalated"
               icon={<AlertCircle className="text-amber-500" />}
               isActive={escalatedActive}
-              count={counts.escalated}
+              count={counts?.escalated}
               onClick={() => onEscalatedActiveChange(!escalatedActive)}
             />
             <FilterRow
               label="Booked"
               icon={<BookedCheckIcon size="sm" />}
               isActive={bookingActive}
-              count={counts.booking}
+              count={counts?.booking}
               onClick={() => onBookingActiveChange(!bookingActive)}
             />
           </FilterSection>
@@ -404,7 +404,7 @@ export function InboxFilterSidebar({
                   label={lead}
                   icon={<Icon className={style.iconClass} />}
                   isActive={activeLeads.includes(lead)}
-                  count={counts.byLead[lead] ?? 0}
+                  count={counts ? counts.byLead[lead] ?? 0 : undefined}
                   onClick={() => onToggleLead(lead)}
                 />
               );
@@ -445,7 +445,7 @@ export function InboxFilterSidebar({
                   label={tag}
                   icon={<Tag className="text-muted-foreground" />}
                   isActive={activeTags.includes(tag)}
-                  count={counts.byTag[tag] ?? 0}
+                  count={counts ? counts.byTag[tag] ?? 0 : undefined}
                   onClick={() => onToggleTag(tag)}
                 />
               ))

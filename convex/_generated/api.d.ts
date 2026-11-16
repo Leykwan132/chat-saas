@@ -322,6 +322,7 @@ import type * as inboxProjectionChanges from "../inboxProjectionChanges.js";
 import type * as inboxSearch from "../inboxSearch.js";
 import type * as inboxSearchMigration from "../inboxSearchMigration.js";
 import type * as inboxSearchProjection from "../inboxSearchProjection.js";
+import type * as inboxSidebarCountKeys from "../inboxSidebarCountKeys.js";
 import type * as instagramApi from "../instagramApi.js";
 import type * as instagramAuth from "../instagramAuth.js";
 import type * as instagramChannelAssignment from "../instagramChannelAssignment.js";
@@ -913,6 +914,7 @@ declare const fullApi: ApiFromModules<{
   inboxSearch: typeof inboxSearch;
   inboxSearchMigration: typeof inboxSearchMigration;
   inboxSearchProjection: typeof inboxSearchProjection;
+  inboxSidebarCountKeys: typeof inboxSidebarCountKeys;
   instagramApi: typeof instagramApi;
   instagramAuth: typeof instagramAuth;
   instagramChannelAssignment: typeof instagramChannelAssignment;

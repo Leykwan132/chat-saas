@@ -279,8 +279,8 @@ export default function ChatsPage() {
     typedAgentId ? { agentId: typedAgentId } : {},
   );
   const [escalatedActive, setEscalatedActive] = useState(false);
-  const escalationCount = useQuery(
-    api.inboxEscalationCounts.getForCurrentOrg,
+  const sidebarCounts = useQuery(
+    api.inboxEscalationCounts.getSidebarCounts,
     typedAgentId ? { agentId: typedAgentId } : {},
   );
   const {
@@ -575,7 +575,7 @@ export default function ChatsPage() {
     />
   ) : undefined;
 
-  const { chatItems, allChatItems } = useMemo(() => {
+  const { chatItems } = useMemo(() => {
     const mapChat = (conv: (typeof inboxSummaries)[number]): InboxChatListItem => ({
       id: conv.conversationId,
       name: conv.contactName ?? 'Unknown contact',
@@ -599,52 +599,11 @@ export default function ChatsPage() {
     return { allChatItems, chatItems: escalatedActive ? inboxSummaries.map(mapChat) : allChatItems };
   }, [allInboxSummaries, inboxSummaries, escalatedActive]);
 
-  const allExistingTags = useMemo(() => {
-    const tagsSet = new Set<string>();
-    for (const conv of allInboxSummaries) {
-      for (const tag of conv.tags) {
-        tagsSet.add(tag);
-      }
-    }
-    return Array.from(tagsSet).sort();
-  }, [allInboxSummaries]);
-
-  const filterCounts = useMemo(() => {
-    const counts = {
-      all: allChatItems.length,
-      unread: 0,
-      assigned_me: 0,
-      unassigned: 0,
-      escalated: escalationCount ?? undefined,
-      booking: 0,
-      byPlatform: {} as Partial<Record<ConversationPlatform, number>>,
-      byLead: {} as Partial<Record<LeadTemperature, number>>,
-      byTag: {} as Record<string, number>,
-    };
-    for (const chat of allChatItems) {
-      if (chat.unread > 0) {
-        counts.unread += 1;
-      }
-      if (chat.assignedUserId === currentUser?.workosUserId) {
-        counts.assigned_me += 1;
-      }
-      if (!chat.assignedUserId) {
-        counts.unassigned += 1;
-      }
-      if (chat.hasBooking) {
-        counts.booking += 1;
-      }
-      counts.byPlatform[chat.platform] = (counts.byPlatform[chat.platform] ?? 0) + 1;
-      if (chat.leadTemperature) {
-        counts.byLead[chat.leadTemperature] =
-          (counts.byLead[chat.leadTemperature] ?? 0) + 1;
-      }
-      for (const tag of chat.tags ?? []) {
-        counts.byTag[tag] = (counts.byTag[tag] ?? 0) + 1;
-      }
-    }
-    return counts;
-  }, [allChatItems, currentUser?.workosUserId, escalationCount]);
+  const filterCounts = useMemo(() => sidebarCounts ? {
+    ...sidebarCounts,
+    byTag: Object.fromEntries(sidebarCounts.byTag.map(({ tag, count }) => [tag, count])),
+  } : undefined, [sidebarCounts]);
+  const allExistingTags = useMemo(() => Object.keys(filterCounts?.byTag ?? {}).sort(), [filterCounts]);
 
   const filteredChats = useMemo(() => {
     let list = chatItems;
