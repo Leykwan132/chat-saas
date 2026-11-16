@@ -6,7 +6,7 @@
   "scripts": {
     "test": "vitest run && node --test kilobot-docs/tests/*.test.mjs",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "node --max-old-space-size=6144 ./node_modules/typescript/bin/tsc -b && vite build",
     "lint": "eslint .",
     "preview": "bun run build && wrangler dev",
     "deploy": "bun run build && wrangler deploy"
