@@ -1,4 +1,5 @@
 import { httpRouter } from "convex/server";
+import { registerIntegrationRoutes } from "./integrations/http";
 import type { FunctionReference } from "convex/server";
 import { httpAction, type ActionCtx } from "./_generated/server";
 import { api, internal } from "./_generated/api";
@@ -19,6 +20,7 @@ import {
 } from "./signedRequest";
 
 const http = httpRouter();
+registerIntegrationRoutes(http);
 authKit.registerRoutes(http);
 
 http.route({

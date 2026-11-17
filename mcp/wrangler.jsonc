@@ -1,0 +1,29 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "kilobot-mcp-staging",
+  "account_id": "1b9fe32d43db06a940b1e6a928b700f1",
+  "main": "index.ts",
+  "compatibility_date": "2026-06-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "vars": {
+    "MCP_ENABLED": "true",
+    "MCP_RESOURCE": "https://kilobot-mcp-staging.leykwan132.workers.dev/mcp",
+    "WORKOS_ISSUER": "https://mighty-nacre-26-staging.authkit.app",
+    "WORKOS_JWKS_URL": "https://mighty-nacre-26-staging.authkit.app/oauth2/jwks",
+  },
+  "services": [
+    {
+      "binding": "KILOBOT_BACKEND",
+      "service": "kilobot",
+      "entrypoint": "KilobotIntegrationEntrypoint",
+    },
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "CONSENT_LIMITER", "class_name": "ConsentRateLimiter" },
+    ],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ConsentRateLimiter"] }],
+}

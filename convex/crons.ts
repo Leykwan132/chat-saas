@@ -3,16 +3,29 @@ import { internal } from "./_generated/api";
 import { parseAdvancedAnalyticsCronUtc } from "./analyticsCronSchedule";
 
 const crons = cronJobs();
+crons.interval(
+  "clean integration audit",
+  { hours: 1 },
+  internal.integrations.audit.cleanup,
+  {},
+);
 const advancedAnalyticsCronSchedule = parseAdvancedAnalyticsCronUtc(
   process.env.ADVANCED_ANALYTICS_CRON_UTC,
 );
-const dailyGoogleCalendarMaintenance = (internal as unknown as {
-  googleCalendar: {
-    watchActions: {
-      runDailyGoogleCalendarMaintenance: FunctionReference<"action", "internal", Record<string, never>, null>;
+const dailyGoogleCalendarMaintenance = (
+  internal as unknown as {
+    googleCalendar: {
+      watchActions: {
+        runDailyGoogleCalendarMaintenance: FunctionReference<
+          "action",
+          "internal",
+          Record<string, never>,
+          null
+        >;
+      };
     };
-  };
-}).googleCalendar.watchActions.runDailyGoogleCalendarMaintenance;
+  }
+).googleCalendar.watchActions.runDailyGoogleCalendarMaintenance;
 
 // Refresh long-lived Instagram tokens daily. Each token is valid for 60 days
 // but can be refreshed any time after it is 24 hours old, so we sweep every
@@ -55,7 +68,5 @@ crons.daily(
   internal.analyticsInsights.runDailyAnalysis,
   {},
 );
-
-
 
 export default crons;

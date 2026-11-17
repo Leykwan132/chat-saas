@@ -1,0 +1,14 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "kilobot-integration-staging",
+  "account_id": "1b9fe32d43db06a940b1e6a928b700f1",
+  "main": "staging.ts",
+  "compatibility_date": "2026-06-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "vars": {
+    "INTEGRATION_ENABLED": "false",
+    "INTEGRATION_ENVIRONMENT": "staging",
+  },
+  "observability": { "enabled": true },
+}
