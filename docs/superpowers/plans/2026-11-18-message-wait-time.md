@@ -49,4 +49,4 @@
 
 - [x] Run focused tests, appropriate backend/app checks, scoped lint/format and full suite; report unrelated existing landing-widget failure separately.
 - [x] Independent review of state races, media, booking/idempotency and delivery; fix findings with regression tests.
-- [ ] Update the existing open PR if still open, excluding unrelated edits. Update continuity; no production changelog until production release is confirmed.
+- [x] Update the existing open PR if still open, excluding unrelated edits. Update continuity; no production changelog until production release is confirmed.
