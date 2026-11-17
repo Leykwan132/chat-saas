@@ -675,6 +675,7 @@ export default defineSchema({
     userId: v.string(),
     orgId: v.string(),
     autoDeescalation: v.optional(autoDeescalationConfigValidator),
+    autoResume: v.optional(autoDeescalationConfigValidator),
     escalationEnabled: v.optional(v.boolean()),
     escalationMessage: v.optional(v.string()),
     responseLength: v.optional(

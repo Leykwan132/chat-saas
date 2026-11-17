@@ -119,6 +119,7 @@ export function AgentSetupPanels({
             />
             <aside className="flex min-w-0 flex-col gap-6">
               <AgentSetupRoutingPanel
+                agentId={agentId}
                 canReadRouting={canReadRouting}
                 canManageRouting={canManageRouting}
                 isLoading={isRoutingSettingsLoading}

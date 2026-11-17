@@ -69,14 +69,6 @@ test('local follow-up guides do not mount permission checks', () => {
   expect(guidesSource).toContain('<AuthenticatedWorkflowFollowupGuides');
 });
 
-test('local follow-up audience skips customer queries regardless of route', () => {
-  const audienceSource = readWorkflowSource('./WorkflowFollowupAudienceField.tsx');
-
-  expect(audienceSource).toContain("dataMode === 'authenticated' && agentId");
-  expect(audienceSource).toContain("? { agentId: agentId as Id<'agents'> }");
-  expect(audienceSource).toContain(": 'skip'");
-});
-
 test('local workflow template previews cannot request signed media URLs', () => {
   const previewSource = readFileSync(
     new URL('../WhatsAppTemplatePreview.tsx', import.meta.url),

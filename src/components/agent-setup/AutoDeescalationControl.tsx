@@ -1,47 +1,92 @@
 import { Clock3, Tags } from "lucide-react";
-import { useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
-import { toast } from 'sonner';
-import { api } from '../../../convex/_generated/api';
-import type { Doc, Id } from '../../../convex/_generated/dataModel';
-import { normalizeEscalationKeywords } from '../../../shared/escalationKeywords';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { KeywordTriggersInput } from './KeywordTriggersInput';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { toast } from "sonner";
+import { api } from "../../../convex/_generated/api";
+import type { Doc, Id } from "../../../convex/_generated/dataModel";
+import { normalizeEscalationKeywords } from "../../../shared/escalationKeywords";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { KeywordTriggersInput } from "./KeywordTriggersInput";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Skeleton } from "@/components/ui/skeleton";
 
-type Config = NonNullable<Doc<'agents'>['autoDeescalation']>;
+type Config = NonNullable<Doc<"agents">["autoDeescalation"]>;
+type Scope = "normal" | undefined;
 
-export function AutoDeescalationSettings({ agentId }: { agentId: Id<'agents'> }) {
-  const config = useQuery(api.autoDeescalationConfig.get, { agentId });
+export function AutoDeescalationSettings({
+  agentId,
+  scope,
+  disabled = false,
+}: {
+  agentId: Id<"agents">;
+  scope?: Scope;
+  disabled?: boolean;
+}) {
+  const config = useQuery(api.autoDeescalationConfig.get, { agentId, scope });
   if (config === undefined) return <Skeleton className="h-20 w-full" />;
-  return <AutoDeescalationControl key={`${agentId}-${config?.revision ?? 'new'}`} agentId={agentId} config={config} />;
+  return (
+    <AutoDeescalationControl
+      key={`${agentId}-${scope ?? "escalation"}-${config?.revision ?? "new"}`}
+      agentId={agentId}
+      config={config}
+      scope={scope}
+      disabled={disabled}
+    />
+  );
 }
 
-export function AutoDeescalationControl({ agentId, config }: { agentId: Id<'agents'>; config: Config | null }) {
+export function AutoDeescalationControl({
+  agentId,
+  config,
+  scope,
+  disabled = false,
+}: {
+  agentId: Id<"agents">;
+  config: Config | null;
+  scope?: Scope;
+  disabled?: boolean;
+}) {
   const update = useMutation(api.autoDeescalationConfig.update);
+  const title = scope === "normal" ? "Auto resume" : "Auto Resolve";
   const [enabled, setEnabled] = useState(config?.enabled === true);
-  const [minutes, setMinutes] = useState(config ? String(config.inactivityMinutes) : '');
-  const [phrases, setPhrases] = useState(config?.keywords.join('\n') ?? '');
+  const [minutes, setMinutes] = useState(
+    config ? String(config.inactivityMinutes) : "",
+  );
+  const [phrases, setPhrases] = useState(config?.keywords.join("\n") ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
   const inactivityMinutes = Number(minutes);
-  const validMinutes = minutes.trim() !== '' && Number.isInteger(inactivityMinutes) && inactivityMinutes >= 1 && inactivityMinutes <= 43200;
-  const dirty = enabled !== (config?.enabled === true) || minutes !== (config ? String(config.inactivityMinutes) : '') || phrases !== (config?.keywords.join('\n') ?? '');
-  const canSave = !saving && validMinutes && dirty;
-  const switchId = `auto-deescalation-${agentId}`;
+  const validMinutes =
+    minutes.trim() !== "" &&
+    Number.isInteger(inactivityMinutes) &&
+    inactivityMinutes >= 1 &&
+    inactivityMinutes <= 43200;
+  const dirty =
+    enabled !== (config?.enabled === true) ||
+    minutes !== (config ? String(config.inactivityMinutes) : "") ||
+    phrases !== (config?.keywords.join("\n") ?? "");
+  const canSave = !saving && !disabled && validMinutes && dirty;
+  const unavailable = saving || disabled;
+  const switchId = `${scope === "normal" ? "auto-resume" : "auto-deescalation"}-${agentId}`;
 
   const save = async () => {
+    if (!canSave) return;
     setSaving(true);
     setError(undefined);
     try {
-      const keywords = normalizeEscalationKeywords(phrases.split('\n'));
-      await update({ agentId, enabled, inactivityMinutes, keywords });
-      toast.success('Auto Resolve saved');
+      const keywords = normalizeEscalationKeywords(phrases.split("\n"));
+      await update({ agentId, scope, enabled, inactivityMinutes, keywords });
+      toast.success(`${title} saved`);
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'Could not save Auto Resolve';
+      const message =
+        cause instanceof Error ? cause.message : `Could not save ${title}`;
       setError(message);
       toast.error(message);
     } finally {
@@ -53,39 +98,98 @@ export function AutoDeescalationControl({ agentId, config }: { agentId: Id<'agen
     <FieldGroup className="gap-6">
       <Field orientation="horizontal">
         <div className="flex flex-1 flex-col gap-1">
-          <FieldLabel htmlFor={switchId}>Auto Resolve</FieldLabel>
-          <FieldDescription>Let AI take over after your team.</FieldDescription>
+          <FieldLabel htmlFor={switchId}>{title}</FieldLabel>
+          <FieldDescription>
+            {scope === "normal"
+              ? "For normal conversations after your team replies. Escalated chats use Human Escalation settings."
+              : "Let AI take over after your team."}
+          </FieldDescription>
         </div>
-        <Switch id={switchId} checked={enabled} disabled={saving} onCheckedChange={(nextEnabled) => {
-          setEnabled(nextEnabled);
-          if (!nextEnabled && config) {
-            setMinutes(String(config.inactivityMinutes));
-            setPhrases(config.keywords.join('\n'));
-          }
-        }} />
+        <Switch
+          id={switchId}
+          checked={enabled}
+          disabled={unavailable}
+          onCheckedChange={(nextEnabled) => {
+            setEnabled(nextEnabled);
+            if (!nextEnabled && config) {
+              setMinutes(String(config.inactivityMinutes));
+              setPhrases(config.keywords.join("\n"));
+            }
+          }}
+        />
       </Field>
       {enabled ? (
         <>
-          <Field data-invalid={minutes !== '' && !validMinutes}>
+          <Field data-invalid={minutes !== "" && !validMinutes}>
             <div className="flex flex-col gap-0.5">
-              <FieldLabel htmlFor={`${switchId}-minutes`}><Clock3 aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />Resume AI after (minutes)</FieldLabel>
-              <p className="m-0 text-xs leading-5 text-muted-foreground">The timer restarts each time your team replies.</p>
+              <FieldLabel htmlFor={`${switchId}-minutes`}>
+                <Clock3
+                  aria-hidden="true"
+                  className="size-3.5 shrink-0 text-muted-foreground"
+                />
+                Resume AI after (minutes)
+              </FieldLabel>
+              <p className="m-0 text-xs leading-5 text-muted-foreground">
+                The timer restarts each time your team replies.
+              </p>
             </div>
-            <Input id={`${switchId}-minutes`} type="number" min={1} max={43200} step={1} value={minutes} placeholder="Enter minutes" disabled={saving} aria-invalid={minutes !== '' && !validMinutes} onChange={(event) => setMinutes(event.target.value)} />
+            <Input
+              id={`${switchId}-minutes`}
+              type="number"
+              min={1}
+              max={43200}
+              step={1}
+              value={minutes}
+              placeholder="Enter minutes"
+              disabled={unavailable}
+              aria-invalid={minutes !== "" && !validMinutes}
+              onChange={(event) => setMinutes(event.target.value)}
+            />
           </Field>
           <Field>
             <div className="flex flex-col gap-0.5">
-              <FieldLabel htmlFor={`${switchId}-phrases`}><Tags aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />Auto Resolve Keyword Triggers</FieldLabel>
-              <p className="m-0 text-xs leading-5 text-muted-foreground">Resume AI when your team replies with any of these keywords.</p>
+              <FieldLabel htmlFor={`${switchId}-phrases`}>
+                <Tags
+                  aria-hidden="true"
+                  className="size-3.5 shrink-0 text-muted-foreground"
+                />
+                {scope === "normal"
+                  ? "Auto resume keyword triggers"
+                  : "Auto Resolve Keyword Triggers"}
+              </FieldLabel>
+              <p className="m-0 text-xs leading-5 text-muted-foreground">
+                Resume AI when your team replies with any of these keywords.
+              </p>
             </div>
-            <KeywordTriggersInput id={`${switchId}-phrases`} label="Auto Resolve keyword" placeholder="e.g. resolved" values={phrases ? phrases.split('\n') : []} disabled={saving} onValuesChange={(keywords) => setPhrases(keywords.join('\n'))} />
+            <KeywordTriggersInput
+              id={`${switchId}-phrases`}
+              label={`${title} keyword`}
+              placeholder="e.g. resolved"
+              values={phrases ? phrases.split("\n") : []}
+              disabled={unavailable}
+              onValuesChange={(keywords) => setPhrases(keywords.join("\n"))}
+            />
           </Field>
         </>
       ) : null}
-      {error ? <p role="alert" className="m-0 text-sm text-destructive">{error}</p> : null}
-      {(enabled || config) ? (
+      {error ? (
+        <p role="alert" className="m-0 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+      {enabled || config ? (
         <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" size="sm" variant={canSave ? 'default' : 'outline'} disabled={!canSave} onClick={() => { void save(); }}>{saving ? 'Saving…' : 'Save'}</Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={canSave ? "default" : "outline"}
+            disabled={!canSave}
+            onClick={() => {
+              void save();
+            }}
+          >
+            {saving ? "Saving…" : "Save"}
+          </Button>
         </div>
       ) : null}
     </FieldGroup>
