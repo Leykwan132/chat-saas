@@ -18,6 +18,10 @@ Convex agent skills for common tasks can be installed by running `npx convex ai-
 
 
 ## Code Style
+- Format all new or modified code with the project's pinned Prettier and `.prettierrc.json` before handoff.
+- Run `npm run format -- <changed files>` followed by `npm run format:check -- <changed files>`, selecting Node 22 in the same shell execution sequence. For MCP-only work, use `format:mcp` and `format:mcp:check`.
+- Keep formatting scoped to the task's files. Do not reformat unrelated code or vendor/build output.
+- Preserve readable multi-line formatting. If formatting exposes a file above the 300-line limit, split it into focused modules rather than compressing statements.
 - No Comments
 - Code should be self-explanatory. Comments should be avoided as much as possible.
 - Write clear, descriptive variable and function names

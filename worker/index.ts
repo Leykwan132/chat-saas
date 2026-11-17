@@ -2,6 +2,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { isNativeHost } from "../src/lib/hostBranding";
 import { api } from "../convex/_generated/api";
 import { buildPartnerPreviewMetadata } from "./partnerPreviewMetadata";
+export { KilobotIntegrationEntrypoint } from "./integrations/entrypoint";
 
 type Env = {
   ASSETS: Fetcher;
@@ -12,13 +13,16 @@ function isHtmlResponse(response: Response) {
   return response.headers.get("content-type")?.includes("text/html") ?? false;
 }
 
-function rewritePartnerPreview(response: Response, metadata: {
-  title: string;
-  siteName: string;
-  tabTitle: string;
-  faviconHref: string | null;
-  url: string;
-}) {
+function rewritePartnerPreview(
+  response: Response,
+  metadata: {
+    title: string;
+    siteName: string;
+    tabTitle: string;
+    faviconHref: string | null;
+    url: string;
+  },
+) {
   return new HTMLRewriter()
     .on("title", {
       element(element) {
@@ -56,11 +60,17 @@ function rewritePartnerPreview(response: Response, metadata: {
       },
     })
     .on('meta[name="description"]', { element: (element) => element.remove() })
-    .on('meta[property="og:description"]', { element: (element) => element.remove() })
+    .on('meta[property="og:description"]', {
+      element: (element) => element.remove(),
+    })
     .on('meta[property="og:image"]', { element: (element) => element.remove() })
     .on('meta[name="twitter:card"]', { element: (element) => element.remove() })
-    .on('meta[name="twitter:description"]', { element: (element) => element.remove() })
-    .on('meta[name="twitter:image"]', { element: (element) => element.remove() })
+    .on('meta[name="twitter:description"]', {
+      element: (element) => element.remove(),
+    })
+    .on('meta[name="twitter:image"]', {
+      element: (element) => element.remove(),
+    })
     .transform(response);
 }
 

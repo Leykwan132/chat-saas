@@ -1,3 +1,4 @@
+import { integrationTables } from "./integrations/schema";
 import { autoDeescalationConfigValidator, autoDeescalationTimersTable } from "./autoDeescalationSchema";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
@@ -272,6 +273,7 @@ const whiteLabelCreditLedgerEventValidator = v.union(
 );
 
 export default defineSchema({
+  ...integrationTables,
   users: defineTable({
     workosUserId: v.string(),
     email: v.string(),
