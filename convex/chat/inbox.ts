@@ -11,7 +11,11 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { INBOX_IMAGE_PLACEHOLDER } from "../../shared/inboxAttachments";
 import { components } from "../_generated/api";
 import { syncStreams, vStreamArgs } from "@convex-dev/agent";
-import { messageDocsToInboxUIMessages, listMessages, getChannelName } from "./inboxMessageMapping";
+import {
+  messageDocsToInboxUIMessages,
+  listMessages,
+  getChannelName,
+} from "./inboxMessageMapping";
 import { paginationOptsValidator } from "convex/server";
 import { getAuthContext } from "../authUtils";
 import {
@@ -142,7 +146,10 @@ export const internalPersistHumanReply = internalMutation({
 
     const channel = conv.channelId ? await ctx.db.get(conv.channelId) : null;
     const orgAddress =
-      channel?.phoneNumberId ?? channel?.igUserId ?? channel?.pageId ?? conv.orgAddress;
+      channel?.phoneNumberId ??
+      channel?.igUserId ??
+      channel?.pageId ??
+      conv.orgAddress;
 
     const trimmed = args.content.trim();
     const images = args.images ?? [];
@@ -176,6 +183,26 @@ export const internalPersistHumanReply = internalMutation({
           });
 
     const now = Date.now();
+    const preview =
+      trimmed.length > 0
+        ? trimmed.slice(0, 140)
+        : images.length > 0
+          ? "Image"
+          : "";
+
+    const markedRead = conv.unreadCount > 0;
+    const patch: Partial<Doc<"conversations">> = {
+      lastMessageAt: now,
+      lastMessageSentByAi: false,
+      unreadCount: 0,
+      assignToAiAgent: false,
+      updatedAt: now,
+    };
+    if (preview && preview.trim() !== "") {
+      patch.lastMessagePreview = preview;
+    }
+    await ctx.db.patch(conv._id, patch);
+
     let latestMessageId: Id<"messages"> | undefined;
     for (const img of images) {
       latestMessageId = await ctx.db.insert("messages", {
@@ -216,30 +243,12 @@ export const internalPersistHumanReply = internalMutation({
       });
     }
 
-    const preview =
-      trimmed.length > 0
-        ? trimmed.slice(0, 140)
-        : images.length > 0
-          ? "Image"
-          : "";
-
-    const markedRead = conv.unreadCount > 0;
-    const patch: Partial<Doc<"conversations">> = {
-      lastMessageAt: now,
-      lastMessageSentByAi: false,
-      unreadCount: 0,
-      assignToAiAgent: false,
-      updatedAt: now,
-    };
-    if (preview && preview.trim() !== "") {
-      patch.lastMessagePreview = preview;
-    }
-    await ctx.db.patch(conv._id, patch);
     await markConversationAnalyticsDirty(ctx, {
       conversationId: conv._id,
       earliestDirtyMessageAt: now,
     });
-    if (latestMessageId) await handleWorkflowFollowUpOutbound(ctx, latestMessageId);
+    if (latestMessageId)
+      await handleWorkflowFollowUpOutbound(ctx, latestMessageId);
 
     return replyPersistResult(
       agentMessageId,
@@ -264,7 +273,9 @@ export const internalPersistAiReply = internalMutation({
     if (conv === null) return null;
     if (!(await canProcessWorkspaceActivity(ctx, conv.orgId))) return null;
 
-    const normalizedContent = normalizeCustomerFacingResponseFormatting(args.content);
+    const normalizedContent = normalizeCustomerFacingResponseFormatting(
+      args.content,
+    );
     const trimmed = normalizedContent.trim();
     const now = Date.now();
     const messageMetadata =
@@ -286,7 +297,10 @@ export const internalPersistAiReply = internalMutation({
 
     const channel = conv.channelId ? await ctx.db.get(conv.channelId) : null;
     const orgAddress =
-      channel?.phoneNumberId ?? channel?.igUserId ?? channel?.pageId ?? conv.orgAddress;
+      channel?.phoneNumberId ??
+      channel?.igUserId ??
+      channel?.pageId ??
+      conv.orgAddress;
 
     const messageId = await ctx.db.insert("messages", {
       orgId: conv.orgId,
@@ -376,14 +390,18 @@ export const internalPersistAiReplyMessages = internalMutation({
     const messages = args.messages
       .map((message) => ({
         ...message,
-        content: normalizeCustomerFacingResponseFormatting(message.content).trim(),
+        content: normalizeCustomerFacingResponseFormatting(
+          message.content,
+        ).trim(),
       }))
       .filter((message) => message.content.length > 0);
     if (messages.length === 0) {
       console.warn("[inbox] persist AI reply skipped: empty after normalize", {
         conversationId: conv._id,
         inputCount: args.messages.length,
-        inputPreview: args.messages.map((message) => message.content.slice(0, 120)),
+        inputPreview: args.messages.map((message) =>
+          message.content.slice(0, 120),
+        ),
       });
       return null;
     }
@@ -402,7 +420,10 @@ export const internalPersistAiReplyMessages = internalMutation({
 
     const channel = conv.channelId ? await ctx.db.get(conv.channelId) : null;
     const orgAddress =
-      channel?.phoneNumberId ?? channel?.igUserId ?? channel?.pageId ?? conv.orgAddress;
+      channel?.phoneNumberId ??
+      channel?.igUserId ??
+      channel?.pageId ??
+      conv.orgAddress;
     const startedAt = Date.now();
     let lastAgentMessageId = "";
     let lastMessageId: Id<"messages"> | null = null;
@@ -474,7 +495,9 @@ export const internalPersistAiReplyMessages = internalMutation({
       conversationId: conv._id,
       count: messages.length,
       status: args.status ?? "sent",
-      allHaveExternalId: messages.every((message) => message.externalId !== undefined),
+      allHaveExternalId: messages.every(
+        (message) => message.externalId !== undefined,
+      ),
     });
 
     const lastContent = messages.at(-1)?.content ?? "";
@@ -538,12 +561,17 @@ export const internalPersistAiMediaReply = internalMutation({
     const now = Date.now();
     const channel = conv.channelId ? await ctx.db.get(conv.channelId) : null;
     const orgAddress =
-      channel?.phoneNumberId ?? channel?.igUserId ?? channel?.pageId ?? conv.orgAddress;
+      channel?.phoneNumberId ??
+      channel?.igUserId ??
+      channel?.pageId ??
+      conv.orgAddress;
 
-    const mediaItems = args.mediaItems ?? args.mediaUrls.map((url) => ({
-      url,
-      mediaType: inferMediaMimeType(url),
-    }));
+    const mediaItems =
+      args.mediaItems ??
+      args.mediaUrls.map((url) => ({
+        url,
+        mediaType: inferMediaMimeType(url),
+      }));
     const inboxAttachments = mediaItems.map((item) => ({
       url: item.url,
       mediaType: item.mediaType ?? inferMediaMimeType(item.url),
@@ -600,7 +628,8 @@ export const internalPersistAiMediaReply = internalMutation({
       conversationId: conv._id,
       earliestDirtyMessageAt: now,
     });
-    if (latestMessageId) await handleWorkflowFollowUpOutbound(ctx, latestMessageId);
+    if (latestMessageId)
+      await handleWorkflowFollowUpOutbound(ctx, latestMessageId);
 
     return replyPersistResult(
       agentMessageId,
@@ -628,13 +657,18 @@ export const internalEscalateConversation = internalMutation({
       return false;
     }
     const workflow = await ensureWorkflowForAgent(ctx, agent);
-    const escalationAvailable = await workflowHasHumanEscalationNode(ctx, workflow._id);
+    const escalationAvailable = await workflowHasHumanEscalationNode(
+      ctx,
+      workflow._id,
+    );
     if (!escalationAvailable) {
       return false;
     }
     const sourceMessage = await ctx.db
       .query("messages")
-      .withIndex("by_agentMessageId", (q) => q.eq("agentMessageId", args.sourceAgentMessageId))
+      .withIndex("by_agentMessageId", (q) =>
+        q.eq("agentMessageId", args.sourceAgentMessageId),
+      )
       .order("desc")
       .first();
     if (
@@ -674,7 +708,12 @@ export const internalEscalateConversation = internalMutation({
     await markConversationAnalyticsDirty(ctx, {
       conversationId: args.conversationId,
     });
-    await notifyHumanEscalation(ctx, agent._id, args.conversationId, agent.name);
+    await notifyHumanEscalation(
+      ctx,
+      agent._id,
+      args.conversationId,
+      agent.name,
+    );
     return true;
   },
 });
@@ -690,11 +729,16 @@ export const generateAiReplyWorker = internalAction({
   },
   handler: async (ctx, args) => {
     if (!args.promptMessageId && !args.promptContent) {
-      throw new Error("Either promptMessageId or promptContent must be provided");
+      throw new Error(
+        "Either promptMessageId or promptContent must be provided",
+      );
     }
-    const conv = await ctx.runQuery(internal.chat.inbox.internalGetConversation, {
-      conversationId: args.conversationId,
-    });
+    const conv = await ctx.runQuery(
+      internal.chat.inbox.internalGetConversation,
+      {
+        conversationId: args.conversationId,
+      },
+    );
     if (
       conv === null ||
       conv.status === "closed" ||
@@ -721,17 +765,26 @@ export const generateAiReplyWorker = internalAction({
       });
       return;
     }
-    if (!(await ctx.runQuery(internal.leadRouting.audience.canReplyToConversation, {
-      conversationId: conv._id,
-    }))) return;
+    if (
+      !(await ctx.runQuery(
+        internal.leadRouting.audience.canReplyToConversation,
+        {
+          conversationId: conv._id,
+        },
+      ))
+    )
+      return;
     if (
       args.promptMessageId !== undefined &&
       args.sourceMessageUpdatedAt !== undefined &&
-      !(await ctx.runQuery(internal.chat.inbox.internalIsInboundMessageCurrent, {
-        conversationId: args.conversationId,
-        agentMessageId: args.promptMessageId,
-        sourceMessageUpdatedAt: args.sourceMessageUpdatedAt,
-      }))
+      !(await ctx.runQuery(
+        internal.chat.inbox.internalIsInboundMessageCurrent,
+        {
+          conversationId: args.conversationId,
+          agentMessageId: args.promptMessageId,
+          sourceMessageUpdatedAt: args.sourceMessageUpdatedAt,
+        },
+      ))
     ) {
       console.info("[inbox] ai reply worker skipped: stale prompt", {
         conversationId: conv._id,
@@ -740,10 +793,13 @@ export const generateAiReplyWorker = internalAction({
       return;
     }
 
-    if (await escalateKeywordMatch(ctx, {
-      conversationId: conv._id,
-      promptMessageId: args.promptMessageId,
-    })) return;
+    if (
+      await escalateKeywordMatch(ctx, {
+        conversationId: conv._id,
+        promptMessageId: args.promptMessageId,
+      })
+    )
+      return;
 
     const agent = await ctx.runQuery(internal.agents.internalGet, {
       agentId: conv.assignedAgentId,
@@ -766,36 +822,54 @@ export const generateAiReplyWorker = internalAction({
       conv.service !== "avatar" &&
       !checkAiFeature(stripeInfo.plan, "auto_reply")
     ) {
-      console.warn("AI reply skipped: auto-reply feature disabled for plan tier", {
-        billingUserId: agent.userId,
-        plan: stripeInfo.plan,
-      });
+      console.warn(
+        "AI reply skipped: auto-reply feature disabled for plan tier",
+        {
+          billingUserId: agent.userId,
+          plan: stripeInfo.plan,
+        },
+      );
       return;
     }
 
-    const creditCheck = await ctx.runQuery(internal.credits.internalCheckCredits, {
-      workosUserId: agent.userId,
-      modelId: agent.model,
-      agentId: agent._id,
-    });
+    const creditCheck = await ctx.runQuery(
+      internal.credits.internalCheckCredits,
+      {
+        workosUserId: agent.userId,
+        modelId: agent.model,
+        agentId: agent._id,
+      },
+    );
     if (!creditCheck.ok) {
-      console.error("AI reply skipped: insufficient credits or unavailable model", {
-        conversationId: args.conversationId,
-        reason: creditCheck.reason,
-        billingUserId: agent.userId,
-      });
+      console.error(
+        "AI reply skipped: insufficient credits or unavailable model",
+        {
+          conversationId: args.conversationId,
+          reason: creditCheck.reason,
+          billingUserId: agent.userId,
+        },
+      );
       return;
     }
 
-    const activeBooking = await ctx.runQuery(internal.appointmentBooking.services.listActiveServices, {
-      agentId: conv.assignedAgentId,
-    });
-    await ctx.runMutation(internal.workflowMigrations.ensureLegacyHumanEscalationForAgent, {
-      agentId: conv.assignedAgentId,
-    });
-    const workflowRuntimeContext = await ctx.runQuery(internal.workflowRuntimeContext.loadForAgent, {
-      agentId: conv.assignedAgentId,
-    });
+    const activeBooking = await ctx.runQuery(
+      internal.appointmentBooking.services.listActiveServices,
+      {
+        agentId: conv.assignedAgentId,
+      },
+    );
+    await ctx.runMutation(
+      internal.workflowMigrations.ensureLegacyHumanEscalationForAgent,
+      {
+        agentId: conv.assignedAgentId,
+      },
+    );
+    const workflowRuntimeContext = await ctx.runQuery(
+      internal.workflowRuntimeContext.loadForAgent,
+      {
+        agentId: conv.assignedAgentId,
+      },
+    );
     const configuredAgent = buildAgent(
       agent,
       conv.assignedAgentId,
@@ -807,9 +881,12 @@ export const generateAiReplyWorker = internalAction({
       false,
     );
     const bookingBeforeReply = activeBooking.enabled
-      ? await ctx.runQuery(internal.appointmentBooking.currentBooking.getCurrentBooking, {
-          conversationId: conv._id,
-        })
+      ? await ctx.runQuery(
+          internal.appointmentBooking.currentBooking.getCurrentBooking,
+          {
+            conversationId: conv._id,
+          },
+        )
       : undefined;
 
     let typingActive = false;
@@ -857,10 +934,16 @@ export const generateAiReplyWorker = internalAction({
       );
       const hasMatches = hasWorkflowActionMatches(workflowActionPlan);
       const plannedMediaItems = hasMatches
-        ? resolveWorkflowActionPlanMedia(workflowActionPlan, workflowRuntimeContext)
+        ? resolveWorkflowActionPlanMedia(
+            workflowActionPlan,
+            workflowRuntimeContext,
+          )
         : [];
       const plannedWorkflowText = hasMatches
-        ? resolveWorkflowActionPlanText(workflowActionPlan, workflowRuntimeContext)
+        ? resolveWorkflowActionPlanText(
+            workflowActionPlan,
+            workflowRuntimeContext,
+          )
         : null;
 
       let replyMessages: string[];
@@ -893,21 +976,30 @@ export const generateAiReplyWorker = internalAction({
         internal.chat.inbox.internalGetConversation,
         { conversationId: args.conversationId },
       );
-      if (!(await ctx.runQuery(internal.leadRouting.audience.canReplyToConversation, {
-        conversationId: conv._id,
-      }))) return;
+      if (
+        !(await ctx.runQuery(
+          internal.leadRouting.audience.canReplyToConversation,
+          {
+            conversationId: conv._id,
+          },
+        ))
+      )
+        return;
       if (
         convAfterGeneration === null ||
         convAfterGeneration.status === "closed" ||
         !convAfterGeneration.assignToAiAgent
       ) {
-        console.info("[inbox] ai reply worker stopped after generation: conversation gate", {
-          conversationId: conv._id,
-          found: convAfterGeneration !== null,
-          status: convAfterGeneration?.status,
-          assignToAiAgent: convAfterGeneration?.assignToAiAgent,
-          replyCount: replyMessages.length,
-        });
+        console.info(
+          "[inbox] ai reply worker stopped after generation: conversation gate",
+          {
+            conversationId: conv._id,
+            found: convAfterGeneration !== null,
+            status: convAfterGeneration?.status,
+            assignToAiAgent: convAfterGeneration?.assignToAiAgent,
+            replyCount: replyMessages.length,
+          },
+        );
         return;
       }
       if (
@@ -915,25 +1007,34 @@ export const generateAiReplyWorker = internalAction({
           orgId: conv.orgId,
         }))
       ) {
-        console.info("[inbox] ai reply worker stopped after generation: workspace inactive", {
-          conversationId: conv._id,
-          replyCount: replyMessages.length,
-        });
+        console.info(
+          "[inbox] ai reply worker stopped after generation: workspace inactive",
+          {
+            conversationId: conv._id,
+            replyCount: replyMessages.length,
+          },
+        );
         return;
       }
       if (
         args.promptMessageId !== undefined &&
         args.sourceMessageUpdatedAt !== undefined &&
-        !(await ctx.runQuery(internal.chat.inbox.internalIsInboundMessageCurrent, {
-          conversationId: args.conversationId,
-          agentMessageId: args.promptMessageId,
-          sourceMessageUpdatedAt: args.sourceMessageUpdatedAt,
-        }))
+        !(await ctx.runQuery(
+          internal.chat.inbox.internalIsInboundMessageCurrent,
+          {
+            conversationId: args.conversationId,
+            agentMessageId: args.promptMessageId,
+            sourceMessageUpdatedAt: args.sourceMessageUpdatedAt,
+          },
+        ))
       ) {
-        console.info("[inbox] ai reply worker stopped after generation: stale prompt", {
-          conversationId: conv._id,
-          replyCount: replyMessages.length,
-        });
+        console.info(
+          "[inbox] ai reply worker stopped after generation: stale prompt",
+          {
+            conversationId: conv._id,
+            replyCount: replyMessages.length,
+          },
+        );
         return;
       }
 
@@ -942,9 +1043,12 @@ export const generateAiReplyWorker = internalAction({
 
       const allMediaUrls = allMediaItems.map((item) => item.url);
       if (replyMessages.length === 0 && allMediaItems.length === 0) {
-        console.info("[inbox] ai reply worker stopped after generation: nothing to send", {
-          conversationId: conv._id,
-        });
+        console.info(
+          "[inbox] ai reply worker stopped after generation: nothing to send",
+          {
+            conversationId: conv._id,
+          },
+        );
         return;
       }
       let usage: { llmModel: string; creditsCharged: number };
@@ -974,36 +1078,38 @@ export const generateAiReplyWorker = internalAction({
         sentTextCount: number;
         textExternalIds: Array<string | null>;
         mediaExternalIds: string[];
-      } | null = await ctx.runAction(
-        internal.chat.inboxActions.internalSendAiReplyMessages,
-        {
+      } | null = await ctx
+        .runAction(internal.chat.inboxActions.internalSendAiReplyMessages, {
           conversationId: conv._id,
           contents: replyMessages,
           mediaUrls: allMediaUrls,
           mediaItems: channelMediaItems,
           allowHumanAgentTag: false,
-        },
-      ).catch(async (error) => {
-        const failureReason =
-          error instanceof Error ? error.message : "Channel delivery failed";
-        if (replyMessages.length > 0) {
-          await ctx.runMutation(internal.chat.inbox.internalPersistAiReplyMessages, {
+        })
+        .catch(async (error) => {
+          const failureReason =
+            error instanceof Error ? error.message : "Channel delivery failed";
+          if (replyMessages.length > 0) {
+            await ctx.runMutation(
+              internal.chat.inbox.internalPersistAiReplyMessages,
+              {
+                conversationId: conv._id,
+                threadId: conv.threadId,
+                messages: replyMessages.map((content) => ({ content })),
+                llmModel: usage.llmModel,
+                creditsCharged: usage.creditsCharged,
+                sourceEventId: args.avatarSourceEventId,
+                status: "failed",
+                failureReason,
+              },
+            );
+          }
+          console.error("AI reply not sent to channel:", failureReason, {
             conversationId: conv._id,
-            threadId: conv.threadId,
-            messages: replyMessages.map((content) => ({ content })),
-            llmModel: usage.llmModel,
-            creditsCharged: usage.creditsCharged,
-            sourceEventId: args.avatarSourceEventId,
-            status: "failed",
-            failureReason,
+            service: conv.service,
           });
-        }
-        console.error("AI reply not sent to channel:", failureReason, {
-          conversationId: conv._id,
-          service: conv.service,
+          return null;
         });
-        return null;
-      });
       if (sendResult === null) return;
       const enqueueMetaMarkSeenIfRead = async (
         persistResult: {
@@ -1023,7 +1129,9 @@ export const generateAiReplyWorker = internalAction({
       };
 
       if (sendResult.mediaSent && allMediaUrls.length > 0) {
-        const sentMediaCount = sendResult.ok ? allMediaUrls.length : sendResult.mediaExternalIds.length;
+        const sentMediaCount = sendResult.ok
+          ? allMediaUrls.length
+          : sendResult.mediaExternalIds.length;
         const persistResult: {
           markedRead: boolean;
           latestInboundExternalId?: string;
@@ -1070,20 +1178,22 @@ export const generateAiReplyWorker = internalAction({
         });
         await enqueueMetaMarkSeenIfRead(persistResult);
       } else {
-        console.warn("[inbox] ai reply worker skipping persist: no sent messages", {
-          conversationId: conv._id,
-          replyCount: replyMessages.length,
-          sendOk: sendResult.ok,
-          sentTextCount: sendResult.sentTextCount,
-        });
+        console.warn(
+          "[inbox] ai reply worker skipping persist: no sent messages",
+          {
+            conversationId: conv._id,
+            replyCount: replyMessages.length,
+            sendOk: sendResult.ok,
+            sentTextCount: sendResult.sentTextCount,
+          },
+        );
       }
 
       if (!sendResult.ok) {
-        console.error(
-          "AI reply not sent to channel:",
-          sendResult.error,
-          { conversationId: conv._id, service: conv.service },
-        );
+        console.error("AI reply not sent to channel:", sendResult.error, {
+          conversationId: conv._id,
+          service: conv.service,
+        });
         return;
       }
     } finally {
@@ -1134,7 +1244,9 @@ export const internalIsInboundMessageCurrent = internalQuery({
   handler: async (ctx, args) => {
     const message = await ctx.db
       .query("messages")
-      .withIndex("by_agentMessageId", (q) => q.eq("agentMessageId", args.agentMessageId))
+      .withIndex("by_agentMessageId", (q) =>
+        q.eq("agentMessageId", args.agentMessageId),
+      )
       .order("desc")
       .first();
     return (

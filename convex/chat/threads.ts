@@ -770,7 +770,9 @@ export function buildAgent(
       inputSchema: z.object({
         bookingId: z
           .string()
-          .describe("The bookingId of the appointment to edit, from listCustomerBookings."),
+          .describe(
+            "The bookingId of the appointment to edit, from listCustomerBookings.",
+          ),
       }),
       execute: async (ctx, input) => {
         await queryActiveBookingSession(ctx, conversationId);
@@ -879,10 +881,13 @@ export function buildAgent(
         }
         if (input.preferredTimesIso !== undefined) {
           const parsed = input.preferredTimesIso.map((value) =>
-            parseAvailabilityIso(value, defaultBookingTimeZone)
+            parseAvailabilityIso(value, defaultBookingTimeZone),
           );
           if (parsed.some((value) => value === null)) {
-            return { success: false, message: "One or more appointment times are invalid." };
+            return {
+              success: false,
+              message: "One or more appointment times are invalid.",
+            };
           }
           args.preferredStartAts = parsed as number[];
         }
@@ -1180,7 +1185,10 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
       instructionsUpdatedAt: agent.instructionsUpdatedAt,
       promptMessageId: sourceAgentMessageId,
     }),
-    rawRequestResponseHandler: async (_ctx, { agentName, request, response }) => {
+    rawRequestResponseHandler: async (
+      _ctx,
+      { agentName, request, response },
+    ) => {
       logAgentRequestResponse({
         agentId,
         agentName,
@@ -1521,6 +1529,7 @@ export async function ingestChannelMessage(
           ...(outboundStatus === "read" ? { readAt: now } : {}),
         };
   const broadcastFields = {
+    ...(args.isHistorical ? { isHistorical: true } : {}),
     ...(args.messageKind ? { messageKind: args.messageKind } : {}),
     ...(args.broadcastPresentation
       ? { broadcastPresentation: args.broadcastPresentation }
@@ -1610,9 +1619,16 @@ export async function ingestChannelMessage(
     conversationId,
   });
 
-  const keywordEscalationScheduled = !args.isHistorical && args.direction === "incoming" && assignToAiAgent && agentMessageId !== undefined
-    ? await scheduleIncomingKeywordEscalation(ctx, { conversationId, promptMessageId: agentMessageId })
-    : false;
+  const keywordEscalationScheduled =
+    !args.isHistorical &&
+    args.direction === "incoming" &&
+    assignToAiAgent &&
+    agentMessageId !== undefined
+      ? await scheduleIncomingKeywordEscalation(ctx, {
+          conversationId,
+          promptMessageId: agentMessageId,
+        })
+      : false;
 
   return {
     conversationId,

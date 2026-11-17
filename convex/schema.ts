@@ -1,5 +1,8 @@
 import { integrationTables } from "./integrations/schema";
-import { autoDeescalationConfigValidator, autoDeescalationTimersTable } from "./autoDeescalationSchema";
+import {
+  autoDeescalationConfigValidator,
+  autoDeescalationTimersTable,
+} from "./autoDeescalationSchema";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { appointmentBookingSessionStatusValidator } from "./appointmentBookingSessionStatus";
@@ -54,7 +57,11 @@ import {
   googleCalendarTables,
 } from "./googleCalendar/schema";
 import { GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX } from "./googleCalendar/constants";
-import { whatsappReferralValidator, whatsappReferralEntryValidator, whatsappFreeMessagingWindowValidator } from "./whatsappReferral";
+import {
+  whatsappReferralValidator,
+  whatsappReferralEntryValidator,
+  whatsappFreeMessagingWindowValidator,
+} from "./whatsappReferral";
 import { customerReferralValidator } from "./customerReferral";
 import { aiReplyAudienceValidator } from "./leadRouting/audience";
 
@@ -732,7 +739,9 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     escalationMessageEnabled: v.optional(v.boolean()),
-    escalationMessageMode: v.optional(v.union(v.literal("ai"), v.literal("manual"))),
+    escalationMessageMode: v.optional(
+      v.union(v.literal("ai"), v.literal("manual")),
+    ),
     escalationMessage: v.optional(v.string()),
     escalationKeywordsEnabled: v.optional(v.boolean()),
     escalationKeywords: v.optional(v.array(v.string())),
@@ -1327,7 +1336,9 @@ export default defineSchema({
     /** Last inbound (customer) message time — used for Meta messaging window checks. */
     lastCustomerMessageAt: v.optional(v.number()),
     whatsappReferralEntry: v.optional(whatsappReferralEntryValidator),
-    whatsappFreeMessagingWindow: v.optional(whatsappFreeMessagingWindowValidator),
+    whatsappFreeMessagingWindow: v.optional(
+      whatsappFreeMessagingWindowValidator,
+    ),
     lastMessagePreview: v.optional(v.string()),
     lastMessageSentByAi: v.optional(v.boolean()),
     unreadCount: v.number(),
@@ -1364,10 +1375,13 @@ export default defineSchema({
       "assignedAgentId",
       "assignedUserId",
     ]),
-  inboxEscalationCounts: defineTable({ scopeKey: v.string(), count: v.number() })
-    .index("by_scopeKey", ["scopeKey"]),
+  inboxEscalationCounts: defineTable({
+    scopeKey: v.string(),
+    count: v.number(),
+  }).index("by_scopeKey", ["scopeKey"]),
   inboxEscalationCountMemberships: defineTable({
-    summaryId: v.id("inboxConversationSummaries"), scopeKeys: v.array(v.string()),
+    summaryId: v.id("inboxConversationSummaries"),
+    scopeKeys: v.array(v.string()),
   }).index("by_summaryId", ["summaryId"]),
   inboxConversationSummaries: defineTable({
     conversationId: v.id("conversations"),
@@ -1399,10 +1413,34 @@ export default defineSchema({
     isChannelConnected: v.boolean(),
     updatedAt: v.number(),
   })
-    .index("by_orgId_connected_status_lastMessageAt", ["orgId", "isChannelConnected", "status", "lastMessageAt"])
-    .index("by_orgId_assignedAgentId_connected_status_lastMessageAt", ["orgId", "assignedAgentId", "isChannelConnected", "status", "lastMessageAt"])
-    .index("by_userId_orgId_connected_status_lastMessageAt", ["userId", "orgId", "isChannelConnected", "status", "lastMessageAt"])
-    .index("by_userId_orgId_assignedAgentId_connected_status_lastMessageAt", ["userId", "orgId", "assignedAgentId", "isChannelConnected", "status", "lastMessageAt"])
+    .index("by_orgId_connected_status_lastMessageAt", [
+      "orgId",
+      "isChannelConnected",
+      "status",
+      "lastMessageAt",
+    ])
+    .index("by_orgId_assignedAgentId_connected_status_lastMessageAt", [
+      "orgId",
+      "assignedAgentId",
+      "isChannelConnected",
+      "status",
+      "lastMessageAt",
+    ])
+    .index("by_userId_orgId_connected_status_lastMessageAt", [
+      "userId",
+      "orgId",
+      "isChannelConnected",
+      "status",
+      "lastMessageAt",
+    ])
+    .index("by_userId_orgId_assignedAgentId_connected_status_lastMessageAt", [
+      "userId",
+      "orgId",
+      "assignedAgentId",
+      "isChannelConnected",
+      "status",
+      "lastMessageAt",
+    ])
     .index("by_conversationId", ["conversationId"])
     .index("by_customerId", ["customerId"])
     .index("by_channelId", ["channelId"])
@@ -1518,6 +1556,7 @@ export default defineSchema({
     externalId: v.optional(v.string()),
     orgAddress: v.string(),
     contactAddress: v.string(),
+    isHistorical: v.optional(v.boolean()),
     direction: v.union(v.literal("incoming"), v.literal("outgoing")),
     agentId: v.optional(v.id("agents")),
     authorUserId: v.optional(v.string()),
@@ -2107,14 +2146,16 @@ export default defineSchema({
       v.literal("restored"),
       v.literal("failed"),
     ),
-    items: v.array(v.object({
-      calendarEventId: v.id("calendarEvents"),
-      sessionId: v.id("appointmentBookingSessions"),
-      originalStartAt: v.number(),
-      originalEndAt: v.number(),
-      slot: appointmentBookingSlotValidator,
-      connectionId: v.optional(v.id("googleCalendarConnections")),
-    })),
+    items: v.array(
+      v.object({
+        calendarEventId: v.id("calendarEvents"),
+        sessionId: v.id("appointmentBookingSessions"),
+        originalStartAt: v.number(),
+        originalEndAt: v.number(),
+        slot: appointmentBookingSlotValidator,
+        connectionId: v.optional(v.id("googleCalendarConnections")),
+      }),
+    ),
     failedCalendarEventIds: v.optional(v.array(v.id("calendarEvents"))),
     failureMessage: v.optional(v.string()),
     createdAt: v.number(),

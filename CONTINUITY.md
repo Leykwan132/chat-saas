@@ -2,6 +2,8 @@
 
 # Snapshot
 
+- 2026-11-17 [USER] Create a PR so direct WhatsApp Business app takeovers resume AI after the configured auto de-escalation inactivity interval. [CODE] Extend existing timers with optional direct-takeover ownership; no synthetic escalation or old-chat backfill. Unreleased; production availability UNCONFIRMED.
+
 - 2026-10-02 [CODE] The WhatsApp service-pricing tooltip stacks the explanation above the rate-card link. PR #198. Unreleased.
 - 2026-10-02 [CODE] Inbox threads render by WhatsApp send time. A late-delivered message stays on its original day, and the escalation divider stays with the reply sent at escalation time. PR #198: https://github.com/Leykwan132/chat-saas/pull/198. Unreleased. No migration: `messages.createdAt` is already the WhatsApp send time.
 - 2026-10-02 [CODE] An open escalation blocks another `escalateToHuman` until Resolve. A human reply and turning AI replies on leave the escalation and Escalated status in place. PR #197: https://github.com/Leykwan132/chat-saas/pull/197. Unreleased. [TOOL] Prod Noland `m177nrea9hq5dbg8s3gggartfd8ff4fh` now has one escalation log, one inbox message, and one thread reply. The 2:29:47 AM duplicate was removed.
@@ -103,6 +105,8 @@
 - 2026-10-01 [CODE] Prior task working sets: `33aec5b:CONTINUITY.md` (Working set).
 
 # Receipts
+
+- 2026-11-17 [TOOL] Direct-takeover timer regression verified red then green. Final focused verification: 7 suites / 82 tests passed on Node 22; Docs 8 passed; formatting and diff checks passed. Broad Vitest run: 714 suites passed, 2 failed (Telegram APP_BASE_URL unset, landing development-widget assertion). Telegram rerun passed with test URL. Review findings fixed: historical imports excluded and inbox pause precedes successful reply inserts. Unreleased.
 
 - 2026-10-02 [CODE] WhatsApp pricing tooltip stacks the market explanation above the rate-card link. [TOOL] `src/components/inbox/WhatsAppPricingLabel.test.tsx` passed (6 tests). PR #198. Unreleased.
 - 2026-10-02 [CODE] Inbox thread order follows WhatsApp send time instead of arrival order. [TOOL] `src/lib/inboxThreadTimeline.test.ts` passed (2 tests). PR #198: https://github.com/Leykwan132/chat-saas/pull/198. Unreleased. No data migration. #197 was already merged.

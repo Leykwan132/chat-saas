@@ -14,6 +14,7 @@ export const autoDeescalationTimersTable = defineTable({
   agentId: v.id("agents"),
   assignedUserId: v.optional(v.string()),
   escalatedAt: v.number(),
+  directTakeover: v.optional(v.boolean()),
   sourceMessageId: v.optional(v.id("messages")),
   lastHumanReplyAt: v.number(),
   dueAt: v.number(),
