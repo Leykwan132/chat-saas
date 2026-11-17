@@ -3,6 +3,7 @@ import { convexToJson, jsonToConvex, type Value } from "convex/values";
 import type { ActionCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
+import { ReplySupersededError } from "./replyCancellation";
 
 const mutatingTools = new Set([
   "beginBookingDetailsEdit",
@@ -25,7 +26,7 @@ export async function assertCurrentReplyRun(
   runId: Id<"inboundReplyRuns">,
 ) {
   if (!(await ctx.runQuery(internal.inboundReplyTools.isCurrent, { runId })))
-    throw new Error("Reply generation was superseded");
+    throw new ReplySupersededError();
 }
 
 export function protectGroupedReplyTools(
@@ -60,6 +61,7 @@ export function protectGroupedReplyTools(
             internal.inboundReplyTools.begin,
             { runId, toolName: name, inputKey },
           );
+          if ("cancelled" in claim) throw new ReplySupersededError();
           if (claim.cachedResultJson !== undefined)
             return jsonToConvex(JSON.parse(claim.cachedResultJson));
           if (!claim.executionId)

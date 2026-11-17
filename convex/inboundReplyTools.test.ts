@@ -81,5 +81,5 @@ test("new input prevents an old generation from starting another tool action", a
       toolName: "bookAppointment",
       inputKey: "slot",
     }),
-  ).rejects.toThrow("superseded");
+  ).resolves.toEqual({ cancelled: true });
 });

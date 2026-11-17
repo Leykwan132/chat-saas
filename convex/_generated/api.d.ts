@@ -171,6 +171,7 @@ import type * as chat_mediaToolResults from "../chat/mediaToolResults.js";
 import type * as chat_mediaUrlExtractor from "../chat/mediaUrlExtractor.js";
 import type * as chat_reactions from "../chat/reactions.js";
 import type * as chat_readReceipts from "../chat/readReceipts.js";
+import type * as chat_replyCancellation from "../chat/replyCancellation.js";
 import type * as chat_responseFormatting from "../chat/responseFormatting.js";
 import type * as chat_streaming from "../chat/streaming.js";
 import type * as chat_threads from "../chat/threads.js";
@@ -781,6 +782,7 @@ declare const fullApi: ApiFromModules<{
   "chat/mediaUrlExtractor": typeof chat_mediaUrlExtractor;
   "chat/reactions": typeof chat_reactions;
   "chat/readReceipts": typeof chat_readReceipts;
+  "chat/replyCancellation": typeof chat_replyCancellation;
   "chat/responseFormatting": typeof chat_responseFormatting;
   "chat/streaming": typeof chat_streaming;
   "chat/threads": typeof chat_threads;

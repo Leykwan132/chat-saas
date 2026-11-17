@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { loadGroupedReplyInput, groupedReplyContext } from "./inboundReplyInput";
 import { protectGroupedReplyTools, assertCurrentReplyRun } from "./inboundReplyToolGuards";
+import { handleReplyGenerationError } from "./replyCancellation";
 import {
   query,
   internalAction,
@@ -1098,6 +1099,11 @@ export const generateAiReplyWorker = internalAction({
         return;
       }
       if (args.replyRunId) await ctx.runMutation(internal.inboundReplyRuns.delivered, { runId: args.replyRunId });
+    } catch (error) {
+      handleReplyGenerationError(error, {
+        conversationId: conv._id,
+        runId: args.replyRunId,
+      });
     } finally {
       await turnTypingOff();
     }

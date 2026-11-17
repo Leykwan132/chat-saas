@@ -33,13 +33,13 @@ export const begin = internalMutation({
     inputKey: v.string(),
   },
   returns: v.union(
+    v.object({ cancelled: v.literal(true) }),
     v.object({ executionId: v.id("inboundReplyToolCalls") }),
     v.object({ cachedResultJson: v.string() }),
   ),
   handler: async (ctx, args) => {
     const run = await currentRun(ctx, args.runId);
-    if (!run)
-      throw new Error("Reply generation was superseded before its tool action");
+    if (!run) return { cancelled: true as const };
     const existing = await ctx.db
       .query("inboundReplyToolCalls")
       .withIndex(
