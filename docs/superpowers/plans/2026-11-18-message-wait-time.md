@@ -38,12 +38,12 @@
 - [x] Add optional run identifier to existing worker entrypoint, validate at start, use grouped context in both workflow planning and response generation, claim delivery before sending, and acknowledge only known delivery success. Workpool callback releases the active claim on all outcomes.
 - [x] Route successful media completion into coordinator readiness; make preparation failures explicit.
 
-## Task3: Ingestion and settings
+## Task3: Ingestion and system-managed timing
 
 - [x] Route WhatsApp/Instagram/Messenger/web-widget incoming work and WhatsApp edits through the coordinator; media arrivals enqueue a not-ready input immediately. Keep immediate keyword escalation.
 - [x] Add trigger invalidation for human replies, closure, reassignment and AI disablement without reviving old work on re-enable.
-- [x] Add agent-scoped Message wait time settings with routing authorization, explicit0–60 whole-second validation and default5s; add a separate UI control below AI audience.
-- [x] Test settings isolation/authorization, UI placement and source callsites, preserving old immediate/avatar/test entrypoints.
+- [x] Keep the default5s quiet wait system-managed. User superseded client customization: remove its UI and public settings endpoints; retain internal runtime validation.
+- [x] Test the default, invalid internal values and absence of the wait-time control; preserve normal Auto resume and immediate/avatar/test entrypoints.
 
 ## Task4: Verification and PR
 

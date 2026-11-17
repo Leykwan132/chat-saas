@@ -3,7 +3,6 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AiReplyAudience } from "../../../shared/aiReplyAudience";
 import { AgentSetupAudiencePanel } from "./AgentSetupAudiencePanel";
-import { MessageWaitTimeSettings } from "./MessageWaitTimeControl";
 import { AutoDeescalationSettings } from "./AutoDeescalationControl";
 import type { Id } from "../../../convex/_generated/dataModel";
 import {
@@ -121,10 +120,6 @@ export function AgentSetupRoutingPanel({
             <AgentSetupAudiencePanel
               value={replyAudience}
               onChange={onReplyAudienceChange}
-              disabled={!canManageRouting || isPublishing}
-            />
-            <MessageWaitTimeSettings
-              agentId={agentId}
               disabled={!canManageRouting || isPublishing}
             />
             <AutoDeescalationSettings

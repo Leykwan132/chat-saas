@@ -4,7 +4,7 @@
 
 ## Customer-facing behavior
 
-2026-11-18 [ASSUMPTION] Add Message wait time (seconds) under Model & Style → AI Replies, configured per agent, starting with five seconds. Explain that AI waits after the customer's latest message before processing a reply. The model's processing time follows this wait.
+2026-11-18 [USER] Message grouping uses a system-managed five-second default. Do not expose wait-time customization or a settings API to clients. Supersedes the earlier proposed Message wait time control under AI Replies. The model's processing time follows the quiet wait.
 
 2026-11-18 [ASSUMPTION] Save each incoming message immediately with its own identity, order and attachments. Keep one pending reply per conversation; a new eligible customer message restarts the five-second quiet window using server arrival time. Different conversations remain independent.
 

@@ -375,7 +375,6 @@ import type * as media_r2 from "../media/r2.js";
 import type * as media_r2Client from "../media/r2Client.js";
 import type * as mediaPools from "../mediaPools.js";
 import type * as messagePlaceholderCleanupMigration from "../messagePlaceholderCleanupMigration.js";
-import type * as messageWaitSettings from "../messageWaitSettings.js";
 import type * as messages from "../messages.js";
 import type * as messengerAuth from "../messengerAuth.js";
 import type * as messengerConnect from "../messengerConnect.js";
@@ -986,7 +985,6 @@ declare const fullApi: ApiFromModules<{
   "media/r2Client": typeof media_r2Client;
   mediaPools: typeof mediaPools;
   messagePlaceholderCleanupMigration: typeof messagePlaceholderCleanupMigration;
-  messageWaitSettings: typeof messageWaitSettings;
   messages: typeof messages;
   messengerAuth: typeof messengerAuth;
   messengerConnect: typeof messengerConnect;

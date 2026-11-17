@@ -11,7 +11,6 @@ vi.mock("convex/react", () => ({
     reference: Parameters<typeof getFunctionName>[0],
     args: { scope?: string },
   ) => {
-    if (getFunctionName(reference) === "messageWaitSettings:get") return 5;
     if (getFunctionName(reference) !== "autoDeescalationConfig:get")
       return null;
     return {
@@ -39,6 +38,7 @@ const props = {
 test("AI Replies shows independent normal auto resume after its audience controls", () => {
   const html = renderToStaticMarkup(<AgentSetupRoutingPanel {...props} />);
   expect(html).toContain("Auto resume");
+  expect(html).not.toContain("Message wait time");
   expect(html).toContain('value="5"');
   expect(html.indexOf("Auto resume")).toBeGreaterThan(
     html.indexOf("Who should AI reply to?"),
