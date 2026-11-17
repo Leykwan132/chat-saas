@@ -11,6 +11,7 @@ vi.mock("convex/react", () => ({
     reference: Parameters<typeof getFunctionName>[0],
     args: { scope?: string },
   ) => {
+    if (getFunctionName(reference) === "messageWaitSettings:get") return 5;
     if (getFunctionName(reference) !== "autoDeescalationConfig:get")
       return null;
     return {

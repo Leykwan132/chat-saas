@@ -10,7 +10,8 @@ import {
 import { markOutboundReadThroughTimestamp } from "./chat/readReceipts";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
-import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
+import { metaIndicatorPool } from "./inboxPools";
+import { queueInboundReply } from "./inboundReplyQueue";
 import { inboxPromptContent } from "../shared/inboxAttachments";
 import type { IngestChannelMessageResult } from "./chat/threads";
 import { queueInboundMediaBatch } from "./inboundMediaBatch";
@@ -399,10 +400,7 @@ export const handleIncoming = internalMutation({
           descriptors,
         }));
       if (!queuedForUnderstanding) {
-        await inboxAiReplyPool.enqueueAction(
-          ctx,
-          internal.chat.inbox.generateAiReplyWorker,
-          {
+        await queueInboundReply(ctx, {
             conversationId: result.conversationId,
             promptContent: inboxPromptContent(
               content,
@@ -411,8 +409,7 @@ export const handleIncoming = internalMutation({
             ),
             promptMessageId: result.agentMessageId,
             inboundExternalId: args.externalId,
-          },
-        );
+          });
       }
     }
 

@@ -1,3 +1,4 @@
+import { getFunctionName } from "convex/server";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test, vi } from "vitest";
@@ -5,7 +6,8 @@ import { AgentSetupRoutingPanel } from "./AgentSetupRoutingPanel";
 import type { ComponentProps } from "react";
 
 vi.mock("convex/react", () => ({
-  useQuery: () => null,
+  useQuery: (reference: Parameters<typeof getFunctionName>[0]) =>
+    getFunctionName(reference) === "messageWaitSettings:get" ? 5 : null,
   useMutation: () => vi.fn(),
 }));
 

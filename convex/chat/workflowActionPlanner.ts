@@ -49,6 +49,8 @@ export type WorkflowActionPlan = z.infer<typeof workflowActionPlanSchema>;
 export type AiReplyPromptArgs = {
   promptContent?: string;
   promptMessageId?: string;
+  groupMessages?: import("ai").ModelMessage[];
+  workflowDecisionState?: string;
 };
 
 export async function retryWorkflowActionPlanGeneration<T>(
@@ -75,6 +77,7 @@ export async function retryWorkflowActionPlanGeneration<T>(
 }
 
 export function aiReplyPromptArgs(args: AiReplyPromptArgs) {
+  if (args.groupMessages) return { promptMessageId: args.promptMessageId, prompt: args.groupMessages };
   if (args.promptMessageId) return { promptMessageId: args.promptMessageId };
   if (args.promptContent) return { prompt: args.promptContent };
   throw new Error("Either promptMessageId or promptContent must be provided");
@@ -253,7 +256,7 @@ export async function generateWorkflowActionPlan(
       responseLanguage: "the latest customer message's language",
     };
   }
-  const state = await buildWorkflowDecisionState(ctx, threadId, args.promptContent);
+  const state = args.workflowDecisionState ?? await buildWorkflowDecisionState(ctx, threadId, args.promptContent);
   const request = buildWorkflowDecisionRequest(state, workflowRuntimeContext);
   const result = await requestWorkflowDecisionAnswers(request);
   const decision = reconcileWorkflowDecisionAnswers(result.answers, workflowRuntimeContext);

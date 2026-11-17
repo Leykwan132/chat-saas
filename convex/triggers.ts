@@ -1,4 +1,5 @@
-import { observeEscalationChange, observeHumanReply } from "./autoDeescalationRuntime";
+import { observeEscalationChange, observeHumanReply, isSuccessfulHumanReply } from "./autoDeescalationRuntime";
+import { observeReplyConversationChange, invalidatePendingReply, excludeRevokedReplyInput } from "./inboundReplyState";
 import { syncEscalationCount } from "./inboxEscalationCounts";
 import { customMutation, customCtx } from "convex-helpers/server/customFunctions";
 import { Triggers } from "convex-helpers/server/triggers";
@@ -64,6 +65,7 @@ triggers.register(
 );
 triggers.register("conversations", async (ctx, change) => {
   await observeEscalationChange(ctx, change.oldDoc, change.newDoc);
+  await observeReplyConversationChange(ctx, change.oldDoc, change.newDoc);
   if (change.operation === "delete") {
     await removeInboxConversationSummary(ctx, change.id);
     return;
@@ -101,6 +103,11 @@ triggers.register("messages", async (ctx, change) => {
     return;
   }
   await observeHumanReply(ctx, change.oldDoc, change.newDoc);
+  if (isSuccessfulHumanReply(change.newDoc) && (!change.oldDoc || !isSuccessfulHumanReply(change.oldDoc))) {
+    const conversation = await ctx.db.get(change.newDoc.conversationId);
+    if (conversation?.assignedAgentId) await invalidatePendingReply(ctx, change.newDoc.conversationId);
+  }
+  if (change.newDoc.direction === "incoming" && change.newDoc.agentMessageId && change.newDoc.revokedAt !== undefined && change.oldDoc?.revokedAt === undefined) await excludeRevokedReplyInput(ctx, change.newDoc.conversationId, change.newDoc.agentMessageId);
   await syncWhatsAppFreeMessagingWindow(ctx, change.oldDoc, change.newDoc);
   await syncCustomerReferral(ctx, change.oldDoc, change.newDoc);
   if (messageSearchFieldsChanged(change.oldDoc, change.newDoc)) {
