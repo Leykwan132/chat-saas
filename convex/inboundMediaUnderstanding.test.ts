@@ -39,14 +39,6 @@ describe("inbound media batching", () => {
     expect(inboundMediaProcessAfter(8_000, 1_000)).toBe(6_000);
   });
 
-  it("deduplicates assets and finalizes one reply", () => {
-    const batchSource = source("./inboundMediaBatch.ts");
-    expect(batchSource).toContain('.withIndex("by_assetKey"');
-    expect(batchSource).toContain("batch.revision !== args.revision");
-    expect(
-      batchSource.match(/inboxAiReplyPool\.enqueueAction/g),
-    ).toHaveLength(1);
-  });
 });
 
 describe("inbound media trust boundaries", () => {

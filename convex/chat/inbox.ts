@@ -1,4 +1,7 @@
 import { v } from "convex/values";
+import { loadGroupedReplyInput, groupedReplyContext } from "./inboundReplyInput";
+import { protectGroupedReplyTools, assertCurrentReplyRun } from "./inboundReplyToolGuards";
+import { handleReplyGenerationError } from "./replyCancellation";
 import {
   query,
   internalAction,
@@ -687,8 +690,10 @@ export const generateAiReplyWorker = internalAction({
     inboundExternalId: v.optional(v.string()),
     sourceMessageUpdatedAt: v.optional(v.number()),
     avatarSourceEventId: v.optional(v.string()),
+    replyRunId: v.optional(v.id("inboundReplyRuns")),
   },
   handler: async (ctx, args) => {
+    if (args.replyRunId && !await ctx.runMutation(internal.inboundReplyRuns.claimGeneration, { runId: args.replyRunId })) return;
     if (!args.promptMessageId && !args.promptContent) {
       throw new Error("Either promptMessageId or promptContent must be provided");
     }
@@ -756,6 +761,10 @@ export const generateAiReplyWorker = internalAction({
       return;
     }
 
+    const groupedInput = args.replyRunId ? await loadGroupedReplyInput(ctx, args.replyRunId, conv.threadId, agent.instructionsUpdatedAt) : null;
+    if (args.replyRunId && !groupedInput) return;
+    const promptArgs = groupedInput ? { ...args, groupMessages: groupedInput.messages, workflowDecisionState: groupedInput.decisionState } : args;
+
     const stripeInfo = await ctx.runQuery(internal.plans.getTeamStripePlan, {
       workosOrgId: agent.orgId,
       userId: agent.userId,
@@ -803,9 +812,10 @@ export const generateAiReplyWorker = internalAction({
       conv._id,
       activeBooking.services,
       workflowRuntimeContext,
-      args.promptMessageId,
+      groupedInput?.sourcePromptMessageId ?? args.promptMessageId,
       false,
     );
+    if (args.replyRunId) configuredAgent.options.tools = protectGroupedReplyTools(ctx, args.replyRunId, configuredAgent.options.tools);
     const bookingBeforeReply = activeBooking.enabled
       ? await ctx.runQuery(internal.appointmentBooking.currentBooking.getCurrentBooking, {
           conversationId: conv._id,
@@ -852,9 +862,10 @@ export const generateAiReplyWorker = internalAction({
       const workflowActionPlan = await generateWorkflowActionPlan(
         ctx,
         conv.threadId,
-        args,
+        promptArgs,
         workflowRuntimeContext,
       );
+      if (args.replyRunId) await assertCurrentReplyRun(ctx, args.replyRunId);
       const hasMatches = hasWorkflowActionMatches(workflowActionPlan);
       const plannedMediaItems = hasMatches
         ? resolveWorkflowActionPlanMedia(workflowActionPlan, workflowRuntimeContext)
@@ -871,12 +882,12 @@ export const generateAiReplyWorker = internalAction({
         const result = await configuredAgent.generateText(
           ctx,
           { threadId: conv.threadId },
-          workflowActionPlanReplyPromptArgs(
-            args,
+          { ...workflowActionPlanReplyPromptArgs(
+            promptArgs,
             workflowActionPlan,
             workflowRuntimeContext,
-          ),
-          { storageOptions: { saveMessages: "none" } },
+          ), ...(args.replyRunId ? { prepareStep: async () => { await assertCurrentReplyRun(ctx, args.replyRunId!); return {}; } } : {}) },
+          { storageOptions: { saveMessages: "none" }, ...(groupedInput ? groupedReplyContext(groupedInput) : {}) },
         );
         replyMessages = splitAiReplyMessages(result.text);
       }
@@ -948,6 +959,7 @@ export const generateAiReplyWorker = internalAction({
         return;
       }
       let usage: { llmModel: string; creditsCharged: number };
+      if (args.replyRunId && !await ctx.runMutation(internal.inboundReplyRuns.beginDelivery, { runId: args.replyRunId })) return;
       try {
         usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
           workosUserId: agent.userId,
@@ -1086,6 +1098,12 @@ export const generateAiReplyWorker = internalAction({
         );
         return;
       }
+      if (args.replyRunId) await ctx.runMutation(internal.inboundReplyRuns.delivered, { runId: args.replyRunId });
+    } catch (error) {
+      handleReplyGenerationError(error, {
+        conversationId: conv._id,
+        runId: args.replyRunId,
+      });
     } finally {
       await turnTypingOff();
     }

@@ -39,6 +39,8 @@ export function Widget() {
     customFields: {},
   });
   const [draft, setDraft] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const sendingRef = useRef(false);
   const [error, setError] = useState("");
   const configRef = useRef<WidgetConfig | null>(null);
   const hasVisitorProfileRef = useRef(false);
@@ -174,7 +176,9 @@ export function Widget() {
   };
   const send = async (text: string) => {
     const content = text.trim();
-    if (!init || !content || isThinking) return;
+    if (!init || !content || sendingRef.current) return;
+    sendingRef.current = true;
+    setIsSending(true);
     const sentAt = Date.now();
     setDraft("");
     setScrollToLatestRequest((current) => current + 1);
@@ -208,6 +212,9 @@ export function Widget() {
       }
     } catch {
       setError("Your message could not be sent. Please try again.");
+    } finally {
+      sendingRef.current = false;
+      setIsSending(false);
     }
   };
   return (
@@ -239,7 +246,7 @@ export function Widget() {
                 scrollToLatestRequest={scrollToLatestRequest}
               />
               <WidgetPromptInput
-                disabled={isThinking}
+                disabled={isSending}
                 value={draft}
                 placeholder={DEFAULT_WEB_WIDGET_PROMPT_PLACEHOLDER}
                 suggestions={getVisibleWebWidgetSuggestions(

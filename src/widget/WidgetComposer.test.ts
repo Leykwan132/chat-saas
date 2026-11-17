@@ -383,7 +383,9 @@ test("widget keeps the thinking indicator active while it polls for an AI reply"
   expect(widgetSource).toContain('from "./useWidgetReplyPolling"');
   expect(widgetSource).toContain("hasReplyAfterLatestVisitorMessage");
   expect(widgetSource).toContain("startThinking(new Set(result.messages.map");
-  expect(widgetSource).toContain("disabled={isThinking}");
+  expect(widgetSource).not.toContain("disabled={isThinking}");
+  expect(widgetSource).not.toContain("!content || isThinking");
+  expect(widgetSource).toContain("disabled={isSending}");
   expect(replyPollingSource).toContain("const conversationIdentity");
   expect(replyPollingSource).toContain(
     "useEffect(() => stopThinking, [conversationIdentity, stopThinking])",

@@ -31,7 +31,11 @@ async function findMessages(
 ): Promise<Map<string, MessageDoc>> {
   const found = new Map<string, MessageDoc>();
   let cursor: string | null = null;
-  for (let pageIndex = 0; pageIndex < 5 && found.size < targetIds.size; pageIndex += 1) {
+  for (
+    let pageIndex = 0;
+    pageIndex < 5 && found.size < targetIds.size;
+    pageIndex += 1
+  ) {
     const page = await listMessages(ctx, components.agent, {
       threadId,
       paginationOpts: { numItems: 100, cursor },
@@ -125,149 +129,163 @@ export const processBatch = internalAction({
       return;
     }
 
+    let preparationError: string | undefined;
     try {
       const resultsByPromptMessageId = new Map<string, InboundMediaResult[]>();
       const captionResponseByPromptMessageId = new Map<string, string>();
 
-    for (
-      let chunkStart = 0, chunkIndex = 0;
-      chunkStart < claimed.items.length;
-      chunkStart += CHUNK_SIZE, chunkIndex += 1
-    ) {
-      const items = claimed.items.slice(chunkStart, chunkStart + CHUNK_SIZE);
-      const fetchedSettled = await Promise.allSettled(
-        items.map((item) =>
-          fetchInboundMedia(item, claimed.accessToken),
-        ),
-      );
-      const media = fetchedSettled.flatMap((result) =>
-        result.status === "fulfilled" ? [result.value] : [],
-      );
-      if (media.length === 0) continue;
-
-      try {
-        const modelResponse = await understandInboundMedia({
-          batchId: args.batchId,
-          chunk: chunkIndex,
-          items,
-          media,
-        });
-        await ctx.runMutation(internal.agentUsage.insertRawUsage, {
-          userId: claimed.agent.userId,
-          threadId: claimed.conversation.threadId,
-          agentId: claimed.agent._id,
-          agentName: claimed.agent.name,
-          model: INBOUND_MEDIA_MODEL,
-          provider: "openrouter",
-          usage: modelResponse.usage,
-          providerMetadata: modelResponse.providerMetadata,
-        });
-        const itemByAssetKey = new Map(
-          items.map((item) => [item.assetKey, item]),
+      for (
+        let chunkStart = 0, chunkIndex = 0;
+        chunkStart < claimed.items.length;
+        chunkStart += CHUNK_SIZE, chunkIndex += 1
+      ) {
+        const items = claimed.items.slice(chunkStart, chunkStart + CHUNK_SIZE);
+        const fetchedSettled = await Promise.allSettled(
+          items.map((item) => fetchInboundMedia(item, claimed.accessToken)),
         );
-        for (const result of modelResponse.results) {
-          const item = itemByAssetKey.get(result.assetKey);
-          if (!item) continue;
-          const existing =
-            resultsByPromptMessageId.get(item.promptMessageId) ?? [];
-          resultsByPromptMessageId.set(item.promptMessageId, [
-            ...existing,
-            result,
-          ]);
-          if (modelResponse.captionResponse && item.caption) {
-            captionResponseByPromptMessageId.set(
-              item.promptMessageId,
-              modelResponse.captionResponse,
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Inbound media understanding chunk failed", {
-          batchId: args.batchId,
-          chunk: chunkIndex,
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
-    }
+        const media = fetchedSettled.flatMap((result) =>
+          result.status === "fulfilled" ? [result.value] : [],
+        );
+        if (media.length === 0) continue;
 
-    const targetIds = new Set(
-      claimed.items.map((item) => item.promptMessageId),
-    );
-    const docs = await findMessages(
-      ctx,
-      claimed.conversation.threadId,
-      targetIds,
-    );
-    const configuredAgent = buildAgent(claimed.agent, claimed.agent._id);
-    for (const promptMessageId of targetIds) {
-      const doc = docs.get(promptMessageId);
-      const nextResults = resultsByPromptMessageId.get(promptMessageId) ?? [];
-      if (!doc || nextResults.length === 0) continue;
-      const inbox =
-        readInboxMetadataFromProviderMetadata(doc.providerOptions) ??
-        readInboxMetadataFromProviderMetadata(doc.providerMetadata);
-      const sourceItem = claimed.items.find(
-        (item) => item.promptMessageId === promptMessageId,
-      );
-      const displayText =
-        inbox?.displayText ?? sourceItem?.caption ?? doc.text ?? "";
-      const assets = mergeAssets(
-        inbox?.mediaUnderstanding?.assets ?? [],
-        nextResults,
-      );
-      const captionResponse =
-        captionResponseByPromptMessageId.get(promptMessageId);
-      const providerMetadata = {
-        ...(doc.providerMetadata as Record<string, unknown> | undefined),
-        inbox: {
-          ...inbox,
-          attachments: inbox?.attachments ?? [],
-          displayText,
-          mediaUnderstanding: {
+        try {
+          const modelResponse = await understandInboundMedia({
+            batchId: args.batchId,
+            chunk: chunkIndex,
+            items,
+            media,
+          });
+          await ctx.runMutation(internal.agentUsage.insertRawUsage, {
+            userId: claimed.agent.userId,
+            threadId: claimed.conversation.threadId,
+            agentId: claimed.agent._id,
+            agentName: claimed.agent.name,
             model: INBOUND_MEDIA_MODEL,
-            processedAt: Date.now(),
-            ...(captionResponse ? { captionResponse } : {}),
-            assets,
-          },
-        },
-      };
-      try {
-        await configuredAgent.updateMessage(ctx, {
-          messageId: promptMessageId,
-          patch: {
-            message: {
-              role: "user",
-              content: agentFacingContent(
-                displayText,
-                captionResponse,
-                assets,
-              ),
-            },
-            status: "success",
-          },
-        });
-        await ctx.runMutation(components.agent.messages.updateMessage, {
-          messageId: promptMessageId,
-          patch: { providerOptions: providerMetadata },
-        });
-      } catch (error) {
-        console.error("Inbound media thread enrichment failed", {
-          batchId: args.batchId,
-          promptMessageId,
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
+            provider: "openrouter",
+            usage: modelResponse.usage,
+            providerMetadata: modelResponse.providerMetadata,
+          });
+          const itemByAssetKey = new Map(
+            items.map((item) => [item.assetKey, item]),
+          );
+          for (const result of modelResponse.results) {
+            const item = itemByAssetKey.get(result.assetKey);
+            if (!item) continue;
+            const existing =
+              resultsByPromptMessageId.get(item.promptMessageId) ?? [];
+            resultsByPromptMessageId.set(item.promptMessageId, [
+              ...existing,
+              result,
+            ]);
+            if (modelResponse.captionResponse && item.caption) {
+              captionResponseByPromptMessageId.set(
+                item.promptMessageId,
+                modelResponse.captionResponse,
+              );
+            }
+          }
+        } catch (error) {
+          console.error("Inbound media understanding chunk failed", {
+            batchId: args.batchId,
+            chunk: chunkIndex,
+            error: error instanceof Error ? error.message : "Unknown error",
+          });
+          throw error;
+        }
       }
-    }
 
+      const targetIds = new Set(
+        claimed.items.map((item) => item.promptMessageId),
+      );
+      const docs = await findMessages(
+        ctx,
+        claimed.conversation.threadId,
+        targetIds,
+      );
+      const configuredAgent = buildAgent(claimed.agent, claimed.agent._id);
+      for (const promptMessageId of targetIds) {
+        const doc = docs.get(promptMessageId);
+        const nextResults = resultsByPromptMessageId.get(promptMessageId) ?? [];
+        if (!doc || nextResults.length === 0)
+          throw new Error(
+            "Media preparation did not produce the required message results",
+          );
+        const inbox =
+          readInboxMetadataFromProviderMetadata(doc.providerOptions) ??
+          readInboxMetadataFromProviderMetadata(doc.providerMetadata);
+        const sourceItem = claimed.items.find(
+          (item) => item.promptMessageId === promptMessageId,
+        );
+        const displayText =
+          inbox?.displayText ?? sourceItem?.caption ?? doc.text ?? "";
+        const assets = mergeAssets(
+          inbox?.mediaUnderstanding?.assets ?? [],
+          nextResults,
+        );
+        const expected = claimed.items.filter(
+          (item) => item.promptMessageId === promptMessageId,
+        );
+        if (
+          expected.some(
+            (item) => !assets.some((asset) => asset.assetKey === item.assetKey),
+          )
+        )
+          throw new Error("Media preparation is incomplete");
+        const captionResponse =
+          captionResponseByPromptMessageId.get(promptMessageId);
+        const providerMetadata = {
+          ...(doc.providerMetadata as Record<string, unknown> | undefined),
+          inbox: {
+            ...inbox,
+            attachments: inbox?.attachments ?? [],
+            displayText,
+            mediaUnderstanding: {
+              model: INBOUND_MEDIA_MODEL,
+              processedAt: Date.now(),
+              ...(captionResponse ? { captionResponse } : {}),
+              assets,
+            },
+          },
+        };
+        try {
+          await configuredAgent.updateMessage(ctx, {
+            messageId: promptMessageId,
+            patch: {
+              message: {
+                role: "user",
+                content: agentFacingContent(
+                  displayText,
+                  captionResponse,
+                  assets,
+                ),
+              },
+              status: "success",
+            },
+          });
+          await ctx.runMutation(components.agent.messages.updateMessage, {
+            messageId: promptMessageId,
+            patch: { providerOptions: providerMetadata },
+          });
+        } catch (error) {
+          console.error("Inbound media thread enrichment failed", {
+            batchId: args.batchId,
+            promptMessageId,
+            error: error instanceof Error ? error.message : "Unknown error",
+          });
+          throw error;
+        }
+      }
     } catch (error) {
+      preparationError = error instanceof Error ? error.message : String(error);
       console.error("Inbound media batch processing failed", {
         batchId: args.batchId,
         error: error instanceof Error ? error.message : "Unknown error",
       });
+      throw error;
     } finally {
       await ctx.runMutation(
         internal.inboundMediaBatch.finalizeBatchAndEnqueueReply,
-        args,
+        { ...args, error: preparationError },
       );
     }
   },

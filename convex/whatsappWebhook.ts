@@ -37,7 +37,8 @@ import { deleteConversationAgentThread } from "./channelAgentThreadCleanup";
 import { isSkippedWhatsAppContact } from "./whatsappSkipContacts";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
-import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
+import { metaIndicatorPool } from "./inboxPools";
+import { queueInboundReply } from "./inboundReplyQueue";
 import { inboxPromptContent } from "../shared/inboxAttachments";
 import type { IngestChannelMessageResult } from "./chat/threads";
 import {
@@ -1248,10 +1249,7 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
           });
         }
         if (!queuedForUnderstanding) {
-          await inboxAiReplyPool.enqueueAction(
-            ctx,
-            internal.chat.inbox.generateAiReplyWorker,
-            {
+          await queueInboundReply(ctx, {
               conversationId: result.conversationId,
               promptContent: inboxPromptContent(
                 args.content,
@@ -1261,8 +1259,7 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
               promptMessageId: result.agentMessageId,
               inboundExternalId: args.externalId,
               sourceMessageUpdatedAt: args.timestampMs,
-            },
-          );
+            });
         }
       }
 
@@ -1368,17 +1365,13 @@ export const handleMessageEdit = internalMutation({
     for (const source of replacement.aiSources) {
       const conversation = await ctx.db.get(source.conversationId);
       if (conversation?.assignToAiAgent && conversation.assignedAgentId !== undefined) {
-        await inboxAiReplyPool.enqueueAction(
-          ctx,
-          internal.chat.inbox.generateAiReplyWorker,
-          {
+        await queueInboundReply(ctx, {
             conversationId: source.conversationId,
             promptContent: args.content,
             promptMessageId: source.agentMessageId,
             inboundExternalId: args.originalExternalId,
             sourceMessageUpdatedAt: args.timestampMs,
-          },
-        );
+          });
       }
     }
     return { updated: replacement.updated };

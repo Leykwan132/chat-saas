@@ -1,5 +1,6 @@
 import { integrationTables } from "./integrations/schema";
 import { autoDeescalationConfigValidator, autoDeescalationTimersTable } from "./autoDeescalationSchema";
+import { inboundReplyCoordinatorsTable, inboundReplyInputsTable, inboundReplyRunsTable, inboundReplyToolCallsTable } from "./inboundReplySchema";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { appointmentBookingSessionStatusValidator } from "./appointmentBookingSessionStatus";
@@ -651,6 +652,10 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_partnerId", ["partnerId"]),
   autoDeescalationTimers: autoDeescalationTimersTable,
+  inboundReplyCoordinators: inboundReplyCoordinatorsTable,
+  inboundReplyInputs: inboundReplyInputsTable,
+  inboundReplyRuns: inboundReplyRunsTable,
+  inboundReplyToolCalls: inboundReplyToolCallsTable,
   agents: defineTable({
     name: v.string(),
     provider: v.union(
@@ -675,6 +680,8 @@ export default defineSchema({
     userId: v.string(),
     orgId: v.string(),
     autoDeescalation: v.optional(autoDeescalationConfigValidator),
+    autoResume: v.optional(autoDeescalationConfigValidator),
+    messageWaitSeconds: v.optional(v.number()),
     escalationEnabled: v.optional(v.boolean()),
     escalationMessage: v.optional(v.string()),
     responseLength: v.optional(

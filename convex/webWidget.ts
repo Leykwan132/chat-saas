@@ -5,7 +5,6 @@ import {
   query,
 } from "./_generated/server";
 import { internalMutation, mutation } from "./triggers";
-import { internal } from "./_generated/api";
 import {
   ensureWidgetForAgent,
   generateWidgetIconUploadUrl,
@@ -28,7 +27,7 @@ import {
 } from "./webWidgetTraditional";
 import { ingestChannelMessage } from "./chat/threads";
 import { inboxPromptContent } from "../shared/inboxAttachments";
-import { inboxAiReplyPool } from "./inboxPools";
+import { queueInboundReply } from "./inboundReplyQueue";
 import {
   webWidgetLayoutValidator,
   webWidgetHomeValidator,
@@ -278,15 +277,11 @@ async function receiveWidgetMessage(
   }
 
   if (result.shouldEnqueueAi) {
-    await inboxAiReplyPool.enqueueAction(
-      ctx,
-      internal.chat.inbox.generateAiReplyWorker,
-      {
+    await queueInboundReply(ctx, {
         conversationId: result.conversationId,
         promptContent: inboxPromptContent(trimmed),
         promptMessageId: result.agentMessageId,
-      },
-    );
+      });
   }
 
   return {

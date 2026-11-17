@@ -2,11 +2,9 @@ import type { WorkId } from "@convex-dev/workpool";
 import { v, type Infer } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import {
-  internalMutation,
-  type MutationCtx,
-} from "./_generated/server";
-import { inboundMediaUnderstandingPool, inboxAiReplyPool } from "./inboxPools";
+import { internalMutation, type MutationCtx } from "./_generated/server";
+import { inboundMediaUnderstandingPool } from "./inboxPools";
+import { queueInboundReply } from "./inboundReplyQueue";
 import { checkAiFeature, getTeamStripePlanHelper } from "./plans";
 import { isConversationInAiReplyAudience } from "./leadRouting/audience";
 
@@ -152,11 +150,22 @@ export async function queueInboundMediaBatch(
     updatedAt: now,
     workId: undefined,
   });
+  await queueInboundReply(ctx, {
+    conversationId: args.conversationId,
+    promptMessageId: args.promptMessageId,
+    inboundExternalId: args.externalId,
+    sourceMessageUpdatedAt: args.timestampMs,
+    waitingForMedia: true,
+  });
   const workId = await inboundMediaUnderstandingPool.enqueueAction(
     ctx,
     internal.inboundMediaUnderstanding.processBatch,
     { batchId: batch._id, revision },
-    { runAfter: Math.max(0, processAfter - now) },
+    {
+      runAfter: Math.max(0, processAfter - now),
+      onComplete: internal.inboundMediaBatch.preparationComplete,
+      context: { batchId: batch._id, revision },
+    },
   );
   await ctx.db.patch(batch._id, { workId });
   return true;
@@ -178,10 +187,10 @@ export const claimBatch = internalMutation({
     }
     const items = await ctx.db
       .query("inboundMediaBatchItems")
-      .withIndex("by_batchId_and_ordinal", (q) =>
-        q.eq("batchId", args.batchId),
-      )
-      .take(100);
+      .withIndex("by_batchId_and_ordinal", (q) => q.eq("batchId", args.batchId))
+      .take(257);
+    if (items.length > 256)
+      throw new Error("Media reply group exceeds 256 assets");
     const conversation = await ctx.db.get(batch.conversationId);
     const agent = await ctx.db.get(batch.agentId);
     const channel = conversation?.channelId
@@ -189,7 +198,11 @@ export const claimBatch = internalMutation({
       : null;
     if (!conversation || !agent || items.length === 0) return null;
     if (!(await isConversationInAiReplyAudience(ctx, conversation))) {
-      await ctx.db.patch(batch._id, { state: "completed", workId: undefined, updatedAt: Date.now() });
+      await ctx.db.patch(batch._id, {
+        state: "completed",
+        workId: undefined,
+        updatedAt: Date.now(),
+      });
       return null;
     }
     await ctx.db.patch(batch._id, {
@@ -207,52 +220,8 @@ export const claimBatch = internalMutation({
   },
 });
 
-export const finalizeBatchAndEnqueueReply = internalMutation({
-  args: {
-    batchId: v.id("inboundMediaBatches"),
-    revision: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const batch = await ctx.db.get(args.batchId);
-    if (
-      !batch ||
-      batch.state !== "processing" ||
-      batch.revision !== args.revision
-    ) {
-      return false;
-    }
-    await ctx.db.patch(batch._id, {
-      state: "completed",
-      updatedAt: Date.now(),
-    });
-    await inboxAiReplyPool.enqueueAction(
-      ctx,
-      internal.chat.inbox.generateAiReplyWorker,
-      {
-        conversationId: batch.conversationId,
-        promptMessageId: batch.latestPromptMessageId,
-        inboundExternalId: batch.latestExternalId,
-      },
-    );
-    return true;
-  },
-});
-
-export const completeBatchWithoutReply = internalMutation({
-  args: {
-    batchId: v.id("inboundMediaBatches"),
-    revision: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const batch = await ctx.db.get(args.batchId);
-    if (
-      batch?.state === "processing" &&
-      batch.revision === args.revision
-    ) {
-      await ctx.db.patch(batch._id, {
-        state: "completed",
-        updatedAt: Date.now(),
-      });
-    }
-  },
-});
+export {
+  finalizeBatchAndEnqueueReply,
+  completeBatchWithoutReply,
+  preparationComplete,
+} from "./inboundMediaCompletion";
