@@ -6,7 +6,7 @@ const frameSource = readFileSync(
   "utf8",
 );
 const threadSource = readFileSync(
-  new URL("./InboxThreadMessages.tsx", import.meta.url),
+  new URL("./InboxMessageBody.tsx", import.meta.url),
   "utf8",
 );
 

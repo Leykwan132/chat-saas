@@ -38,7 +38,6 @@ describe("inbound media batching", () => {
     expect(inboundMediaProcessAfter(4_500, 1_000)).toBe(6_000);
     expect(inboundMediaProcessAfter(8_000, 1_000)).toBe(6_000);
   });
-
 });
 
 describe("inbound media trust boundaries", () => {
@@ -108,9 +107,9 @@ describe("inbound media integration contracts", () => {
     const imageIngestSource = source("./chat/inboxImageIngest.ts");
     const audioIngestSource = source("./chat/inboxAudioIngest.ts");
     const mediaIngestSource = source("./chat/whatsappMediaIngest.ts");
-    const uiSource = source(
-      "../src/components/inbox/InboxThreadMessages.tsx",
-    );
+    const uiSource =
+      source("../src/components/inbox/InboxMessageBody.tsx") +
+      source("../src/components/inbox/InboxMessageAttachments.tsx");
     expect(webhookSource).toContain("resolveWhatsAppImageFiles");
     expect(webhookSource).toContain("images: args.images");
     expect(webhookSource).toContain(
@@ -122,9 +121,7 @@ describe("inbound media integration contracts", () => {
     expect(mediaIngestSource).toContain(
       "Authorization: `Bearer ${accessToken}`",
     );
-    expect(mediaIngestSource).toContain(
-      'response.headers.get("content-type")',
-    );
+    expect(mediaIngestSource).toContain('response.headers.get("content-type")');
     expect(mediaIngestSource).toContain("5 * 1024 * 1024");
     expect(mediaIngestSource).toContain("16 * 1024 * 1024");
     expect(mediaIngestSource).toContain("response.status === 404");
@@ -136,7 +133,7 @@ describe("inbound media integration contracts", () => {
     const captionIndex = uiSource.indexOf("{showText ? (", imageIndex);
     expect(imageIndex).toBeGreaterThan(-1);
     expect(captionIndex).toBeGreaterThan(imageIndex);
-    expect(uiSource).toContain("'block h-6 w-full'");
+    expect(uiSource).toContain('"block h-6 w-full"');
   });
 
   it("hides captionless image placeholders from Inbox display", () => {
@@ -166,7 +163,7 @@ describe("inbound media integration contracts", () => {
   it("records MiMo usage without deducting customer credits", () => {
     const workerSource = source("./inboundMediaUnderstanding.ts");
     expect(workerSource).toContain("internal.agentUsage.insertRawUsage");
-    expect(workerSource).toContain('model: INBOUND_MEDIA_MODEL');
+    expect(workerSource).toContain("model: INBOUND_MEDIA_MODEL");
     expect(workerSource).not.toContain("internalDeductCredits");
   });
 
@@ -193,15 +190,13 @@ describe("inbound media integration contracts", () => {
     const workerSource = source("./inboundMediaUnderstanding.ts");
     expect(workerSource).toContain("configuredAgent.updateMessage");
     expect(workerSource).toContain("finally");
-    expect(workerSource).toContain(
-      "finalizeBatchAndEnqueueReply",
-    );
+    expect(workerSource).toContain("finalizeBatchAndEnqueueReply");
   });
 
   it("renders only audio transcripts in Inbox", () => {
-    const uiSource = source(
-      "../src/components/inbox/InboxThreadMessages.tsx",
-    );
+    const uiSource =
+      source("../src/components/inbox/InboxMessageBody.tsx") +
+      source("../src/components/inbox/InboxMessageAttachments.tsx");
     const transcriptSource = source(
       "../src/components/inbox/InboxAudioTranscript.tsx",
     );

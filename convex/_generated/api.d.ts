@@ -327,6 +327,8 @@ import type * as inboxConversationSummary from "../inboxConversationSummary.js";
 import type * as inboxConversationSummaryMigration from "../inboxConversationSummaryMigration.js";
 import type * as inboxEscalationCounts from "../inboxEscalationCounts.js";
 import type * as inboxEscalationQuery from "../inboxEscalationQuery.js";
+import type * as inboxEscalationTimer from "../inboxEscalationTimer.js";
+import type * as inboxManualEscalation from "../inboxManualEscalation.js";
 import type * as inboxMessageSearchRefresh from "../inboxMessageSearchRefresh.js";
 import type * as inboxPools from "../inboxPools.js";
 import type * as inboxProjectionChanges from "../inboxProjectionChanges.js";
@@ -937,6 +939,8 @@ declare const fullApi: ApiFromModules<{
   inboxConversationSummaryMigration: typeof inboxConversationSummaryMigration;
   inboxEscalationCounts: typeof inboxEscalationCounts;
   inboxEscalationQuery: typeof inboxEscalationQuery;
+  inboxEscalationTimer: typeof inboxEscalationTimer;
+  inboxManualEscalation: typeof inboxManualEscalation;
   inboxMessageSearchRefresh: typeof inboxMessageSearchRefresh;
   inboxPools: typeof inboxPools;
   inboxProjectionChanges: typeof inboxProjectionChanges;
