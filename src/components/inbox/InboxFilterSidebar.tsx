@@ -1,3 +1,5 @@
+import type { InboxHandlingFilter } from "../../../shared/inboxHandling";
+import { PiRobot } from "react-icons/pi";
 import {
   AlertCircle,
   Inbox,
@@ -11,10 +13,10 @@ import {
   Tag,
   User,
   UserX,
-} from 'lucide-react';
-import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
-import { Button } from '@/components/ui/button';
-import { SidebarPageTitleRow } from '@/components/SidebarPageTitleRow';
+} from "lucide-react";
+import { SiInstagram, SiMessenger, SiWhatsapp } from "react-icons/si";
+import { Button } from "@/components/ui/button";
+import { SidebarPageTitleRow } from "@/components/SidebarPageTitleRow";
 import {
   Empty,
   EmptyContent,
@@ -22,13 +24,17 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/ui/empty';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/empty";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import {
   getLeadTemperatureStyle,
   type LeadTemperature,
-} from '@/lib/leadTemperature';
+} from "@/lib/leadTemperature";
 import {
   INBOX_SIDEBAR_ICON_RAIL_WIDTH,
   INBOX_SIDEBAR_WIDTH,
@@ -41,43 +47,43 @@ import {
   inboxSidebarSectionClassName,
   inboxSidebarToggleButtonClassName,
   inboxSidebarToggleIconClassName,
-} from '@/lib/sidebarNavStyles';
-import type { ConversationPlatform } from '@/components/ChatRow';
-import { getPlatformIconClassName } from '@/lib/platformIconStyles';
+} from "@/lib/sidebarNavStyles";
+import type { ConversationPlatform } from "@/components/ChatRow";
+import { getPlatformIconClassName } from "@/lib/platformIconStyles";
 import {
   inboxColumnClassName,
   inboxColumnScrollClassName,
-} from '@/components/inbox/inboxLayout';
-import { LeadTemperatureInfo } from '@/components/inbox/LeadTemperatureInfo';
-import { BookedCheckIcon } from '@/components/booking/BookingDetailsPanel';
+} from "@/components/inbox/inboxLayout";
+import { LeadTemperatureInfo } from "@/components/inbox/LeadTemperatureInfo";
+import { BookedCheckIcon } from "@/components/booking/BookingDetailsPanel";
 
 function BookedCheckIconSlot({ className }: { className?: string }) {
   return <BookedCheckIcon size="sm" className={className} />;
 }
 
-export type AssignmentFilter = 'all' | 'unread' | 'assigned_me' | 'unassigned';
+export type AssignmentFilter = "all" | "unread" | "assigned_me" | "unassigned";
 
 const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
-  whatsapp: 'WhatsApp',
-  instagram: 'Instagram',
-  messenger: 'Messenger',
-  web: 'Web',
-  avatar: 'Avatar',
+  whatsapp: "WhatsApp",
+  instagram: "Instagram",
+  messenger: "Messenger",
+  web: "Web",
+  avatar: "Avatar",
 };
 
 function PlatformIcon({ platform }: { platform: ConversationPlatform }) {
-  const className = cn('shrink-0', getPlatformIconClassName(platform));
+  const className = cn("shrink-0", getPlatformIconClassName(platform));
   const common = { size: 18, className } as const;
   switch (platform) {
-    case 'whatsapp':
+    case "whatsapp":
       return <SiWhatsapp {...common} />;
-    case 'instagram':
+    case "instagram":
       return <SiInstagram {...common} />;
-    case 'messenger':
+    case "messenger":
       return <SiMessenger {...common} />;
-    case 'web':
+    case "web":
       return <Globe className={className} />;
-    case 'avatar':
+    case "avatar":
       return <ScanFace className={className} />;
   }
 }
@@ -106,11 +112,15 @@ function FilterRow({
       onClick={onClick}
       className={cn(
         inboxSidebarItemClassName,
-        isActive ? inboxSidebarItemActiveClassName : inboxSidebarItemInactiveClassName,
+        isActive
+          ? inboxSidebarItemActiveClassName
+          : inboxSidebarItemInactiveClassName,
         className,
       )}
     >
-      {icon ? <span className={inboxSidebarIconSlotClassName}>{icon}</span> : null}
+      {icon ? (
+        <span className={inboxSidebarIconSlotClassName}>{icon}</span>
+      ) : null}
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {showCount && count !== undefined ? (
         <span className={inboxSidebarCountClassName}>{count}</span>
@@ -164,11 +174,13 @@ function RailButton({
           onClick={onClick}
           className={cn(
             inboxSidebarToggleButtonClassName,
-            isActive && 'bg-sidebar-accent text-sidebar-accent-foreground',
+            isActive && "bg-sidebar-accent text-sidebar-accent-foreground",
           )}
           aria-label={label}
         >
-          <Icon className={cn(inboxSidebarToggleIconClassName, iconClassName)} />
+          <Icon
+            className={cn(inboxSidebarToggleIconClassName, iconClassName)}
+          />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="right">{label}</TooltipContent>
@@ -193,6 +205,8 @@ export type InboxFilterSidebarProps = {
   onOpenChange: (open: boolean) => void;
   assignmentFilter: AssignmentFilter;
   onAssignmentFilterChange: (filter: AssignmentFilter) => void;
+  handlingFilter: InboxHandlingFilter;
+  onHandlingFilterChange: (filter: InboxHandlingFilter) => void;
   platformFilters: ConversationPlatform[];
   onTogglePlatform: (platform: ConversationPlatform) => void;
   escalatedActive: boolean;
@@ -215,6 +229,8 @@ export function InboxFilterSidebar({
   onOpenChange,
   assignmentFilter,
   onAssignmentFilterChange,
+  handlingFilter,
+  onHandlingFilterChange,
   platformFilters,
   onTogglePlatform,
   escalatedActive,
@@ -235,7 +251,7 @@ export function InboxFilterSidebar({
     <div
       className={cn(
         inboxColumnClassName,
-        'shrink-0 border-r border-border bg-background transition-[width] duration-200 ease-out',
+        "shrink-0 border-r border-border bg-background transition-[width] duration-200 ease-out",
       )}
       style={{
         width: open ? INBOX_SIDEBAR_WIDTH : INBOX_SIDEBAR_ICON_RAIL_WIDTH,
@@ -244,7 +260,7 @@ export function InboxFilterSidebar({
       {open ? (
         <SidebarPageTitleRow
           title="Inbox"
-          action={(
+          action={
             <Button
               type="button"
               variant="ghost"
@@ -255,7 +271,7 @@ export function InboxFilterSidebar({
             >
               <PanelLeftClose className={inboxSidebarToggleIconClassName} />
             </Button>
-          )}
+          }
         />
       ) : (
         <div className="flex justify-center px-[0.45rem] py-2">
@@ -278,7 +294,7 @@ export function InboxFilterSidebar({
             label="All conversations"
             icon={Inbox}
             isActive={
-              assignmentFilter === 'all' &&
+              assignmentFilter === "all" &&
               platformFilters.length === 0 &&
               !escalatedActive &&
               !bookingActive
@@ -288,19 +304,19 @@ export function InboxFilterSidebar({
           <RailButton
             label="Unread"
             icon={MessageSquareDot}
-            isActive={assignmentFilter === 'unread'}
+            isActive={assignmentFilter === "unread"}
             onClick={() => onOpenChange(true)}
           />
           <RailButton
             label="Assigned to me"
             icon={User}
-            isActive={assignmentFilter === 'assigned_me'}
+            isActive={assignmentFilter === "assigned_me"}
             onClick={() => onOpenChange(true)}
           />
           <RailButton
             label="Unassigned"
             icon={UserX}
-            isActive={assignmentFilter === 'unassigned'}
+            isActive={assignmentFilter === "unassigned"}
             onClick={() => onOpenChange(true)}
           />
           <RailButton
@@ -314,6 +330,12 @@ export function InboxFilterSidebar({
             label="Booked"
             icon={BookedCheckIconSlot}
             isActive={bookingActive}
+            onClick={() => onOpenChange(true)}
+          />
+          <RailButton
+            label="Handling"
+            icon={PiRobot}
+            isActive={handlingFilter !== "all"}
             onClick={() => onOpenChange(true)}
           />
           <RailButton
@@ -332,35 +354,56 @@ export function InboxFilterSidebar({
           ) : null}
         </div>
       ) : (
-        <div className={cn(inboxColumnScrollClassName, 'no-scrollbar')}>
+        <div className={cn(inboxColumnScrollClassName, "no-scrollbar")}>
           <FilterSection title="Assignment">
             <FilterRow
               label="All"
               icon={<Inbox className="text-muted-foreground" />}
-              isActive={assignmentFilter === 'all'}
+              isActive={assignmentFilter === "all"}
               count={counts?.all}
-              onClick={() => onAssignmentFilterChange('all')}
+              onClick={() => onAssignmentFilterChange("all")}
             />
             <FilterRow
               label="Unread"
               icon={<MessageSquareDot className="text-muted-foreground" />}
-              isActive={assignmentFilter === 'unread'}
+              isActive={assignmentFilter === "unread"}
               count={counts?.unread}
-              onClick={() => onAssignmentFilterChange('unread')}
+              onClick={() => onAssignmentFilterChange("unread")}
             />
             <FilterRow
               label="Assigned to me"
               icon={<User className="text-muted-foreground" />}
-              isActive={assignmentFilter === 'assigned_me'}
+              isActive={assignmentFilter === "assigned_me"}
               count={counts?.assigned_me}
-              onClick={() => onAssignmentFilterChange('assigned_me')}
+              onClick={() => onAssignmentFilterChange("assigned_me")}
             />
             <FilterRow
               label="Unassigned"
               icon={<UserX className="text-muted-foreground" />}
-              isActive={assignmentFilter === 'unassigned'}
+              isActive={assignmentFilter === "unassigned"}
               count={counts?.unassigned}
-              onClick={() => onAssignmentFilterChange('unassigned')}
+              onClick={() => onAssignmentFilterChange("unassigned")}
+            />
+          </FilterSection>
+
+          <FilterSection title="Handling">
+            <FilterRow
+              label="AI handled"
+              icon={<PiRobot className="text-muted-foreground" />}
+              isActive={handlingFilter === "ai"}
+              onClick={() =>
+                onHandlingFilterChange(handlingFilter === "ai" ? "all" : "ai")
+              }
+            />
+            <FilterRow
+              label="Non-AI handled"
+              icon={<User className="text-muted-foreground" />}
+              isActive={handlingFilter === "human"}
+              onClick={() =>
+                onHandlingFilterChange(
+                  handlingFilter === "human" ? "all" : "human",
+                )
+              }
             />
           </FilterSection>
 
@@ -371,7 +414,7 @@ export function InboxFilterSidebar({
                 label={PLATFORM_LABEL[platform]}
                 icon={<PlatformIcon platform={platform} />}
                 isActive={platformFilters.includes(platform)}
-                count={counts ? counts.byPlatform[platform] ?? 0 : undefined}
+                count={counts ? (counts.byPlatform[platform] ?? 0) : undefined}
                 onClick={() => onTogglePlatform(platform)}
               />
             ))}
@@ -394,8 +437,11 @@ export function InboxFilterSidebar({
             />
           </FilterSection>
 
-          <FilterSection title="Lead Temperature" info={<LeadTemperatureInfo />}>
-            {(['Hot', 'Warm', 'Cold'] as const).map((lead) => {
+          <FilterSection
+            title="Lead Temperature"
+            info={<LeadTemperatureInfo />}
+          >
+            {(["Hot", "Warm", "Cold"] as const).map((lead) => {
               const style = getLeadTemperatureStyle(lead);
               const Icon = style.icon;
               return (
@@ -404,7 +450,7 @@ export function InboxFilterSidebar({
                   label={lead}
                   icon={<Icon className={style.iconClass} />}
                   isActive={activeLeads.includes(lead)}
-                  count={counts ? counts.byLead[lead] ?? 0 : undefined}
+                  count={counts ? (counts.byLead[lead] ?? 0) : undefined}
                   onClick={() => onToggleLead(lead)}
                 />
               );
@@ -415,12 +461,18 @@ export function InboxFilterSidebar({
             {userTags.length === 0 ? (
               <Empty className="mx-[0.45rem] my-[0.3375rem] w-auto flex-none gap-[0.45rem] rounded-lg border border-dashed bg-muted/10 p-[0.675rem]">
                 <EmptyHeader className="max-w-none gap-[0.3375rem]">
-                  <EmptyMedia variant="icon" className="mb-0 size-[1.8rem] [&_svg:not([class*='size-'])]:size-[0.7875rem]">
+                  <EmptyMedia
+                    variant="icon"
+                    className="mb-0 size-[1.8rem] [&_svg:not([class*='size-'])]:size-[0.7875rem]"
+                  >
                     <Tag />
                   </EmptyMedia>
-                  <EmptyTitle className="text-[0.675rem] font-semibold">No tags yet</EmptyTitle>
+                  <EmptyTitle className="text-[0.675rem] font-semibold">
+                    No tags yet
+                  </EmptyTitle>
                   <EmptyDescription className="text-[9.9px] leading-snug">
-                    Add tags on a contact to organize conversations and filter your inbox.
+                    Add tags on a contact to organize conversations and filter
+                    your inbox.
                   </EmptyDescription>
                 </EmptyHeader>
                 {canCreateTag && onCreateTagClick ? (
@@ -445,7 +497,7 @@ export function InboxFilterSidebar({
                   label={tag}
                   icon={<Tag className="text-muted-foreground" />}
                   isActive={activeTags.includes(tag)}
-                  count={counts ? counts.byTag[tag] ?? 0 : undefined}
+                  count={counts ? (counts.byTag[tag] ?? 0) : undefined}
                   onClick={() => onToggleTag(tag)}
                 />
               ))

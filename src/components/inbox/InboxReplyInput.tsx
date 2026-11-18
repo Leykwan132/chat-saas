@@ -1,6 +1,9 @@
-"use client";
+import { SendHorizontal } from "lucide-react";
 
-import { ChatPromptInput, type ChatPromptInputProps } from "@/components/ChatPromptInput";
+import {
+  ChatPromptInput,
+  type ChatPromptInputProps,
+} from "@/components/ChatPromptInput";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 
 export type InboxReplyInputProps = Omit<
@@ -20,6 +23,7 @@ export function InboxReplyInput({
   return (
     <ChatPromptInput
       {...props}
+      sendIcon={<SendHorizontal className="size-4 fill-current" />}
       allowImageAttachments
       enableMediaUpload
       disabled={disabled || busy}

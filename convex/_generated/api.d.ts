@@ -328,6 +328,8 @@ import type * as inboxConversationSummaryMigration from "../inboxConversationSum
 import type * as inboxEscalationCounts from "../inboxEscalationCounts.js";
 import type * as inboxEscalationQuery from "../inboxEscalationQuery.js";
 import type * as inboxEscalationTimer from "../inboxEscalationTimer.js";
+import type * as inboxHandling from "../inboxHandling.js";
+import type * as inboxHandlingValidators from "../inboxHandlingValidators.js";
 import type * as inboxManualEscalation from "../inboxManualEscalation.js";
 import type * as inboxMessageSearchRefresh from "../inboxMessageSearchRefresh.js";
 import type * as inboxPools from "../inboxPools.js";
@@ -336,6 +338,7 @@ import type * as inboxSearch from "../inboxSearch.js";
 import type * as inboxSearchMigration from "../inboxSearchMigration.js";
 import type * as inboxSearchProjection from "../inboxSearchProjection.js";
 import type * as inboxSidebarCountKeys from "../inboxSidebarCountKeys.js";
+import type * as inboxSummaryQueries from "../inboxSummaryQueries.js";
 import type * as instagramApi from "../instagramApi.js";
 import type * as instagramAuth from "../instagramAuth.js";
 import type * as instagramChannelAssignment from "../instagramChannelAssignment.js";
@@ -940,6 +943,8 @@ declare const fullApi: ApiFromModules<{
   inboxEscalationCounts: typeof inboxEscalationCounts;
   inboxEscalationQuery: typeof inboxEscalationQuery;
   inboxEscalationTimer: typeof inboxEscalationTimer;
+  inboxHandling: typeof inboxHandling;
+  inboxHandlingValidators: typeof inboxHandlingValidators;
   inboxManualEscalation: typeof inboxManualEscalation;
   inboxMessageSearchRefresh: typeof inboxMessageSearchRefresh;
   inboxPools: typeof inboxPools;
@@ -948,6 +953,7 @@ declare const fullApi: ApiFromModules<{
   inboxSearchMigration: typeof inboxSearchMigration;
   inboxSearchProjection: typeof inboxSearchProjection;
   inboxSidebarCountKeys: typeof inboxSidebarCountKeys;
+  inboxSummaryQueries: typeof inboxSummaryQueries;
   instagramApi: typeof instagramApi;
   instagramAuth: typeof instagramAuth;
   instagramChannelAssignment: typeof instagramChannelAssignment;

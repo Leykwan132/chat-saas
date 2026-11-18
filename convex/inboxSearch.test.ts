@@ -68,23 +68,26 @@ async function createFixture() {
       createdAt: now,
       updatedAt: now,
     });
-    const messageIds = await Promise.all([now, now + 1].map((createdAt) =>
-      ctx.db.insert("messages", {
-        orgId: "",
-        conversationId,
-        channelId,
-        service: "whatsapp",
-        orgAddress: "+60999999999",
-        contactAddress: "+60123456789",
-        direction: "incoming",
-        contentType: "text",
-        content: "Need to reschedule Friday",
-        createdAt,
-      }),
-    ));
+    const messageIds = await Promise.all(
+      [now, now + 1].map((createdAt) =>
+        ctx.db.insert("messages", {
+          orgId: "",
+          conversationId,
+          channelId,
+          service: "whatsapp",
+          orgAddress: "+60999999999",
+          contactAddress: "+60123456789",
+          direction: "incoming",
+          contentType: "text",
+          content: "Need to reschedule Friday",
+          createdAt,
+        }),
+      ),
+    );
     await upsertInboxConversationSummary(ctx, conversationId);
     await upsertInboxChatSearchDocument(ctx, conversationId);
-    for (const messageId of messageIds) await upsertInboxMessageSearchDocument(ctx, messageId);
+    for (const messageId of messageIds)
+      await upsertInboxMessageSearchDocument(ctx, messageId);
     return { agentId };
   });
   const client = t.withIdentity({ subject: "inbox-search-query-owner" });
@@ -94,23 +97,33 @@ async function createFixture() {
 
 test("returns at most five scoped contact matches", async () => {
   const fixture = await createFixture();
-  const result = await fixture.client.query(api.inboxSearch.searchChatsForCurrentOrg, {
-    agentId: fixture.agentId,
-    searchQuery: "aisha",
-  });
+  const result = await fixture.client.query(
+    api.inboxSearch.searchChatsForCurrentOrg,
+    {
+      agentId: fixture.agentId,
+      searchQuery: "aisha",
+    },
+  );
   expect(result).toHaveLength(1);
-  expect(result[0]).toMatchObject({ contactName: "Aisha Rahman" });
+  expect(result[0]).toMatchObject({
+    contactName: "Aisha Rahman",
+    handling: "ai",
+  });
 });
 
 test("returns separate message hits with current summary presentation data", async () => {
   const fixture = await createFixture();
-  const result = await fixture.client.query(api.inboxSearch.searchMessagesForCurrentOrg, {
-    agentId: fixture.agentId,
-    searchQuery: "reschedule",
-    paginationOpts: { cursor: null, numItems: 20 },
-  });
+  const result = await fixture.client.query(
+    api.inboxSearch.searchMessagesForCurrentOrg,
+    {
+      agentId: fixture.agentId,
+      searchQuery: "reschedule",
+      paginationOpts: { cursor: null, numItems: 20 },
+    },
+  );
   expect(result.page).toHaveLength(2);
   expect(result.page[0]).toMatchObject({
+    handling: "ai",
     matchedMessage: "Need to reschedule Friday",
     matchedMessageAt: expect.any(Number),
   });

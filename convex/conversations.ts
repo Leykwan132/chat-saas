@@ -1,7 +1,17 @@
-import { escalatedInboxQuery } from "./inboxEscalationQuery";
+import { inboxHandlingSummaryValidator } from "./inboxHandlingValidators";
+import { listInboxSummaries } from "./inboxSummaryQueries";
 import { v } from "convex/values";
-import { paginationOptsValidator } from "convex/server";
-import { action, internalQuery, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import {
+  paginationOptsValidator,
+  paginationResultValidator,
+} from "convex/server";
+import {
+  action,
+  internalQuery,
+  query,
+  type MutationCtx,
+  type QueryCtx,
+} from "./_generated/server";
 import { mutation } from "./triggers";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -141,58 +151,8 @@ export const listInboxSummariesForCurrentOrg = query({
     escalatedOnly: v.optional(v.boolean()),
     paginationOpts: paginationOptsValidator,
   },
-  handler: async (ctx, args) => {
-    const { orgId, userId } = await getAuthContext(ctx);
-    if (args.escalatedOnly) {
-      return await escalatedInboxQuery(ctx, orgId, userId, args.agentId)
-        .order("desc").paginate(args.paginationOpts);
-    }
-    const isPersonal = !orgId || orgId === "personal";
-    if (isPersonal && args.agentId !== undefined) {
-      return await ctx.db
-        .query("inboxConversationSummaries")
-        .withIndex(
-          "by_userId_assignedAgentId_connected_lastMessageAt",
-          (q) =>
-            q
-              .eq("userId", userId)
-              .eq("assignedAgentId", args.agentId)
-              .eq("isChannelConnected", true),
-        )
-        .order("desc")
-        .paginate(args.paginationOpts);
-    }
-    if (isPersonal) {
-      return await ctx.db
-        .query("inboxConversationSummaries")
-        .withIndex("by_userId_and_isChannelConnected_and_lastMessageAt", (q) =>
-          q.eq("userId", userId).eq("isChannelConnected", true),
-        )
-        .order("desc")
-        .paginate(args.paginationOpts);
-    }
-    if (args.agentId !== undefined) {
-      return await ctx.db
-        .query("inboxConversationSummaries")
-        .withIndex(
-          "by_orgId_assignedAgentId_connected_lastMessageAt",
-          (q) =>
-            q
-              .eq("orgId", orgId)
-              .eq("assignedAgentId", args.agentId)
-              .eq("isChannelConnected", true),
-        )
-        .order("desc")
-        .paginate(args.paginationOpts);
-    }
-    return await ctx.db
-      .query("inboxConversationSummaries")
-      .withIndex("by_orgId_and_isChannelConnected_and_lastMessageAt", (q) =>
-        q.eq("orgId", orgId).eq("isChannelConnected", true),
-      )
-      .order("desc")
-      .paginate(args.paginationOpts);
-  },
+  returns: paginationResultValidator(inboxHandlingSummaryValidator),
+  handler: listInboxSummaries,
 });
 
 export const getTotalUnreadForAgent = query({
@@ -206,24 +166,20 @@ export const getTotalUnreadForAgent = query({
     const summaries = isPersonal
       ? await ctx.db
           .query("inboxConversationSummaries")
-          .withIndex(
-            "by_userId_assignedAgentId_connected_lastMessageAt",
-            (q) =>
-              q
-                .eq("userId", userId)
-                .eq("assignedAgentId", args.agentId)
-                .eq("isChannelConnected", true),
+          .withIndex("by_userId_assignedAgentId_connected_lastMessageAt", (q) =>
+            q
+              .eq("userId", userId)
+              .eq("assignedAgentId", args.agentId)
+              .eq("isChannelConnected", true),
           )
           .collect()
       : await ctx.db
           .query("inboxConversationSummaries")
-          .withIndex(
-            "by_orgId_assignedAgentId_connected_lastMessageAt",
-            (q) =>
-              q
-                .eq("orgId", orgId)
-                .eq("assignedAgentId", args.agentId)
-                .eq("isChannelConnected", true),
+          .withIndex("by_orgId_assignedAgentId_connected_lastMessageAt", (q) =>
+            q
+              .eq("orgId", orgId)
+              .eq("assignedAgentId", args.agentId)
+              .eq("isChannelConnected", true),
           )
           .collect();
     return summaries.reduce((total, summary) => total + summary.unreadCount, 0);
@@ -401,7 +357,11 @@ export const setAssignee = mutation({
       await setConversationAiEnabledHandler(ctx, args.conversationId, true);
       return;
     }
-    await setConversationLeadOwnerHandler(ctx, args.conversationId, args.assignee.workosUserId);
+    await setConversationLeadOwnerHandler(
+      ctx,
+      args.conversationId,
+      args.assignee.workosUserId,
+    );
   },
 });
 
@@ -411,7 +371,11 @@ export const setConversationAiEnabled = mutation({
     enabled: v.boolean(),
   },
   handler: async (ctx, args) => {
-    await setConversationAiEnabledHandler(ctx, args.conversationId, args.enabled);
+    await setConversationAiEnabledHandler(
+      ctx,
+      args.conversationId,
+      args.enabled,
+    );
   },
 });
 
@@ -421,7 +385,11 @@ export const setConversationLeadOwner = mutation({
     workosUserId: v.string(),
   },
   handler: async (ctx, args) => {
-    await setConversationLeadOwnerHandler(ctx, args.conversationId, args.workosUserId);
+    await setConversationLeadOwnerHandler(
+      ctx,
+      args.conversationId,
+      args.workosUserId,
+    );
   },
 });
 
@@ -488,7 +456,8 @@ async function setConversationLeadOwnerHandler(
     updatedAt: Date.now(),
   });
   const nameParts = [userRow.firstName, userRow.lastName].filter(Boolean);
-  const assigneeName = nameParts.length > 0 ? nameParts.join(" ") : userRow.email;
+  const assigneeName =
+    nameParts.length > 0 ? nameParts.join(" ") : userRow.email;
 
   await logConversationEvent(ctx, {
     conversationId,

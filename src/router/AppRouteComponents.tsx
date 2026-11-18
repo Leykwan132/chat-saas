@@ -1,27 +1,39 @@
-import { useEffect } from 'react';
-import { AuthKitProvider, useAuth as useWorkosAuth } from '@workos-inc/authkit-react';
-import { ConvexProviderWithAuthKit } from '@convex-dev/workos';
-import { ConvexProviderWithAuth, useQuery, type ConvexReactClient } from 'convex/react';
-import { Navigate, Outlet, useParams } from 'react-router';
-import { api } from '../../convex/_generated/api';
-import { POST_LOGIN_REDIRECT } from '@/constants';
-import { HostFavicon, PostHogIdentifier, ScrollToTop } from '@/components/AppRuntimeEffects';
-import { ThemeProvider } from '@/components/theme-provider';
-import { Spinner } from '@/components/ui/spinner';
-import { Toaster } from '@/components/ui/sonner';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { AdjustPlanProvider } from '@/components/billing/AdjustPlanProvider';
-import { UpgradeModalProvider } from '@/components/UpgradeModalProvider';
-import { usePermissions } from '@/hooks/usePermissions';
+import { InboxFocusReturnGate } from "@/components/inbox/InboxFocusReturnGate";
+import { useEffect } from "react";
+import {
+  AuthKitProvider,
+  useAuth as useWorkosAuth,
+} from "@workos-inc/authkit-react";
+import { ConvexProviderWithAuthKit } from "@convex-dev/workos";
+import {
+  ConvexProviderWithAuth,
+  useQuery,
+  type ConvexReactClient,
+} from "convex/react";
+import { Navigate, Outlet, useParams } from "react-router";
+import { api } from "../../convex/_generated/api";
+import { POST_LOGIN_REDIRECT } from "@/constants";
+import {
+  HostFavicon,
+  PostHogIdentifier,
+  ScrollToTop,
+} from "@/components/AppRuntimeEffects";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Spinner } from "@/components/ui/spinner";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AdjustPlanProvider } from "@/components/billing/AdjustPlanProvider";
+import { UpgradeModalProvider } from "@/components/UpgradeModalProvider";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   getDefaultAnalyticsSection,
   type PlanKey,
-} from '../../shared/planCatalog';
-import { Permission } from '../../shared/permissions';
-import { NativeAppAuthProvider, useAuth } from '@/partnerAuth/AppAuthProvider';
-import { PartnerAuthProvider } from '@/partnerAuth/PartnerAuthProvider';
-import { usePartnerConvexAuth } from '@/partnerAuth/usePartnerConvexAuth';
-import { AccountUnavailableBoundary } from '@/components/AccountUnavailableBoundary';
+} from "../../shared/planCatalog";
+import { Permission } from "../../shared/permissions";
+import { NativeAppAuthProvider, useAuth } from "@/partnerAuth/AppAuthProvider";
+import { PartnerAuthProvider } from "@/partnerAuth/PartnerAuthProvider";
+import { usePartnerConvexAuth } from "@/partnerAuth/usePartnerConvexAuth";
+import { AccountUnavailableBoundary } from "@/components/AccountUnavailableBoundary";
 
 export function OldAgentRedirect() {
   const { agentId } = useParams();
@@ -51,7 +63,7 @@ export function AnalyticsIndex() {
   }
 
   const section = getDefaultAnalyticsSection(
-    (planAndUsage?.plan ?? 'free') as PlanKey,
+    (planAndUsage?.plan ?? "free") as PlanKey,
   );
   return <Navigate to={`/dashboard/${agentId}/analytics/${section}`} replace />;
 }
@@ -94,9 +106,11 @@ export function DashboardIndexRedirect() {
   }
   if (can(Permission.ANALYTICS_READ)) {
     const section = getDefaultAnalyticsSection(
-      (planAndUsage?.plan ?? 'free') as PlanKey,
+      (planAndUsage?.plan ?? "free") as PlanKey,
     );
-    return <Navigate to={`/dashboard/${agentId}/analytics/${section}`} replace />;
+    return (
+      <Navigate to={`/dashboard/${agentId}/analytics/${section}`} replace />
+    );
   }
 
   return <Navigate to={`/dashboard/${agentId}/inbox`} replace />;
@@ -123,7 +137,7 @@ export function CallbackRoute() {
     );
   }
 
-  return <Navigate to={user ? POST_LOGIN_REDIRECT : '/'} replace />;
+  return <Navigate to={user ? POST_LOGIN_REDIRECT : "/"} replace />;
 }
 
 export function AppRootLayout({
@@ -135,9 +149,10 @@ export function AppRootLayout({
   workosClientId: string;
   workosRedirectUri?: string;
 }) {
-  const isKilobotHost = window.location.hostname === 'kilobot.app' ||
-    window.location.hostname === 'localhost' ||
-    window.location.hostname.endsWith('.localhost');
+  const isKilobotHost =
+    window.location.hostname === "kilobot.app" ||
+    window.location.hostname === "localhost" ||
+    window.location.hostname.endsWith(".localhost");
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
@@ -155,7 +170,10 @@ export function AppRootLayout({
         </AuthKitProvider>
       ) : (
         <PartnerAuthProvider>
-          <ConvexProviderWithAuth client={convex} useAuth={usePartnerConvexAuth}>
+          <ConvexProviderWithAuth
+            client={convex}
+            useAuth={usePartnerConvexAuth}
+          >
             <AppContent />
           </ConvexProviderWithAuth>
         </PartnerAuthProvider>
@@ -172,7 +190,9 @@ function AppContent() {
             <HostFavicon />
             <PostHogIdentifier />
             <ScrollToTop />
-            <Outlet />
+            <InboxFocusReturnGate>
+              <Outlet />
+            </InboxFocusReturnGate>
             <Toaster />
           </UpgradeModalProvider>
         </AdjustPlanProvider>
