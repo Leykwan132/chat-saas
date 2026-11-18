@@ -1,13 +1,14 @@
-import { Astroid, UserRoundCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Spinner } from '@/components/ui/spinner';
+import { Astroid, UserRoundCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 
 type InboxAiHandlingBarProps = {
   agentName: string | undefined;
   canTakeControl: boolean;
   takingControl: boolean;
   onTakeControl: () => void;
+  actionLabel?: string;
 };
 
 export function InboxAiHandlingBar({
@@ -15,6 +16,7 @@ export function InboxAiHandlingBar({
   canTakeControl,
   takingControl,
   onTakeControl,
+  actionLabel = "Take control",
 }: InboxAiHandlingBarProps) {
   return (
     <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-muted/50 p-3">
@@ -25,11 +27,16 @@ export function InboxAiHandlingBar({
         {agentName === undefined ? (
           <Skeleton className="h-4 w-24" />
         ) : (
-          <span className="truncate text-sm font-medium text-foreground" title={agentName}>
+          <span
+            className="truncate text-sm font-medium text-foreground"
+            title={agentName}
+          >
             {agentName}
           </span>
         )}
-        <span className="text-xs text-muted-foreground">Handling this conversation</span>
+        <span className="text-xs text-muted-foreground">
+          Handling this conversation
+        </span>
       </div>
       <Button
         type="button"
@@ -38,8 +45,12 @@ export function InboxAiHandlingBar({
         onClick={onTakeControl}
         aria-busy={takingControl}
       >
-        {takingControl ? <Spinner data-icon="inline-start" /> : <UserRoundCheck data-icon="inline-start" />}
-        {takingControl ? 'Taking control…' : 'Take control'}
+        {takingControl ? (
+          <Spinner data-icon="inline-start" />
+        ) : (
+          <UserRoundCheck data-icon="inline-start" />
+        )}
+        {takingControl ? "Taking control…" : actionLabel}
       </Button>
     </div>
   );

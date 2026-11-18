@@ -1,9 +1,20 @@
+import {
+  matchesInboxHandling,
+  type InboxHandlingFilter,
+} from "../../shared/inboxHandling";
+import {
+  matchesFocusInboxSearchFilters,
+  type FocusInboxSearchFilters,
+} from "@/lib/inboxFocusSearchFilters";
+import { InboxMobileHandlingFilter } from "@/components/inbox/InboxMobileHandlingFilter";
+import { InboxFocusFilters } from "@/components/inbox/InboxFocusFilters";
 import { InboxEscalateButton } from "@/components/inbox/InboxEscalateButton";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { usePaginatedQuery } from "convex-helpers/react";
 import {
+  ArrowLeft,
   ChevronDown,
   Clock,
   Contact,
@@ -296,7 +307,11 @@ function DetailsPanelSkeleton() {
   );
 }
 
-export default function ChatsPage() {
+export default function ChatsPage({
+  focusMode = false,
+}: {
+  focusMode?: boolean;
+}) {
   const { agentId } = useParams();
   const [searchParams] = useSearchParams();
   const linkedConversationId = searchParams.get("conversation")?.trim() || null;
@@ -361,6 +376,13 @@ export default function ChatsPage() {
   };
   const [assignmentFilter, setAssignmentFilter] =
     useState<AssignmentFilter>("all");
+  const [focusReadOnly, setFocusReadOnly] = useState(false);
+  const [handlingFilter, setHandlingFilter] =
+    useState<InboxHandlingFilter>("all");
+  const handleFocusAssignmentChange = (filter: AssignmentFilter | "read") => {
+    setFocusReadOnly(filter === "read");
+    handleAssignmentFilterChange(filter === "read" ? "all" : filter);
+  };
   const handleAssignmentFilterChange = (filter: AssignmentFilter) => {
     if (filter === "unread" && assignmentFilter !== "unread") {
       setSelectedConversationId(null);
@@ -657,11 +679,32 @@ export default function ChatsPage() {
     }
   }, [inboxSummaryStatus]);
 
+  const focusSearchFilters: FocusInboxSearchFilters = {
+    assignment: focusReadOnly ? "read" : assignmentFilter,
+    handling: handlingFilter,
+    currentUserId: currentUser?.workosUserId,
+    selectedConversationId,
+    platforms: platformFilters,
+    escalated: escalatedActive,
+    booked: bookingActive,
+  };
   const inboxSearchResults = debouncedSearchQuery ? (
     <InboxSearchResults
       searchQuery={debouncedSearchQuery}
-      chats={chatMatches}
-      messages={messageMatches}
+      chats={
+        focusMode
+          ? chatMatches?.filter((row) =>
+              matchesFocusInboxSearchFilters(row, focusSearchFilters),
+            )
+          : chatMatches
+      }
+      messages={
+        focusMode
+          ? messageMatches.filter((row) =>
+              matchesFocusInboxSearchFilters(row, focusSearchFilters),
+            )
+          : messageMatches
+      }
       messageStatus={messageSearchStatus}
       onLoadMore={() => loadMoreMessageMatches(20)}
       onSelect={(conversationId, messageId) => {
@@ -685,6 +728,7 @@ export default function ChatsPage() {
       lastMessageAt: conv.lastMessageAt,
       unread: conv.unreadCount,
       lastMessageSentByAi: conv.lastMessageSentByAi ?? false,
+      handling: conv.handling,
       platform: conv.service as ConversationPlatform,
       requiresAction: conv.unreadCount > 0,
       conversationStatus: conv.status,
@@ -728,6 +772,10 @@ export default function ChatsPage() {
           c.message.toLowerCase().includes(q),
       );
     }
+    list = list.filter((chat) =>
+      matchesInboxHandling(chat.handling, handlingFilter),
+    );
+    if (focusReadOnly) list = list.filter((chat) => chat.unread === 0);
     list = filterInboxPlatforms(list, platformFilters);
     if (assignmentFilter === "unread") {
       list = filterUnreadChats(list, selectedConversationId);
@@ -761,6 +809,8 @@ export default function ChatsPage() {
     searchQuery,
     platformFilters,
     assignmentFilter,
+    focusReadOnly,
+    handlingFilter,
     escalatedActive,
     bookingActive,
     activeTags,
@@ -867,6 +917,18 @@ export default function ChatsPage() {
         icon: <UserX className="text-muted-foreground" />,
       });
     }
+    if (handlingFilter !== "all")
+      filters.push({
+        id: "handling",
+        label: handlingFilter === "ai" ? "AI handled" : "Non-AI handled",
+        icon: handlingFilter === "ai" ? <PiRobot /> : <User />,
+      });
+    if (focusReadOnly)
+      filters.push({
+        id: "assignment:read",
+        label: "Read",
+        icon: <MessageSquare className="text-muted-foreground" />,
+      });
     for (const platformFilter of platformFilters) {
       const PlatformIcon =
         platformFilter === "whatsapp"
@@ -921,6 +983,8 @@ export default function ChatsPage() {
     return filters;
   }, [
     assignmentFilter,
+    focusReadOnly,
+    handlingFilter,
     platformFilters,
     escalatedActive,
     bookingActive,
@@ -929,6 +993,14 @@ export default function ChatsPage() {
   ]);
 
   const handleRemoveInboxFilter = (id: string) => {
+    if (id === "handling") {
+      setHandlingFilter("all");
+      return;
+    }
+    if (id === "assignment:read") {
+      setFocusReadOnly(false);
+      return;
+    }
     if (
       id === "assignment:assigned_me" ||
       id === "assignment:unassigned" ||
@@ -1431,69 +1503,139 @@ export default function ChatsPage() {
               conversations from your customers.
             </p>
           </div>
-          <Button asChild>
-            <Link to={`/dashboard/${agentId}/channels`}>Connect a channel</Link>
-          </Button>
+          {focusMode ? (
+            <p className="text-sm text-muted-foreground">
+              Ask your team to connect a channel for this inbox.
+            </p>
+          ) : (
+            <Button asChild>
+              <Link to={`/dashboard/${agentId}/channels`}>
+                Connect a channel
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     );
   }
 
+  const escalationAction = (
+    <InboxEscalateButton
+      key={selectedConversationId}
+      conversationId={selectedConversationId}
+      escalated={Boolean(selectedConversation?.escalation)}
+      onDeescalate={() => setResolveConfirmOpen(true)}
+      disabled={
+        !conversationDocMatchesSelection ||
+        !can(Permission.CHATS_ASSIGN) ||
+        selectedConversation?.status === "closed"
+      }
+    />
+  );
+
   return (
     <div className="flex h-full max-h-full min-h-0 w-full overflow-hidden">
       <div className="hidden md:contents">
-        {conversationsStillLoading ? (
-          <InboxFilterSidebarSkeleton />
-        ) : (
-          <InboxFilterSidebar
-            open={filterSidebarOpen}
-            onOpenChange={setFilterSidebarOpen}
-            assignmentFilter={assignmentFilter}
-            onAssignmentFilterChange={handleAssignmentFilterChange}
-            platformFilters={platformFilters}
-            onTogglePlatform={handleTogglePlatform}
-            escalatedActive={escalatedActive}
-            onEscalatedActiveChange={setEscalatedActive}
-            bookingActive={bookingActive}
-            onBookingActiveChange={setBookingActive}
-            activeLeads={activeLeads}
-            onToggleLead={handleToggleLead}
-            activeTags={activeTags}
-            onToggleTag={handleToggleTag}
-            connectedPlatforms={connectedPlatforms}
-            userTags={userTags}
-            counts={filterCounts}
-            canCreateTag={can(Permission.CHATS_TAG)}
-            onCreateTagClick={handleCreateTagFromFilters}
-          />
-        )}
+        {!focusMode &&
+          (conversationsStillLoading ? (
+            <InboxFilterSidebarSkeleton />
+          ) : (
+            <InboxFilterSidebar
+              open={filterSidebarOpen}
+              onOpenChange={setFilterSidebarOpen}
+              handlingFilter={handlingFilter}
+              onHandlingFilterChange={setHandlingFilter}
+              assignmentFilter={assignmentFilter}
+              onAssignmentFilterChange={handleAssignmentFilterChange}
+              platformFilters={platformFilters}
+              onTogglePlatform={handleTogglePlatform}
+              escalatedActive={escalatedActive}
+              onEscalatedActiveChange={setEscalatedActive}
+              bookingActive={bookingActive}
+              onBookingActiveChange={setBookingActive}
+              activeLeads={activeLeads}
+              onToggleLead={handleToggleLead}
+              activeTags={activeTags}
+              onToggleTag={handleToggleTag}
+              connectedPlatforms={connectedPlatforms}
+              userTags={userTags}
+              counts={filterCounts}
+              canCreateTag={can(Permission.CHATS_TAG)}
+              onCreateTagClick={handleCreateTagFromFilters}
+            />
+          ))}
 
-        <InboxConversationList
-          searchQuery={searchQuery}
-          onSearchQueryChange={setSearchQuery}
-          conversationSort={conversationSort}
-          onConversationSortChange={setConversationSort}
-          loading={conversationsStillLoading}
-          filteredChats={filteredChats}
-          pinnedChats={pinnedChats}
-          unpinnedChats={unpinnedChats}
-          totalConversationCount={chatItems.length}
-          selectedConversationId={selectedConversationId}
-          onSelectConversation={setSelectedConversationId}
-          onTogglePin={togglePin}
-          onRequestDelete={setDeleteConversationId}
-          activeFilters={activeInboxFilters}
-          onRemoveActiveFilter={handleRemoveInboxFilter}
-          canLoadMore={inboxSummaryStatus === "CanLoadMore"}
-          isLoadingMore={inboxSummaryStatus === "LoadingMore"}
-          onLoadMore={handleLoadMoreInboxSummaries}
-          searchResults={inboxSearchResults}
-        />
+        <div
+          className={
+            focusMode
+              ? "flex h-full w-[300px] min-h-0 shrink-0 flex-col"
+              : "contents"
+          }
+        >
+          {focusMode ? (
+            <InboxFocusFilters
+              handling={handlingFilter}
+              onHandlingChange={setHandlingFilter}
+              assignment={focusReadOnly ? "read" : assignmentFilter}
+              onAssignmentChange={handleFocusAssignmentChange}
+              escalated={escalatedActive}
+              onEscalatedChange={setEscalatedActive}
+              booked={bookingActive}
+              onBookedChange={setBookingActive}
+              platforms={connectedPlatforms}
+              selectedPlatforms={platformFilters}
+              onTogglePlatform={handleTogglePlatform}
+            />
+          ) : null}
+          <InboxConversationList
+            comfortable={focusMode}
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+            conversationSort={conversationSort}
+            onConversationSortChange={setConversationSort}
+            loading={conversationsStillLoading}
+            filteredChats={filteredChats}
+            pinnedChats={pinnedChats}
+            unpinnedChats={unpinnedChats}
+            totalConversationCount={chatItems.length}
+            selectedConversationId={selectedConversationId}
+            onSelectConversation={setSelectedConversationId}
+            onTogglePin={togglePin}
+            onRequestDelete={focusMode ? undefined : setDeleteConversationId}
+            activeFilters={activeInboxFilters}
+            onRemoveActiveFilter={handleRemoveInboxFilter}
+            canLoadMore={inboxSummaryStatus === "CanLoadMore"}
+            isLoadingMore={inboxSummaryStatus === "LoadingMore"}
+            onLoadMore={handleLoadMoreInboxSummaries}
+            searchResults={inboxSearchResults}
+          />
+        </div>
       </div>
 
       {!selectedConversationId ? (
-        <div className="flex min-w-0 flex-1 md:hidden">
+        <div className="flex min-w-0 flex-1 flex-col md:hidden">
+          {focusMode ? (
+            <InboxFocusFilters
+              handling={handlingFilter}
+              onHandlingChange={setHandlingFilter}
+              assignment={focusReadOnly ? "read" : assignmentFilter}
+              onAssignmentChange={handleFocusAssignmentChange}
+              escalated={escalatedActive}
+              onEscalatedChange={setEscalatedActive}
+              booked={bookingActive}
+              onBookedChange={setBookingActive}
+              platforms={connectedPlatforms}
+              selectedPlatforms={platformFilters}
+              onTogglePlatform={handleTogglePlatform}
+            />
+          ) : (
+            <InboxMobileHandlingFilter
+              value={handlingFilter}
+              onChange={setHandlingFilter}
+            />
+          )}
           <InboxConversationList
+            comfortable={focusMode}
             fullWidth
             searchQuery={searchQuery}
             onSearchQueryChange={setSearchQuery}
@@ -1507,7 +1649,7 @@ export default function ChatsPage() {
             selectedConversationId={selectedConversationId}
             onSelectConversation={setSelectedConversationId}
             onTogglePin={togglePin}
-            onRequestDelete={setDeleteConversationId}
+            onRequestDelete={focusMode ? undefined : setDeleteConversationId}
             activeFilters={activeInboxFilters}
             onRemoveActiveFilter={handleRemoveInboxFilter}
             canLoadMore={inboxSummaryStatus === "CanLoadMore"}
@@ -1536,42 +1678,66 @@ export default function ChatsPage() {
               )}
             >
               <div className="flex min-w-0 flex-1 items-center md:hidden">
-                <InboxMobileConversationSwitcher
-                  open={mobileConversationSwitcherOpen}
-                  onOpenChange={handleMobileConversationSwitcherOpenChange}
-                  customerName={displayHeaderName ?? "Conversations"}
-                >
-                  <InboxConversationList
-                    fullWidth
-                    searchQuery={mobileConversationSearchQuery}
-                    onSearchQueryChange={setMobileConversationSearchQuery}
-                    conversationSort={conversationSort}
-                    onConversationSortChange={setConversationSort}
-                    loading={conversationsStillLoading}
-                    filteredChats={mobileSwitcherChats}
-                    pinnedChats={mobileSwitcherChats.filter((chat) =>
-                      pinnedIds.has(chat.id as string),
-                    )}
-                    unpinnedChats={mobileSwitcherChats.filter(
-                      (chat) => !pinnedIds.has(chat.id as string),
-                    )}
-                    totalConversationCount={chatItems.length}
-                    selectedConversationId={selectedConversationId}
-                    onSelectConversation={(conversationId) => {
-                      setSelectedConversationId(conversationId);
-                      setMobileConversationSearchQuery("");
-                      setMobileConversationSwitcherOpen(false);
-                    }}
-                    onTogglePin={togglePin}
-                    onRequestDelete={setDeleteConversationId}
-                    activeFilters={activeInboxFilters}
-                    onRemoveActiveFilter={handleRemoveInboxFilter}
-                    canLoadMore={inboxSummaryStatus === "CanLoadMore"}
-                    isLoadingMore={inboxSummaryStatus === "LoadingMore"}
-                    onLoadMore={handleLoadMoreInboxSummaries}
-                    searchResults={inboxSearchResults}
-                  />
-                </InboxMobileConversationSwitcher>
+                {focusMode ? (
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-11"
+                      aria-label="Back to chats"
+                      onClick={() => setSelectedConversationId(null)}
+                    >
+                      <ArrowLeft className="size-4" />
+                    </Button>
+                    <h2 className="truncate text-sm font-semibold">
+                      {displayHeaderName}
+                    </h2>
+                  </div>
+                ) : (
+                  <InboxMobileConversationSwitcher
+                    open={mobileConversationSwitcherOpen}
+                    onOpenChange={handleMobileConversationSwitcherOpenChange}
+                    customerName={displayHeaderName ?? "Conversations"}
+                  >
+                    <InboxMobileHandlingFilter
+                      value={handlingFilter}
+                      onChange={setHandlingFilter}
+                    />
+                    <InboxConversationList
+                      comfortable={focusMode}
+                      fullWidth
+                      searchQuery={mobileConversationSearchQuery}
+                      onSearchQueryChange={setMobileConversationSearchQuery}
+                      conversationSort={conversationSort}
+                      onConversationSortChange={setConversationSort}
+                      loading={conversationsStillLoading}
+                      filteredChats={mobileSwitcherChats}
+                      pinnedChats={mobileSwitcherChats.filter((chat) =>
+                        pinnedIds.has(chat.id as string),
+                      )}
+                      unpinnedChats={mobileSwitcherChats.filter(
+                        (chat) => !pinnedIds.has(chat.id as string),
+                      )}
+                      totalConversationCount={chatItems.length}
+                      selectedConversationId={selectedConversationId}
+                      onSelectConversation={(conversationId) => {
+                        setSelectedConversationId(conversationId);
+                        setMobileConversationSearchQuery("");
+                        setMobileConversationSwitcherOpen(false);
+                      }}
+                      onTogglePin={togglePin}
+                      onRequestDelete={
+                        focusMode ? undefined : setDeleteConversationId
+                      }
+                      activeFilters={activeInboxFilters}
+                      onRemoveActiveFilter={handleRemoveInboxFilter}
+                      canLoadMore={inboxSummaryStatus === "CanLoadMore"}
+                      isLoadingMore={inboxSummaryStatus === "LoadingMore"}
+                      onLoadMore={handleLoadMoreInboxSummaries}
+                      searchResults={inboxSearchResults}
+                    />
+                  </InboxMobileConversationSwitcher>
+                )}
               </div>
               <div className="hidden min-w-0 flex-1 items-center md:flex">
                 {displayHeaderName ? (
@@ -1613,74 +1779,85 @@ export default function ChatsPage() {
                   />
                 )}
               </div>
-              <div className="flex shrink-0 items-center gap-2.5">
-                {selectedConversation ? (
-                  <div className="inline-flex h-8 w-fit shrink-0 items-center gap-1 px-0 shadow-none">
-                    <label
-                      htmlFor="mobile-ai-replies-switch"
-                      className={cn(
-                        "inline-flex cursor-pointer select-none items-center gap-1.5 text-xs font-normal text-muted-foreground md:hidden",
-                        (assigneeSaving || !can(Permission.CHATS_ASSIGN)) &&
-                          "cursor-not-allowed",
-                      )}
-                    >
-                      <PiRobot className="size-3.5 shrink-0" aria-hidden />
-                      <span>AI</span>
-                    </label>
-                    <Switch
-                      id="mobile-ai-replies-switch"
-                      checked={selectedConversation.assignToAiAgent}
-                      onCheckedChange={(checked) =>
-                        void handleAiToggle(checked)
-                      }
-                      disabled={assigneeSaving || !can(Permission.CHATS_ASSIGN)}
-                      className="shrink-0 data-[state=checked]:bg-emerald-600 md:hidden"
-                    />
-                    <label
-                      htmlFor="ai-replies-switch-chat"
-                      className={cn(
-                        "hidden cursor-pointer select-none items-center gap-1.5 text-xs font-normal text-muted-foreground md:inline-flex",
-                        (assigneeSaving || !can(Permission.CHATS_ASSIGN)) &&
-                          "cursor-not-allowed",
-                      )}
-                    >
-                      <PiRobot className="size-3.5 shrink-0" aria-hidden />
-                      AI replies
-                    </label>
-                    <Switch
-                      id="ai-replies-switch-chat"
-                      checked={selectedConversation.assignToAiAgent}
-                      onCheckedChange={(checked) =>
-                        void handleAiToggle(checked)
-                      }
-                      disabled={assigneeSaving || !can(Permission.CHATS_ASSIGN)}
-                      className="hidden shrink-0 data-[state=checked]:bg-emerald-600 md:inline-flex"
-                    />
-                    <InboxMobileDetailsSheet
-                      open={mobileDetailsOpen}
-                      onOpenChange={setMobileDetailsOpen}
-                      customerName={
-                        customerSidebarDetails?.name ??
-                        displayHeaderName ??
-                        "Customer"
-                      }
-                      platform={
-                        customerSidebarDetails?.platformLabel ??
-                        selectedConversation.service
-                      }
-                      phone={customerSidebarDetails?.phone}
-                      email={customerSidebarDetails?.email}
-                      status={selectedConversation.status.replaceAll("_", " ")}
-                      leadTemperature={customerSidebarDetails?.leadTemperature}
-                      tags={
-                        customerSidebarDetails?.tags ??
-                        selectedConversation.tags ??
-                        []
-                      }
-                    />
-                  </div>
-                ) : null}
-              </div>
+              {!focusMode && (
+                <div className="flex shrink-0 items-center gap-2.5">
+                  {selectedConversation ? (
+                    <div className="inline-flex h-8 w-fit shrink-0 items-center gap-1 px-0 shadow-none">
+                      <label
+                        htmlFor="mobile-ai-replies-switch"
+                        className={cn(
+                          "inline-flex cursor-pointer select-none items-center gap-1.5 text-xs font-normal text-muted-foreground md:hidden",
+                          (assigneeSaving || !can(Permission.CHATS_ASSIGN)) &&
+                            "cursor-not-allowed",
+                        )}
+                      >
+                        <PiRobot className="size-3.5 shrink-0" aria-hidden />
+                        <span>AI</span>
+                      </label>
+                      <Switch
+                        id="mobile-ai-replies-switch"
+                        checked={selectedConversation.assignToAiAgent}
+                        onCheckedChange={(checked) =>
+                          void handleAiToggle(checked)
+                        }
+                        disabled={
+                          assigneeSaving || !can(Permission.CHATS_ASSIGN)
+                        }
+                        className="shrink-0 data-[state=checked]:bg-emerald-600 md:hidden"
+                      />
+                      <label
+                        htmlFor="ai-replies-switch-chat"
+                        className={cn(
+                          "hidden cursor-pointer select-none items-center gap-1.5 text-xs font-normal text-muted-foreground md:inline-flex",
+                          (assigneeSaving || !can(Permission.CHATS_ASSIGN)) &&
+                            "cursor-not-allowed",
+                        )}
+                      >
+                        <PiRobot className="size-3.5 shrink-0" aria-hidden />
+                        AI replies
+                      </label>
+                      <Switch
+                        id="ai-replies-switch-chat"
+                        checked={selectedConversation.assignToAiAgent}
+                        onCheckedChange={(checked) =>
+                          void handleAiToggle(checked)
+                        }
+                        disabled={
+                          assigneeSaving || !can(Permission.CHATS_ASSIGN)
+                        }
+                        className="hidden shrink-0 data-[state=checked]:bg-emerald-600 md:inline-flex"
+                      />
+                      <InboxMobileDetailsSheet
+                        open={mobileDetailsOpen}
+                        onOpenChange={setMobileDetailsOpen}
+                        customerName={
+                          customerSidebarDetails?.name ??
+                          displayHeaderName ??
+                          "Customer"
+                        }
+                        platform={
+                          customerSidebarDetails?.platformLabel ??
+                          selectedConversation.service
+                        }
+                        phone={customerSidebarDetails?.phone}
+                        email={customerSidebarDetails?.email}
+                        status={selectedConversation.status.replaceAll(
+                          "_",
+                          " ",
+                        )}
+                        leadTemperature={
+                          customerSidebarDetails?.leadTemperature
+                        }
+                        tags={
+                          customerSidebarDetails?.tags ??
+                          selectedConversation.tags ??
+                          []
+                        }
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </div>
 
             <div className="relative row-start-2 min-h-0 overflow-hidden">
@@ -1703,7 +1880,13 @@ export default function ChatsPage() {
 
             {/* Chat Input — pinned to bottom of the chat column */}
             <div className="row-start-3 flex w-full min-w-0 flex-col gap-3 border-t border-border bg-background p-4">
+              {conversationDocMatchesSelection && (
+                <div className={focusMode ? undefined : "md:hidden"}>
+                  {escalationAction}
+                </div>
+              )}
               <InboxConversationComposer
+                focusMode={focusMode}
                 agentId={selectedConversation?.assignedAgentId ?? typedAgentId}
                 aiHandling={
                   conversationDocMatchesSelection &&
@@ -1781,7 +1964,7 @@ export default function ChatsPage() {
       </div>
 
       {/* RIGHT COLUMN: Details */}
-      {selectedConversationId && (
+      {!focusMode && selectedConversationId && (
         <div
           className={cn(
             inboxColumnClassName,
@@ -2577,17 +2760,7 @@ export default function ChatsPage() {
                 )}
               </div>
               <div className="shrink-0 border-t border-border p-4">
-                <InboxEscalateButton
-                  key={selectedConversationId}
-                  conversationId={selectedConversationId}
-                  escalated={Boolean(selectedConversation?.escalation)}
-                  onDeescalate={() => setResolveConfirmOpen(true)}
-                  disabled={
-                    !conversationDocMatchesSelection ||
-                    !can(Permission.CHATS_ASSIGN) ||
-                    selectedConversation?.status === "closed"
-                  }
-                />
+                {escalationAction}
               </div>
             </div>
           )}

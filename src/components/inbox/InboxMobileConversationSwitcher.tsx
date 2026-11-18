@@ -1,13 +1,13 @@
-import type { ReactNode } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import type { ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 
 export function InboxMobileConversationSwitcher({
   open,
@@ -41,7 +41,7 @@ export function InboxMobileConversationSwitcher({
         <SheetHeader className="sr-only">
           <SheetTitle>Conversations</SheetTitle>
         </SheetHeader>
-        <div className="h-full pt-12">{children}</div>
+        <div className="flex h-full min-h-0 flex-col pt-12">{children}</div>
       </SheetContent>
     </Sheet>
   );

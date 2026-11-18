@@ -1,4 +1,9 @@
-import { paginationOptsValidator } from "convex/server";
+import { inboxHandlingSummaryValidator } from "./inboxHandlingValidators";
+import { withInboxHandling } from "./inboxHandling";
+import {
+  paginationOptsValidator,
+  paginationResultValidator,
+} from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query, type QueryCtx } from "./_generated/server";
@@ -44,14 +49,18 @@ async function getScopedSummary(
 ) {
   const summary = await ctx.db
     .query("inboxConversationSummaries")
-    .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+    .withIndex("by_conversationId", (q) =>
+      q.eq("conversationId", conversationId),
+    )
     .unique();
-  return summary !== null && matchesCurrentScope(summary, orgId, userId, agentId)
-    ? summary
+  return summary !== null &&
+    matchesCurrentScope(summary, orgId, userId, agentId)
+    ? await withInboxHandling(ctx, summary)
     : null;
 }
 
 export const searchChatsForCurrentOrg = query({
+  returns: v.array(inboxHandlingSummaryValidator),
   args: { agentId: v.id("agents"), searchQuery: v.string() },
   handler: async (ctx, args) => {
     const searchQuery = args.searchQuery.trim();
@@ -76,14 +85,27 @@ export const searchChatsForCurrentOrg = query({
       .take(5);
     const summaries = await Promise.all(
       documents.map((document) =>
-        getScopedSummary(ctx, document.conversationId, orgId, userId, args.agentId),
+        getScopedSummary(
+          ctx,
+          document.conversationId,
+          orgId,
+          userId,
+          args.agentId,
+        ),
       ),
     );
-    return summaries.filter((summary): summary is Doc<"inboxConversationSummaries"> => summary !== null);
+    return summaries.filter((summary) => summary !== null);
   },
 });
 
 export const searchMessagesForCurrentOrg = query({
+  returns: paginationResultValidator(
+    inboxHandlingSummaryValidator.extend({
+      matchedMessageId: v.id("messages"),
+      matchedMessage: v.string(),
+      matchedMessageAt: v.number(),
+    }),
+  ),
   args: {
     agentId: v.id("agents"),
     searchQuery: v.string(),

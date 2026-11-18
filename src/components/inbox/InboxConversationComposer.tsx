@@ -1,14 +1,15 @@
-import { useQuery } from 'convex/react';
-import { api } from '../../../convex/_generated/api';
-import type { Id } from '../../../convex/_generated/dataModel';
-import { cn } from '@/lib/utils';
-import { ConversationWindowBanner } from './ConversationWindowBanner';
-import { InboxAiHandlingBar } from './InboxAiHandlingBar';
-import { InboxReplyInput, type InboxReplyInputProps } from './InboxReplyInput';
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
+import { cn } from "@/lib/utils";
+import { ConversationWindowBanner } from "./ConversationWindowBanner";
+import { InboxAiHandlingBar } from "./InboxAiHandlingBar";
+import { InboxReplyInput, type InboxReplyInputProps } from "./InboxReplyInput";
 
 type InboxConversationComposerProps = InboxReplyInputProps & {
-  agentId: Id<'agents'> | undefined;
+  agentId: Id<"agents"> | undefined;
   aiHandling: boolean;
+  focusMode?: boolean;
   canTakeControl: boolean;
   takingControl: boolean;
   onTakeControl: () => void;
@@ -21,6 +22,7 @@ type InboxConversationComposerProps = InboxReplyInputProps & {
 export function InboxConversationComposer({
   agentId,
   aiHandling,
+  focusMode = false,
   canTakeControl,
   takingControl,
   onTakeControl,
@@ -30,14 +32,24 @@ export function InboxConversationComposer({
   lastCustomerMessageAt,
   ...replyProps
 }: InboxConversationComposerProps) {
-  const agent = useQuery(api.agents.get, aiHandling && agentId ? { agentId } : 'skip');
-  if (agent === null) throw new Error('Assigned agent is unavailable.');
+  const agent = useQuery(
+    api.agents.get,
+    aiHandling && agentId ? { agentId } : "skip",
+  );
+  if (agent === null) throw new Error("Assigned agent is unavailable.");
 
   return (
-    <div className={cn(
-      'flex w-full min-w-0 flex-col',
-      aiHandling ? 'gap-3' : canReplyFromInbox && 'overflow-hidden rounded-2xl border border-border bg-input/50 focus-within:border-ring [&_[data-slot=input-group]]:border-none [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:ring-0',
-    )}>
+    <div
+      className={cn(
+        "flex w-full min-w-0 flex-col",
+        focusMode &&
+          "[&_button]:min-h-11 [&_button]:min-w-11 md:[&_button]:min-h-0 md:[&_button]:min-w-0",
+        aiHandling
+          ? "gap-3"
+          : canReplyFromInbox &&
+              "overflow-hidden rounded-2xl border border-border bg-input/50 focus-within:border-ring [&_[data-slot=input-group]]:border-none [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:ring-0",
+      )}
+    >
       <ConversationWindowBanner
         freeMessagingExpiresAt={freeMessagingExpiresAt}
         lastCustomerMessageAt={lastCustomerMessageAt}
@@ -46,6 +58,7 @@ export function InboxConversationComposer({
       />
       {aiHandling ? (
         <InboxAiHandlingBar
+          actionLabel={focusMode ? "Take over" : undefined}
           agentName={agent?.name}
           canTakeControl={canTakeControl}
           takingControl={takingControl}
