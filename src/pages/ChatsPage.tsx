@@ -47,7 +47,6 @@ import { PiRobot } from "react-icons/pi";
 import { toast } from "sonner";
 import { type Chat, type ConversationPlatform } from "@/components/ChatRow";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1779,54 +1778,15 @@ export default function ChatsPage({
                   />
                 )}
               </div>
+              {conversationDocMatchesSelection && (
+                <div className="ml-2 shrink-0 md:hidden [&_button]:w-auto [&_button]:px-3 [&_button]:text-xs">
+                  {escalationAction}
+                </div>
+              )}
               {!focusMode && (
                 <div className="flex shrink-0 items-center gap-2.5">
                   {selectedConversation ? (
                     <div className="inline-flex h-8 w-fit shrink-0 items-center gap-1 px-0 shadow-none">
-                      <label
-                        htmlFor="mobile-ai-replies-switch"
-                        className={cn(
-                          "inline-flex cursor-pointer select-none items-center gap-1.5 text-xs font-normal text-muted-foreground md:hidden",
-                          (assigneeSaving || !can(Permission.CHATS_ASSIGN)) &&
-                            "cursor-not-allowed",
-                        )}
-                      >
-                        <PiRobot className="size-3.5 shrink-0" aria-hidden />
-                        <span>AI</span>
-                      </label>
-                      <Switch
-                        id="mobile-ai-replies-switch"
-                        checked={selectedConversation.assignToAiAgent}
-                        onCheckedChange={(checked) =>
-                          void handleAiToggle(checked)
-                        }
-                        disabled={
-                          assigneeSaving || !can(Permission.CHATS_ASSIGN)
-                        }
-                        className="shrink-0 data-[state=checked]:bg-emerald-600 md:hidden"
-                      />
-                      <label
-                        htmlFor="ai-replies-switch-chat"
-                        className={cn(
-                          "hidden cursor-pointer select-none items-center gap-1.5 text-xs font-normal text-muted-foreground md:inline-flex",
-                          (assigneeSaving || !can(Permission.CHATS_ASSIGN)) &&
-                            "cursor-not-allowed",
-                        )}
-                      >
-                        <PiRobot className="size-3.5 shrink-0" aria-hidden />
-                        AI replies
-                      </label>
-                      <Switch
-                        id="ai-replies-switch-chat"
-                        checked={selectedConversation.assignToAiAgent}
-                        onCheckedChange={(checked) =>
-                          void handleAiToggle(checked)
-                        }
-                        disabled={
-                          assigneeSaving || !can(Permission.CHATS_ASSIGN)
-                        }
-                        className="hidden shrink-0 data-[state=checked]:bg-emerald-600 md:inline-flex"
-                      />
                       <InboxMobileDetailsSheet
                         open={mobileDetailsOpen}
                         onOpenChange={setMobileDetailsOpen}
@@ -1880,10 +1840,8 @@ export default function ChatsPage({
 
             {/* Chat Input — pinned to bottom of the chat column */}
             <div className="row-start-3 flex w-full min-w-0 flex-col gap-3 border-t border-border bg-background p-4">
-              {conversationDocMatchesSelection && (
-                <div className={focusMode ? undefined : "md:hidden"}>
-                  {escalationAction}
-                </div>
+              {focusMode && conversationDocMatchesSelection && (
+                <div className="hidden md:block">{escalationAction}</div>
               )}
               <InboxConversationComposer
                 focusMode={focusMode}
@@ -1898,6 +1856,7 @@ export default function ChatsPage({
                 }
                 takingControl={assigneeSaving}
                 onTakeControl={() => void handleAiToggle(false)}
+                onHandToAi={() => void handleAiToggle(true)}
                 canReplyFromInbox={canReplyFromInbox}
                 freeMessagingExpiresAt={
                   selectedConversation?.whatsappFreeMessagingWindow?.expiresAt

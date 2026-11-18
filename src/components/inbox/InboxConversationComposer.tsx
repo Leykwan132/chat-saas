@@ -1,3 +1,5 @@
+import { PiRobot } from "react-icons/pi";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -13,6 +15,7 @@ type InboxConversationComposerProps = InboxReplyInputProps & {
   canTakeControl: boolean;
   takingControl: boolean;
   onTakeControl: () => void;
+  onHandToAi?: () => void;
   canReplyFromInbox: boolean;
   service: string;
   freeMessagingExpiresAt?: number;
@@ -26,6 +29,7 @@ export function InboxConversationComposer({
   canTakeControl,
   takingControl,
   onTakeControl,
+  onHandToAi,
   canReplyFromInbox,
   service,
   freeMessagingExpiresAt,
@@ -65,7 +69,22 @@ export function InboxConversationComposer({
           onTakeControl={onTakeControl}
         />
       ) : (
-        <InboxReplyInput {...replyProps} />
+        <InboxReplyInput
+          {...replyProps}
+          footerAction={
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              disabled={!canTakeControl || takingControl || replyProps.busy}
+              onClick={onHandToAi}
+              className="min-h-9 gap-1.5 rounded-full bg-violet-700 px-3 text-xs font-semibold text-white hover:bg-violet-800 dark:bg-violet-600 dark:text-white dark:hover:bg-violet-500"
+            >
+              <PiRobot className="size-3.5" aria-hidden="true" />
+              {takingControl ? "Handing over…" : "Hand over to AI"}
+            </Button>
+          }
+        />
       )}
     </div>
   );

@@ -67,12 +67,14 @@ function ChatPromptInputSubmit({
   disabled,
   hasText,
   status,
+  sendIcon,
 }: {
   allowAttachments?: boolean;
   attachmentsUploadBlocked?: boolean;
   disabled?: boolean;
   hasText: boolean;
   status?: ChatStatus;
+  sendIcon?: React.ReactNode;
 }) {
   const attachments = usePromptInputAttachments();
   const canSubmit =
@@ -82,7 +84,10 @@ function ChatPromptInputSubmit({
     <PromptInputSubmit
       disabled={disabled || !canSubmit || attachmentsUploadBlocked}
       status={status}
-    />
+      aria-label="Send message"
+    >
+      {!status ? sendIcon : undefined}
+    </PromptInputSubmit>
   );
 }
 
@@ -91,6 +96,7 @@ function ChatPromptInputSubmitWithUploadGate(props: {
   disabled?: boolean;
   hasText: boolean;
   status?: ChatStatus;
+  sendIcon?: React.ReactNode;
 }) {
   const uploadState = useMediaAttachmentUploads();
   const attachmentsUploadBlocked =
@@ -113,6 +119,7 @@ function ChatPromptInputSubmitWithUploads({
   enableMediaUpload?: boolean;
   hasText: boolean;
   status?: ChatStatus;
+  sendIcon?: React.ReactNode;
 }) {
   if (enableMediaUpload) {
     return <ChatPromptInputSubmitWithUploadGate {...props} />;
@@ -128,12 +135,7 @@ export function ChatPromptInputShell({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className={cn(
-        "w-full min-w-0 max-w-full overflow-hidden",
-        className,
-      )}
-    >
+    <div className={cn("w-full min-w-0 max-w-full overflow-hidden", className)}>
       {children}
     </div>
   );
@@ -147,6 +149,8 @@ export type ChatPromptInputProps = {
   disabled?: boolean;
   submitDisabled?: boolean;
   submitStatus?: ChatStatus;
+  sendIcon?: React.ReactNode;
+  footerAction?: React.ReactNode;
   textareaRef?: Ref<HTMLTextAreaElement>;
   className?: string;
   containerClassName?: string;
@@ -166,6 +170,8 @@ export function ChatPromptInput({
   disabled = false,
   submitDisabled = false,
   submitStatus,
+  sendIcon,
+  footerAction,
   textareaRef,
   className,
   containerClassName,
@@ -224,20 +230,22 @@ export function ChatPromptInput({
           {allowImageAttachments && (
             <ChatPromptInputAttachButton disabled={disabled} />
           )}
-          {showSavedReplies && (
-            <ChatPromptInputQuickRepliesButton
-              disabled={disabled}
-              onChange={onChange}
-              resizeTextarea={autoResizeTextarea}
-              textareaRef={internalTextareaRef}
-            />
-          )}
+          {footerAction ??
+            (showSavedReplies && (
+              <ChatPromptInputQuickRepliesButton
+                disabled={disabled}
+                onChange={onChange}
+                resizeTextarea={autoResizeTextarea}
+                textareaRef={internalTextareaRef}
+              />
+            ))}
         </PromptInputTools>
         <ChatPromptInputSubmitWithUploads
           allowAttachments={allowImageAttachments}
           disabled={submitDisabled}
           enableMediaUpload={useUploads}
           hasText={value.trim().length > 0}
+          sendIcon={sendIcon}
           status={submitStatus}
         />
       </PromptInputFooter>
