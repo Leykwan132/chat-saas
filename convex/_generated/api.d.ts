@@ -330,6 +330,7 @@ import type * as inboxEscalationQuery from "../inboxEscalationQuery.js";
 import type * as inboxEscalationTimer from "../inboxEscalationTimer.js";
 import type * as inboxHandling from "../inboxHandling.js";
 import type * as inboxHandlingValidators from "../inboxHandlingValidators.js";
+import type * as inboxLastReply from "../inboxLastReply.js";
 import type * as inboxManualEscalation from "../inboxManualEscalation.js";
 import type * as inboxMessageSearchRefresh from "../inboxMessageSearchRefresh.js";
 import type * as inboxPools from "../inboxPools.js";
@@ -946,6 +947,7 @@ declare const fullApi: ApiFromModules<{
   inboxEscalationTimer: typeof inboxEscalationTimer;
   inboxHandling: typeof inboxHandling;
   inboxHandlingValidators: typeof inboxHandlingValidators;
+  inboxLastReply: typeof inboxLastReply;
   inboxManualEscalation: typeof inboxManualEscalation;
   inboxMessageSearchRefresh: typeof inboxMessageSearchRefresh;
   inboxPools: typeof inboxPools;
