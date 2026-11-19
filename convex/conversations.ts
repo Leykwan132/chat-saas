@@ -1,3 +1,5 @@
+import { permissionsForCurrentUser } from "./appointmentBooking/access";
+import { Permission } from "../shared/permissions";
 import { inboxHandlingSummaryValidator } from "./inboxHandlingValidators";
 import { listInboxSummaries } from "./inboxSummaryQueries";
 import { v } from "convex/values";
@@ -398,11 +400,18 @@ async function setConversationAiEnabledHandler(
   conversationId: Id<"conversations">,
   enabled: boolean,
 ) {
-  const { orgId } = await getAuthContext(ctx);
+  const { orgId, userId } = await getAuthContext(ctx);
   const conv = await ctx.db.get(conversationId);
-  if (conv === null || conv.orgId !== orgId) {
+  if (
+    conv === null ||
+    conv.orgId !== orgId ||
+    ((!orgId || orgId === "personal") && conv.userId !== userId)
+  ) {
     throw new Error("Conversation not found");
   }
+  const permissions = await permissionsForCurrentUser(ctx);
+  if (!permissions.includes(Permission.CHATS_ASSIGN))
+    throw new Error("Forbidden");
   const patch: Record<string, any> = {
     assignToAiAgent: enabled,
     updatedAt: Date.now(),

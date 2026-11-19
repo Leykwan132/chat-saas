@@ -1,3 +1,4 @@
+import { InboxChatAiControl } from "./inbox/InboxChatAiControl";
 import type { InboxHandling } from "../../shared/inboxHandling";
 import { InboxHandlingBadge } from "@/components/inbox/InboxHandlingBadge";
 import { ChatRowTags } from "./ChatRowTags";
@@ -47,6 +48,7 @@ export type Chat = {
   isEscalated?: boolean;
   lastMessageSentByAi?: boolean;
   handling?: InboxHandling;
+  aiControlAvailable?: boolean;
 };
 
 function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {
@@ -135,7 +137,7 @@ export function ChatRow({
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
+                gap: "4px",
                 marginBottom: comfortable ? "6px" : "2px",
               }}
             >
@@ -161,20 +163,20 @@ export function ChatRow({
                 )}
                 <PlatformGlyph platform={chat.platform} />
                 <span className="truncate">{chat.name}</span>
-                {chat.handling ? (
-                  <InboxHandlingBadge handling={chat.handling} />
-                ) : null}
               </span>
               <span
                 style={{
                   fontSize: "11px",
                   color: "var(--color-foreground-subtle)",
                   flexShrink: 0,
-                  marginLeft: "8px",
+                  marginLeft: 0,
                 }}
               >
                 {chat.time}
               </span>
+              {chat.handling ? (
+                <InboxHandlingBadge handling={chat.handling} />
+              ) : null}
             </div>
             <div
               style={{
@@ -236,6 +238,7 @@ export function ChatRow({
             </div>
             <ChatRowTags chat={chat} />
           </div>
+          {chat.handling && <InboxChatAiControl chat={chat} />}
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>

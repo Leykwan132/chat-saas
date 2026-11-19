@@ -6,6 +6,7 @@ export const inboxHandlingSummaryValidator = doc(
   schema,
   "inboxConversationSummaries",
 ).extend({
+  aiControlAvailable: v.boolean(),
   handling: v.union(
     v.literal("ai"),
     v.literal("human"),
