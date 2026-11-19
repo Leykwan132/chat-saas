@@ -6,7 +6,6 @@ import {
   matchesFocusInboxSearchFilters,
   type FocusInboxSearchFilters,
 } from "@/lib/inboxFocusSearchFilters";
-import { InboxMobileHandlingFilter } from "@/components/inbox/InboxMobileHandlingFilter";
 import { InboxFocusFilters } from "@/components/inbox/InboxFocusFilters";
 import { InboxEscalateButton } from "@/components/inbox/InboxEscalateButton";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -109,7 +108,6 @@ import {
   type InboxConversationSort,
 } from "@/components/inbox/InboxConversationList";
 import { InboxSearchResults } from "@/components/inbox/InboxSearchResults";
-import { InboxMobileConversationSwitcher } from "@/components/inbox/InboxMobileConversationSwitcher";
 import { InboxMobileDetailsSheet } from "@/components/inbox/InboxMobileDetailsSheet";
 import { InboxDemoPreview } from "@/components/inbox/InboxDemoPreview";
 import type { InboxActiveFilter } from "@/components/inbox/InboxActiveFilterChips";
@@ -363,10 +361,6 @@ export default function ChatsPage({
     useState<Id<"messages"> | null>(null);
   const [highlightedMessageId, setHighlightedMessageId] =
     useState<Id<"messages"> | null>(null);
-  const [mobileConversationSwitcherOpen, setMobileConversationSwitcherOpen] =
-    useState(false);
-  const [mobileConversationSearchQuery, setMobileConversationSearchQuery] =
-    useState("");
   const [platformFilters, setPlatformFilters] = useState<
     ConversationPlatform[]
   >([]);
@@ -817,18 +811,7 @@ export default function ChatsPage({
     currentUser?.workosUserId,
   ]);
 
-  const mobileSwitcherChats = useMemo(() => {
-    const query = mobileConversationSearchQuery.trim().toLowerCase();
-    if (!query) return filteredChats;
-    return filteredChats.filter(
-      (chat) =>
-        chat.name.toLowerCase().includes(query) ||
-        chat.message.toLowerCase().includes(query),
-    );
-  }, [filteredChats, mobileConversationSearchQuery]);
-
   useEffect(() => {
-    if (mobileConversationSwitcherOpen) return;
     if (inboxSummaryStatus === "LoadingFirstPage") return;
     if (debouncedSearchQuery) return;
     if (
@@ -841,7 +824,6 @@ export default function ChatsPage({
     debouncedSearchQuery,
     filteredChats,
     inboxSummaryStatus,
-    mobileConversationSwitcherOpen,
     selectedConversationId,
   ]);
 
@@ -871,11 +853,6 @@ export default function ChatsPage({
     } finally {
       setDeleteConversationBusy(false);
     }
-  };
-
-  const handleMobileConversationSwitcherOpenChange = (open: boolean) => {
-    setMobileConversationSwitcherOpen(open);
-    if (!open) setMobileConversationSearchQuery("");
   };
 
   const pinnedChats = useMemo(
@@ -1613,28 +1590,21 @@ export default function ChatsPage({
 
       {!selectedConversationId ? (
         <div className="flex min-w-0 flex-1 flex-col md:hidden">
-          {focusMode ? (
-            <InboxFocusFilters
-              handling={handlingFilter}
-              onHandlingChange={setHandlingFilter}
-              assignment={focusReadOnly ? "read" : assignmentFilter}
-              onAssignmentChange={handleFocusAssignmentChange}
-              escalated={escalatedActive}
-              onEscalatedChange={setEscalatedActive}
-              booked={bookingActive}
-              onBookedChange={setBookingActive}
-              platforms={connectedPlatforms}
-              selectedPlatforms={platformFilters}
-              onTogglePlatform={handleTogglePlatform}
-            />
-          ) : (
-            <InboxMobileHandlingFilter
-              value={handlingFilter}
-              onChange={setHandlingFilter}
-            />
-          )}
+          <InboxFocusFilters
+            handling={handlingFilter}
+            onHandlingChange={setHandlingFilter}
+            assignment={focusReadOnly ? "read" : assignmentFilter}
+            onAssignmentChange={handleFocusAssignmentChange}
+            escalated={escalatedActive}
+            onEscalatedChange={setEscalatedActive}
+            booked={bookingActive}
+            onBookedChange={setBookingActive}
+            platforms={connectedPlatforms}
+            selectedPlatforms={platformFilters}
+            onTogglePlatform={handleTogglePlatform}
+          />
           <InboxConversationList
-            comfortable={focusMode}
+            comfortable
             fullWidth
             searchQuery={searchQuery}
             onSearchQueryChange={setSearchQuery}
@@ -1677,66 +1647,20 @@ export default function ChatsPage({
               )}
             >
               <div className="flex min-w-0 flex-1 items-center md:hidden">
-                {focusMode ? (
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="size-11"
-                      aria-label="Back to chats"
-                      onClick={() => setSelectedConversationId(null)}
-                    >
-                      <ArrowLeft className="size-4" />
-                    </Button>
-                    <h2 className="truncate text-sm font-semibold">
-                      {displayHeaderName}
-                    </h2>
-                  </div>
-                ) : (
-                  <InboxMobileConversationSwitcher
-                    open={mobileConversationSwitcherOpen}
-                    onOpenChange={handleMobileConversationSwitcherOpenChange}
-                    customerName={displayHeaderName ?? "Conversations"}
+                <div className="flex min-w-0 items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-11"
+                    aria-label="Back to chats"
+                    onClick={() => setSelectedConversationId(null)}
                   >
-                    <InboxMobileHandlingFilter
-                      value={handlingFilter}
-                      onChange={setHandlingFilter}
-                    />
-                    <InboxConversationList
-                      comfortable={focusMode}
-                      fullWidth
-                      searchQuery={mobileConversationSearchQuery}
-                      onSearchQueryChange={setMobileConversationSearchQuery}
-                      conversationSort={conversationSort}
-                      onConversationSortChange={setConversationSort}
-                      loading={conversationsStillLoading}
-                      filteredChats={mobileSwitcherChats}
-                      pinnedChats={mobileSwitcherChats.filter((chat) =>
-                        pinnedIds.has(chat.id as string),
-                      )}
-                      unpinnedChats={mobileSwitcherChats.filter(
-                        (chat) => !pinnedIds.has(chat.id as string),
-                      )}
-                      totalConversationCount={chatItems.length}
-                      selectedConversationId={selectedConversationId}
-                      onSelectConversation={(conversationId) => {
-                        setSelectedConversationId(conversationId);
-                        setMobileConversationSearchQuery("");
-                        setMobileConversationSwitcherOpen(false);
-                      }}
-                      onTogglePin={togglePin}
-                      onRequestDelete={
-                        focusMode ? undefined : setDeleteConversationId
-                      }
-                      activeFilters={activeInboxFilters}
-                      onRemoveActiveFilter={handleRemoveInboxFilter}
-                      canLoadMore={inboxSummaryStatus === "CanLoadMore"}
-                      isLoadingMore={inboxSummaryStatus === "LoadingMore"}
-                      onLoadMore={handleLoadMoreInboxSummaries}
-                      searchResults={inboxSearchResults}
-                    />
-                  </InboxMobileConversationSwitcher>
-                )}
+                    <ArrowLeft className="size-4" />
+                  </Button>
+                  <h2 className="truncate text-sm font-semibold">
+                    {displayHeaderName}
+                  </h2>
+                </div>
               </div>
               <div className="hidden min-w-0 flex-1 items-center md:flex">
                 {displayHeaderName ? (
