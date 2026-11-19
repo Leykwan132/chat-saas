@@ -9,6 +9,7 @@ export type PersistActiveAccountArgs = {
   workosOrganizationMembershipId: string;
   email: string;
   role: "owner" | "admin" | "member";
+  interfaceMode?: "normal" | "focus";
   credential: {
     ciphertext: string;
     initializationVector: string;
@@ -38,6 +39,7 @@ export async function persistPartnerCustomerAccount(
     workosOrganizationMembershipId: args.workosOrganizationMembershipId,
     email: args.email.trim().toLowerCase(),
     role: args.role,
+    interfaceMode: args.interfaceMode ?? "normal",
     status: "active" as const,
     updatedAt: now,
   };

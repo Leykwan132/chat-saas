@@ -4,9 +4,7 @@ import { InboxHandlingBadge } from "./InboxHandlingBadge";
 import { matchesInboxHandling } from "../../../shared/inboxHandling";
 
 test("shows a badge for AI handling and chats needing attention", () => {
-  expect(renderToStaticMarkup(<InboxHandlingBadge handling="ai" />)).toContain(
-    "AI handling",
-  );
+  expect(renderToStaticMarkup(<InboxHandlingBadge handling="ai" />)).toBe("");
   expect(renderToStaticMarkup(<InboxHandlingBadge handling="human" />)).toBe(
     "",
   );

@@ -722,6 +722,7 @@ export default function ChatsPage({
       unread: conv.unreadCount,
       lastMessageSentByAi: conv.lastMessageSentByAi ?? false,
       handling: conv.handling,
+      aiControlAvailable: conv.aiControlAvailable,
       platform: conv.service as ConversationPlatform,
       requiresAction: conv.unreadCount > 0,
       conversationStatus: conv.status,

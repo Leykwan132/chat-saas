@@ -41,6 +41,7 @@ export const createCustomerAccount = action({
     partnerOrganizationId: v.id("whiteLabelPartnerOrganizations"),
     email: v.string(),
     role: roleValidator,
+    interfaceMode: v.optional(v.union(v.literal("normal"), v.literal("focus"))),
   },
   returns: v.object({
     workosUserId: v.string(),
@@ -82,6 +83,7 @@ export const createCustomerAccount = action({
           workosOrganizationMembershipId: membership.id,
           email: user.email,
           role: args.role,
+          interfaceMode: args.interfaceMode,
           credential,
         },
       );
@@ -110,7 +112,10 @@ export const getCustomerInitialCredentials = action({
     initialPassword: v.string(),
     passwordResetAt: v.union(v.number(), v.null()),
   }),
-  handler: async (ctx, args): Promise<{
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{
     email: string;
     initialPassword: string;
     passwordResetAt: number | null;
@@ -231,12 +236,11 @@ export const removeCustomerFromOrganization = action({
     } else if (target.kind === "pending") {
       await workos.userManagement.revokeInvitation(target.workosInvitationId);
     } else {
-      const memberships = await workos.userManagement.listOrganizationMemberships(
-        {
+      const memberships =
+        await workos.userManagement.listOrganizationMemberships({
           organizationId: organization.workosOrgId,
           userId: target.workosUserId,
-        },
-      );
+        });
       const membership = memberships.data.find(
         (item) => item.status === "active",
       );
