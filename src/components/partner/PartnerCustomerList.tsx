@@ -1,3 +1,4 @@
+import { PartnerCustomerModeControl } from "./PartnerCustomerModeControl";
 import { useRef, useState } from "react";
 import { KeyRound, MoreHorizontal, Trash2 } from "lucide-react";
 import { PartnerPanel } from "@/components/partner/PartnerPanel";
@@ -94,7 +95,9 @@ export function PartnerCustomerList({
 }) {
   const [pendingCustomer, setPendingCustomer] = useState<Customer | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
-  const [credentials, setCredentials] = useState<CustomerCredentials | null>(null);
+  const [credentials, setCredentials] = useState<CustomerCredentials | null>(
+    null,
+  );
   const [isCredentialsLoading, setIsCredentialsLoading] = useState(false);
   const credentialsRequestId = useRef(0);
 
@@ -104,9 +107,7 @@ export function PartnerCustomerList({
     if (removal === null) return;
     setIsRemoving(true);
     try {
-      if (
-        await onRemove(pendingCustomer.partnerOrganizationId, removal)
-      ) {
+      if (await onRemove(pendingCustomer.partnerOrganizationId, removal)) {
         setPendingCustomer(null);
       }
     } finally {
@@ -161,6 +162,7 @@ export function PartnerCustomerList({
                   <TableHead>User</TableHead>
                   <TableHead>Organization</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Mode</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -181,10 +183,10 @@ export function PartnerCustomerList({
                       />
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        className="gap-1.5 capitalize"
-                        variant="secondary"
-                      >
+                      <PartnerCustomerModeControl customer={customer} />
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="gap-1.5 capitalize" variant="secondary">
                         {customer.invitationStatus === "active" ? (
                           <span className="size-1.5 rounded-full bg-emerald-500" />
                         ) : customer.invitationStatus === "pending" ? (
@@ -210,7 +212,8 @@ export function PartnerCustomerList({
                             align="end"
                             onClick={preventCustomerRowClick}
                           >
-                            {customer.hasRetainedInitialPassword && customer.workosUserId ? (
+                            {customer.hasRetainedInitialPassword &&
+                            customer.workosUserId ? (
                               <DropdownMenuItem
                                 onSelect={() => void showCredentials(customer)}
                               >

@@ -53,6 +53,7 @@ export const persistActiveAccount = internalMutation({
     workosOrganizationMembershipId: v.string(),
     email: v.string(),
     role: roleValidator,
+    interfaceMode: v.optional(v.union(v.literal("normal"), v.literal("focus"))),
     credential: encryptedCredentialValidator,
   },
   returns: v.null(),
@@ -69,9 +70,7 @@ export const hasCurrentPasswordAccount = query({
     const auth = await getAuthContext(ctx);
     const account = await ctx.db
       .query("whiteLabelPartnerOrganizationAccounts")
-      .withIndex("by_workosUserId", (q) =>
-        q.eq("workosUserId", auth.userId),
-      )
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", auth.userId))
       .first();
     return account !== null && account.status === "active";
   },
@@ -180,8 +179,7 @@ export const resolveCustomerRemoval = internalQuery({
       }
       return {
         kind: "active" as const,
-        workosOrganizationMembershipId:
-          account.workosOrganizationMembershipId,
+        workosOrganizationMembershipId: account.workosOrganizationMembershipId,
       };
     }
     const invitation = await ctx.db

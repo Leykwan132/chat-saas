@@ -1,3 +1,4 @@
+import { Pause, Play } from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { toast } from "sonner";
@@ -60,7 +61,19 @@ export function InboxEscalateButton({
       )}
       onClick={() => void handleEscalate()}
     >
-      {busy ? <Spinner className="size-4" /> : null}
+      {busy ? (
+        <Spinner className="size-4" />
+      ) : escalated ? (
+        <Play
+          className="relative size-3.5 shrink-0 fill-current"
+          aria-hidden="true"
+        />
+      ) : (
+        <Pause
+          className="relative size-3.5 shrink-0 fill-current"
+          aria-hidden="true"
+        />
+      )}
       {busy ? (
         "Escalating…"
       ) : escalated && timer ? (

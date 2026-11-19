@@ -1,3 +1,4 @@
+import { PartnerInterfaceModeGate } from "@/components/inbox/PartnerInterfaceModeGate";
 import { InboxFocusReturnGate } from "@/components/inbox/InboxFocusReturnGate";
 import { useEffect } from "react";
 import {
@@ -190,9 +191,11 @@ function AppContent() {
             <HostFavicon />
             <PostHogIdentifier />
             <ScrollToTop />
-            <InboxFocusReturnGate>
-              <Outlet />
-            </InboxFocusReturnGate>
+            <PartnerInterfaceModeGate>
+              <InboxFocusReturnGate>
+                <Outlet />
+              </InboxFocusReturnGate>
+            </PartnerInterfaceModeGate>
             <Toaster />
           </UpgradeModalProvider>
         </AdjustPlanProvider>

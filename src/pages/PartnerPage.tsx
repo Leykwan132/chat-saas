@@ -52,7 +52,9 @@ export default function PartnerPage() {
   );
   const updateBrand = useMutation(whiteLabelApi.portal.updateBranding);
   const createCustomHostname = useAction(whiteLabelApi.customHostnames.create);
-  const restartCustomHostname = useAction(whiteLabelApi.customHostnames.restart);
+  const restartCustomHostname = useAction(
+    whiteLabelApi.customHostnames.restart,
+  );
   const confirmOwnershipDns = useMutation(
     whiteLabelApi.customHostnames.confirmOwnershipDns,
   );
@@ -123,7 +125,10 @@ export default function PartnerPage() {
       });
       if (!response.ok) throw new Error("Logo upload failed.");
       const result = (await response.json()) as { storageId: string };
-      await updateBrand({ name: partner.name, logoStorageId: result.storageId });
+      await updateBrand({
+        name: partner.name,
+        logoStorageId: result.storageId,
+      });
     }, "Logo updated.");
 
   const runCustomerAction = async <Result,>(
@@ -146,8 +151,8 @@ export default function PartnerPage() {
           Partner Programme
         </h1>
         <p className="text-sm text-muted-foreground">
-          Manage customer organizations, users, credits, and your
-          portal branding.
+          Manage customer organizations, users, credits, and your portal
+          branding.
         </p>
       </div>
       <Tabs
@@ -201,7 +206,11 @@ export default function PartnerPage() {
             isCreatingOrganization={pendingCustomerAction === "organization"}
             isCreatingCustomer={pendingCustomerAction === "customer"}
             isGivingCredits={pendingCustomerAction === "credits"}
-            onCreateOrganization={async ({ maxAgents, monthlyCredits, modelId }) =>
+            onCreateOrganization={async ({
+              maxAgents,
+              monthlyCredits,
+              modelId,
+            }) =>
               (await runCustomerAction(
                 "organization",
                 async () => {
@@ -217,27 +226,36 @@ export default function PartnerPage() {
                 "Customer organization created.",
               )) !== null
             }
-            onCreateCustomer={() =>
-              runCustomerAction("customer", async () => {
-                const customer = await createCustomerAccount({
-                  partnerOrganizationId:
-                    selectedOrganization!.partnerOrganizationId,
-                  email: inviteEmail,
-                  role: inviteRole,
-                });
-                setInviteEmail("");
-                return customer;
-              }, "User account created.")
+            onCreateCustomer={(interfaceMode) =>
+              runCustomerAction(
+                "customer",
+                async () => {
+                  const customer = await createCustomerAccount({
+                    partnerOrganizationId:
+                      selectedOrganization!.partnerOrganizationId,
+                    interfaceMode,
+                    email: inviteEmail,
+                    role: inviteRole,
+                  });
+                  setInviteEmail("");
+                  return customer;
+                },
+                "User account created.",
+              )
             }
             onGiveCredits={() =>
-              void runCustomerAction("credits", async () => {
-                await grantCredits({
-                  partnerOrganizationId:
-                    selectedOrganization!.partnerOrganizationId,
-                  credits: Number(creditAmount),
-                });
-                setCreditAmount("");
-              }, "Credits added to this organization.")
+              void runCustomerAction(
+                "credits",
+                async () => {
+                  await grantCredits({
+                    partnerOrganizationId:
+                      selectedOrganization!.partnerOrganizationId,
+                    credits: Number(creditAmount),
+                  });
+                  setCreditAmount("");
+                },
+                "Credits added to this organization.",
+              )
             }
           />
           <PartnerOrganizationList
@@ -346,16 +364,10 @@ export default function PartnerPage() {
               )
             }
             onConfirmOwnershipDns={() =>
-              run(
-                () => confirmOwnershipDns({}),
-                "Checking ownership DNS.",
-              )
+              run(() => confirmOwnershipDns({}), "Checking ownership DNS.")
             }
             onConfirmDelegatedDcvDns={() =>
-              run(
-                () => confirmDelegatedDcvDns({}),
-                "Checking certificate DNS.",
-              )
+              run(() => confirmDelegatedDcvDns({}), "Checking certificate DNS.")
             }
             onCheckCertificateAgain={() =>
               run(

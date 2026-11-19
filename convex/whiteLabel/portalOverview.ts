@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import type { QueryCtx } from "../_generated/server";
 import { type PlanKey } from "../planCatalog";
-import { resolvePartnerMaxAgents, resolvePartnerAgentModel } from "../../shared/partnerEntitlementLimits";
+import {
+  resolvePartnerMaxAgents,
+  resolvePartnerAgentModel,
+} from "../../shared/partnerEntitlementLimits";
 import { orgRoleKeyFromWorkosSlug } from "../../shared/teamRoleCatalog";
 import { assertCurrentPartnerAccess } from "./access";
 import { getPartnerCreditBalance } from "./creditLedger";
@@ -80,6 +83,9 @@ export const partnerOverviewValidator = v.object({
         v.literal("member"),
       ),
       invitationStatus: customerInvitationStateValidator,
+      interfaceMode: v.optional(
+        v.union(v.literal("normal"), v.literal("focus")),
+      ),
       hasRetainedInitialPassword: v.boolean(),
       passwordResetAt: v.optional(v.number()),
       workosUserId: v.optional(v.string()),
@@ -151,6 +157,7 @@ export async function getPartnerOverview(ctx: QueryCtx) {
               email: account.email,
               organizationName: team.name,
               role: account.role,
+              interfaceMode: account.interfaceMode ?? "normal",
               invitationStatus: "active" as const,
               hasRetainedInitialPassword: credential !== null,
               ...(account.passwordResetAt === undefined
@@ -242,10 +249,7 @@ export async function getPartnerOverview(ctx: QueryCtx) {
       (total, row) => total + row.addedCredits,
       0,
     ),
-    totalSpentCredits: rows.reduce(
-      (total, row) => total + row.spentCredits,
-      0,
-    ),
+    totalSpentCredits: rows.reduce((total, row) => total + row.spentCredits, 0),
     planMix,
     organizations: rows,
     customers,

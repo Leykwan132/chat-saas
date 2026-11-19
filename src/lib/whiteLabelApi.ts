@@ -86,6 +86,7 @@ export type PartnerOverview = {
     organizationName: string;
     role: "owner" | "admin" | "member";
     invitationStatus: "pending" | "accepted" | "active";
+    interfaceMode?: "normal" | "focus";
     hasRetainedInitialPassword: boolean;
     passwordResetAt?: number;
     workosUserId?: string;
@@ -222,6 +223,7 @@ export const whiteLabelApi = {
       "action",
       {
         partnerOrganizationId: string;
+        interfaceMode?: "normal" | "focus";
         email: string;
         role: "owner" | "admin" | "member";
       },

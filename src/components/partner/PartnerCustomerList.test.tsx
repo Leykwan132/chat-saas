@@ -1,7 +1,9 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { preventCustomerRowClick } from "./customerRemovalMenu";
 import { PartnerCustomerList } from "./PartnerCustomerList";
+
+vi.mock("convex/react", () => ({ useMutation: () => vi.fn() }));
 
 test("renders users in the same order as the table headers", () => {
   const markup = renderToStaticMarkup(
@@ -30,6 +32,7 @@ test("renders users in the same order as the table headers", () => {
     "customer@example.com",
     "Example organization",
     "",
+    "NormalFocus",
     "active",
     "",
   ]);
