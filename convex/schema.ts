@@ -1654,6 +1654,13 @@ export default defineSchema({
     ),
     createdAt: v.number(),
   })
+    .index("by_conversation_reply_status", [
+      "conversationId",
+      "direction",
+      "status",
+      "revokedAt",
+      "createdAt",
+    ])
     .index("by_conversationId_and_createdAt", ["conversationId", "createdAt"])
     .index("by_agentId_and_createdAt", ["agentId", "createdAt"])
     .index("by_agentMessageId", ["agentMessageId"])

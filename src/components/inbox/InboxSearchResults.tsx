@@ -1,3 +1,7 @@
+import {
+  InboxReplyAuthorChip,
+  type InboxReplyAuthor,
+} from "./InboxReplyAuthorChip";
 import { InboxChatAiControl } from "./InboxChatAiControl";
 import type { InboxHandling } from "../../../shared/inboxHandling";
 import { InboxHandlingBadge } from "./InboxHandlingBadge";
@@ -14,6 +18,8 @@ type SearchRow = {
   hasBooking: boolean;
   leadTemperature?: "Hot" | "Warm" | "Cold";
   isEscalated: boolean;
+  lastMessageSentByAi?: boolean;
+  lastReplyAuthor?: InboxReplyAuthor | null;
   handling?: InboxHandling;
   aiControlAvailable?: boolean;
   lastMessageAt: number;
@@ -69,27 +75,35 @@ function ResultRow({
           </span>
           {row.handling ? <InboxHandlingBadge handling={row.handling} /> : null}
         </div>
-        <p className="mt-1 truncate text-xs text-muted-foreground">
+        <p className="mt-1.5 flex min-w-0 items-center gap-1.5 truncate text-xs text-muted-foreground">
+          <InboxReplyAuthorChip author={row.lastReplyAuthor} />
           <InboxSearchHighlight text={message} query={query} />
         </p>
-        <div className="mt-2 flex flex-wrap gap-1 text-[10px] text-muted-foreground">
-          {row.hasBooking ? (
-            <span className="rounded-full bg-muted px-2 py-0.5">Booked</span>
-          ) : null}
-          {row.isEscalated ? (
-            <span className="rounded-full bg-muted px-2 py-0.5">Escalated</span>
-          ) : null}
-          {row.leadTemperature ? (
-            <span className="rounded-full bg-muted px-2 py-0.5">
-              {row.leadTemperature}
-            </span>
-          ) : null}
-          {row.tags.slice(0, 2).map((tag) => (
-            <span key={tag} className="rounded-full bg-muted px-2 py-0.5">
-              {tag}
-            </span>
-          ))}
-        </div>
+        {(row.hasBooking ||
+          row.isEscalated ||
+          row.leadTemperature ||
+          row.tags.length > 0) && (
+          <div className="mt-1.5 flex flex-wrap gap-1 text-[10px] text-muted-foreground">
+            {row.hasBooking ? (
+              <span className="rounded-full bg-muted px-2 py-0.5">Booked</span>
+            ) : null}
+            {row.isEscalated ? (
+              <span className="rounded-full bg-muted px-2 py-0.5">
+                Escalated
+              </span>
+            ) : null}
+            {row.leadTemperature ? (
+              <span className="rounded-full bg-muted px-2 py-0.5">
+                {row.leadTemperature}
+              </span>
+            ) : null}
+            {row.tags.slice(0, 2).map((tag) => (
+              <span key={tag} className="rounded-full bg-muted px-2 py-0.5">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       {row.handling && (
         <InboxChatAiControl

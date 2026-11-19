@@ -1,3 +1,7 @@
+import {
+  InboxReplyAuthorChip,
+  type InboxReplyAuthor,
+} from "./inbox/InboxReplyAuthorChip";
 import { InboxChatAiControl } from "./inbox/InboxChatAiControl";
 import type { InboxHandling } from "../../shared/inboxHandling";
 import { InboxHandlingBadge } from "@/components/inbox/InboxHandlingBadge";
@@ -47,6 +51,7 @@ export type Chat = {
   hasBooking?: boolean;
   isEscalated?: boolean;
   lastMessageSentByAi?: boolean;
+  lastReplyAuthor?: InboxReplyAuthor | null;
   handling?: InboxHandling;
   aiControlAvailable?: boolean;
 };
@@ -138,7 +143,7 @@ export function ChatRow({
                 display: "flex",
                 alignItems: "center",
                 gap: "4px",
-                marginBottom: comfortable ? "6px" : "2px",
+                marginBottom: "6px",
               }}
             >
               <span
@@ -221,11 +226,7 @@ export function ChatRow({
                     style={{ display: "inline-block" }}
                   />
                 )}
-                {chat.lastMessageSentByAi && !chat.handling ? (
-                  <span className="rounded bg-muted px-1 py-0.5 text-[9px] font-semibold text-muted-foreground">
-                    AI
-                  </span>
-                ) : null}
+                <InboxReplyAuthorChip author={chat.lastReplyAuthor} />
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
                   {chat.message}
                 </span>

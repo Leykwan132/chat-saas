@@ -39,3 +39,13 @@ test("normal Inbox row density stays unchanged", () => {
   expect(markup).toContain("font-size:12px");
   expect(markup).toContain("padding:12px 16px");
 });
+
+test("shows the last reply author independently of the latest message sender", () => {
+  chat.lastReplyAuthor = { kind: "ai", name: "AI" };
+  chat.lastMessageSentByAi = false;
+  expect(render(false)).toContain("Last reply by AI");
+  chat.lastReplyAuthor = { kind: "human", name: "Alex" };
+  expect(render(false)).toContain("Last reply by Alex");
+  chat.lastReplyAuthor = null;
+  expect(render(false)).not.toContain("Last reply by");
+});
