@@ -1,3 +1,4 @@
+import { InboxChatAiControl } from "./InboxChatAiControl";
 import type { InboxHandling } from "../../../shared/inboxHandling";
 import { InboxHandlingBadge } from "./InboxHandlingBadge";
 import { LoaderCircle, Search } from "lucide-react";
@@ -14,6 +15,7 @@ type SearchRow = {
   leadTemperature?: "Hot" | "Warm" | "Cold";
   isEscalated: boolean;
   handling?: InboxHandling;
+  aiControlAvailable?: boolean;
   lastMessageAt: number;
 };
 
@@ -43,44 +45,62 @@ function ResultRow({
   ) => void;
 }) {
   return (
-    <button
-      type="button"
-      className="block w-full border-b border-border px-4 py-3 text-left hover:bg-muted/50"
+    <div
+      role="button"
+      tabIndex={0}
+      className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left hover:bg-muted/50"
       onClick={() => onSelect(row.conversationId)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(row.conversationId);
+        }
+      }}
     >
-      <div className="flex items-center justify-between gap-3">
-        <span className="flex min-w-0 items-center gap-1.5">
-          <span className="truncate text-sm font-semibold">
-            {row.contactName ?? "Unknown contact"}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate text-sm font-semibold">
+              {row.contactName ?? "Unknown contact"}
+            </span>
+          </span>
+          <span className="shrink-0 text-[11px] text-muted-foreground">
+            {relativeTime(row.lastMessageAt)}
           </span>
           {row.handling ? <InboxHandlingBadge handling={row.handling} /> : null}
-        </span>
-        <span className="shrink-0 text-[11px] text-muted-foreground">
-          {relativeTime(row.lastMessageAt)}
-        </span>
+        </div>
+        <p className="mt-1 truncate text-xs text-muted-foreground">
+          <InboxSearchHighlight text={message} query={query} />
+        </p>
+        <div className="mt-2 flex flex-wrap gap-1 text-[10px] text-muted-foreground">
+          {row.hasBooking ? (
+            <span className="rounded-full bg-muted px-2 py-0.5">Booked</span>
+          ) : null}
+          {row.isEscalated ? (
+            <span className="rounded-full bg-muted px-2 py-0.5">Escalated</span>
+          ) : null}
+          {row.leadTemperature ? (
+            <span className="rounded-full bg-muted px-2 py-0.5">
+              {row.leadTemperature}
+            </span>
+          ) : null}
+          {row.tags.slice(0, 2).map((tag) => (
+            <span key={tag} className="rounded-full bg-muted px-2 py-0.5">
+              {tag}
+            </span>
+          ))}
+        </div>
       </div>
-      <p className="mt-1 truncate text-xs text-muted-foreground">
-        <InboxSearchHighlight text={message} query={query} />
-      </p>
-      <div className="mt-2 flex flex-wrap gap-1 text-[10px] text-muted-foreground">
-        {row.hasBooking ? (
-          <span className="rounded-full bg-muted px-2 py-0.5">Booked</span>
-        ) : null}
-        {row.isEscalated ? (
-          <span className="rounded-full bg-muted px-2 py-0.5">Escalated</span>
-        ) : null}
-        {row.leadTemperature ? (
-          <span className="rounded-full bg-muted px-2 py-0.5">
-            {row.leadTemperature}
-          </span>
-        ) : null}
-        {row.tags.slice(0, 2).map((tag) => (
-          <span key={tag} className="rounded-full bg-muted px-2 py-0.5">
-            {tag}
-          </span>
-        ))}
-      </div>
-    </button>
+      {row.handling && (
+        <InboxChatAiControl
+          chat={{
+            id: row.conversationId,
+            handling: row.handling,
+            aiControlAvailable: row.aiControlAvailable,
+          }}
+        />
+      )}
+    </div>
   );
 }
 
