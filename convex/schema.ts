@@ -1311,6 +1311,8 @@ export default defineSchema({
   // Unified conversation table. service: "playground" rows are AI-playground
   // threads; the rest are channel-backed inbox conversations.
   conversations: defineTable({
+    manualAiResumeAt: v.optional(v.number()),
+    manualAiResumeRevision: v.optional(v.number()),
     orgId: v.string(),
     /** Owner's WorkOS user id. For personal workspaces (orgId = ""), this
      *  scopes the conversation to its owner; for team workspaces it records

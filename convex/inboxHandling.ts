@@ -25,5 +25,11 @@ export async function withInboxHandling<
     ctx,
     summary.conversationId,
   );
-  return { ...summary, handling, aiControlAvailable, lastReplyAuthor };
+  return {
+    ...summary,
+    handling,
+    aiControlAvailable,
+    lastReplyAuthor,
+    aiResumeAt: conversation.manualAiResumeAt ?? null,
+  };
 }

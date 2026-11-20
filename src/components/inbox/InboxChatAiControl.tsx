@@ -1,3 +1,6 @@
+import { InboxResumeTiming } from "./InboxResumeTiming";
+import { InboxResumeCountdown } from "./InboxResumeCountdown";
+import { makeFunctionReference } from "convex/server";
 import {
   Tooltip,
   TooltipContent,
@@ -14,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useMutation } from "convex/react";
-import { Pause, Play } from "lucide-react";
+import { Clock, Pause, Play } from "lucide-react";
 import { PiRobot } from "react-icons/pi";
 import { toast } from "sonner";
 import { api } from "../../../convex/_generated/api";
@@ -25,6 +28,12 @@ import { Permission } from "../../../shared/permissions";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
+const scheduleResume = makeFunctionReference<
+  "mutation",
+  { conversationId: Id<"conversations">; minutes: number },
+  null
+>("inboxManualResume:set");
+
 export function InboxChatAiControl({
   chat,
 }: {
@@ -32,25 +41,42 @@ export function InboxChatAiControl({
     id: Id<"conversations">;
     handling?: InboxHandling;
     aiControlAvailable?: boolean;
+    aiResumeAt?: number | null;
   };
 }) {
   const { can } = usePermissions();
   const toggle = useMutation(api.conversations.setConversationAiEnabled);
-  const resolve = useMutation(api.inboxManualEscalation.deescalate);
+  const resume = useMutation(scheduleResume);
+  const [timing, setTiming] = useState<"now" | "later">("now");
+  const [minutes, setMinutes] = useState("5");
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const active = chat.handling === "ai";
   const available =
     chat.aiControlAvailable === true && can(Permission.CHATS_ASSIGN);
   const label = active ? "Pause AI replies" : "Resume AI replies";
+  const validMinutes =
+    Number.isInteger(Number(minutes)) &&
+    Number(minutes) >= 1 &&
+    Number(minutes) <= 10080;
   const change = async () => {
-    if (busy || !available) return;
+    if (busy || !available || (!active && timing === "later" && !validMinutes))
+      return;
     setBusy(true);
     try {
-      if (chat.handling === "attention")
-        await resolve({ conversationId: chat.id });
-      else await toggle({ conversationId: chat.id, enabled: !active });
-      toast.success(active ? "AI paused" : "AI resumed");
+      if (active) await toggle({ conversationId: chat.id, enabled: false });
+      else
+        await resume({
+          conversationId: chat.id,
+          minutes: timing === "now" ? 0 : Number(minutes),
+        });
+      toast.success(
+        active
+          ? "AI paused"
+          : timing === "now"
+            ? "AI resumed"
+            : `AI will resume in ${minutes} minutes`,
+      );
       setConfirmOpen(false);
     } catch (error) {
       toast.error(
@@ -74,10 +100,11 @@ export function InboxChatAiControl({
             disabled={busy || !available}
             onClick={(event) => {
               event.stopPropagation();
+              setTiming("now");
               setConfirmOpen(true);
             }}
             onKeyDown={(event) => event.stopPropagation()}
-            className="flex size-11 shrink-0 items-center justify-center rounded-full disabled:opacity-50"
+            className="flex min-h-11 w-11 shrink-0 flex-col items-center justify-center rounded-full disabled:opacity-50"
           >
             <span
               className={cn(
@@ -115,12 +142,17 @@ export function InboxChatAiControl({
                 >
                   {active ? (
                     <Play className="size-2 fill-current" aria-hidden="true" />
+                  ) : chat.aiResumeAt ? (
+                    <Clock className="size-2" aria-hidden="true" />
                   ) : (
                     <Pause className="size-2 fill-current" aria-hidden="true" />
                   )}
                 </span>
               )}
             </span>
+            {!active && chat.aiResumeAt ? (
+              <InboxResumeCountdown dueAt={chat.aiResumeAt} />
+            ) : null}
           </button>
         </TooltipTrigger>
         <TooltipContent side="top">
@@ -149,17 +181,43 @@ export function InboxChatAiControl({
                   : "AI replies will be enabled for the next customer message."}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
+          {!active && timing === "later" && (
+            <InboxResumeTiming
+              minutes={minutes}
               disabled={busy}
-              onClick={() => setConfirmOpen(false)}
+              onMinutesChange={setMinutes}
+            />
+          )}
+          <DialogFooter>
+            {active ? (
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={() => setConfirmOpen(false)}
+              >
+                Cancel
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                disabled={busy}
+                onClick={() => setTiming(timing === "now" ? "later" : "now")}
+              >
+                {timing === "now" ? "Resume later" : "Back"}
+              </Button>
+            )}
+            <Button
+              disabled={
+                busy || (!active && timing === "later" && !validMinutes)
+              }
+              onClick={() => void change()}
             >
-              Cancel
-            </Button>
-            <Button disabled={busy} onClick={() => void change()}>
               {busy ? <Spinner className="size-4" /> : null}
-              {active ? "Pause AI" : "Resume AI"}
+              {active
+                ? "Pause AI"
+                : timing === "now"
+                  ? "Resume now"
+                  : "Schedule resume"}
             </Button>
           </DialogFooter>
         </DialogContent>

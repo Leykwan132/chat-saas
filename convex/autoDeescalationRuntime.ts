@@ -48,7 +48,11 @@ async function scheduleTimer(
   conversation: Conversation,
   lastHumanReplyAt: number,
 ) {
-  if (!conversation.assignedAgentId || conversation.status === "closed")
+  if (
+    conversation.manualAiResumeAt !== undefined ||
+    !conversation.assignedAgentId ||
+    conversation.status === "closed"
+  )
     return null;
   const scope: Timer["scope"] = conversation.escalation ? undefined : "normal";
   const agent = await ctx.db.get(conversation.assignedAgentId);
@@ -95,6 +99,17 @@ export async function observeEscalationChange(
 ) {
   const conversationId = after?._id ?? before?._id;
   if (!conversationId) return;
+  if (
+    after?.manualAiResumeAt !== undefined &&
+    before !== null &&
+    (after.assignToAiAgent ||
+      after.status === "closed" ||
+      before.assignedAgentId !== after.assignedAgentId ||
+      before.assignedUserId !== after.assignedUserId ||
+      before.escalation?.escalatedAt !== after.escalation?.escalatedAt)
+  )
+    await ctx.db.patch(after._id, { manualAiResumeAt: undefined });
+
   const changed =
     before?.escalation?.escalatedAt !== after?.escalation?.escalatedAt ||
     before?.escalation?.sourceMessageId !==
@@ -188,6 +203,7 @@ export async function expireTimer(
   const config = autoResumeConfig(agent, timer.scope);
   if (
     !conversation ||
+    conversation.manualAiResumeAt !== undefined ||
     conversation.assignToAiAgent ||
     !ownsAutoResumeTimer(timer, conversation) ||
     !config?.enabled ||
@@ -222,6 +238,7 @@ export async function processHumanReply(
   const conversation = await ctx.db.get(message.conversationId);
   if (
     !conversation ||
+    conversation.manualAiResumeAt !== undefined ||
     conversation.assignToAiAgent ||
     !ownsAutoResumeTimer(timer, conversation) ||
     sentAt < (timer.escalatedAt ?? conversation.createdAt)
