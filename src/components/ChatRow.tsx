@@ -54,6 +54,7 @@ export type Chat = {
   lastReplyAuthor?: InboxReplyAuthor | null;
   handling?: InboxHandling;
   aiControlAvailable?: boolean;
+  aiResumeAt?: number | null;
 };
 
 function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {

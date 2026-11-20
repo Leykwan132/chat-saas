@@ -22,6 +22,7 @@ type SearchRow = {
   lastReplyAuthor?: InboxReplyAuthor | null;
   handling?: InboxHandling;
   aiControlAvailable?: boolean;
+  aiResumeAt?: number | null;
   lastMessageAt: number;
 };
 
@@ -111,6 +112,7 @@ function ResultRow({
             id: row.conversationId,
             handling: row.handling,
             aiControlAvailable: row.aiControlAvailable,
+            aiResumeAt: row.aiResumeAt,
           }}
         />
       )}

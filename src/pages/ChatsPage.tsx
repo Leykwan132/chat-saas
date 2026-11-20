@@ -1,3 +1,4 @@
+import { InboxResumeConversationDialog } from "@/components/inbox/InboxResumeConversationDialog";
 import {
   matchesInboxHandling,
   type InboxHandlingFilter,
@@ -477,6 +478,7 @@ export default function ChatsPage({
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
   const [tagSearchInput, setTagSearchInput] = useState("");
   const [resolveConfirmOpen, setResolveConfirmOpen] = useState(false);
+  const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
   const [resolveBusy, setResolveBusy] = useState(false);
 
   const [isEditingCustomerDetails, setIsEditingCustomerDetails] =
@@ -724,6 +726,7 @@ export default function ChatsPage({
       lastReplyAuthor: conv.lastReplyAuthor,
       handling: conv.handling,
       aiControlAvailable: conv.aiControlAvailable,
+      aiResumeAt: conv.aiResumeAt,
       platform: conv.service as ConversationPlatform,
       requiresAction: conv.unreadCount > 0,
       conversationStatus: conv.status,
@@ -1782,7 +1785,7 @@ export default function ChatsPage({
                 }
                 takingControl={assigneeSaving}
                 onTakeControl={() => void handleAiToggle(false)}
-                onHandToAi={() => void handleAiToggle(true)}
+                onHandToAi={() => setResumeDialogOpen(true)}
                 canReplyFromInbox={canReplyFromInbox}
                 freeMessagingExpiresAt={
                   selectedConversation?.whatsappFreeMessagingWindow?.expiresAt
@@ -2677,6 +2680,14 @@ export default function ChatsPage({
         agentId={agentId}
       />
 
+      {selectedConversationId && (
+        <InboxResumeConversationDialog
+          key={selectedConversationId}
+          conversationId={selectedConversationId}
+          open={resumeDialogOpen}
+          onOpenChange={setResumeDialogOpen}
+        />
+      )}
       <Dialog open={resolveConfirmOpen} onOpenChange={setResolveConfirmOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
