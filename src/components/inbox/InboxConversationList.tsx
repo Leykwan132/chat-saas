@@ -179,6 +179,18 @@ export function InboxConversationList({
           ) : filteredChats.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center text-sm text-muted-foreground">
               <MessageSquare className="size-8 opacity-40" />
+              {canLoadMore || isLoadingMore ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={isLoadingMore}
+                  onClick={onLoadMore}
+                >
+                  {isLoadingMore
+                    ? "Loading conversations"
+                    : "Load more conversations"}
+                </Button>
+              ) : null}
               {totalConversationCount > 0 ? (
                 <>
                   <p className="m-0 font-medium text-foreground">

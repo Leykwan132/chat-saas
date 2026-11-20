@@ -128,3 +128,18 @@ test("returns separate message hits with current summary presentation data", asy
     matchedMessageAt: expect.any(Number),
   });
 });
+
+test("chat search supports paging through matches without the five-result cutoff", async () => {
+  const fixture = await createFixture();
+  const result = await fixture.client.query(
+    api.inboxSearch.searchChatPagesForCurrentOrg,
+    {
+      agentId: fixture.agentId,
+      searchQuery: "aisha",
+      paginationOpts: { cursor: null, numItems: 1 },
+    },
+  );
+  expect(result.page).toHaveLength(1);
+  expect(result.page[0]?.contactName).toBe("Aisha Rahman");
+  expect(typeof result.continueCursor).toBe("string");
+});

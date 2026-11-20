@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useMutation } from "convex/react";
-import { Clock, Pause, Play } from "lucide-react";
+import { Pause, Play } from "lucide-react";
 import { PiRobot } from "react-icons/pi";
 import { toast } from "sonner";
 import { api } from "../../../convex/_generated/api";
@@ -42,6 +42,7 @@ export function InboxChatAiControl({
     handling?: InboxHandling;
     aiControlAvailable?: boolean;
     aiResumeAt?: number | null;
+    aiResumeStartedAt?: number | null;
   };
 }) {
   const { can } = usePermissions();
@@ -60,11 +61,11 @@ export function InboxChatAiControl({
     Number(minutes) >= 1 &&
     Number(minutes) <= 10080;
   const change = async () => {
-    if (busy || !available || (!active && timing === "later" && !validMinutes))
-      return;
+    if (busy || !available || (timing === "later" && !validMinutes)) return;
     setBusy(true);
     try {
-      if (active) await toggle({ conversationId: chat.id, enabled: false });
+      if (active && timing === "now")
+        await toggle({ conversationId: chat.id, enabled: false });
       else
         await resume({
           conversationId: chat.id,
@@ -72,7 +73,9 @@ export function InboxChatAiControl({
         });
       toast.success(
         active
-          ? "AI paused"
+          ? timing === "later"
+            ? `AI paused for ${minutes} minutes`
+            : "AI paused"
           : timing === "now"
             ? "AI resumed"
             : `AI will resume in ${minutes} minutes`,
@@ -128,10 +131,16 @@ export function InboxChatAiControl({
               )}
               {busy ? (
                 <Spinner className="size-4" />
+              ) : !active && chat.aiResumeAt != null ? (
+                <InboxResumeCountdown
+                  key={chat.aiResumeAt}
+                  dueAt={chat.aiResumeAt}
+                  startedAt={chat.aiResumeStartedAt}
+                />
               ) : (
                 <PiRobot className="size-5" aria-hidden="true" />
               )}
-              {!busy && (
+              {!busy && (active || chat.aiResumeAt == null) && (
                 <span
                   className={cn(
                     "absolute -bottom-0.5 -right-0.5 flex size-3.5 items-center justify-center rounded-full ring-2 ring-background",
@@ -141,18 +150,13 @@ export function InboxChatAiControl({
                   )}
                 >
                   {active ? (
-                    <Play className="size-2 fill-current" aria-hidden="true" />
-                  ) : chat.aiResumeAt ? (
-                    <Clock className="size-2" aria-hidden="true" />
-                  ) : (
                     <Pause className="size-2 fill-current" aria-hidden="true" />
+                  ) : (
+                    <Play className="size-2 fill-current" aria-hidden="true" />
                   )}
                 </span>
               )}
             </span>
-            {!active && chat.aiResumeAt ? (
-              <InboxResumeCountdown dueAt={chat.aiResumeAt} />
-            ) : null}
           </button>
         </TooltipTrigger>
         <TooltipContent side="top">
@@ -175,46 +179,39 @@ export function InboxChatAiControl({
             </DialogTitle>
             <DialogDescription>
               {active
-                ? "AI will stop replying to this conversation so your team can take over."
+                ? timing === "later"
+                  ? "AI will pause now and resume automatically after the selected duration, ready for the next customer message."
+                  : "AI will stop replying to this conversation so your team can take over."
                 : chat.handling === "attention"
                   ? "This will resolve the escalation and enable AI replies for the next customer message."
                   : "AI replies will be enabled for the next customer message."}
             </DialogDescription>
           </DialogHeader>
-          {!active && timing === "later" && (
+          {timing === "later" && (
             <InboxResumeTiming
+              label={active ? "Pause for (minutes)" : "Resume in (minutes)"}
               minutes={minutes}
               disabled={busy}
               onMinutesChange={setMinutes}
             />
           )}
           <DialogFooter>
-            {active ? (
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={() => setConfirmOpen(false)}
-              >
-                Cancel
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                disabled={busy}
-                onClick={() => setTiming(timing === "now" ? "later" : "now")}
-              >
-                {timing === "now" ? "Resume later" : "Back"}
-              </Button>
-            )}
             <Button
-              disabled={
-                busy || (!active && timing === "later" && !validMinutes)
-              }
+              variant="ghost"
+              disabled={busy}
+              onClick={() => setTiming(timing === "now" ? "later" : "now")}
+            >
+              {timing === "later" ? "Back" : "Schedule resume"}
+            </Button>
+            <Button
+              disabled={busy || (timing === "later" && !validMinutes)}
               onClick={() => void change()}
             >
               {busy ? <Spinner className="size-4" /> : null}
               {active
-                ? "Pause AI"
+                ? timing === "later"
+                  ? "Pause and schedule resume"
+                  : "Pause AI"
                 : timing === "now"
                   ? "Resume now"
                   : "Schedule resume"}

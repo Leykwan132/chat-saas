@@ -59,6 +59,64 @@ async function getScopedSummary(
     : null;
 }
 
+function scopedChatSearch(
+  ctx: QueryCtx,
+  searchQuery: string,
+  orgId: string,
+  userId: string,
+  agentId: Id<"agents">,
+) {
+  const isPersonal = !orgId || orgId === "personal";
+  return ctx.db
+    .query("inboxChatSearchDocuments")
+    .withSearchIndex("search_text", (q) => {
+      const scoped = q.search("searchText", searchQuery);
+      return isPersonal
+        ? scoped
+            .eq("userId", userId)
+            .eq("assignedAgentId", agentId)
+            .eq("isChannelConnected", true)
+        : scoped
+            .eq("orgId", orgId)
+            .eq("assignedAgentId", agentId)
+            .eq("isChannelConnected", true);
+    });
+}
+
+export const searchChatPagesForCurrentOrg = query({
+  args: {
+    agentId: v.id("agents"),
+    searchQuery: v.string(),
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: paginationResultValidator(inboxHandlingSummaryValidator),
+  handler: async (ctx, args) => {
+    const searchQuery = args.searchQuery.trim();
+    if (!searchQuery) return { page: [], isDone: true, continueCursor: "" };
+    const { orgId, userId } = await getAuthContext(ctx);
+    await assertScopedAgent(ctx, args.agentId, orgId, userId);
+    const result = await scopedChatSearch(
+      ctx,
+      searchQuery,
+      orgId,
+      userId,
+      args.agentId,
+    ).paginate(args.paginationOpts);
+    const summaries = await Promise.all(
+      result.page.map((document) =>
+        getScopedSummary(
+          ctx,
+          document.conversationId,
+          orgId,
+          userId,
+          args.agentId,
+        ),
+      ),
+    );
+    return { ...result, page: summaries.filter((summary) => summary !== null) };
+  },
+});
+
 export const searchChatsForCurrentOrg = query({
   returns: v.array(inboxHandlingSummaryValidator),
   args: { agentId: v.id("agents"), searchQuery: v.string() },
@@ -67,22 +125,13 @@ export const searchChatsForCurrentOrg = query({
     if (searchQuery === "") return [];
     const { orgId, userId } = await getAuthContext(ctx);
     await assertScopedAgent(ctx, args.agentId, orgId, userId);
-    const isPersonal = !orgId || orgId === "personal";
-    const documents = await ctx.db
-      .query("inboxChatSearchDocuments")
-      .withSearchIndex("search_text", (q) => {
-        const scoped = q.search("searchText", searchQuery);
-        return isPersonal
-          ? scoped
-              .eq("userId", userId)
-              .eq("assignedAgentId", args.agentId)
-              .eq("isChannelConnected", true)
-          : scoped
-              .eq("orgId", orgId)
-              .eq("assignedAgentId", args.agentId)
-              .eq("isChannelConnected", true);
-      })
-      .take(5);
+    const documents = await scopedChatSearch(
+      ctx,
+      searchQuery,
+      orgId,
+      userId,
+      args.agentId,
+    ).take(5);
     const summaries = await Promise.all(
       documents.map((document) =>
         getScopedSummary(

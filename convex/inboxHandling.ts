@@ -31,5 +31,9 @@ export async function withInboxHandling<
     aiControlAvailable,
     lastReplyAuthor,
     aiResumeAt: conversation.manualAiResumeAt ?? null,
+    aiResumeStartedAt:
+      conversation.manualAiResumeAt != null
+        ? (conversation.manualAiResumeStartedAt ?? null)
+        : null,
   };
 }

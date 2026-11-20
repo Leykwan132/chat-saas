@@ -4,6 +4,7 @@ import {
   type InboxHandlingFilter,
 } from "../../shared/inboxHandling";
 import type { AssignmentFilter } from "@/components/inbox/InboxFilterSidebar";
+import { matchesInboxLastReply } from "./inboxLastReplyFilter";
 
 type Row = {
   conversationId: string;
@@ -13,6 +14,7 @@ type Row = {
   service: string;
   isEscalated: boolean;
   hasBooking: boolean;
+  lastReplyAuthor?: { kind: string } | null;
 };
 export type FocusInboxSearchFilters = {
   assignment: AssignmentFilter | "read";
@@ -22,12 +24,15 @@ export type FocusInboxSearchFilters = {
   platforms: string[];
   escalated: boolean;
   booked: boolean;
+  lastRepliedByAi?: boolean;
 };
 
 export function matchesFocusInboxSearchFilters(
   row: Row,
   filters: FocusInboxSearchFilters,
 ) {
+  if (!matchesInboxLastReply(row, filters.lastRepliedByAi === true))
+    return false;
   if (filters.handling && !matchesInboxHandling(row.handling, filters.handling))
     return false;
   if (filters.assignment === "read" && row.unreadCount > 0) return false;

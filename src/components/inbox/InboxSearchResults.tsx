@@ -23,6 +23,7 @@ type SearchRow = {
   handling?: InboxHandling;
   aiControlAvailable?: boolean;
   aiResumeAt?: number | null;
+  aiResumeStartedAt?: number | null;
   lastMessageAt: number;
 };
 
@@ -113,6 +114,7 @@ function ResultRow({
             handling: row.handling,
             aiControlAvailable: row.aiControlAvailable,
             aiResumeAt: row.aiResumeAt,
+            aiResumeStartedAt: row.aiResumeStartedAt,
           }}
         />
       )}
@@ -127,6 +129,8 @@ export function InboxSearchResults({
   messageStatus,
   onLoadMore,
   onSelect,
+  chatStatus,
+  onLoadMoreChats,
 }: {
   searchQuery: string;
   chats: SearchRow[] | undefined;
@@ -137,19 +141,29 @@ export function InboxSearchResults({
     | "LoadingMore"
     | "Exhausted";
   onLoadMore: () => void;
+  chatStatus?: "LoadingFirstPage" | "CanLoadMore" | "LoadingMore" | "Exhausted";
+  onLoadMoreChats?: () => void;
   onSelect: (
     conversationId: Id<"conversations">,
     messageId?: Id<"messages">,
   ) => void;
 }) {
-  const isLoading = chats === undefined || messageStatus === "LoadingFirstPage";
+  const isLoading =
+    chats === undefined ||
+    chatStatus === "LoadingFirstPage" ||
+    messageStatus === "LoadingFirstPage";
   if (isLoading)
     return (
       <div className="flex justify-center p-8">
         <LoaderCircle className="size-5 animate-spin" />
       </div>
     );
-  if (chats.length === 0 && messages.length === 0) {
+  if (
+    chats.length === 0 &&
+    messages.length === 0 &&
+    messageStatus === "Exhausted" &&
+    (chatStatus == null || chatStatus === "Exhausted")
+  ) {
     return (
       <div className="flex flex-col items-center gap-2 px-6 py-16 text-center text-sm text-muted-foreground">
         <Search className="size-8 opacity-40" />
@@ -162,6 +176,21 @@ export function InboxSearchResults({
   }
   return (
     <>
+      {(chatStatus === "CanLoadMore" || chatStatus === "LoadingMore") &&
+      onLoadMoreChats ? (
+        <div className="flex justify-center border-b border-border p-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onLoadMoreChats}
+            disabled={chatStatus === "LoadingMore"}
+          >
+            {chatStatus === "LoadingMore"
+              ? "Loading chats…"
+              : "Load more chats"}
+          </Button>
+        </div>
+      ) : null}
       {chats.length > 0 ? (
         <>
           <div className="border-b border-border px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">

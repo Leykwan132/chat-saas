@@ -3,10 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
 
 export function InboxResumeTiming({
+  label = "Resume in (minutes)",
   minutes,
   disabled,
   onMinutesChange,
 }: {
+  label?: string;
   minutes: string;
   disabled: boolean;
   onMinutesChange: (value: string) => void;
@@ -14,7 +16,7 @@ export function InboxResumeTiming({
   const id = useId();
   return (
     <Field>
-      <FieldLabel htmlFor={id}>Resume in (minutes)</FieldLabel>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Input
         id={id}
         autoFocus

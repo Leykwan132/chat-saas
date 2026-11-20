@@ -95,7 +95,7 @@ export function InboxResumeConversationDialog({
             disabled={busy}
             onClick={() => setTiming(timing === "now" ? "later" : "now")}
           >
-            {timing === "now" ? "Resume later" : "Back"}
+            {timing === "now" ? "Schedule resume" : "Back"}
           </Button>
           <Button disabled={busy || !valid} onClick={() => void confirm()}>
             {busy ? <Spinner className="size-4" /> : null}

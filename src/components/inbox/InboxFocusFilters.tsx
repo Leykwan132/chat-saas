@@ -27,6 +27,8 @@ import type { AssignmentFilter } from "./InboxFilterSidebar";
 import type { ConversationPlatform } from "@/components/ChatRow";
 
 type Props = {
+  lastRepliedByAi?: boolean;
+  onLastRepliedByAiChange?: (active: boolean) => void;
   assignment: AssignmentFilter | "read";
   handling?: InboxHandlingFilter;
   onHandlingChange?: (filter: InboxHandlingFilter) => void;
@@ -56,6 +58,8 @@ const platformIcons = {
 };
 
 export function InboxFocusFilters({
+  lastRepliedByAi,
+  onLastRepliedByAiChange,
   assignment,
   handling = "all",
   onHandlingChange,
@@ -107,6 +111,15 @@ export function InboxFocusFilters({
           align="end"
           className="[&_[data-slot=dropdown-menu-checkbox-item]]:min-h-11 md:[&_[data-slot=dropdown-menu-checkbox-item]]:min-h-0"
         >
+          {onLastRepliedByAiChange ? (
+            <DropdownMenuCheckboxItem
+              checked={lastRepliedByAi}
+              onCheckedChange={onLastRepliedByAiChange}
+            >
+              <PiRobot className="size-4" aria-hidden="true" />
+              Last replied by AI
+            </DropdownMenuCheckboxItem>
+          ) : null}
           {onHandlingChange ? (
             <>
               <DropdownMenuLabel>Handling</DropdownMenuLabel>

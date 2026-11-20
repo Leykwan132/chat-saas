@@ -1312,6 +1312,7 @@ export default defineSchema({
   // threads; the rest are channel-backed inbox conversations.
   conversations: defineTable({
     manualAiResumeAt: v.optional(v.number()),
+    manualAiResumeStartedAt: v.optional(v.number()),
     manualAiResumeRevision: v.optional(v.number()),
     orgId: v.string(),
     /** Owner's WorkOS user id. For personal workspaces (orgId = ""), this

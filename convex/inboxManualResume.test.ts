@@ -32,7 +32,18 @@ test("per-chat schedule stays paused until due and a newer choice invalidates th
   });
   const first = (await f.conversation())!;
   expect(first.assignToAiAgent).toBe(false);
+  expect(first.manualAiResumeStartedAt).toBe(Date.now());
   expect(first.manualAiResumeAt).toBe(Date.now() + 300000);
+  const summaries = await f.authed.query(
+    api.conversations.listInboxSummariesForCurrentOrg,
+    {
+      agentId: f.agentId,
+      paginationOpts: { cursor: null, numItems: 10 },
+    },
+  );
+  expect(summaries.page[0]?.aiResumeStartedAt).toBe(
+    first.manualAiResumeStartedAt,
+  );
   const oldJob = {
     conversationId: f.conversationId,
     agentId: f.agentId,
@@ -56,6 +67,7 @@ test("per-chat schedule stays paused until due and a newer choice invalidates th
   });
   expect((await f.conversation())?.assignToAiAgent).toBe(true);
   expect((await f.conversation())?.manualAiResumeAt).toBeUndefined();
+  expect((await f.conversation())?.manualAiResumeStartedAt).toBeUndefined();
 });
 
 test("resume now clears schedule and escalation without sending a message", async () => {

@@ -12,6 +12,7 @@ async function resume(ctx: MutationCtx, conversation: Doc<"conversations">) {
   await ctx.db.patch(conversation._id, {
     assignToAiAgent: true,
     manualAiResumeAt: undefined,
+    manualAiResumeStartedAt: undefined,
     ...(conversation.escalation
       ? { escalation: undefined, status: "open" as const }
       : {}),
@@ -63,11 +64,13 @@ export const set = mutation({
       await resume(ctx, conversation);
       return null;
     }
-    const dueAt = Date.now() + minutes * 60000;
+    const startedAt = Date.now();
+    const dueAt = startedAt + minutes * 60000;
     const revision = (conversation.manualAiResumeRevision ?? 0) + 1;
     await ctx.db.patch(conversationId, {
       assignToAiAgent: false,
       manualAiResumeAt: dueAt,
+      manualAiResumeStartedAt: startedAt,
       manualAiResumeRevision: revision,
       updatedAt: Date.now(),
     });
@@ -123,7 +126,10 @@ export const expire = internalMutation({
       conversation.escalation?.escalatedAt !== args.escalatedAt ||
       !(await isConversationInAiReplyAudience(ctx, conversation))
     ) {
-      await ctx.db.patch(conversation._id, { manualAiResumeAt: undefined });
+      await ctx.db.patch(conversation._id, {
+        manualAiResumeAt: undefined,
+        manualAiResumeStartedAt: undefined,
+      });
       return null;
     }
     if (Date.now() >= args.dueAt) await resume(ctx, conversation);

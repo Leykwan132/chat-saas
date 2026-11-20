@@ -108,7 +108,10 @@ export async function observeEscalationChange(
       before.assignedUserId !== after.assignedUserId ||
       before.escalation?.escalatedAt !== after.escalation?.escalatedAt)
   )
-    await ctx.db.patch(after._id, { manualAiResumeAt: undefined });
+    await ctx.db.patch(after._id, {
+      manualAiResumeAt: undefined,
+      manualAiResumeStartedAt: undefined,
+    });
 
   const changed =
     before?.escalation?.escalatedAt !== after?.escalation?.escalatedAt ||

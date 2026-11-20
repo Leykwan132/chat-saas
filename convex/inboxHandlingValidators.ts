@@ -9,6 +9,7 @@ export const inboxHandlingSummaryValidator = doc(
 ).extend({
   lastReplyAuthor: lastReplyAuthorValidator,
   aiResumeAt: v.union(v.number(), v.null()),
+  aiResumeStartedAt: v.union(v.number(), v.null()),
   aiControlAvailable: v.boolean(),
   handling: v.union(
     v.literal("ai"),

@@ -19,6 +19,22 @@ const filters: FocusInboxSearchFilters = {
   escalated: false,
   booked: false,
 };
+test("last replied by AI filters search using the outgoing reply author", () => {
+  const selected = { ...filters, lastRepliedByAi: true };
+  expect(
+    matchesFocusInboxSearchFilters(
+      { ...row, lastReplyAuthor: { kind: "ai" } },
+      selected,
+    ),
+  ).toBe(true);
+  expect(
+    matchesFocusInboxSearchFilters(
+      { ...row, lastReplyAuthor: { kind: "human" } },
+      selected,
+    ),
+  ).toBe(false);
+  expect(matchesFocusInboxSearchFilters(row, selected)).toBe(false);
+});
 test("Read and Unread apply to search results as well as chat lists", () => {
   expect(
     matchesFocusInboxSearchFilters(row, { ...filters, assignment: "read" }),
