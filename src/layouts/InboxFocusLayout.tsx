@@ -7,10 +7,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { InboxFocusUnavailable } from "@/components/inbox/InboxFocusUnavailable";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { InboxFocusSettings } from "@/components/inbox/InboxFocusSettings";
 import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 import { useQuery } from "convex/react";
-import { ChevronDown, Copy, LogOut, UserRound } from "lucide-react";
+import { ChevronDown, Copy, LogOut, Settings, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/partnerAuth/AppAuthProvider";
 import { RequireOrganization } from "@/components/RequireOrganization";
@@ -39,6 +40,7 @@ function InboxFocusSignIn() {
 }
 
 function FocusedInbox() {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { agentId } = useParams();
   const { signOut } = useAuth();
   const brand = useHostBrand();
@@ -107,6 +109,13 @@ function FocusedInbox() {
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               className="min-h-11 md:min-h-0"
+              onSelect={() => setSettingsOpen(true)}
+            >
+              <Settings className="size-4" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="min-h-11 md:min-h-0"
               onSelect={() =>
                 void signOut({ returnTo: window.location.origin })
               }
@@ -117,6 +126,7 @@ function FocusedInbox() {
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
+      <InboxFocusSettings open={settingsOpen} onOpenChange={setSettingsOpen} />
       <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <Outlet />
       </main>

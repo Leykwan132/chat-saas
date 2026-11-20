@@ -55,6 +55,7 @@ export type Chat = {
   handling?: InboxHandling;
   aiControlAvailable?: boolean;
   aiResumeAt?: number | null;
+  aiResumeStartedAt?: number | null;
 };
 
 function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {

@@ -8,6 +8,8 @@ import {
   type FocusInboxSearchFilters,
 } from "@/lib/inboxFocusSearchFilters";
 import { InboxFocusFilters } from "@/components/inbox/InboxFocusFilters";
+import { InboxWhatsAppButton } from "@/components/inbox/InboxWhatsAppButton";
+import { matchesInboxLastReply } from "@/lib/inboxLastReplyFilter";
 import { InboxEscalateButton } from "@/components/inbox/InboxEscalateButton";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
@@ -370,6 +372,7 @@ export default function ChatsPage({
   };
   const [assignmentFilter, setAssignmentFilter] =
     useState<AssignmentFilter>("all");
+  const [lastRepliedByAi, setLastRepliedByAi] = useState(false);
   const [focusReadOnly, setFocusReadOnly] = useState(false);
   const [handlingFilter, setHandlingFilter] =
     useState<InboxHandlingFilter>("all");
@@ -429,11 +432,16 @@ export default function ChatsPage({
     );
     return () => window.clearTimeout(timeoutId);
   }, [searchQuery]);
-  const chatMatches = useQuery(
-    api.inboxSearch.searchChatsForCurrentOrg,
+  const {
+    results: chatMatches,
+    status: chatSearchStatus,
+    loadMore: loadMoreChatMatches,
+  } = usePaginatedQuery(
+    api.inboxSearch.searchChatPagesForCurrentOrg,
     debouncedSearchQuery && typedAgentId
       ? { agentId: typedAgentId, searchQuery: debouncedSearchQuery }
       : "skip",
+    { initialNumItems: 5 },
   );
   const {
     results: messageMatches,
@@ -675,6 +683,7 @@ export default function ChatsPage({
   }, [inboxSummaryStatus]);
 
   const focusSearchFilters: FocusInboxSearchFilters = {
+    lastRepliedByAi,
     assignment: focusReadOnly ? "read" : assignmentFilter,
     handling: handlingFilter,
     currentUserId: currentUser?.workosUserId,
@@ -685,16 +694,18 @@ export default function ChatsPage({
   };
   const inboxSearchResults = debouncedSearchQuery ? (
     <InboxSearchResults
+      chatStatus={chatSearchStatus}
+      onLoadMoreChats={() => loadMoreChatMatches(20)}
       searchQuery={debouncedSearchQuery}
       chats={
-        focusMode
+        focusMode || lastRepliedByAi
           ? chatMatches?.filter((row) =>
               matchesFocusInboxSearchFilters(row, focusSearchFilters),
             )
           : chatMatches
       }
       messages={
-        focusMode
+        focusMode || lastRepliedByAi
           ? messageMatches.filter((row) =>
               matchesFocusInboxSearchFilters(row, focusSearchFilters),
             )
@@ -727,6 +738,7 @@ export default function ChatsPage({
       handling: conv.handling,
       aiControlAvailable: conv.aiControlAvailable,
       aiResumeAt: conv.aiResumeAt,
+      aiResumeStartedAt: conv.aiResumeStartedAt,
       platform: conv.service as ConversationPlatform,
       requiresAction: conv.unreadCount > 0,
       conversationStatus: conv.status,
@@ -762,6 +774,7 @@ export default function ChatsPage({
 
   const filteredChats = useMemo(() => {
     let list = chatItems;
+    list = list.filter((chat) => matchesInboxLastReply(chat, lastRepliedByAi));
     const q = searchQuery.trim().toLowerCase();
     if (q) {
       list = list.filter(
@@ -803,6 +816,7 @@ export default function ChatsPage({
     return list;
   }, [
     chatItems,
+    lastRepliedByAi,
     selectedConversationId,
     searchQuery,
     platformFilters,
@@ -879,6 +893,12 @@ export default function ChatsPage({
 
   const activeInboxFilters = useMemo((): InboxActiveFilter[] => {
     const filters: InboxActiveFilter[] = [];
+    if (lastRepliedByAi)
+      filters.push({
+        id: "last-reply:ai",
+        label: "Last replied by AI",
+        icon: <PiRobot />,
+      });
     if (assignmentFilter === "assigned_me") {
       filters.push({
         id: "assignment:assigned_me",
@@ -967,6 +987,7 @@ export default function ChatsPage({
     focusReadOnly,
     handlingFilter,
     platformFilters,
+    lastRepliedByAi,
     escalatedActive,
     bookingActive,
     activeLeads,
@@ -974,6 +995,10 @@ export default function ChatsPage({
   ]);
 
   const handleRemoveInboxFilter = (id: string) => {
+    if (id === "last-reply:ai") {
+      setLastRepliedByAi(false);
+      return;
+    }
     if (id === "handling") {
       setHandlingFilter("all");
       return;
@@ -1522,6 +1547,8 @@ export default function ChatsPage({
             <InboxFilterSidebarSkeleton />
           ) : (
             <InboxFilterSidebar
+              lastRepliedByAi={lastRepliedByAi}
+              onLastRepliedByAiChange={setLastRepliedByAi}
               open={filterSidebarOpen}
               onOpenChange={setFilterSidebarOpen}
               handlingFilter={handlingFilter}
@@ -1555,6 +1582,8 @@ export default function ChatsPage({
         >
           {focusMode ? (
             <InboxFocusFilters
+              lastRepliedByAi={lastRepliedByAi}
+              onLastRepliedByAiChange={setLastRepliedByAi}
               handling={handlingFilter}
               onHandlingChange={setHandlingFilter}
               assignment={focusReadOnly ? "read" : assignmentFilter}
@@ -1707,6 +1736,16 @@ export default function ChatsPage({
                   />
                 )}
               </div>
+              {conversationDocMatchesSelection && (
+                <InboxWhatsAppButton
+                  phone={
+                    customerSidebarDetails?.phone ||
+                    (selectedConversation?.service === "whatsapp"
+                      ? selectedConversation.contactAddress
+                      : undefined)
+                  }
+                />
+              )}
               {conversationDocMatchesSelection && (
                 <div className="ml-2 shrink-0 md:hidden [&_button]:w-auto [&_button]:px-3 [&_button]:text-xs">
                   {escalationAction}

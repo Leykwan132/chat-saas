@@ -26,7 +26,7 @@ export function InboxReplyAuthorChip({
       className={cn(
         "inline-flex max-w-24 shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-4",
         author.kind === "ai"
-          ? "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200"
+          ? "bg-sky-800 text-sky-100 dark:bg-sky-200 dark:text-sky-950"
           : "bg-muted text-muted-foreground",
       )}
     >

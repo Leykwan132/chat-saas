@@ -201,6 +201,8 @@ export type InboxFilterCounts = {
 };
 
 export type InboxFilterSidebarProps = {
+  lastRepliedByAi?: boolean;
+  onLastRepliedByAiChange?: (active: boolean) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   assignmentFilter: AssignmentFilter;
@@ -225,6 +227,8 @@ export type InboxFilterSidebarProps = {
 };
 
 export function InboxFilterSidebar({
+  lastRepliedByAi,
+  onLastRepliedByAiChange,
   open,
   onOpenChange,
   assignmentFilter,
@@ -387,6 +391,14 @@ export function InboxFilterSidebar({
           </FilterSection>
 
           <FilterSection title="Handling">
+            {onLastRepliedByAiChange ? (
+              <FilterRow
+                label="Last replied by AI"
+                icon={<PiRobot className="text-muted-foreground" />}
+                isActive={lastRepliedByAi === true}
+                onClick={() => onLastRepliedByAiChange(!lastRepliedByAi)}
+              />
+            ) : null}
             <FilterRow
               label="AI handled"
               icon={<PiRobot className="text-muted-foreground" />}
