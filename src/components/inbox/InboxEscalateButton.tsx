@@ -65,10 +65,7 @@ export function InboxEscalateButton({
         <Spinner className="size-4" />
       ) : escalated ? (
         <Play
-          className={cn(
-            "size-3.5 shrink-0 fill-current",
-            timer ? "absolute left-3 z-10" : "relative",
-          )}
+          className={cn("size-3.5 shrink-0 fill-current", "relative")}
           aria-hidden="true"
         />
       ) : (
