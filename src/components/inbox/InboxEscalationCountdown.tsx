@@ -18,18 +18,12 @@ export function InboxEscalationCountdown({ timer }: Props) {
     };
   }, []);
   const countdown = autoResolveCountdown(timer, now);
-  const background =
-    countdown.progress >= 0.8
-      ? "bg-emerald-900"
-      : countdown.progress >= 0.5
-        ? "bg-emerald-800"
-        : "bg-emerald-700";
   return (
     <span
-      className={`pointer-events-none absolute inset-0 flex items-center justify-center tabular-nums ${background}`}
+      className="relative tabular-nums"
       aria-label={`Auto Resolve in ${countdown.label}`}
     >
-      {countdown.label}
+      Resolve ({countdown.label})
     </span>
   );
 }
