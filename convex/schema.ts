@@ -726,7 +726,653 @@ export default defineSchema({
     .index("by_orgId", ["orgId"])
     .index("by_userId_and_orgId", ["userId", "orgId"]),
   workflows: defineTable({
-    humanEscal…6240 tokens truncated…dex("by_orgId_and_lastMessageAt", ["orgId", "lastMessageAt"])
+    humanEscalationEnabled: v.optional(v.boolean()),
+    agentId: v.id("agents"),
+    orgId: v.string(),
+    userId: v.string(),
+    name: v.string(),
+    layoutOrientation: v.optional(workflowLayoutOrientationValidator),
+    reminderAutomation: v.optional(workflowReminderAutomationConfigValidator),
+    followUpAutomation: v.optional(workflowFollowUpAutomationConfigValidator),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_orgId", ["orgId"])
+    .index("by_userId_and_orgId", ["userId", "orgId"]),
+  workflowAutomationRuns: workflowAutomationRunsTable,
+  workflowAutomationCostTotals: workflowAutomationCostTotalsTable,
+  workflowAutomationOperations: workflowAutomationOperationsTable,
+  workflowFollowUpTimers: workflowFollowUpTimersTable,
+  workflowTemplateUsage: workflowTemplateUsageTable,
+  workflowTemplateUsageTotals: workflowTemplateUsageTotalsTable,
+  workflowNodes: defineTable({
+    workflowId: v.id("workflows"),
+    kind: workflowNodeKindValidator,
+    title: v.string(),
+    description: v.optional(v.string()),
+    escalationMessageEnabled: v.optional(v.boolean()),
+    escalationMessageMode: v.optional(
+      v.union(v.literal("ai"), v.literal("manual")),
+    ),
+    escalationMessage: v.optional(v.string()),
+    escalationKeywordsEnabled: v.optional(v.boolean()),
+    escalationKeywords: v.optional(v.array(v.string())),
+    notes: v.optional(v.string()),
+    allowedAppointmentServiceIds: v.optional(
+      v.array(v.id("appointmentServices")),
+    ),
+    isReady: v.optional(v.boolean()),
+    readinessIssueCount: v.optional(v.number()),
+    positionX: v.number(),
+    positionY: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_workflowId", ["workflowId"]),
+  workflowEdges: defineTable({
+    workflowId: v.id("workflows"),
+    sourceNodeId: v.id("workflowNodes"),
+    targetNodeId: v.id("workflowNodes"),
+    label: v.optional(v.string()),
+    detail: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_workflowId", ["workflowId"])
+    .index("by_workflowId_and_sourceNodeId", ["workflowId", "sourceNodeId"])
+    .index("by_workflowId_and_targetNodeId", ["workflowId", "targetNodeId"]),
+  textEntries: defineTable({
+    agentId: v.id("agents"),
+    title: v.string(),
+    content: v.string(),
+    fileSize: v.number(),
+    status: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("queued"),
+        v.literal("processing"),
+        v.literal("completed"),
+        v.literal("failed"),
+        v.literal("deleting"),
+      ),
+    ),
+    cfItemId: v.optional(v.string()),
+    ragEntryId: v.optional(v.string()),
+    userId: v.string(),
+    orgId: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_userId_and_orgId", ["userId", "orgId"])
+    .index("by_orgId", ["orgId"]),
+  fileEntries: defineTable({
+    agentId: v.id("agents"),
+    title: v.optional(v.string()),
+    fileName: v.string(),
+    fileSize: v.number(),
+    status: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("queued"),
+        v.literal("processing"),
+        v.literal("completed"),
+        v.literal("failed"),
+        v.literal("deleting"),
+      ),
+    ),
+    cfItemId: v.optional(v.string()),
+    ragEntryId: v.optional(v.string()),
+    extractedText: v.optional(v.string()),
+    previewR2Key: v.optional(v.string()),
+    userId: v.string(),
+    orgId: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_userId_and_orgId", ["userId", "orgId"])
+    .index("by_orgId", ["orgId"]),
+  webEntries: defineTable({
+    agentId: v.id("agents"),
+    url: v.string(),
+    fileSize: v.number(),
+    status: v.optional(
+      v.union(
+        v.literal("gettingLinks"),
+        v.literal("linksObtained"),
+        v.literal("gettingMarkdown"),
+        v.literal("completed"),
+        v.literal("failed"),
+        v.literal("deleting"),
+      ),
+    ),
+    cfItemId: v.optional(v.string()),
+    ragEntryId: v.optional(v.string()),
+    markdownStorageId: v.optional(v.id("_storage")),
+    markdownR2Key: v.optional(v.string()),
+    parentUrl: v.optional(v.string()),
+    parentId: v.optional(v.id("webEntries")),
+    userId: v.string(),
+    orgId: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_userId_and_orgId", ["userId", "orgId"])
+    .index("by_orgId", ["orgId"]),
+  qaEntries: defineTable({
+    agentId: v.id("agents"),
+    question: v.string(),
+    answer: v.string(),
+    fileSize: v.number(),
+    status: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("queued"),
+        v.literal("processing"),
+        v.literal("completed"),
+        v.literal("failed"),
+        v.literal("deleting"),
+      ),
+    ),
+    cfItemId: v.optional(v.string()),
+    ragEntryId: v.optional(v.string()),
+    userId: v.string(),
+    orgId: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_userId_and_orgId", ["userId", "orgId"])
+    .index("by_orgId", ["orgId"]),
+  // Per-org Meta connection. wabaId/phoneNumberId/accessToken are optional so a
+  // row can exist before signup completes (status: "pending") and so future
+  // Instagram/Messenger rows can live in the same table.
+  channels: defineTable({
+    orgId: v.string(),
+    service: serviceValidator,
+    wabaId: v.optional(v.string()),
+    wabaIds: v.optional(v.array(v.string())),
+    phoneNumberId: v.optional(v.string()),
+    displayPhoneNumber: v.optional(v.string()),
+    igUserId: v.optional(v.string()),
+    instagramPageId: v.optional(v.string()),
+    pageId: v.optional(v.string()),
+    // Facebook user id of the person who completed the Messenger connect.
+    // Meta deliver Deauthorize / Data Deletion callbacks at the FB-user
+    // level (not the Page level), so we need this to resolve which channel
+    // row(s) to disconnect when those callbacks fire.
+    fbUserId: v.optional(v.string()),
+    displayUsername: v.optional(v.string()),
+    accessToken: v.optional(v.string()),
+    tokenExpiresAt: v.optional(v.number()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("connected"),
+      v.literal("disconnected"),
+      v.literal("error"),
+    ),
+    progressStep: v.optional(
+      v.union(
+        v.literal("linking"),
+        v.literal("subscribing"),
+        v.literal("registering"),
+        v.literal("exchanging"),
+        v.literal("backfilling"),
+      ),
+    ),
+    mmLiteTermsSignedAt: v.optional(v.number()),
+    partnerAppInstalledAt: v.optional(v.number()),
+    coexistenceSyncStartedAt: v.optional(v.number()),
+    historySyncPhase: v.optional(v.number()),
+    historySyncChunkOrder: v.optional(v.number()),
+    historySyncProgress: v.optional(v.number()),
+    historySyncCompletedBatchCount: v.optional(v.number()),
+    historySyncTotalBatchCount: v.optional(v.number()),
+    historySyncStatus: v.optional(whatsappHistorySyncStatusValidator),
+    historySyncUpdatedAt: v.optional(v.number()),
+    historySyncError: v.optional(v.string()),
+    contactSyncStartedAt: v.optional(v.number()),
+    contactSyncLastEventAt: v.optional(v.number()),
+    contactSyncStatus: v.optional(whatsappContactSyncStatusValidator),
+    lastError: v.optional(v.string()),
+    connectedByUserId: v.string(),
+    defaultAgentId: v.optional(v.id("agents")),
+    conversationCount: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_orgId_and_service", ["orgId", "service"])
+    .index("by_phoneNumberId", ["phoneNumberId"])
+    .index("by_wabaId", ["wabaId"])
+    .index("by_igUserId", ["igUserId"])
+    .index("by_instagramPageId", ["instagramPageId"])
+    .index("by_pageId", ["pageId"])
+    .index("by_fbUserId", ["fbUserId"])
+    .index("by_defaultAgentId_and_service", ["defaultAgentId", "service"])
+    .index("by_connectedByUserId", ["connectedByUserId"]),
+  commentAutomations: defineTable({
+    orgId: v.string(),
+    agentId: v.optional(v.id("agents")),
+    name: v.string(),
+    status: v.union(v.literal("inactive"), v.literal("active")),
+    trigger: v.union(v.literal("any_comment"), v.literal("keywords")),
+    keywords: v.array(v.string()),
+    privateMessage: v.string(),
+    publicReply: v.optional(v.string()),
+    sentCount: v.number(),
+    respondedCount: v.number(),
+    createdByUserId: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_orgId", ["orgId"])
+    .index("by_orgId_and_agentId", ["orgId", "agentId"]),
+  commentAutomationPages: defineTable({
+    automationId: v.id("commentAutomations"),
+    channelId: v.id("channels"),
+    subscriptionStatus: v.union(
+      v.literal("pending"),
+      v.literal("subscribed"),
+      v.literal("failed"),
+    ),
+    subscriptionError: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_automationId", ["automationId"])
+    .index("by_automationId_and_channelId", ["automationId", "channelId"])
+    .index("by_channelId", ["channelId"]),
+  commentAutomationDeliveries: defineTable({
+    automationId: v.id("commentAutomations"),
+    channelId: v.id("channels"),
+    externalCommentId: v.string(),
+    contactAddress: v.string(),
+    contactName: v.optional(v.string()),
+    commentText: v.string(),
+    commentCreatedAt: v.number(),
+    conversationId: v.optional(v.id("conversations")),
+    customerId: v.optional(v.id("customers")),
+    privateStatus: v.union(
+      v.literal("pending"),
+      v.literal("sending"),
+      v.literal("sent"),
+      v.literal("failed"),
+    ),
+    publicStatus: v.optional(v.union(v.literal("sent"), v.literal("failed"))),
+    privateError: v.optional(v.string()),
+    publicError: v.optional(v.string()),
+    sentAt: v.optional(v.number()),
+    respondedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_externalCommentId", ["externalCommentId"])
+    .index("by_automationId_and_createdAt", ["automationId", "createdAt"])
+    .index("by_channelId_and_contactAddress_and_respondedAt", [
+      "channelId",
+      "contactAddress",
+      "respondedAt",
+    ]),
+  webWidgetSettings: defineTable({
+    channelId: v.id("channels"),
+    agentId: v.id("agents"),
+    orgId: v.string(),
+    connectedByUserId: v.string(),
+    publicKey: v.string(),
+    enabled: v.boolean(),
+    agentDisplayName: v.string(),
+    placeholder: v.optional(v.string()),
+    suggestions: v.optional(webWidgetSuggestionsValidator),
+    suggestionsEnabled: v.optional(v.boolean()),
+    layout: v.optional(webWidgetLayoutValidator),
+    theme: v.optional(webWidgetThemeValidator),
+    home: v.optional(webWidgetHomeValidator),
+    leadForm: v.optional(webWidgetLeadFormValidator),
+    iconStorageId: v.optional(v.id("_storage")),
+    hidePoweredBy: v.optional(v.boolean()),
+    mode: v.optional(webWidgetModeValidator),
+    traditionalLabel: v.optional(v.string()),
+    traditionalPrefillMessage: v.optional(v.string()),
+    traditionalMainColor: v.optional(v.string()),
+    traditionalIconStorageId: v.optional(v.id("_storage")),
+    traditionalHidePoweredBy: v.optional(v.boolean()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_publicKey", ["publicKey"])
+    .index("by_channelId", ["channelId"])
+    .index("by_agentId", ["agentId"])
+    .index("by_orgId", ["orgId"]),
+  avatarConfigurations: defineTable({
+    channelId: v.id("channels"),
+    agentId: v.id("agents"),
+    orgId: v.string(),
+    connectedByUserId: v.string(),
+    publicKey: v.string(),
+    enabled: v.boolean(),
+    avatarId: v.optional(v.string()),
+    avatarName: v.optional(v.string()),
+    avatarPreviewUrl: v.optional(v.string()),
+    coverImageR2Key: v.optional(v.string()),
+    coverImageType: v.optional(v.union(v.literal("image"), v.literal("video"))),
+    backgroundR2Key: v.optional(v.string()),
+    backgroundType: v.optional(v.union(v.literal("image"), v.literal("video"))),
+    voiceId: v.optional(v.string()),
+    voiceName: v.optional(v.string()),
+    voiceLanguage: v.optional(v.string()),
+    voiceGender: v.optional(v.string()),
+    geminiVoice: v.optional(v.string()),
+    language: v.string(),
+    providerContextId: v.optional(v.string()),
+    providerContextPrompt: v.optional(v.string()),
+    providerContextOpeningText: v.optional(v.string()),
+    providerEmbedId: v.optional(v.string()),
+    providerEmbedUrl: v.optional(v.string()),
+    providerEmbedScript: v.optional(v.string()),
+    providerEmbedSandbox: v.optional(v.boolean()),
+    embedCreatedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_publicKey", ["publicKey"])
+    .index("by_channelId", ["channelId"])
+    .index("by_agentId", ["agentId"])
+    .index("by_orgId", ["orgId"])
+    .index("by_connectedByUserId", ["connectedByUserId"]),
+  avatarSessions: defineTable({
+    configurationId: v.id("avatarConfigurations"),
+    sessionId: v.string(),
+    visitorId: v.string(),
+    conversationId: v.optional(v.id("conversations")),
+    isSandbox: v.boolean(),
+    status: v.union(
+      v.literal("active"),
+      v.literal("stopped"),
+      v.literal("failed"),
+    ),
+    startedAt: v.number(),
+    stoppedAt: v.optional(v.number()),
+    durationMs: v.optional(v.number()),
+    endReason: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_configurationId_and_startedAt", [
+      "configurationId",
+      "startedAt",
+    ]),
+  avatarEvents: defineTable({
+    sessionId: v.string(),
+    eventId: v.string(),
+    eventType: v.string(),
+    sourceEventId: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_eventId", ["eventId"])
+    .index("by_sessionId_and_createdAt", ["sessionId", "createdAt"]),
+  whatsappSyncRequests: defineTable({
+    channelId: v.id("channels"),
+    orgId: v.string(),
+    wabaId: v.optional(v.string()),
+    phoneNumberId: v.string(),
+    syncType: whatsappSyncTypeValidator,
+    requestId: v.optional(v.string()),
+    status: whatsappSyncRequestStatusValidator,
+    errorMessage: v.optional(v.string()),
+    errorCode: v.optional(v.number()),
+    createdAt: v.number(),
+    requestedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_requestId", ["requestId"])
+    .index("by_channelId_and_syncType", ["channelId", "syncType"])
+    .index("by_phoneNumberId", ["phoneNumberId"])
+    .index("by_orgId", ["orgId"]),
+  whatsappAccountUpdates: defineTable({
+    wabaId: v.string(),
+    event: v.string(),
+    phoneNumber: v.optional(v.string()),
+    ownerBusinessId: v.optional(v.string()),
+    partnerAppId: v.optional(v.string()),
+    eventAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_wabaId", ["wabaId"])
+    .index("by_wabaId_and_event", ["wabaId", "event"]),
+  whatsappConnectionAttempts: defineTable({
+    orgId: v.string(),
+    connectedByUserId: v.string(),
+    agentId: v.optional(v.id("agents")),
+    status: whatsappConnectionAttemptStatusValidator,
+    wabaId: v.optional(v.string()),
+    wabaIds: v.optional(v.array(v.string())),
+    phoneNumberId: v.optional(v.string()),
+    channelId: v.optional(v.id("channels")),
+    signupFinishedAt: v.optional(v.number()),
+    mmLiteTermsSignedAt: v.optional(v.number()),
+    partnerAppInstalledAt: v.optional(v.number()),
+    syncStartedAt: v.optional(v.number()),
+    lastError: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_wabaId", ["wabaId"])
+    .index("by_channelId", ["channelId"])
+    .index("by_orgId_and_status", ["orgId", "status"])
+    .index("by_connectedByUserId_and_status", ["connectedByUserId", "status"])
+    .index("by_connectedByUserId", ["connectedByUserId"]),
+  whatsappHistorySyncBatches: defineTable({
+    channelId: v.id("channels"),
+    orgId: v.string(),
+    phoneNumberId: v.string(),
+    phase: v.optional(v.number()),
+    chunkOrder: v.optional(v.number()),
+    progress: v.optional(v.number()),
+    status: whatsappStagingSyncStatusValidator,
+    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_channelId", ["channelId"])
+    .index("by_channelId_and_status", ["channelId", "status"])
+    .index("by_channelId_and_phase_and_chunkOrder", [
+      "channelId",
+      "phase",
+      "chunkOrder",
+    ])
+    .index("by_orgId", ["orgId"]),
+  whatsappHistoryIngestThreads: defineTable({
+    batchId: v.id("whatsappHistorySyncBatches"),
+    channelId: v.id("channels"),
+    orgId: v.string(),
+    phoneNumberId: v.string(),
+    whatsappThreadId: v.string(),
+    contactAddress: v.string(),
+    status: whatsappStagingSyncStatusValidator,
+    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_batchId_and_status", ["batchId", "status"])
+    .index("by_batchId_and_whatsappThreadId", ["batchId", "whatsappThreadId"])
+    .index("by_channelId_and_status", ["channelId", "status"])
+    .index("by_channelId_and_whatsappThreadId", [
+      "channelId",
+      "whatsappThreadId",
+    ])
+    .index("by_orgId", ["orgId"]),
+  whatsappHistoryIngestMessages: defineTable({
+    channelId: v.id("channels"),
+    orgId: v.string(),
+    batchId: v.id("whatsappHistorySyncBatches"),
+    ingestThreadId: v.id("whatsappHistoryIngestThreads"),
+    externalId: v.string(),
+    whatsappThreadId: v.string(),
+    direction: v.union(v.literal("incoming"), v.literal("outgoing")),
+    content: v.string(),
+    contentType: v.union(
+      v.literal("text"),
+      v.literal("image"),
+      v.literal("audio"),
+      v.literal("video"),
+      v.literal("document"),
+      v.literal("file"),
+    ),
+    timestampMs: v.number(),
+    rawType: v.optional(v.string()),
+    historyStatus: v.optional(
+      v.union(
+        v.literal("sent"),
+        v.literal("delivered"),
+        v.literal("read"),
+        v.literal("failed"),
+      ),
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_ingestThreadId_and_timestampMs", [
+      "ingestThreadId",
+      "timestampMs",
+    ])
+    .index("by_channelId_and_externalId", ["channelId", "externalId"])
+    .index("by_channelId_and_whatsappThreadId_and_timestampMs", [
+      "channelId",
+      "whatsappThreadId",
+      "timestampMs",
+    ])
+    .index("by_orgId", ["orgId"]),
+  // A customer is anyone who messaged the org via any channel, or who was
+  // added manually. Natural key is (orgId, service, contactAddress).
+  customers: defineTable({
+    orgId: v.string(),
+    /** Owner's WorkOS user id (personal workspaces) or channel connector (team). */
+    userId: v.optional(v.string()),
+    /** Agent this contact is segregated to (from the channel's defaultAgentId). */
+    agentId: v.optional(v.id("agents")),
+    service: customerServiceValidator,
+    contactAddress: v.string(),
+    whatsappUserId: v.optional(v.string()),
+    whatsappUsername: v.optional(v.string()),
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    searchText: v.optional(v.string()),
+    tags: v.array(v.string()),
+    leadTemperature: v.optional(
+      v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold")),
+    ),
+    notes: v.optional(v.string()),
+    source: customerServiceValidator,
+    firstReferral: v.optional(customerReferralValidator),
+    latestReferral: v.optional(customerReferralValidator),
+    latestAdReferral: v.optional(customerReferralValidator),
+    firstSeenAt: v.number(),
+    lastSeenAt: v.number(),
+    lastConversationId: v.optional(v.id("conversations")),
+    followUpPending: v.optional(v.boolean()),
+    followUpAttempt: v.optional(v.number()),
+    followUpPendingRuleId: v.optional(v.id("followUpRules")),
+    followUpScheduledAt: v.optional(v.number()),
+    customFields: v.optional(v.record(v.string(), v.string())),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_orgId_and_lastSeenAt", ["orgId", "lastSeenAt"])
+    .searchIndex("search_searchText", {
+      searchField: "searchText",
+      filterFields: ["orgId"],
+    })
+    .index("by_orgId_and_service_and_contactAddress", [
+      "orgId",
+      "service",
+      "contactAddress",
+    ])
+    .index("by_orgId_and_service_and_whatsappUserId", [
+      "orgId",
+      "service",
+      "whatsappUserId",
+    ])
+    .index("by_userId_and_agentId_and_lastSeenAt", [
+      "userId",
+      "agentId",
+      "lastSeenAt",
+    ])
+    .index("by_orgId_and_agentId_and_lastSeenAt", [
+      "orgId",
+      "agentId",
+      "lastSeenAt",
+    ]),
+  customerTags: defineTable({
+    workspaceKey: v.string(),
+    tag: v.string(),
+  }).index("by_workspaceKey_and_tag", ["workspaceKey", "tag"]),
+  // Unified conversation table. service: "playground" rows are AI-playground
+  // threads; the rest are channel-backed inbox conversations.
+  conversations: defineTable({
+    playgroundReplyJobId: v.optional(v.id("_scheduled_functions")),
+    playgroundReplyMessageId: v.optional(v.string()),
+    playgroundReplyFirstMessageId: v.optional(v.string()),
+    manualAiResumeAt: v.optional(v.number()),
+    manualAiResumeStartedAt: v.optional(v.number()),
+    manualAiResumeRevision: v.optional(v.number()),
+    orgId: v.string(),
+    /** Owner's WorkOS user id. For personal workspaces (orgId = ""), this
+     *  scopes the conversation to its owner; for team workspaces it records
+     *  the channel connector and queries still use orgId. */
+    userId: v.optional(v.string()),
+    channelId: v.optional(v.id("channels")),
+    service: conversationServiceValidator,
+    orgAddress: v.string(),
+    contactAddress: v.string(),
+    contactName: v.optional(v.string()),
+    customerId: v.optional(v.id("customers")),
+    status: v.union(
+      v.literal("open"),
+      v.literal("snoozed"),
+      v.literal("closed"),
+      v.literal("booked"),
+      v.literal("requires_user_input"),
+    ),
+    escalation: v.optional(
+      v.object({
+        question: v.string(),
+        context: v.string(),
+        escalatedAt: v.number(),
+        sourceMessageId: v.optional(v.id("messages")),
+      }),
+    ),
+    tags: v.optional(v.array(v.string())),
+    assignedAgentId: v.optional(v.id("agents")),
+    assignedUserId: v.optional(v.string()),
+    assignToAiAgent: v.boolean(),
+    leadAssignmentFallback: v.optional(v.boolean()),
+    metaConversationId: v.optional(v.string()),
+    threadId: v.string(),
+    threadHistoryBackfilledAt: v.optional(v.number()),
+    lastMessageAt: v.number(),
+    /** Last inbound (customer) message time — used for Meta messaging window checks. */
+    lastCustomerMessageAt: v.optional(v.number()),
+    whatsappReferralEntry: v.optional(whatsappReferralEntryValidator),
+    whatsappFreeMessagingWindow: v.optional(
+      whatsappFreeMessagingWindowValidator,
+    ),
+    lastMessagePreview: v.optional(v.string()),
+    lastMessageSentByAi: v.optional(v.boolean()),
+    unreadCount: v.number(),
+    /** Set after AI lead labeling runs during initial Meta conversation sync. */
+    syncLeadLabeledAt: v.optional(v.number()),
+    /** Overall customer sentiment from the latest AI sentiment analysis run. */
+    customerSentiment: v.optional(customerSentimentValidator),
+    sentimentAnalyzedAt: v.optional(v.number()),
+    sentimentSourceMessageMaxCreatedAt: v.optional(v.number()),
+    advancedAnalyticsAnalyzedAt: v.optional(v.number()),
+    advancedAnalyticsSourceMessageMaxCreatedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_orgId_and_lastMessageAt", ["orgId", "lastMessageAt"])
     .index("by_userId_and_lastMessageAt", ["userId", "lastMessageAt"])
     .index("by_orgId_and_assignedAgentId_and_lastMessageAt", [
       "orgId",

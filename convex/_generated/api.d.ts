@@ -1284,233 +1284,38 @@ export declare const components: {
   cfDeleteWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"cfDeleteWorkpool">;
   webScraperWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"webScraperWorkpool">;
   linkDiscovererWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"linkDiscovererWorkpool">;
-  ins…30184 tokens truncated…udienceTags: v.optional(v.array(v.string())),
-    isActive: v.boolean(),
-    messagesSentCount: v.optional(v.number()),
-    repliesReceivedCount: v.optional(v.number()),
-    estimatedCostPerCustomer: v.optional(v.number()),
-    createdBy: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_agentId", ["agentId"])
-    .index("by_orgId_and_isActive", ["orgId", "isActive"]),
-  followUpSends: defineTable({
-    ruleId: v.id("followUpRules"),
-    orgId: v.string(),
-    recipientPhone: v.string(),
-    recipientName: v.optional(v.string()),
-    attemptNumber: v.number(),
-    templateName: v.string(),
-    templateLanguage: v.string(),
-    sentAt: v.number(),
-    status: v.union(
-      v.literal("sent"),
-      v.literal("delivered"),
-      v.literal("failed"),
-    ),
-    estCostMyr: v.number(),
-    errorMessage: v.optional(v.string()),
-  })
-    .index("by_ruleId_and_sentAt", ["ruleId", "sentAt"])
-    .index("by_orgId", ["orgId"]),
-  rawAgentUsage: defineTable({
-    userId: v.optional(v.string()),
-    threadId: v.optional(v.string()),
-    agentId: v.optional(v.id("agents")),
-    agentName: v.optional(v.string()),
-    model: v.string(),
-    provider: v.string(),
-    usage: v.object({
-      promptTokens: v.number(),
-      completionTokens: v.number(),
-      totalTokens: v.number(),
-      reasoningTokens: v.optional(v.number()),
-      cachedInputTokens: v.optional(v.number()),
-    }),
-    providerMetadata: v.optional(v.any()),
-    createdAt: v.number(),
-  }).index("by_agentId", ["agentId"]),
-  conversationLogs: defineTable({
-    conversationId: v.id("conversations"),
-    orgId: v.string(),
-    action: v.union(
-      // Conversation lifecycle
-      v.literal("thread_created"),
-      v.literal("broadcast_sent"),
-      v.literal("reminder_sent"),
-      v.literal("followup_sent"),
-      v.literal("ai_enabled"),
-      v.literal("ai_disabled"),
-      v.literal("assignee_changed"),
-      v.literal("escalation_raised"),
-      v.literal("escalation_resolved"),
-      // Tags
-      v.literal("tag_added"),
-      v.literal("tag_removed"),
-      // Calendar / Booking
-      v.literal("event_booked"),
-      v.literal("event_updated"),
-      v.literal("event_cancelled"),
-      v.literal("event_deleted"),
-      // Lead
-      v.literal("lead_status_changed"),
-      v.literal("user_details_changed"),
-    ),
-    // Who performed the action
-    actorType: v.union(v.literal("user"), v.literal("ai"), v.literal("system")),
-    actorName: v.optional(v.string()), // Display name (user name or agent name)
-    actorUserId: v.optional(v.string()), // workosUserId if user
-    actorAgentId: v.optional(v.id("agents")),
-    // What changed (flexible metadata)
-    metadata: v.optional(v.any()), // e.g. { tag: "VIP" }, { assigneeName: "John" }, { eventTitle: "Consultation" }
-    performedAt: v.number(),
-  })
-    .index("by_conversationId_and_performedAt", [
-      "conversationId",
-      "performedAt",
-    ])
-    .index("by_actorAgentId_and_action_and_performedAt", [
-      "actorAgentId",
-      "action",
-      "performedAt",
-    ])
-    .index("by_orgId_and_performedAt", ["orgId", "performedAt"]),
-  whatsappTemplates: defineTable({
-    orgId: v.string(),
-    channelId: v.id("channels"),
-    name: v.string(),
-    language: v.string(),
-    purpose: v.union(v.literal("broadcasting"), v.literal("follow_up")),
-    category: v.union(v.literal("MARKETING"), v.literal("UTILITY")),
-    parameterFormat: v.optional(whatsappTemplateParameterFormatValidator),
-    components: v.any(),
-    status: whatsappTemplateStatusValidator,
-    error: v.optional(v.string()),
-    metaTemplateId: v.optional(v.string()),
-    statusUpdatedAt: v.optional(v.number()),
-    createdAt: v.number(),
-  })
-    .index("by_channelId", ["channelId"])
-    .index("by_orgId_and_channelId", ["orgId", "channelId"])
-    .index("by_channelId_and_name_and_language", [
-      "channelId",
-      "name",
-      "language",
-    ])
-    .index("by_orgId_and_channelId_and_status", [
-      "orgId",
-      "channelId",
-      "status",
-    ])
-    .index("by_channelId_and_metaTemplateId", ["channelId", "metaTemplateId"]),
-  whatsappTemplateMediaAssets: defineTable({
-    orgId: v.string(),
-    channelId: v.id("channels"),
-    templateId: v.id("whatsappTemplates"),
-    templateName: v.string(),
-    templateLanguage: v.string(),
-    r2Key: v.string(),
-    filename: v.string(),
-    mimeType: whatsappTemplateMediaMimeTypeValidator,
-    headerFormat: whatsappTemplateHeaderFormatValidator,
-    mediaId: v.optional(v.string()),
-    status: whatsappTemplateMediaStatusValidator,
-    uploadedAt: v.optional(v.number()),
-    retryCount: v.number(),
-    lastError: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_templateId", ["templateId"])
-    .index("by_channelId_and_templateName_and_templateLanguage", [
-      "channelId",
-      "templateName",
-      "templateLanguage",
-    ])
-    .index("by_orgId", ["orgId"]),
-  // ─── Bulk CSV Customer Import ────────────────────────────
-  // Parent table aggregating progress across one or more import jobs/chunks.
-  customerImports: defineTable({
-    orgId: v.string(),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("processing"),
-      v.literal("completed"),
-      v.literal("failed"),
-    ),
-    fileName: v.string(),
-    totalRows: v.number(),
-    processedRows: v.number(),
-    failedRows: v.number(),
-    skippedRows: v.number(),
-    createdBy: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_orgId_and_status", ["orgId", "status"])
-    .index("by_orgId_and_createdAt", ["orgId", "createdAt"]),
-
-  // One row per import job. Tracks overall progress and settings.
-  customerImportJobs: defineTable({
-    importId: v.optional(v.id("customerImports")),
-    orgId: v.string(),
-    agentId: v.optional(v.id("agents")),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("processing"),
-      v.literal("completed"),
-      v.literal("failed"),
-    ),
-    fileName: v.string(),
-    totalRows: v.number(),
-    processedRows: v.number(),
-    failedRows: v.number(),
-    skippedRows: v.number(),
-    /** Maps our customer field key → CSV column header name */
-    fieldMapping: v.record(v.string(), v.string()),
-    /** Tags to apply to every imported customer */
-    tags: v.array(v.string()),
-    leadTemperature: v.optional(
-      v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold")),
-    ),
-    createdBy: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_importId", ["importId"])
-    .index("by_orgId_and_status", ["orgId", "status"])
-    .index("by_orgId_and_createdAt", ["orgId", "createdAt"]),
-  // One row per batch of CSV rows within an import job.
-  customerImportRows: defineTable({
-    jobId: v.id("customerImportJobs"),
-    batchIndex: v.number(),
-    /** Array of raw row objects (column header → cell value) */
-    rows: v.array(v.record(v.string(), v.string())),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("processing"),
-      v.literal("completed"),
-      v.literal("failed"),
-    ),
-    processedCount: v.number(),
-    failedCount: v.number(),
-    skippedCount: v.number(),
-    errorMessage: v.optional(v.string()),
-    rowIssues: v.optional(
-      v.array(
-        v.object({
-          rowNumber: v.number(),
-          name: v.string(),
-          reason: v.string(),
-          type: v.union(v.literal("skipped"), v.literal("failed")),
-        }),
-      ),
-    ),
-  })
-    .index("by_jobId", ["jobId"])
-    .index("by_jobId_and_status", ["jobId", "status"]),
-  teamDeletionJobs: teamDeletionJobsTable,
-  teamExternalResources: teamExternalResourcesTable,
-  deletedTeamOrganizations: deletedTeamOrganizationsTable,
-});
+  instagramSyncWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"instagramSyncWorkpool">;
+  messengerSyncWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"messengerSyncWorkpool">;
+  whatsappSyncWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"whatsappSyncWorkpool">;
+  inboxAiReplyWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"inboxAiReplyWorkpool">;
+  inboundMediaUnderstandingWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"inboundMediaUnderstandingWorkpool">;
+  metaIndicatorWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"metaIndicatorWorkpool">;
+  metaReactionWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"metaReactionWorkpool">;
+  mediaDeleteWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"mediaDeleteWorkpool">;
+  threadSummarizerWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"threadSummarizerWorkpool">;
+  leadLabelWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"leadLabelWorkpool">;
+  broadcastWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"broadcastWorkpool">;
+  followUpWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"followUpWorkpool">;
+  workflowReminderWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"workflowReminderWorkpool">;
+  telegramNotificationWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"telegramNotificationWorkpool">;
+  workflowFollowUpWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"workflowFollowUpWorkpool">;
+  whatsappTemplateMediaWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"whatsappTemplateMediaWorkpool">;
+  conversationLogWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"conversationLogWorkpool">;
+  creditPeriodWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"creditPeriodWorkpool">;
+  customerImportWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"customerImportWorkpool">;
+  advancedAnalyticsWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"advancedAnalyticsWorkpool">;
+  teamDeletionWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"teamDeletionWorkpool">;
+  workOSAuthKit: import("@convex-dev/workos-authkit/_generated/component.js").ComponentApi<"workOSAuthKit">;
+  crons: import("@convex-dev/crons/_generated/component.js").ComponentApi<"crons">;
+  modelLifetimeUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelLifetimeUsage">;
+  modelMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelMonthlyUsage">;
+  agentMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentMonthlyUsage">;
+  agentCostUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentCostUsage">;
+  agentTokenUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentTokenUsage">;
+  creditDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditDailyUsage">;
+  creditWorkspaceDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditWorkspaceDailyUsage">;
+  creditAccountDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditAccountDailyUsage">;
+  analyticsMetrics: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"analyticsMetrics">;
+  agentOverviewAiAssistedDaily: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentOverviewAiAssistedDaily">;
+  agentOverviewHumanEscalationsDaily: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentOverviewHumanEscalationsDaily">;
+};
