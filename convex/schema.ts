@@ -1311,6 +1311,9 @@ export default defineSchema({
   // Unified conversation table. service: "playground" rows are AI-playground
   // threads; the rest are channel-backed inbox conversations.
   conversations: defineTable({
+    playgroundReplyJobId: v.optional(v.id("_scheduled_functions")),
+    playgroundReplyMessageId: v.optional(v.string()),
+    playgroundReplyFirstMessageId: v.optional(v.string()),
     manualAiResumeAt: v.optional(v.number()),
     manualAiResumeStartedAt: v.optional(v.number()),
     manualAiResumeRevision: v.optional(v.number()),

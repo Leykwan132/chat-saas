@@ -13,7 +13,7 @@ export function InboxWhatsAppButton({ phone }: { phone?: string | null }) {
   const contents = (
     <>
       <SiWhatsapp className="size-4 shrink-0" aria-hidden="true" />
-      <span className="hidden lg:inline">Open in WhatsApp</span>
+      <span className="sr-only">Open in WhatsApp</span>
     </>
   );
   return url ? (
@@ -21,7 +21,7 @@ export function InboxWhatsAppButton({ phone }: { phone?: string | null }) {
       asChild
       variant="ghost"
       size="sm"
-      className="ml-auto shrink-0 text-emerald-700 dark:text-emerald-400"
+      className="ml-auto shrink-0 text-emerald-700 md:hidden dark:text-emerald-400"
     >
       <a
         href={url}
@@ -39,7 +39,7 @@ export function InboxWhatsAppButton({ phone }: { phone?: string | null }) {
       disabled
       aria-label="Open in WhatsApp"
       title="A WhatsApp phone number is required"
-      className="ml-auto shrink-0"
+      className="ml-auto shrink-0 md:hidden"
     >
       {contents}
     </Button>

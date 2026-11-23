@@ -27,7 +27,12 @@ const workflowContext = {
       nodeId: "video-node-id" as Id<"workflowNodes">,
       kind: "sendImage",
       title: "Send Type B video",
-      incomingConditions: [{ sourceNodeId: "entry-node-id" as Id<"workflowNodes">, name: "Asked for Type B video" }],
+      incomingConditions: [
+        {
+          sourceNodeId: "entry-node-id" as Id<"workflowNodes">,
+          name: "Asked for Type B video",
+        },
+      ],
       allowedServices: [],
       mediaAssets: [
         {
@@ -105,7 +110,9 @@ const scoredWorkflowContext = {
 
 test("runs when workflow has executable media or Send message actions", () => {
   expect(shouldRunWorkflowActionPlanner(null)).toBe(false);
-  expect(shouldRunWorkflowActionPlanner({ ...workflowContext, nodes: [] })).toBe(false);
+  expect(
+    shouldRunWorkflowActionPlanner({ ...workflowContext, nodes: [] }),
+  ).toBe(false);
   expect(
     shouldRunWorkflowActionPlanner({
       ...workflowContext,
@@ -126,7 +133,9 @@ test("builds a planner prompt with definitive action payloads", () => {
   expect(prompt).toContain("will be sent automatically");
   expect(prompt).toContain("will be sent exactly as configured");
   expect(prompt).toContain("Do not return media URLs");
-  expect(prompt).toContain("Do not decide or describe the customer-visible reply");
+  expect(prompt).toContain(
+    "Do not decide or describe the customer-visible reply",
+  );
   expect(prompt).toContain("Do not make factual claims about bookings");
   expect(prompt).toContain("responseLanguage");
   expect(prompt).toContain(
@@ -163,7 +172,10 @@ test("validates planner output with a fixed schema", () => {
 });
 
 test("builds binary JEV decisions for every non-start ready workflow node", () => {
-  const request = buildWorkflowDecisionRequest("I want to book the Test service.", scoredWorkflowContext);
+  const request = buildWorkflowDecisionRequest(
+    "I want to book the Test service.",
+    scoredWorkflowContext,
+  );
 
   expect(request.model).toBe("typesafe/jev-1.13");
   expect(request.state).toBe("I want to book the Test service.");
@@ -298,12 +310,14 @@ test("describes each workflow action plan schema item", () => {
     "workflow action node",
   );
   expect(matchSchema.shape.matched.description).toContain("Always true");
-  expect(matchSchema.shape.nodeId.description).toContain("exact Workflow Runtime node ID");
+  expect(matchSchema.shape.nodeId.description).toContain(
+    "exact Workflow Runtime node ID",
+  );
   expect(matchSchema.shape.nodeKind.description).toContain("kind");
   expect(matchSchema.shape.nodeTitle.description).toContain("title");
-  expect(workflowActionPlanSchema.shape.mediaNodeIdsToSend.description).toContain(
-    "Node IDs",
-  );
+  expect(
+    workflowActionPlanSchema.shape.mediaNodeIdsToSend.description,
+  ).toContain("Node IDs");
   expect(workflowActionPlanSchema.shape.responseLanguage.description).toContain(
     "latest user message",
   );
@@ -394,13 +408,17 @@ test("builds final reply guidance with the exact media payload being sent", () =
   );
 
   expect(guidance).toContain("You must respond in English strictly.");
-  expect(guidance).toContain("The backend is sending the selected workflow media now");
+  expect(guidance).toContain(
+    "The backend is sending the selected workflow media now",
+  );
   expect(guidance).not.toContain("Type_A_layout.jpg");
   expect(guidance).toContain("Send Type A layout (image/jpeg)");
   expect(guidance).toContain(
     "Never mention uploaded filenames in customer-visible content",
   );
-  expect(guidance).toContain("Do not ask whether the customer wants you to send it");
+  expect(guidance).toContain(
+    "Do not ask whether the customer wants you to send it",
+  );
 });
 
 test("final reply guidance requires the planner-detected response language", () => {
@@ -427,7 +445,9 @@ test("final reply guidance preserves the latest customer language when JEV only 
     workflowContext,
   );
 
-  expect(guidance).toContain("Respond in the same language as the latest customer message.");
+  expect(guidance).toContain(
+    "Respond in the same language as the latest customer message.",
+  );
 });
 
 test("adds workflow action constraints as context without replacing the agent system prompt", () => {
@@ -445,7 +465,9 @@ test("adds workflow action constraints as context without replacing the agent sy
   expect(promptArgs.messages).toEqual([
     {
       role: "system",
-      content: expect.stringContaining("No workflow media is being sent in this turn"),
+      content: expect.stringContaining(
+        "No workflow media is being sent in this turn",
+      ),
     },
   ]);
 });
@@ -499,7 +521,9 @@ test("AI reply worker always runs the planner and injects language into generate
   expect(inboxSource).toContain("generateWorkflowActionPlan(");
   expect(inboxSource).toContain("hasWorkflowActionMatches(");
   expect(inboxSource).toContain("resolveWorkflowActionPlanMedia(");
-  expect(inboxSource).toContain("if (hasMatches && plannedWorkflowText !== null)");
+  expect(inboxSource).toContain(
+    "if (hasMatches && plannedWorkflowText !== null)",
+  );
   expect(inboxSource).toContain("workflowActionPlanReplyPromptArgs(");
   expect(inboxSource).toContain("const allMediaItems = plannedMediaItems");
   expect(inboxSource).toContain(
@@ -508,7 +532,9 @@ test("AI reply worker always runs the planner and injects language into generate
   expect(inboxSource).not.toContain("aiReplyStructuredOutput");
   expect(inboxSource).not.toContain("extractAiReplyOutputMedia(");
   expect(inboxSource).not.toContain("replyMediaItems");
-  expect(plannerSource).not.toContain("shouldRunWorkflowActionPlanner(workflowRuntimeContext)");
+  expect(plannerSource).not.toContain(
+    "shouldRunWorkflowActionPlanner(workflowRuntimeContext)",
+  );
 });
 
 test("AI reply worker sends matched Send message text exactly", () => {
@@ -520,7 +546,9 @@ test("AI reply worker sends matched Send message text exactly", () => {
 });
 
 test("Test Your Agent runs the JEV workflow planner before streaming a reply", () => {
-  const streamingPath = fileURLToPath(new URL("./streaming.ts", import.meta.url));
+  const streamingPath = fileURLToPath(
+    new URL("./playgroundGeneration.ts", import.meta.url),
+  );
   const streamingSource = readFileSync(streamingPath, "utf8");
 
   expect(streamingSource).toContain("generateWorkflowActionPlan(");

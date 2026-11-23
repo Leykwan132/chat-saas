@@ -4,6 +4,7 @@ export interface Citation {
   url?: string;
   description?: string;
   quote?: string;
+  sourceType?: string;
 }
 
 interface ParsedCitationText {
@@ -11,7 +12,8 @@ interface ParsedCitationText {
   citations: Citation[];
 }
 
-const SOURCES_HEADER_REGEX = /(?:^|\n)\s*(?:#{1,3}\s+)?(?:\*\*)?(?:Sources?|References?|Citations?)[:*]?\s*(?:\*\*)?\s*(?:\n|$)/i;
+const SOURCES_HEADER_REGEX =
+  /(?:^|\n)\s*(?:#{1,3}\s+)?(?:\*\*)?(?:Sources?|References?|Citations?)[:*]?\s*(?:\*\*)?\s*(?:\n|$)/i;
 
 export function stripInlineCitationMarkers(text: string): string {
   return text
@@ -36,10 +38,18 @@ function extractFieldsFromBlock(blockText: string): Omit<Citation, "number"> {
     const titleMatch = jsonStr.match(/["']?title["']?\s*:\s*"([^"]*)"/i);
     const urlMatch = jsonStr.match(/["']?url["']?\s*:\s*"([^"]*)"/i);
     const descMatch = jsonStr.match(/["']?description["']?\s*:\s*"([^"]*)"/i);
+    const sourceType = jsonStr
+      .match(/["']?sourceType["']?\s*:\s*"([^"]*)"/i)?.[1]
+      ?.trim();
 
-    if (titleMatch?.[1]) title = titleMatch[1];
-    if (urlMatch?.[1]) url = urlMatch[1];
-    if (descMatch?.[1]) description = descMatch[1];
+    if (titleMatch || urlMatch || descMatch) {
+      return {
+        title: titleMatch?.[1]?.trim() || undefined,
+        url: urlMatch?.[1]?.trim() || undefined,
+        description: descMatch?.[1]?.trim() || undefined,
+        ...(sourceType ? { sourceType } : {}),
+      };
+    }
   }
 
   const boldOnFirst = firstLine.match(/\*\*(.+?)\*\*/);
@@ -73,10 +83,14 @@ function extractFieldsFromBlock(blockText: string): Omit<Citation, "number"> {
     }
   }
 
-  const entries = blockText.match(/[*-]\s*(URL|Description|Quote|Title)\s*:\s*(.+)/gi);
+  const entries = blockText.match(
+    /[*-]\s*(URL|Description|Quote|Title)\s*:\s*(.+)/gi,
+  );
   if (entries) {
     for (const entry of entries) {
-      const match = entry.match(/[*-]\s*(URL|Description|Quote|Title)\s*:\s*(.+)/i);
+      const match = entry.match(
+        /[*-]\s*(URL|Description|Quote|Title)\s*:\s*(.+)/i,
+      );
       if (!match) continue;
       const key = match[1].toLowerCase();
       const value = match[2].trim();
@@ -144,7 +158,8 @@ function extractFieldsFromBlock(blockText: string): Omit<Citation, "number"> {
         if (!trimmed) return false;
         if (trimmed.match(/^\s*\d+[.)]/)) return false;
         if (trimmed.match(/^\s*\[\d+\]/)) return false;
-        if (trimmed.match(/[*-]\s*(URL|Description|Quote|Title)\s*:/i)) return false;
+        if (trimmed.match(/[*-]\s*(URL|Description|Quote|Title)\s*:/i))
+          return false;
         if (title && trimmed.includes(title)) return false;
         if (url && trimmed.includes(url)) return false;
         return true;
@@ -168,7 +183,9 @@ export function parseCitations(text: string): ParsedCitationText {
   }
 
   const mainContent = text.slice(0, sourcesMatch.index).trim();
-  const sourcesSection = text.slice(sourcesMatch.index! + sourcesMatch[0].length);
+  const sourcesSection = text.slice(
+    sourcesMatch.index! + sourcesMatch[0].length,
+  );
 
   const blockRegex = /^\[?(\d+)[.\])]\s/gm;
   const blocks: { number: string; text: string }[] = [];
@@ -181,7 +198,8 @@ export function parseCitations(text: string): ParsedCitationText {
 
   for (let i = 0; i < markers.length; i++) {
     const contentStart = markers[i].start + markers[i].len;
-    const contentEnd = i < markers.length - 1 ? markers[i + 1].start : sourcesSection.length;
+    const contentEnd =
+      i < markers.length - 1 ? markers[i + 1].start : sourcesSection.length;
     blocks.push({
       number: markers[i].number,
       text: sourcesSection.slice(contentStart, contentEnd).trim(),
@@ -198,7 +216,10 @@ export function parseCitations(text: string): ParsedCitationText {
       const lineMatch = trimmed.match(/^\[?(\d+)[.\])]\s/);
       if (lineMatch) {
         if (currentNumber && currentLines.length > 0) {
-          blocks.push({ number: currentNumber, text: currentLines.join("\n").trim() });
+          blocks.push({
+            number: currentNumber,
+            text: currentLines.join("\n").trim(),
+          });
         }
         currentNumber = lineMatch[1];
         currentLines = [trimmed.slice(lineMatch[0].length)];
@@ -207,7 +228,10 @@ export function parseCitations(text: string): ParsedCitationText {
       }
     }
     if (currentNumber && currentLines.length > 0) {
-      blocks.push({ number: currentNumber, text: currentLines.join("\n").trim() });
+      blocks.push({
+        number: currentNumber,
+        text: currentLines.join("\n").trim(),
+      });
     }
   }
 
@@ -221,10 +245,16 @@ export function parseCitations(text: string): ParsedCitationText {
     }
   }
 
-  const citations: Citation[] = blocks.map((block) => ({
-    number: block.number,
-    ...extractFieldsFromBlock(block.text),
-  }));
+  const citations: Citation[] = blocks
+    .map((block) => ({
+      number: block.number,
+      ...extractFieldsFromBlock(block.text),
+    }))
+    .filter((citation) =>
+      [citation.title, citation.url, citation.description].some((value) =>
+        value?.trim(),
+      ),
+    );
 
   return {
     content: stripInlineCitationMarkers(mainContent),

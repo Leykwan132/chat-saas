@@ -1,10 +1,37 @@
 import { describe, expect, it } from "vitest";
-import {
-  parseCitations,
-  stripInlineCitationMarkers,
-} from "./citation-parser";
+import { parseCitations, stripInlineCitationMarkers } from "./citation-parser";
 
 describe("parseCitations", () => {
+  it("omits empty citation objects without changing the reply", () => {
+    const parsed = parseCitations(`I'm good, thanks for checking in.
+
+Citations
+
+{"title": "", "url": "", "description": ""}
+{"title": " ", "url": " ", "description": " "}`);
+
+    expect(parsed.content).toBe("I'm good, thanks for checking in.");
+    expect(parsed.citations).toEqual([]);
+  });
+
+  it("keeps populated citations alongside empty numbered entries", () => {
+    const parsed = parseCitations(`See our pricing. [2]
+
+Citations
+
+1. {"title": "", "url": "", "description": ""}
+2. {"title": " Pricing ", "url": "https://kilobot.app/pricing", "description": " Plans "}`);
+
+    expect(parsed.citations).toEqual([
+      {
+        number: "2",
+        title: "Pricing",
+        url: "https://kilobot.app/pricing",
+        description: "Plans",
+      },
+    ]);
+  });
+
   it("parses unnumbered JSON-like citation objects from the Citations section", () => {
     const parsed = parseCitations(`Yes, we have a Business plan. [1]
 
@@ -63,7 +90,9 @@ Citations
 
   it("strips leftover inline citation markers", () => {
     expect(
-      stripInlineCitationMarkers("Starter includes 2 agents [1] and all channels [2]."),
+      stripInlineCitationMarkers(
+        "Starter includes 2 agents [1] and all channels [2].",
+      ),
     ).toBe("Starter includes 2 agents and all channels.");
   });
 });
