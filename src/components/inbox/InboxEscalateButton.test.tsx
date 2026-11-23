@@ -59,13 +59,14 @@ test("missing selection or permission disables the action", () => {
   ).toContain('disabled=""');
 });
 
-test("the resolve action centers the countdown with a draining border", () => {
+test("the resolve action centers the countdown with a solid colour background", () => {
   vi.useFakeTimers();
   vi.setSystemTime(301_000);
   vi.mocked(useQuery).mockReturnValue({ startedAt: 1_000, dueAt: 601_000 });
   const markup = render(true);
   expect(markup).toContain("Auto Resolve in 05:00");
-  expect(markup).toContain('stroke-dashoffset="50"');
+  expect(markup).not.toContain("stroke-dashoffset");
+  expect(markup).toContain("bg-emerald-800");
   expect(markup).toContain("absolute inset-0 flex items-center justify-center");
   expect(markup).toContain("bg-emerald-700");
   expect(markup).not.toContain('disabled=""');
@@ -79,8 +80,8 @@ test("a timer arriving after an idle button starts with a fresh clock", () => {
   vi.mocked(useQuery).mockReturnValue({ startedAt: 11_000, dueAt: 71_000 });
   const markup = render(true);
   expect(markup).toContain("Auto Resolve in 01:00");
-  expect(markup).toContain('stroke-dashoffset="0"');
+  expect(markup).toContain("bg-emerald-700");
   vi.setSystemTime(71_000);
   expect(render(true)).toContain("Auto Resolve in 00:00");
-  expect(render(true)).toContain('stroke-dashoffset="100"');
+  expect(render(true)).toContain("bg-emerald-900");
 });
