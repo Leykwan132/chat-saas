@@ -1735,16 +1735,16 @@ export default function ChatsPage({
               )}
               <InboxConversationComposer
                 whatsappAction={
-conversationDocMatchesSelection && (
-                <InboxWhatsAppButton
-                  phone={
-                    customerSidebarDetails?.phone ||
-                    (selectedConversation?.service === "whatsapp"
-                      ? selectedConversation.contactAddress
-                      : undefined)
-                  }
-                />
-              )
+                  conversationDocMatchesSelection && (
+                    <InboxWhatsAppButton
+                      phone={
+                        customerSidebarDetails?.phone ||
+                        (selectedConversation?.service === "whatsapp"
+                          ? selectedConversation.contactAddress
+                          : undefined)
+                      }
+                    />
+                  )
                 }
                 focusMode={focusMode}
                 agentId={selectedConversation?.assignedAgentId ?? typedAgentId}
