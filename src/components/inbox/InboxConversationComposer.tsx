@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { PiRobot } from "react-icons/pi";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "convex/react";
@@ -12,6 +13,7 @@ type InboxConversationComposerProps = InboxReplyInputProps & {
   agentId: Id<"agents"> | undefined;
   aiHandling: boolean;
   focusMode?: boolean;
+  whatsappAction?: ReactNode;
   canTakeControl: boolean;
   takingControl: boolean;
   onTakeControl: () => void;
@@ -26,6 +28,7 @@ export function InboxConversationComposer({
   agentId,
   aiHandling,
   focusMode = false,
+  whatsappAction,
   canTakeControl,
   takingControl,
   onTakeControl,
@@ -61,28 +64,34 @@ export function InboxConversationComposer({
         agentId={agentId}
       />
       {aiHandling ? (
-        <InboxAiHandlingBar
-          actionLabel={focusMode ? "Take over" : undefined}
-          agentName={agent?.name}
-          canTakeControl={canTakeControl}
-          takingControl={takingControl}
-          onTakeControl={onTakeControl}
-        />
+        <div className="flex min-w-0 items-center gap-2">
+          <InboxAiHandlingBar
+            actionLabel={focusMode ? "Take over" : undefined}
+            agentName={agent?.name}
+            canTakeControl={canTakeControl}
+            takingControl={takingControl}
+            onTakeControl={onTakeControl}
+          />
+          {whatsappAction}
+        </div>
       ) : (
         <InboxReplyInput
           {...replyProps}
           footerAction={
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              disabled={!canTakeControl || takingControl || replyProps.busy}
-              onClick={onHandToAi}
-              className="min-h-9 gap-1.5 rounded-full bg-violet-700 px-3 text-xs font-semibold text-white hover:bg-violet-800 dark:bg-violet-600 dark:text-white dark:hover:bg-violet-500"
-            >
-              <PiRobot className="size-3.5" aria-hidden="true" />
-              {takingControl ? "Handing over…" : "Hand over to AI"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                disabled={!canTakeControl || takingControl || replyProps.busy}
+                onClick={onHandToAi}
+                className="min-h-9 gap-1.5 rounded-full bg-violet-700 px-3 text-xs font-semibold text-white hover:bg-violet-800 dark:bg-violet-600 dark:text-white dark:hover:bg-violet-500"
+              >
+                <PiRobot className="size-3.5" aria-hidden="true" />
+                {takingControl ? "Handing over…" : "Hand over to AI"}
+              </Button>
+              {whatsappAction}
+            </div>
           }
         />
       )}

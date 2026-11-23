@@ -1669,16 +1669,6 @@ export default function ChatsPage({
                 )}
               </div>
               {conversationDocMatchesSelection && (
-                <InboxWhatsAppButton
-                  phone={
-                    customerSidebarDetails?.phone ||
-                    (selectedConversation?.service === "whatsapp"
-                      ? selectedConversation.contactAddress
-                      : undefined)
-                  }
-                />
-              )}
-              {conversationDocMatchesSelection && (
                 <div className="ml-2 shrink-0 md:hidden [&_button]:w-auto [&_button]:px-3 [&_button]:text-xs">
                   {escalationAction}
                 </div>
@@ -1744,6 +1734,18 @@ export default function ChatsPage({
                 <div className="hidden md:block">{escalationAction}</div>
               )}
               <InboxConversationComposer
+                whatsappAction={
+                  conversationDocMatchesSelection && (
+                    <InboxWhatsAppButton
+                      phone={
+                        customerSidebarDetails?.phone ||
+                        (selectedConversation?.service === "whatsapp"
+                          ? selectedConversation.contactAddress
+                          : undefined)
+                      }
+                    />
+                  )
+                }
                 focusMode={focusMode}
                 agentId={selectedConversation?.assignedAgentId ?? typedAgentId}
                 aiHandling={
