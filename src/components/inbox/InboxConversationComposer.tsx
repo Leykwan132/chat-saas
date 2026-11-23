@@ -44,6 +44,7 @@ export function InboxConversationComposer({
     aiHandling && agentId ? { agentId } : "skip",
   );
   if (agent === null) throw new Error("Assigned agent is unavailable.");
+  const mobileWhatsAppAction = service === "whatsapp" ? whatsappAction : null;
 
   return (
     <div
@@ -72,7 +73,7 @@ export function InboxConversationComposer({
             takingControl={takingControl}
             onTakeControl={onTakeControl}
           />
-          {whatsappAction}
+          {mobileWhatsAppAction}
         </div>
       ) : (
         <InboxReplyInput
@@ -90,7 +91,7 @@ export function InboxConversationComposer({
                 <PiRobot className="size-3.5" aria-hidden="true" />
                 {takingControl ? "Handing over…" : "Hand over to AI"}
               </Button>
-              {whatsappAction}
+              {mobileWhatsAppAction}
             </div>
           }
         />
