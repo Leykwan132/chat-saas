@@ -1,38 +1,19 @@
-import { InboxResumeTiming } from "./InboxResumeTiming";
+import { InboxAiReplyTimingDialog } from "./InboxAiReplyTimingDialog";
 import { InboxResumeCountdown } from "./InboxResumeCountdown";
-import { makeFunctionReference } from "convex/server";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useMutation } from "convex/react";
 import { Pause, Play } from "lucide-react";
 import { PiRobot } from "react-icons/pi";
-import { toast } from "sonner";
-import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { InboxHandling } from "../../../shared/inboxHandling";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Permission } from "../../../shared/permissions";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-
-const scheduleResume = makeFunctionReference<
-  "mutation",
-  { conversationId: Id<"conversations">; minutes: number },
-  null
->("inboxManualResume:set");
 
 export function InboxChatAiControl({
   chat,
@@ -46,49 +27,12 @@ export function InboxChatAiControl({
   };
 }) {
   const { can } = usePermissions();
-  const toggle = useMutation(api.conversations.setConversationAiEnabled);
-  const resume = useMutation(scheduleResume);
-  const [timing, setTiming] = useState<"now" | "later">("now");
-  const [minutes, setMinutes] = useState("5");
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const active = chat.handling === "ai";
   const available =
     chat.aiControlAvailable === true && can(Permission.CHATS_ASSIGN);
   const label = active ? "Pause AI replies" : "Resume AI replies";
-  const validMinutes =
-    Number.isInteger(Number(minutes)) &&
-    Number(minutes) >= 1 &&
-    Number(minutes) <= 10080;
-  const change = async () => {
-    if (busy || !available || (timing === "later" && !validMinutes)) return;
-    setBusy(true);
-    try {
-      if (active && timing === "now")
-        await toggle({ conversationId: chat.id, enabled: false });
-      else
-        await resume({
-          conversationId: chat.id,
-          minutes: timing === "now" ? 0 : Number(minutes),
-        });
-      toast.success(
-        active
-          ? timing === "later"
-            ? `AI paused for ${minutes} minutes`
-            : "AI paused"
-          : timing === "now"
-            ? "AI resumed"
-            : `AI will resume in ${minutes} minutes`,
-      );
-      setConfirmOpen(false);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not update AI",
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
   return (
     <div
       className="contents"
@@ -103,7 +47,6 @@ export function InboxChatAiControl({
             disabled={busy || !available}
             onClick={(event) => {
               event.stopPropagation();
-              setTiming("now");
               setConfirmOpen(true);
             }}
             onKeyDown={(event) => event.stopPropagation()}
@@ -163,62 +106,15 @@ export function InboxChatAiControl({
           {available ? label : "AI control unavailable"}
         </TooltipContent>
       </Tooltip>
-      <Dialog
+      <InboxAiReplyTimingDialog
+        conversationId={chat.id}
         open={confirmOpen}
-        onOpenChange={(open) => {
-          if (!busy) setConfirmOpen(open);
-        }}
-      >
-        <DialogContent
-          onClick={(event) => event.stopPropagation()}
-          onKeyDown={(event) => event.stopPropagation()}
-        >
-          <DialogHeader>
-            <DialogTitle>
-              {active ? "Pause AI replies?" : "Resume AI replies?"}
-            </DialogTitle>
-            <DialogDescription>
-              {active
-                ? timing === "later"
-                  ? "AI will pause now and resume automatically after the selected duration, ready for the next customer message."
-                  : "AI will stop replying to this conversation so your team can take over."
-                : chat.handling === "attention"
-                  ? "This will resolve the escalation and enable AI replies for the next customer message."
-                  : "AI replies will be enabled for the next customer message."}
-            </DialogDescription>
-          </DialogHeader>
-          {timing === "later" && (
-            <InboxResumeTiming
-              label={active ? "Pause for (minutes)" : "Resume in (minutes)"}
-              minutes={minutes}
-              disabled={busy}
-              onMinutesChange={setMinutes}
-            />
-          )}
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              disabled={busy}
-              onClick={() => setTiming(timing === "now" ? "later" : "now")}
-            >
-              {timing === "later" ? "Back" : "Schedule resume"}
-            </Button>
-            <Button
-              disabled={busy || (timing === "later" && !validMinutes)}
-              onClick={() => void change()}
-            >
-              {busy ? <Spinner className="size-4" /> : null}
-              {active
-                ? timing === "later"
-                  ? "Pause and schedule resume"
-                  : "Pause AI"
-                : timing === "now"
-                  ? "Resume now"
-                  : "Schedule resume"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setConfirmOpen}
+        mode={active ? "pause" : "resume"}
+        title={active ? "Pause AI replies?" : "Resume AI replies?"}
+        disabled={!available}
+        onBusyChange={setBusy}
+      />
     </div>
   );
 }

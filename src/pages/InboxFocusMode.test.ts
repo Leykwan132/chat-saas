@@ -11,4 +11,7 @@ test("dedicated focus path reuses the inbox with minimal navigation", () => {
   expect(page).toContain(
     "onRequestDelete={focusMode ? undefined : setDeleteConversationId}",
   );
+  expect(page).toContain("onTakeControl={() => setPauseDialogOpen(true)}");
+  expect(page).toContain('mode="pause"');
+  expect(page).not.toContain("handleAiToggle(false)");
 });
