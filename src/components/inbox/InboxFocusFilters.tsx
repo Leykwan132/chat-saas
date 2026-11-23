@@ -1,11 +1,9 @@
-import type { InboxHandlingFilter } from "../../../shared/inboxHandling";
 import { PiRobot } from "react-icons/pi";
 import {
   AlertCircle,
   Globe,
   LayoutGrid,
   ListFilter,
-  MailOpen,
   MessageSquareDot,
   ScanFace,
   User,
@@ -27,12 +25,10 @@ import type { AssignmentFilter } from "./InboxFilterSidebar";
 import type { ConversationPlatform } from "@/components/ChatRow";
 
 type Props = {
-  lastRepliedByAi?: boolean;
-  onLastRepliedByAiChange?: (active: boolean) => void;
-  assignment: AssignmentFilter | "read";
-  handling?: InboxHandlingFilter;
-  onHandlingChange?: (filter: InboxHandlingFilter) => void;
-  onAssignmentChange: (filter: AssignmentFilter | "read") => void;
+  lastRepliedByAi: boolean;
+  onLastRepliedByAiChange: (active: boolean) => void;
+  assignment: AssignmentFilter;
+  onAssignmentChange: (filter: AssignmentFilter) => void;
   escalated: boolean;
   onEscalatedChange: (active: boolean) => void;
   booked: boolean;
@@ -61,8 +57,6 @@ export function InboxFocusFilters({
   lastRepliedByAi,
   onLastRepliedByAiChange,
   assignment,
-  handling = "all",
-  onHandlingChange,
   onAssignmentChange,
   escalated,
   onEscalatedChange,
@@ -77,25 +71,31 @@ export function InboxFocusFilters({
       className="flex shrink-0 items-center gap-1 border-b border-border px-3 py-2"
       aria-label="Conversation filters"
     >
-      {(
-        [
-          ["all", "All", LayoutGrid],
-          ["unread", "Unread", MessageSquareDot],
-          ["read", "Read", MailOpen],
-        ] as const
-      ).map(([value, label, Icon]) => (
-        <Button
-          key={value}
-          size="sm"
-          className="h-11 min-w-11 md:h-8"
-          variant={assignment === value ? "secondary" : "ghost"}
-          aria-pressed={assignment === value}
-          onClick={() => onAssignmentChange(value)}
-        >
-          <Icon className="size-4 shrink-0" aria-hidden="true" />
-          {label}
-        </Button>
-      ))}
+      <Button
+        size="sm"
+        className={`h-11 min-w-11 md:h-8 ${assignment === "all" && !lastRepliedByAi ? "" : "text-muted-foreground"}`}
+        variant={
+          assignment === "all" && !lastRepliedByAi ? "secondary" : "ghost"
+        }
+        aria-pressed={assignment === "all" && !lastRepliedByAi}
+        onClick={() => {
+          onAssignmentChange("all");
+          onLastRepliedByAiChange(false);
+        }}
+      >
+        <LayoutGrid className="size-4 shrink-0" aria-hidden="true" />
+        All
+      </Button>
+      <Button
+        size="sm"
+        className={`h-11 min-w-11 md:h-8 ${lastRepliedByAi ? "" : "text-muted-foreground"}`}
+        variant={lastRepliedByAi ? "secondary" : "ghost"}
+        aria-pressed={lastRepliedByAi}
+        onClick={() => onLastRepliedByAiChange(!lastRepliedByAi)}
+      >
+        <PiRobot className="size-4 shrink-0" aria-hidden="true" />
+        Last replied by AI
+      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -111,39 +111,16 @@ export function InboxFocusFilters({
           align="end"
           className="[&_[data-slot=dropdown-menu-checkbox-item]]:min-h-11 md:[&_[data-slot=dropdown-menu-checkbox-item]]:min-h-0"
         >
-          {onLastRepliedByAiChange ? (
-            <DropdownMenuCheckboxItem
-              checked={lastRepliedByAi}
-              onCheckedChange={onLastRepliedByAiChange}
-            >
-              <PiRobot className="size-4" aria-hidden="true" />
-              Last replied by AI
-            </DropdownMenuCheckboxItem>
-          ) : null}
-          {onHandlingChange ? (
-            <>
-              <DropdownMenuLabel>Handling</DropdownMenuLabel>
-              <DropdownMenuCheckboxItem
-                checked={handling === "ai"}
-                onCheckedChange={(checked) =>
-                  onHandlingChange(checked ? "ai" : "all")
-                }
-              >
-                <PiRobot className="size-4" aria-hidden="true" />
-                AI handling
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={handling === "human"}
-                onCheckedChange={(checked) =>
-                  onHandlingChange(checked ? "human" : "all")
-                }
-              >
-                <User className="size-4" aria-hidden="true" />
-                Human handling
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuSeparator />
-            </>
-          ) : null}
+          <DropdownMenuCheckboxItem
+            checked={assignment === "unread"}
+            onCheckedChange={(checked) =>
+              onAssignmentChange(checked ? "unread" : "all")
+            }
+          >
+            <MessageSquareDot className="size-4" aria-hidden="true" />
+            Unread
+          </DropdownMenuCheckboxItem>
+          <DropdownMenuSeparator />
           <DropdownMenuLabel>Assignment</DropdownMenuLabel>
           {(
             [

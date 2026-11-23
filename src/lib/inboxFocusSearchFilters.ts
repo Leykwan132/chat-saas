@@ -1,15 +1,9 @@
-import {
-  matchesInboxHandling,
-  type InboxHandling,
-  type InboxHandlingFilter,
-} from "../../shared/inboxHandling";
 import type { AssignmentFilter } from "@/components/inbox/InboxFilterSidebar";
 import { matchesInboxLastReply } from "./inboxLastReplyFilter";
 
 type Row = {
   conversationId: string;
   unreadCount: number;
-  handling?: InboxHandling;
   assignedUserId?: string;
   service: string;
   isEscalated: boolean;
@@ -17,8 +11,7 @@ type Row = {
   lastReplyAuthor?: { kind: string } | null;
 };
 export type FocusInboxSearchFilters = {
-  assignment: AssignmentFilter | "read";
-  handling?: InboxHandlingFilter;
+  assignment: AssignmentFilter;
   currentUserId?: string;
   selectedConversationId: string | null;
   platforms: string[];
@@ -33,9 +26,6 @@ export function matchesFocusInboxSearchFilters(
 ) {
   if (!matchesInboxLastReply(row, filters.lastRepliedByAi === true))
     return false;
-  if (filters.handling && !matchesInboxHandling(row.handling, filters.handling))
-    return false;
-  if (filters.assignment === "read" && row.unreadCount > 0) return false;
   if (
     filters.assignment === "unread" &&
     row.unreadCount === 0 &&

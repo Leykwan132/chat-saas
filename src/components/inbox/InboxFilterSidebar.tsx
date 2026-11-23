@@ -1,4 +1,3 @@
-import type { InboxHandlingFilter } from "../../../shared/inboxHandling";
 import { PiRobot } from "react-icons/pi";
 import {
   AlertCircle,
@@ -207,8 +206,6 @@ export type InboxFilterSidebarProps = {
   onOpenChange: (open: boolean) => void;
   assignmentFilter: AssignmentFilter;
   onAssignmentFilterChange: (filter: AssignmentFilter) => void;
-  handlingFilter: InboxHandlingFilter;
-  onHandlingFilterChange: (filter: InboxHandlingFilter) => void;
   platformFilters: ConversationPlatform[];
   onTogglePlatform: (platform: ConversationPlatform) => void;
   escalatedActive: boolean;
@@ -233,8 +230,6 @@ export function InboxFilterSidebar({
   onOpenChange,
   assignmentFilter,
   onAssignmentFilterChange,
-  handlingFilter,
-  onHandlingFilterChange,
   platformFilters,
   onTogglePlatform,
   escalatedActive,
@@ -337,9 +332,9 @@ export function InboxFilterSidebar({
             onClick={() => onOpenChange(true)}
           />
           <RailButton
-            label="Handling"
+            label="Last replied by AI"
             icon={PiRobot}
-            isActive={handlingFilter !== "all"}
+            isActive={lastRepliedByAi === true}
             onClick={() => onOpenChange(true)}
           />
           <RailButton
@@ -390,7 +385,7 @@ export function InboxFilterSidebar({
             />
           </FilterSection>
 
-          <FilterSection title="Handling">
+          <FilterSection title="Replies">
             {onLastRepliedByAiChange ? (
               <FilterRow
                 label="Last replied by AI"
@@ -399,24 +394,6 @@ export function InboxFilterSidebar({
                 onClick={() => onLastRepliedByAiChange(!lastRepliedByAi)}
               />
             ) : null}
-            <FilterRow
-              label="AI handled"
-              icon={<PiRobot className="text-muted-foreground" />}
-              isActive={handlingFilter === "ai"}
-              onClick={() =>
-                onHandlingFilterChange(handlingFilter === "ai" ? "all" : "ai")
-              }
-            />
-            <FilterRow
-              label="Non-AI handled"
-              icon={<User className="text-muted-foreground" />}
-              isActive={handlingFilter === "human"}
-              onClick={() =>
-                onHandlingFilterChange(
-                  handlingFilter === "human" ? "all" : "human",
-                )
-              }
-            />
           </FilterSection>
 
           <FilterSection title="Platform">
