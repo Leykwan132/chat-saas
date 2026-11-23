@@ -1,6 +1,7 @@
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import schema from "./schema";
+import { withInboxHandling } from "./inboxHandling";
 import { api } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 
@@ -188,4 +189,37 @@ test("personal timers are restricted to their owner", async () => {
   expect(await f.read()).not.toBeNull();
   await f.t.run((ctx) => ctx.db.patch(f.conversationId, { userId: "other" }));
   expect(await f.read()).toBeNull();
+});
+
+test("board countdown follows the same escalation timer and human-reply resets", async () => {
+  const f = await fixture();
+  const readBoard = () =>
+    f.t.run(async (ctx) => {
+      const conversation = (await ctx.db.get(f.conversationId))!;
+      return withInboxHandling(ctx, {
+        conversationId: f.conversationId,
+        orgId: conversation.orgId,
+        userId: conversation.userId,
+      } as Doc<"inboxConversationSummaries">);
+    });
+  expect(await readBoard()).toMatchObject({
+    handling: "attention",
+    aiResumeAt: f.now + 600_000,
+    aiResumeStartedAt: f.now,
+  });
+  await f.t.run((ctx) =>
+    ctx.db.patch(f.timerId, {
+      lastHumanReplyAt: f.now + 300_000,
+      dueAt: f.now + 900_000,
+    }),
+  );
+  expect(await readBoard()).toMatchObject({
+    aiResumeAt: f.now + 900_000,
+    aiResumeStartedAt: f.now + 300_000,
+  });
+  await f.t.run((ctx) => ctx.db.delete(f.timerId));
+  expect(await readBoard()).toMatchObject({
+    aiResumeAt: null,
+    aiResumeStartedAt: null,
+  });
 });
