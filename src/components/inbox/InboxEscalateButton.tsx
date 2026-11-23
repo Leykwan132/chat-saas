@@ -67,7 +67,7 @@ export function InboxEscalateButton({
         <Play
           className={cn(
             "size-3.5 shrink-0 fill-current",
-            timer ? "absolute left-3" : "relative",
+            timer ? "absolute left-3 z-10" : "relative",
           )}
           aria-hidden="true"
         />
