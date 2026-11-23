@@ -1,3 +1,4 @@
+import { InboxAiReplyTimingDialog } from "@/components/inbox/InboxAiReplyTimingDialog";
 import { InboxResumeConversationDialog } from "@/components/inbox/InboxResumeConversationDialog";
 import {
   matchesFocusInboxSearchFilters,
@@ -137,7 +138,6 @@ import {
   inboxColumnScrollClassName,
 } from "@/components/inbox/inboxLayout";
 import { InboxConversationComposer } from "@/components/inbox/InboxConversationComposer";
-import { optimisticallySetInboxAiEnabled } from "@/components/inbox/inboxAiAssignment";
 import { InboxThreadMessages } from "@/components/inbox/InboxThreadMessages";
 import { InboxActionHistory } from "@/components/inbox/InboxActionHistory";
 import { AvatarConversationTag } from "@/components/inbox/AvatarConversationTag";
@@ -456,9 +456,6 @@ export default function ChatsPage({
     }>
   >([]);
   const markRead = useAction(api.conversations.markReadAndSendSeen);
-  const setConversationAiEnabled = useMutation(
-    api.conversations.setConversationAiEnabled,
-  ).withOptimisticUpdate(optimisticallySetInboxAiEnabled);
   const setConversationLeadOwner = useMutation(
     api.conversations.setConversationLeadOwner,
   );
@@ -476,6 +473,7 @@ export default function ChatsPage({
   const [tagSearchInput, setTagSearchInput] = useState("");
   const [resolveConfirmOpen, setResolveConfirmOpen] = useState(false);
   const [resumeDialogOpen, setResumeDialogOpen] = useState(false);
+  const [pauseDialogOpen, setPauseDialogOpen] = useState(false);
   const [resolveBusy, setResolveBusy] = useState(false);
 
   const [isEditingCustomerDetails, setIsEditingCustomerDetails] =
@@ -1145,28 +1143,6 @@ export default function ChatsPage({
     return u ? formatOrgMemberDisplayName(u) : "Teammate";
   }, [selectedConversation?.assignedUserId, teamUsers, currentUser]);
 
-  const handleAiToggle = async (enabled: boolean) => {
-    if (!selectedConversationId) return;
-    setAssigneeSaving(true);
-    const promise = setConversationAiEnabled({
-      conversationId: selectedConversationId,
-      enabled,
-    });
-    toast.promise(promise, {
-      loading: enabled ? "Enabling AI replies…" : "Disabling AI replies…",
-      success: enabled ? "AI replies enabled" : "AI replies disabled",
-      error: (e) =>
-        e instanceof Error ? e.message : "Could not update AI replies",
-    });
-    try {
-      await promise;
-    } catch (e) {
-      // Ignored here as toast.promise handles display
-    } finally {
-      setAssigneeSaving(false);
-    }
-  };
-
   const handleLeadOwnerChange = async (workosUserId: string) => {
     if (!selectedConversationId) return;
     setAssigneeSaving(true);
@@ -1779,7 +1755,7 @@ export default function ChatsPage({
                   !threadDataLoading && can(Permission.CHATS_ASSIGN)
                 }
                 takingControl={assigneeSaving}
-                onTakeControl={() => void handleAiToggle(false)}
+                onTakeControl={() => setPauseDialogOpen(true)}
                 onHandToAi={() => setResumeDialogOpen(true)}
                 canReplyFromInbox={canReplyFromInbox}
                 freeMessagingExpiresAt={
@@ -2675,6 +2651,18 @@ export default function ChatsPage({
         agentId={agentId}
       />
 
+      {selectedConversationId && (
+        <InboxAiReplyTimingDialog
+          key={`pause-${selectedConversationId}`}
+          conversationId={selectedConversationId}
+          mode="pause"
+          open={pauseDialogOpen}
+          onOpenChange={setPauseDialogOpen}
+          disabled={
+            !can(Permission.CHATS_ASSIGN) || !conversationDocMatchesSelection
+          }
+        />
+      )}
       {selectedConversationId && (
         <InboxResumeConversationDialog
           key={selectedConversationId}

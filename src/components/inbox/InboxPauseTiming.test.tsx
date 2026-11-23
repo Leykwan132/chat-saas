@@ -5,7 +5,10 @@ import { InboxResumeTiming } from "./InboxResumeTiming";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Id } from "../../../convex/_generated/dataModel";
 
-vi.mock("convex/react", () => ({ useMutation: () => vi.fn() }));
+vi.mock("convex/react", () => ({
+  useMutation: () =>
+    Object.assign(vi.fn(), { withOptimisticUpdate: () => vi.fn() }),
+}));
 vi.mock("@/hooks/usePermissions", () => ({
   usePermissions: () => ({ can: () => true }),
 }));
