@@ -35,24 +35,22 @@ test("last replied by AI filters search using the outgoing reply author", () => 
   ).toBe(false);
   expect(matchesFocusInboxSearchFilters(row, selected)).toBe(false);
 });
-test("Read and Unread apply to search results as well as chat lists", () => {
-  expect(
-    matchesFocusInboxSearchFilters(row, { ...filters, assignment: "read" }),
-  ).toBe(true);
+test("Unread applies to search results and preserves the selected conversation", () => {
   expect(
     matchesFocusInboxSearchFilters(row, { ...filters, assignment: "unread" }),
   ).toBe(false);
   expect(
     matchesFocusInboxSearchFilters(
       { ...row, unreadCount: 2 },
-      { ...filters, assignment: "read" },
-    ),
-  ).toBe(false);
-  expect(
-    matchesFocusInboxSearchFilters(
-      { ...row, unreadCount: 2 },
       { ...filters, assignment: "unread" },
     ),
+  ).toBe(true);
+  expect(
+    matchesFocusInboxSearchFilters(row, {
+      ...filters,
+      assignment: "unread",
+      selectedConversationId: "chat",
+    }),
   ).toBe(true);
 });
 test("combines assignment, platform and status filters", () => {
@@ -80,25 +78,4 @@ test("combines assignment, platform and status filters", () => {
   expect(
     matchesFocusInboxSearchFilters(row, { ...filters, booked: true }),
   ).toBe(false);
-});
-
-test("handling filters combine with read state and status in search", () => {
-  expect(
-    matchesFocusInboxSearchFilters(
-      { ...row, handling: "ai" },
-      { ...filters, assignment: "read", handling: "ai" },
-    ),
-  ).toBe(true);
-  expect(
-    matchesFocusInboxSearchFilters(
-      { ...row, handling: "human" },
-      { ...filters, handling: "ai" },
-    ),
-  ).toBe(false);
-  expect(
-    matchesFocusInboxSearchFilters(
-      { ...row, handling: "attention", isEscalated: true },
-      { ...filters, handling: "human", escalated: true },
-    ),
-  ).toBe(true);
 });

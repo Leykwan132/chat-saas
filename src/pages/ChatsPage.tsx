@@ -1,9 +1,5 @@
 import { InboxResumeConversationDialog } from "@/components/inbox/InboxResumeConversationDialog";
 import {
-  matchesInboxHandling,
-  type InboxHandlingFilter,
-} from "../../shared/inboxHandling";
-import {
   matchesFocusInboxSearchFilters,
   type FocusInboxSearchFilters,
 } from "@/lib/inboxFocusSearchFilters";
@@ -373,13 +369,6 @@ export default function ChatsPage({
   const [assignmentFilter, setAssignmentFilter] =
     useState<AssignmentFilter>("all");
   const [lastRepliedByAi, setLastRepliedByAi] = useState(false);
-  const [focusReadOnly, setFocusReadOnly] = useState(false);
-  const [handlingFilter, setHandlingFilter] =
-    useState<InboxHandlingFilter>("all");
-  const handleFocusAssignmentChange = (filter: AssignmentFilter | "read") => {
-    setFocusReadOnly(filter === "read");
-    handleAssignmentFilterChange(filter === "read" ? "all" : filter);
-  };
   const handleAssignmentFilterChange = (filter: AssignmentFilter) => {
     if (filter === "unread" && assignmentFilter !== "unread") {
       setSelectedConversationId(null);
@@ -684,8 +673,7 @@ export default function ChatsPage({
 
   const focusSearchFilters: FocusInboxSearchFilters = {
     lastRepliedByAi,
-    assignment: focusReadOnly ? "read" : assignmentFilter,
-    handling: handlingFilter,
+    assignment: assignmentFilter,
     currentUserId: currentUser?.workosUserId,
     selectedConversationId,
     platforms: platformFilters,
@@ -783,10 +771,6 @@ export default function ChatsPage({
           c.message.toLowerCase().includes(q),
       );
     }
-    list = list.filter((chat) =>
-      matchesInboxHandling(chat.handling, handlingFilter),
-    );
-    if (focusReadOnly) list = list.filter((chat) => chat.unread === 0);
     list = filterInboxPlatforms(list, platformFilters);
     if (assignmentFilter === "unread") {
       list = filterUnreadChats(list, selectedConversationId);
@@ -821,8 +805,6 @@ export default function ChatsPage({
     searchQuery,
     platformFilters,
     assignmentFilter,
-    focusReadOnly,
-    handlingFilter,
     escalatedActive,
     bookingActive,
     activeTags,
@@ -918,18 +900,6 @@ export default function ChatsPage({
         icon: <UserX className="text-muted-foreground" />,
       });
     }
-    if (handlingFilter !== "all")
-      filters.push({
-        id: "handling",
-        label: handlingFilter === "ai" ? "AI handled" : "Non-AI handled",
-        icon: handlingFilter === "ai" ? <PiRobot /> : <User />,
-      });
-    if (focusReadOnly)
-      filters.push({
-        id: "assignment:read",
-        label: "Read",
-        icon: <MessageSquare className="text-muted-foreground" />,
-      });
     for (const platformFilter of platformFilters) {
       const PlatformIcon =
         platformFilter === "whatsapp"
@@ -984,8 +954,6 @@ export default function ChatsPage({
     return filters;
   }, [
     assignmentFilter,
-    focusReadOnly,
-    handlingFilter,
     platformFilters,
     lastRepliedByAi,
     escalatedActive,
@@ -997,14 +965,6 @@ export default function ChatsPage({
   const handleRemoveInboxFilter = (id: string) => {
     if (id === "last-reply:ai") {
       setLastRepliedByAi(false);
-      return;
-    }
-    if (id === "handling") {
-      setHandlingFilter("all");
-      return;
-    }
-    if (id === "assignment:read") {
-      setFocusReadOnly(false);
       return;
     }
     if (
@@ -1551,8 +1511,6 @@ export default function ChatsPage({
               onLastRepliedByAiChange={setLastRepliedByAi}
               open={filterSidebarOpen}
               onOpenChange={setFilterSidebarOpen}
-              handlingFilter={handlingFilter}
-              onHandlingFilterChange={setHandlingFilter}
               assignmentFilter={assignmentFilter}
               onAssignmentFilterChange={handleAssignmentFilterChange}
               platformFilters={platformFilters}
@@ -1584,10 +1542,8 @@ export default function ChatsPage({
             <InboxFocusFilters
               lastRepliedByAi={lastRepliedByAi}
               onLastRepliedByAiChange={setLastRepliedByAi}
-              handling={handlingFilter}
-              onHandlingChange={setHandlingFilter}
-              assignment={focusReadOnly ? "read" : assignmentFilter}
-              onAssignmentChange={handleFocusAssignmentChange}
+              assignment={assignmentFilter}
+              onAssignmentChange={handleAssignmentFilterChange}
               escalated={escalatedActive}
               onEscalatedChange={setEscalatedActive}
               booked={bookingActive}
@@ -1625,10 +1581,10 @@ export default function ChatsPage({
       {!selectedConversationId ? (
         <div className="flex min-w-0 flex-1 flex-col md:hidden">
           <InboxFocusFilters
-            handling={handlingFilter}
-            onHandlingChange={setHandlingFilter}
-            assignment={focusReadOnly ? "read" : assignmentFilter}
-            onAssignmentChange={handleFocusAssignmentChange}
+            lastRepliedByAi={lastRepliedByAi}
+            onLastRepliedByAiChange={setLastRepliedByAi}
+            assignment={assignmentFilter}
+            onAssignmentChange={handleAssignmentFilterChange}
             escalated={escalatedActive}
             onEscalatedChange={setEscalatedActive}
             booked={bookingActive}

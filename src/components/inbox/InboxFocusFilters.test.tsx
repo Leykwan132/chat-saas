@@ -2,10 +2,12 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test, vi } from "vitest";
 import { InboxFocusFilters } from "./InboxFocusFilters";
 
-test("shows All, Unread and Read with the selected read filter", () => {
+test("shows All and Last replied by AI with muted unselected text", () => {
   const markup = renderToStaticMarkup(
     <InboxFocusFilters
-      assignment="read"
+      assignment="all"
+      lastRepliedByAi={true}
+      onLastRepliedByAiChange={vi.fn()}
       onAssignmentChange={vi.fn()}
       escalated={false}
       onEscalatedChange={vi.fn()}
@@ -17,7 +19,9 @@ test("shows All, Unread and Read with the selected read filter", () => {
     />,
   );
   expect(markup).toContain(">All<");
-  expect(markup).toContain(">Unread<");
-  expect(markup).toMatch(/aria-pressed="true"[^>]*>.*?Read</s);
+  expect(markup).not.toContain(">Unread<");
+  expect(markup).not.toContain(">Read<");
+  expect(markup).toMatch(/aria-pressed="true"[^>]*>.*?Last replied by AI</s);
+  expect(markup).toContain("text-muted-foreground");
   expect(markup).toContain("More conversation filters");
 });
