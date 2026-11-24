@@ -1,19 +1,19 @@
-import type { ReactNode } from 'react';
-import { NavLink } from 'react-router';
+import type { ReactNode } from "react";
+import { NavLink } from "react-router";
 import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '@/components/ui/sidebar';
-import type { NavItem } from './app-sidebar-nav';
+} from "@/components/ui/sidebar";
+import type { NavItem } from "./app-sidebar-nav";
 
 type SidebarNavMenuItemProps = {
   to: string;
   className?: string;
   end?: boolean;
   tooltip?: string;
-  icon: NavItem['icon'];
-  activeIcon?: NavItem['activeIcon'];
+  icon: NavItem["icon"];
+  activeIcon?: NavItem["activeIcon"];
   label: string;
   badge?: ReactNode;
   badgeLabel?: string;
@@ -30,7 +30,7 @@ export function SidebarNavMenuItem({
   badge,
   badgeLabel,
 }: SidebarNavMenuItemProps) {
-  const { state, setOpen } = useSidebar();
+  const { state, setOpen, isMobile } = useSidebar();
 
   return (
     <SidebarMenuItem>
@@ -38,13 +38,18 @@ export function SidebarNavMenuItem({
         to={to}
         end={end}
         onClick={() => {
-          if (state === 'collapsed') {
+          if (!isMobile && state === "collapsed") {
             setOpen(true);
           }
         }}
       >
         {({ isActive }) => (
-          <SidebarMenuButton asChild className={className} isActive={isActive} tooltip={tooltip}>
+          <SidebarMenuButton
+            asChild
+            className={className}
+            isActive={isActive}
+            tooltip={tooltip}
+          >
             {badge || badgeLabel ? (
               <span className="flex w-full min-w-0 items-center gap-[0.45rem]">
                 {isActive && ActiveIcon ? <ActiveIcon /> : <Icon />}
