@@ -1,0 +1,28 @@
+name: Verify push dependency fix
+on:
+  push:
+    branches: [codex/pwa-notifications-and-resume]
+    paths: [.github/workflows/repair-push-lockfile.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      VITE_CONVEX_URL: https://ci-validation.convex.cloud
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.6"
+      - name: Verify frozen dependency installation
+        run: bun install --frozen-lockfile
+      - name: Verify Convex push action bundling
+        run: bunx --no-install esbuild convex/pushNotifications/send.ts --bundle --platform=node --outfile=/tmp/kilobot-push-action.js
+      - name: Verify notification tests
+        run: bunx --no-install vitest run convex/pushNotifications src/pwa src/components/notifications src/components/AgentSidebarNavigation.test.tsx src/pages/pageHeaderChrome.test.ts
+      - name: Verify production build
+        run: npm run build
