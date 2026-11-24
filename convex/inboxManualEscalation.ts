@@ -1,3 +1,4 @@
+import { notifyPushEscalation } from "./pushNotifications/events";
 import { v } from "convex/values";
 import { mutation } from "./triggers";
 import type { MutationCtx } from "./_generated/server";
@@ -54,6 +55,12 @@ export const escalate = mutation({
       actor: { type: "user", userId: auth.userId, name: auth.identity.name },
       metadata: { question: escalation.question, context: escalation.context },
     });
+    if (conversation.assignedAgentId)
+      await notifyPushEscalation(
+        ctx,
+        conversation.assignedAgentId,
+        conversationId,
+      );
     await markConversationAnalyticsDirty(ctx, { conversationId });
     return null;
   },

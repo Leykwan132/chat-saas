@@ -1,3 +1,5 @@
+import { PwaLocationRestoration } from "@/pwa/PwaLocationRestoration";
+import { PushNotificationNavigation } from "@/pwa/PushNotificationNavigation";
 import { PartnerInterfaceModeGate } from "@/components/inbox/PartnerInterfaceModeGate";
 import { InboxFocusReturnGate } from "@/components/inbox/InboxFocusReturnGate";
 import { useEffect } from "react";
@@ -189,6 +191,8 @@ function AppContent() {
         <AdjustPlanProvider>
           <UpgradeModalProvider>
             <HostFavicon />
+            <PushNotificationNavigation />
+            <PwaLocationRestoration />
             <PostHogIdentifier />
             <ScrollToTop />
             <PartnerInterfaceModeGate>

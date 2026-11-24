@@ -22,3 +22,70 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(fetch(request).catch(() => offlinePage.clone()));
 });
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener("push", (event) => {
+  const payload = event.data?.json();
+  if (
+    !payload ||
+    typeof payload.title !== "string" ||
+    typeof payload.body !== "string" ||
+    typeof payload.url !== "string"
+  ) {
+    throw new Error("Invalid push notification payload");
+  }
+  const url = new URL(payload.url, self.location.origin);
+  if (
+    url.origin !== self.location.origin ||
+    !url.pathname.startsWith("/dashboard/")
+  ) {
+    throw new Error("Invalid push notification destination");
+  }
+  url.searchParams.set("fromPush", "1");
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: typeof payload.icon === "string" ? payload.icon : undefined,
+      tag: typeof payload.tag === "string" ? payload.tag : undefined,
+      data: { url: url.toString() },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const value = event.notification.data?.url;
+  if (typeof value !== "string") return;
+  const url = new URL(value, self.location.origin);
+  if (
+    url.origin !== self.location.origin ||
+    !url.pathname.startsWith("/dashboard/")
+  )
+    return;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      const existing =
+        windows.find((client) => client.url === url.toString()) ??
+        windows.find(
+          (client) => new URL(client.url).origin === self.location.origin,
+        );
+      if (existing) {
+        await existing.navigate(url.toString());
+        await existing.focus();
+      } else {
+        await self.clients.openWindow(url.toString());
+      }
+    })(),
+  );
+});

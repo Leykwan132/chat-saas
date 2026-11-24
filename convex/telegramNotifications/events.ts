@@ -1,4 +1,11 @@
-import { googleCalendarBookingUrl, notificationButtons } from '../../shared/telegramNotificationActions';
+import {
+  notifyPushEscalation,
+  notifyPushBooking,
+} from "../pushNotifications/events";
+import {
+  googleCalendarBookingUrl,
+  notificationButtons,
+} from "../../shared/telegramNotificationActions";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import type { TelegramNotificationKind } from "../../shared/telegramNotificationKinds";
@@ -13,14 +20,26 @@ import {
 import { getConversationIdForEvent } from "../calendarEventsHelpers";
 import { dashboardOrigin } from "./dashboardOrigin";
 import { enqueueTelegramAgentNotification } from "./dispatch";
-import { escalationChannelLabel, notificationConversationUrl } from "./escalationMessage";
+import {
+  escalationChannelLabel,
+  notificationConversationUrl,
+} from "./escalationMessage";
 import { isNotificationKindEnabled } from "./kinds";
 
-async function hasEnabledRecipient(ctx: MutationCtx, agentId: Id<"agents">): Promise<boolean> {
-  return (await ctx.db
-    .query("agentTelegramNotificationSubscriptions")
-    .withIndex("by_agentId_and_status", (q) => q.eq("agentId", agentId).eq("status", "enabled"))
-    .take(1)).length > 0;
+async function hasEnabledRecipient(
+  ctx: MutationCtx,
+  agentId: Id<"agents">,
+): Promise<boolean> {
+  return (
+    (
+      await ctx.db
+        .query("agentTelegramNotificationSubscriptions")
+        .withIndex("by_agentId_and_status", (q) =>
+          q.eq("agentId", agentId).eq("status", "enabled"),
+        )
+        .take(1)
+    ).length > 0
+  );
 }
 
 async function canSendNotification(
@@ -29,29 +48,53 @@ async function canSendNotification(
   kind: TelegramNotificationKind,
 ): Promise<boolean> {
   const agent = await ctx.db.get(agentId);
-  return Boolean(agent && isNotificationKindEnabled(agent.telegramNotificationKinds, kind))
-    && await hasEnabledRecipient(ctx, agentId);
+  return (
+    Boolean(
+      agent && isNotificationKindEnabled(agent.telegramNotificationKinds, kind),
+    ) && (await hasEnabledRecipient(ctx, agentId))
+  );
 }
 
-function latestMessageText(content: string | undefined, contentType: string | undefined, preview: string | undefined): string {
+function latestMessageText(
+  content: string | undefined,
+  contentType: string | undefined,
+  preview: string | undefined,
+): string {
   const text = content?.trim();
   if (text) return text;
   if (contentType && contentType !== "text") return contentType;
   return preview?.trim() ?? "";
 }
 
-export async function notifyHumanEscalation(ctx: MutationCtx, agentId: Id<"agents">, conversationId: Id<"conversations">, agentName: string) {
+export async function notifyHumanEscalation(
+  ctx: MutationCtx,
+  agentId: Id<"agents">,
+  conversationId: Id<"conversations">,
+  agentName: string,
+) {
+  await notifyPushEscalation(ctx, agentId, conversationId);
   if (!(await canSendNotification(ctx, agentId, "humanEscalation"))) return 0;
   const conversation = await ctx.db.get(conversationId);
   if (!conversation) return 0;
-  const customer = conversation.customerId ? await ctx.db.get(conversation.customerId) : null;
+  const customer = conversation.customerId
+    ? await ctx.db.get(conversation.customerId)
+    : null;
   const sourceMessage = conversation.escalation?.sourceMessageId
     ? await ctx.db.get(conversation.escalation.sourceMessageId)
     : null;
-  const contact = customer?.email?.trim() || customer?.phone?.trim() || conversation.contactAddress;
-  const customerName = customer?.name?.trim() || conversation.contactName?.trim() || contact;
+  const contact =
+    customer?.email?.trim() ||
+    customer?.phone?.trim() ||
+    conversation.contactAddress;
+  const customerName =
+    customer?.name?.trim() || conversation.contactName?.trim() || contact;
   const origin = await dashboardOrigin(ctx, conversation.orgId);
-  const openUrl = notificationConversationUrl(origin, agentId, conversation, customer);
+  const openUrl = notificationConversationUrl(
+    origin,
+    agentId,
+    conversation,
+    customer,
+  );
   return await enqueueTelegramAgentNotification(
     ctx,
     agentId,
@@ -60,7 +103,11 @@ export async function notifyHumanEscalation(ctx: MutationCtx, agentId: Id<"agent
       customerName,
       contact,
       channel: escalationChannelLabel(conversation.service),
-      latestMessage: latestMessageText(sourceMessage?.content, sourceMessage?.contentType, conversation.lastMessagePreview),
+      latestMessage: latestMessageText(
+        sourceMessage?.content,
+        sourceMessage?.contentType,
+        conversation.lastMessagePreview,
+      ),
       question: conversation.escalation?.question ?? "",
       context: conversation.escalation?.context ?? "",
       openUrl,
@@ -76,43 +123,77 @@ function appointmentWhen(event: Doc<"calendarEvents">) {
       time: "All day",
     };
   }
-  const formatted = formatCalendarDateTime(event.startAt, event.endAt, event.timeZone);
+  const formatted = formatCalendarDateTime(
+    event.startAt,
+    event.endAt,
+    event.timeZone,
+  );
   return { date: formatted.date, time: formatted.timeRange };
 }
 
-export async function notifyAppointmentEvent(ctx: MutationCtx, agentId: Id<"agents">, appointmentId: Id<"calendarEvents">, agentName: string, event: "booked" | "updated" | "cancelled") {
-  const kind = event === "booked" ? "bookingCreated" : event === "updated" ? "bookingUpdated" : "bookingCancelled";
+export async function notifyAppointmentEvent(
+  ctx: MutationCtx,
+  agentId: Id<"agents">,
+  appointmentId: Id<"calendarEvents">,
+  agentName: string,
+  event: "booked" | "updated" | "cancelled",
+) {
+  await notifyPushBooking(ctx, agentId, appointmentId, event);
+  const kind =
+    event === "booked"
+      ? "bookingCreated"
+      : event === "updated"
+        ? "bookingUpdated"
+        : "bookingCancelled";
   if (!(await canSendNotification(ctx, agentId, kind))) return 0;
   const appointment = await ctx.db.get(appointmentId);
   if (!appointment) return 0;
   const [agent, service, participants] = await Promise.all([
     ctx.db.get(agentId),
-    appointment.appointmentServiceId ? ctx.db.get(appointment.appointmentServiceId) : null,
+    appointment.appointmentServiceId
+      ? ctx.db.get(appointment.appointmentServiceId)
+      : null,
     ctx.db
       .query("calendarEventParticipants")
       .withIndex("by_eventId", (q) => q.eq("eventId", appointment._id))
       .take(20),
   ]);
-  const customer = participants.find((participant) => participant.role === "customer");
+  const customer = participants.find(
+    (participant) => participant.role === "customer",
+  );
   const when = appointmentWhen(appointment);
-  const label = event === "booked" ? "New booking" : event === "updated" ? "Booking updated" : "Booking cancelled";
+  const label =
+    event === "booked"
+      ? "New booking"
+      : event === "updated"
+        ? "Booking updated"
+        : "Booking cancelled";
   const origin = await dashboardOrigin(ctx, agent?.orgId ?? "");
   const conversationId = await getConversationIdForEvent(ctx, appointment);
   const conversation = conversationId ? await ctx.db.get(conversationId) : null;
   const customerId = conversation?.customerId ?? customer?.customerId;
   const customerProfile = customerId ? await ctx.db.get(customerId) : null;
-  const openUrl = notificationConversationUrl(origin, agentId, conversation, customerProfile);
-  const customerName = customer?.displayName?.trim() || customer?.email?.trim() || "Customer";
+  const openUrl = notificationConversationUrl(
+    origin,
+    agentId,
+    conversation,
+    customerProfile,
+  );
+  const customerName =
+    customer?.displayName?.trim() || customer?.email?.trim() || "Customer";
   const serviceName = service?.name?.trim() || appointment.title;
-  const calendarUrl = event === "booked" ? googleCalendarBookingUrl({
-    title: `${serviceName} — ${customerName}`,
-    startAt: appointment.startAt,
-    endAt: appointment.endAt,
-    timeZone: appointment.timeZone,
-    allDay: appointment.allDay,
-    location: appointment.location,
-    chatUrl: openUrl,
-  }) : undefined;
+  const calendarUrl =
+    event === "booked"
+      ? googleCalendarBookingUrl({
+          title: `${serviceName} — ${customerName}`,
+          startAt: appointment.startAt,
+          endAt: appointment.endAt,
+          timeZone: appointment.timeZone,
+          allDay: appointment.allDay,
+          location: appointment.location,
+          chatUrl: openUrl,
+        })
+      : undefined;
   return await enqueueTelegramAgentNotification(
     ctx,
     agentId,
@@ -121,7 +202,9 @@ export async function notifyAppointmentEvent(ctx: MutationCtx, agentId: Id<"agen
       agentName,
       customerName,
       serviceName,
-      platform: escalationChannelLabel(conversation?.service ?? customerProfile?.service ?? "unknown"),
+      platform: escalationChannelLabel(
+        conversation?.service ?? customerProfile?.service ?? "unknown",
+      ),
       date: when.date,
       time: when.time,
       openUrl,

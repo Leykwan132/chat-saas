@@ -1,3 +1,4 @@
+import { pushNotificationTables } from "./pushNotifications/schema";
 import { integrationTables } from "./integrations/schema";
 import {
   autoDeescalationConfigValidator,
@@ -286,6 +287,7 @@ const whiteLabelCreditLedgerEventValidator = v.union(
 );
 
 export default defineSchema({
+  ...pushNotificationTables,
   ...integrationTables,
   users: defineTable({
     workosUserId: v.string(),

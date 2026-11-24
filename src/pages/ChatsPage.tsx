@@ -1,3 +1,4 @@
+import { usePwaConversationSelection } from "@/pwa/usePwaConversationSelection";
 import { InboxAiReplyTimingDialog } from "@/components/inbox/InboxAiReplyTimingDialog";
 import { InboxResumeConversationDialog } from "@/components/inbox/InboxResumeConversationDialog";
 import {
@@ -353,9 +354,7 @@ export default function ChatsPage({
   const currentUser = useQuery(api.users.currentUser);
 
   const [selectedConversationId, setSelectedConversationId] =
-    useState<Id<"conversations"> | null>(
-      linkedConversationId as Id<"conversations"> | null,
-    );
+    usePwaConversationSelection(linkedConversationId);
   const [pendingMessageFocusId, setPendingMessageFocusId] =
     useState<Id<"messages"> | null>(null);
   const [highlightedMessageId, setHighlightedMessageId] =
