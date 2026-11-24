@@ -46,8 +46,10 @@ export function PushNotificationsPanel({ agentId }: { agentId: Id<"agents"> }) {
           {deviceError}
         </p>
       )}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-3">
         <Button
+          variant={enabled ? "destructive" : "default"}
+          className="h-auto min-h-12 w-full whitespace-normal px-6 py-3 text-sm"
           disabled={
             busy ||
             !settings?.configured ||
@@ -70,6 +72,7 @@ export function PushNotificationsPanel({ agentId }: { agentId: Id<"agents"> }) {
         </Button>
         <Button
           variant="outline"
+          className="h-auto min-h-12 w-full whitespace-normal px-6 py-3 text-sm"
           disabled={busy || !enabled || !settings?.subscription?.kinds.length}
           onClick={() =>
             void perform(async () => {
