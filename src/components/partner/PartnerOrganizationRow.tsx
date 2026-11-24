@@ -59,7 +59,7 @@ export function PartnerOrganizationRow({
       </TableRow>
       {expanded && (
         <TableRow className="bg-muted/15 hover:bg-muted/15">
-          <TableCell colSpan={10} className="p-4">
+          <TableCell colSpan={10} className="p-0">
             <div id={detailsId} aria-label={`Users in ${name}`}>
               <PartnerCustomerList
                 {...customerListProps}

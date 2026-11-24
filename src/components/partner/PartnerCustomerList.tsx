@@ -140,10 +140,16 @@ export function PartnerCustomerList({
 
   return (
     <section
-      className={embedded ? "flex flex-col gap-4" : "mt-8 flex flex-col gap-4"}
+      className={embedded ? "flex flex-col" : "mt-8 flex flex-col gap-4"}
     >
       {customers.length === 0 ? (
-        <Empty className="rounded-lg border border-dashed bg-muted/20">
+        <Empty
+          className={
+            embedded
+              ? "rounded-none border-0 bg-muted/20"
+              : "rounded-lg border border-dashed bg-muted/20"
+          }
+        >
           <EmptyHeader>
             <EmptyTitle>No users yet</EmptyTitle>
             <EmptyDescription>
@@ -152,7 +158,13 @@ export function PartnerCustomerList({
           </EmptyHeader>
         </Empty>
       ) : (
-        <PartnerPanel className="gap-0 overflow-hidden py-0">
+        <PartnerPanel
+          className={
+            embedded
+              ? "gap-0 overflow-hidden rounded-none border-0 py-0"
+              : "gap-0 overflow-hidden py-0"
+          }
+        >
           <CardContent className="px-0">
             <Table>
               <TableHeader className="bg-muted [&_th]:font-semibold [&_th]:text-foreground">
