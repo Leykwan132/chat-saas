@@ -1,25 +1,35 @@
-import { useState } from 'react';
-import { Outlet, Navigate, useParams, useNavigate, useLocation } from 'react-router';
-import { useQuery } from 'convex/react';
-import { useAuth } from '@/partnerAuth/AppAuthProvider';
-import { Bot, ChevronDown } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { AppSidebar } from '@/components/app-sidebar';
-import { RequireOrganization } from '@/components/RequireOrganization';
-import { UserProfileButton } from '@/components/UserProfileButton';
-import { TeamSwitcher } from '@/components/TeamSwitcher';
-import { SupportHoverCard } from '@/components/SupportHoverCard';
-import { WhatsNewDialog } from '@/components/WhatsNewDialog';
-import { ModeToggle } from '@/components/mode-toggle';
+import { useState } from "react";
+import {
+  Outlet,
+  Navigate,
+  useParams,
+  useNavigate,
+  useLocation,
+} from "react-router";
+import { useQuery } from "convex/react";
+import { useAuth } from "@/partnerAuth/AppAuthProvider";
+import { Bot, ChevronDown } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AppSidebar } from "@/components/app-sidebar";
+import { RequireOrganization } from "@/components/RequireOrganization";
+import { UserProfileButton } from "@/components/UserProfileButton";
+import { TeamSwitcher } from "@/components/TeamSwitcher";
+import { SupportHoverCard } from "@/components/SupportHoverCard";
+import { WhatsNewDialog } from "@/components/WhatsNewDialog";
+import { ModeToggle } from "@/components/mode-toggle";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+} from "@/components/ui/breadcrumb";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,16 +38,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { api } from '../../convex/_generated/api';
-import type { Id, Doc } from '../../convex/_generated/dataModel';
-import { cn } from '@/lib/utils';
-import { WorkspaceUnavailable } from '@/components/WorkspaceUnavailable';
-import { useActiveTeam } from '@/hooks/useActiveTeam';
-import { toast } from 'sonner';
+} from "@/components/ui/dropdown-menu";
+import { api } from "../../convex/_generated/api";
+import type { Id, Doc } from "../../convex/_generated/dataModel";
+import { cn } from "@/lib/utils";
+import { WorkspaceUnavailable } from "@/components/WorkspaceUnavailable";
+import { useActiveTeam } from "@/hooks/useActiveTeam";
+import { toast } from "sonner";
 
 type DashboardHeaderProps = {
-  agent: { _id: Id<'agents'>; name: string };
+  agent: { _id: Id<"agents">; name: string };
   onTeamSwitchStart: () => void;
   onTeamSwitchFailed: () => void;
 };
@@ -51,16 +61,20 @@ function DashboardHeader({
   const location = useLocation();
   const allAgents = useQuery(api.agents.list);
 
-  const subPath = location.pathname.replace(/^\/dashboard\/[^/]+\/?/, '') || 'inbox';
+  const subPath =
+    location.pathname.replace(/^\/dashboard\/[^/]+\/?/, "") || "inbox";
   const settingsPath = `/dashboard/${agent._id}/settings`;
 
   const handleTeamSwitch = () => {
-    navigate('/workspace');
+    navigate("/workspace");
   };
 
   return (
     <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/50 bg-background px-4">
-      <SidebarTrigger className="-ml-1 md:hidden" aria-label="Open navigation" />
+      <SidebarTrigger
+        className="-ml-1 md:hidden"
+        aria-label="Open navigation"
+      />
       <Breadcrumb>
         <BreadcrumbList>
           <TeamSwitcher
@@ -97,13 +111,17 @@ function DashboardHeader({
                       Loading…
                     </DropdownMenuItem>
                   ) : allAgents.length === 0 ? (
-                    <DropdownMenuItem disabled>No agents found</DropdownMenuItem>
+                    <DropdownMenuItem disabled>
+                      No agents found
+                    </DropdownMenuItem>
                   ) : (
-                    allAgents.map((a: Doc<'agents'>) => (
+                    allAgents.map((a: Doc<"agents">) => (
                       <DropdownMenuItem
                         key={a._id}
-                        onSelect={() => navigate(`/dashboard/${a._id}/${subPath}`)}
-                        className={a._id === agent._id ? 'bg-accent' : ''}
+                        onSelect={() =>
+                          navigate(`/dashboard/${a._id}/${subPath}`)
+                        }
+                        className={a._id === agent._id ? "bg-accent" : ""}
                       >
                         <Bot className="mr-2 size-3.5" />
                         <span className="truncate">{a.name}</span>
@@ -143,26 +161,24 @@ function DashboardContent() {
   const isFullHeightPage = isInboxPage || isCalendarPage || isWorkflowPage;
   const agent = useQuery(
     api.agents.get,
-    agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
+    agentId ? { agentId: agentId as Id<"agents"> } : "skip",
   );
 
   const handleBackToPersonal = async () => {
-    const personalTeam = teams?.find((team) => team.type === 'personal');
+    const personalTeam = teams?.find((team) => team.type === "personal");
     if (!personalTeam) {
-      toast.error('Personal workspace is unavailable');
+      toast.error("Personal workspace is unavailable");
       return;
     }
     setSwitchingToPersonal(true);
     try {
       if (!isPersonal) {
-        await switchTeam({ teamId: personalTeam._id as Id<'teams'> });
+        await switchTeam({ teamId: personalTeam._id as Id<"teams"> });
       }
-      navigate('/workspace', { replace: true });
+      navigate("/workspace", { replace: true });
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Could not switch workspace',
+        error instanceof Error ? error.message : "Could not switch workspace",
       );
       setSwitchingToPersonal(false);
     }
@@ -176,7 +192,9 @@ function DashboardContent() {
     return (
       <div className="flex min-h-[100svh] flex-col items-center justify-center gap-4 bg-background">
         <Spinner className="size-8 text-muted-foreground" />
-        <p className="text-sm font-medium text-muted-foreground">Switching workspace...</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          Switching workspace...
+        </p>
       </div>
     );
   }
@@ -211,13 +229,16 @@ function DashboardContent() {
   return (
     <TooltipProvider delayDuration={0}>
       <SidebarProvider
-        className={cn(isFullHeightPage && 'h-svh max-h-svh min-h-0 overflow-hidden')}
+        className={cn(
+          isFullHeightPage &&
+            "h-dvh max-h-dvh min-h-0 overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
+        )}
       >
         <AppSidebar agent={agent} />
 
         <SidebarInset
           className={cn(
-            isFullHeightPage && 'h-svh max-h-svh min-h-0 overflow-hidden',
+            isFullHeightPage && "h-full max-h-full min-h-0 overflow-hidden",
           )}
         >
           {/* Top header with breadcrumb */}
@@ -231,11 +252,16 @@ function DashboardContent() {
           <main
             className={
               isFullHeightPage
-                ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-0'
-                 : 'flex-1 overflow-auto px-4 py-6 sm:px-6 md:px-12 md:py-8 lg:px-28'
+                ? "flex min-h-0 flex-1 flex-col overflow-hidden p-0"
+                : "flex-1 overflow-auto px-4 py-6 sm:px-6 md:px-12 md:py-8 lg:px-28"
             }
           >
-            <div className={cn('animate-fade-in', isFullHeightPage && 'flex h-full min-h-0 flex-1 flex-col')}>
+            <div
+              className={cn(
+                "animate-fade-in",
+                isFullHeightPage && "flex h-full min-h-0 flex-1 flex-col",
+              )}
+            >
               <Outlet />
             </div>
           </main>
