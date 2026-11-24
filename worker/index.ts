@@ -1,3 +1,4 @@
+import { partnerPwaManifest } from "./pwaManifest";
 import { ConvexHttpClient } from "convex/browser";
 import { isNativeHost } from "../src/lib/hostBranding";
 import { api } from "../convex/_generated/api";
@@ -27,6 +28,12 @@ function rewritePartnerPreview(
     .on("title", {
       element(element) {
         element.setInnerContent(metadata.tabTitle);
+      },
+    })
+    .on('link[rel="apple-touch-icon"]', {
+      element(element) {
+        if (metadata.faviconHref === null) element.remove();
+        else element.setAttribute("href", metadata.faviconHref);
       },
     })
     .on('link[rel="icon"]', {
@@ -76,8 +83,26 @@ function rewritePartnerPreview(
 
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+    const hostname = url.hostname;
+    if (url.pathname === "/pwa/app.webmanifest") {
+      if (isNativeHost(hostname)) {
+        url.pathname = "/pwa/kilobot.webmanifest";
+        return env.ASSETS.fetch(new Request(url, request));
+      }
+      const branding = await new ConvexHttpClient(env.CONVEX_URL).query(
+        api.whiteLabel.partnerAuthGateway.getBrandingForHostname,
+        { hostname },
+      );
+      if (!branding) return new Response("Partner not found", { status: 404 });
+      return Response.json(partnerPwaManifest(branding), {
+        headers: {
+          "Content-Type": "application/manifest+json",
+          "Cache-Control": "no-store",
+        },
+      });
+    }
     const assetResponse = await env.ASSETS.fetch(request);
-    const hostname = new URL(request.url).hostname;
     if (isNativeHost(hostname) || !isHtmlResponse(assetResponse)) {
       return assetResponse;
     }

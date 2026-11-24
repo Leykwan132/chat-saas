@@ -1,3 +1,5 @@
+import { registerKilobotPwa } from "@/pwa/registerKilobotPwa";
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -231,6 +233,8 @@ const router = createBrowserRouter(
     </Route>,
   ),
 );
+
+registerKilobotPwa();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
