@@ -5,7 +5,18 @@ Push delivery uses the existing notification workpool, a Node action with
 
 ## Development setup
 
-Use Node 22 and install the pinned dependencies with `bun install`. Generate
+Use Node 22 and install the pinned dependencies before starting Convex:
+
+```sh
+nvm use 22
+bun install --frozen-lockfile
+```
+
+Restart the Convex development process after installing. A bundler error that
+cannot resolve `web-push` means the runtime dependency has not been installed;
+do not mark it external to hide the error.
+
+Generate
 a VAPID key pair once with `bunx web-push generate-vapid-keys --json`. Keep the
 private key confidential and retain this pair across deployments.
 
