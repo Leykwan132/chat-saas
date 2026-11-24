@@ -121,7 +121,11 @@ export function PartnerModelSelect({
       <SelectContent>
         <SelectGroup>
           {(models ?? []).map((model) => (
-            <SelectItem key={model.value} value={model.value} className="text-sm">
+            <SelectItem
+              key={model.value}
+              value={model.value}
+              className="text-sm"
+            >
               {model.label}
             </SelectItem>
           ))}
@@ -132,11 +136,13 @@ export function PartnerModelSelect({
 }
 
 export function PartnerRoleSelect({
+  id,
   value,
   onValueChange,
   compact = false,
   disabled = false,
 }: {
+  id?: string;
   value: "owner" | "admin" | "member";
   onValueChange: (value: "owner" | "admin" | "member") => void;
   compact?: boolean;
@@ -151,7 +157,8 @@ export function PartnerRoleSelect({
       }
     >
       <SelectTrigger
-        id="customer-role"
+        id={id}
+        aria-label="User role"
         className={compact ? "w-28 text-sm" : fullWidthSelectClassName}
       >
         <SelectValue />
@@ -215,7 +222,9 @@ export function PartnerLimitInput({
         inputMode="numeric"
         min={1}
         type="number"
-        onBlur={(event) => commit(event.currentTarget.value, event.currentTarget)}
+        onBlur={(event) =>
+          commit(event.currentTarget.value, event.currentTarget)
+        }
         onKeyDown={(event) => {
           if (event.key === "Enter") event.currentTarget.blur();
         }}

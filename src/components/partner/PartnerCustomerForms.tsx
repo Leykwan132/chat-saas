@@ -1,3 +1,4 @@
+import { PartnerModeSelect } from "./PartnerModeSelect";
 import { useState } from "react";
 import { ArrowRight, UserPlus, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -154,6 +155,7 @@ export function PartnerCustomerForms({
               <Field>
                 <FieldLabel htmlFor="customer-role">Role</FieldLabel>
                 <PartnerRoleSelect
+                  id="customer-role"
                   value={inviteRole}
                   onValueChange={onInviteRoleChange}
                 />
@@ -161,17 +163,11 @@ export function PartnerCustomerForms({
             </FieldGroup>
             <Field>
               <FieldLabel htmlFor="customer-mode">Mode</FieldLabel>
-              <select
+              <PartnerModeSelect
                 id="customer-mode"
-                className="h-10 rounded-md border border-border bg-background px-3"
                 value={interfaceMode}
-                onChange={(event) =>
-                  setInterfaceMode(event.target.value as "normal" | "focus")
-                }
-              >
-                <option value="normal">Normal</option>
-                <option value="focus">Focus</option>
-              </select>
+                onValueChange={setInterfaceMode}
+              />
             </Field>
             <DialogFooter className="justify-end gap-2">
               <Button

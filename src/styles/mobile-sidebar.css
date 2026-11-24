@@ -8,8 +8,8 @@
     gap: 0.5rem;
   }
 
-  [data-mobile="true"] [data-slot="sidebar-menu-button"],
-  [data-mobile="true"] [data-slot="sidebar-menu-sub-button"] {
+  [data-mobile="true"] [data-sidebar="menu-button"],
+  [data-mobile="true"] [data-sidebar="menu-sub-button"] {
     min-height: 48px;
     height: auto;
     padding: 0.75rem 1rem;
@@ -17,8 +17,8 @@
     font-size: 1rem;
   }
 
-  [data-mobile="true"] [data-slot="sidebar-menu-button"] svg,
-  [data-mobile="true"] [data-slot="sidebar-menu-sub-button"] svg {
+  [data-mobile="true"] [data-sidebar="menu-button"] svg,
+  [data-mobile="true"] [data-sidebar="menu-sub-button"] svg {
     width: 1.375rem;
     height: 1.375rem;
   }

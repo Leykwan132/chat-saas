@@ -1,3 +1,8 @@
+import { PartnerOrganizationTableHeader } from "./PartnerOrganizationTableHeader";
+import {
+  PartnerOrganizationRow,
+  type OrganizationUsersProps,
+} from "./PartnerOrganizationRow";
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { MoreHorizontal, Trash2 } from "lucide-react";
@@ -28,14 +33,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell } from "@/components/ui/table";
 import { PLAN_CATALOG } from "../../../shared/planCatalog";
 import {
   type PartnerOverview,
@@ -48,11 +46,13 @@ type Organization = PartnerOverview["organizations"][number];
 
 export function PartnerOrganizationList({
   organizations,
+  customerListProps,
   onPlanChange,
   onEntitlementsChange,
   onDelete,
 }: {
   organizations: PartnerOverview["organizations"];
+  customerListProps: OrganizationUsersProps;
   onPlanChange: (
     organization: Organization,
     planKey: PlanKey,
@@ -60,13 +60,21 @@ export function PartnerOrganizationList({
   ) => void;
   onEntitlementsChange: (
     organization: Organization,
-    entitlements: { maxAgents?: number; monthlyCredits?: number; modelId?: string },
+    entitlements: {
+      maxAgents?: number;
+      monthlyCredits?: number;
+      modelId?: string;
+    },
     timing?: PlanChangeTiming,
   ) => void;
   onDelete: (organization: Organization) => Promise<boolean>;
 }) {
-  const [pendingChange, setPendingChange] = useState<PendingLimitChange | null>(null);
-  const [pendingDeletion, setPendingDeletion] = useState<Organization | null>(null);
+  const [pendingChange, setPendingChange] = useState<PendingLimitChange | null>(
+    null,
+  );
+  const [pendingDeletion, setPendingDeletion] = useState<Organization | null>(
+    null,
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [limitInputEpoch, setLimitInputEpoch] = useState(0);
   const models = useQuery(whiteLabelApi.portal.listEnabledAgentModels);
@@ -118,29 +126,18 @@ export function PartnerOrganizationList({
           </EmptyHeader>
         </Empty>
       ) : (
-        <PartnerPanel className="gap-0 py-0">
+        <PartnerPanel className="gap-0 overflow-hidden py-0">
           <CardContent className="px-0">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Organization</TableHead>
-                  <TableHead className="text-center">Users</TableHead>
-                  <TableHead className="text-center">Plan</TableHead>
-                  <TableHead className="text-center">Model</TableHead>
-                  <TableHead className="text-center">Agents</TableHead>
-                  <TableHead className="text-center">Monthly</TableHead>
-                  <TableHead className="text-center">Top-up</TableHead>
-                  <TableHead className="text-center">Remaining</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+              <PartnerOrganizationTableHeader />
               <TableBody>
                 {organizations.map((organization) => (
-                  <TableRow key={organization.partnerOrganizationId}>
-                    <TableCell className="font-medium">
-                      {organization.name}
-                    </TableCell>
+                  <PartnerOrganizationRow
+                    key={organization.partnerOrganizationId}
+                    organizationId={organization.partnerOrganizationId}
+                    name={organization.name}
+                    customerListProps={customerListProps}
+                  >
                     <TableCell className="text-center">
                       {organization.customerCount.toLocaleString()}
                     </TableCell>
@@ -238,7 +235,10 @@ export function PartnerOrganizationList({
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-center">
-                        <Badge className="gap-1.5 capitalize" variant="secondary">
+                        <Badge
+                          className="gap-1.5 capitalize"
+                          variant="secondary"
+                        >
                           <span className="size-1.5 rounded-full bg-emerald-500" />
                           {organization.status}
                         </Badge>
@@ -256,7 +256,10 @@ export function PartnerOrganizationList({
                               <MoreHorizontal />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent
+                            align="end"
+                            className="rounded-md"
+                          >
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onSelect={() => setPendingDeletion(organization)}
@@ -268,7 +271,7 @@ export function PartnerOrganizationList({
                         </DropdownMenu>
                       </div>
                     </TableCell>
-                  </TableRow>
+                  </PartnerOrganizationRow>
                 ))}
               </TableBody>
             </Table>
