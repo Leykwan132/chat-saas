@@ -9,7 +9,11 @@ vi.mock("@/components/ui/sidebar", () => ({
 }));
 
 class NavigationTarget {
-  constructor(private link: boolean) {}
+  private link: boolean;
+
+  constructor(link: boolean) {
+    this.link = link;
+  }
   closest() {
     return this.link ? {} : null;
   }
