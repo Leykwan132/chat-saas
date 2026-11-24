@@ -32,11 +32,11 @@ test("renders users in the same order as the table headers", () => {
     "customer@example.com",
     "Example organization",
     "",
-    "NormalFocus",
+    "",
     "active",
     "",
   ]);
-  expect(markup).toContain(">Users<");
+  expect(markup).not.toContain(">Users<");
   expect(markup).toContain(">User<");
   expect(markup).not.toContain("cursor-pointer");
 });

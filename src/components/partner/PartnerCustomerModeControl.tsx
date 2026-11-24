@@ -1,3 +1,4 @@
+import { PartnerModeSelect } from "./PartnerModeSelect";
 import { useState } from "react";
 import { useMutation } from "convex/react";
 import { makeFunctionReference } from "convex/server";
@@ -46,21 +47,15 @@ export function PartnerCustomerModeControl({
     }
   };
   return (
-    <select
-      aria-label="User mode"
-      className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+    <PartnerModeSelect
+      compact
       disabled={
         saving ||
         customer.invitationStatus !== "active" ||
         !customer.workosUserId
       }
       value={customer.interfaceMode ?? "normal"}
-      onChange={(event) =>
-        void change(event.target.value as "normal" | "focus")
-      }
-    >
-      <option value="normal">Normal</option>
-      <option value="focus">Focus</option>
-    </select>
+      onValueChange={(value) => void change(value)}
+    />
   );
 }

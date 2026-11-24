@@ -78,11 +78,13 @@ function removalForCustomer(customer: Customer): PartnerCustomerRemoval | null {
 
 export function PartnerCustomerList({
   customers,
+  embedded = false,
   onRemove,
   onShowCredentials,
   onRoleChange,
 }: {
   customers: PartnerOverview["customers"];
+  embedded?: boolean;
   onRemove: (
     partnerOrganizationId: string,
     removal: PartnerCustomerRemoval,
@@ -137,15 +139,17 @@ export function PartnerCustomerList({
   };
 
   return (
-    <section className="mt-8 flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="font-heading text-base font-medium">Users</h2>
-        <p className="text-sm text-muted-foreground">
-          Review invited and active users across your organizations.
-        </p>
-      </div>
+    <section
+      className={embedded ? "flex flex-col" : "mt-8 flex flex-col gap-4"}
+    >
       {customers.length === 0 ? (
-        <Empty className="rounded-lg border border-dashed bg-muted/20">
+        <Empty
+          className={
+            embedded
+              ? "rounded-none border-0 bg-muted/20"
+              : "rounded-lg border border-dashed bg-muted/20"
+          }
+        >
           <EmptyHeader>
             <EmptyTitle>No users yet</EmptyTitle>
             <EmptyDescription>
@@ -154,13 +158,19 @@ export function PartnerCustomerList({
           </EmptyHeader>
         </Empty>
       ) : (
-        <PartnerPanel className="gap-0 py-0">
+        <PartnerPanel
+          className={
+            embedded
+              ? "gap-0 overflow-hidden rounded-none border-0 py-0"
+              : "gap-0 overflow-hidden py-0"
+          }
+        >
           <CardContent className="px-0">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-muted [&_th]:font-semibold [&_th]:text-foreground">
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead>Organization</TableHead>
+                  {!embedded && <TableHead>Organization</TableHead>}
                   <TableHead>Role</TableHead>
                   <TableHead>Mode</TableHead>
                   <TableHead>Status</TableHead>
@@ -175,7 +185,9 @@ export function PartnerCustomerList({
                     <TableCell className="font-medium">
                       {customer.email}
                     </TableCell>
-                    <TableCell>{customer.organizationName}</TableCell>
+                    {!embedded && (
+                      <TableCell>{customer.organizationName}</TableCell>
+                    )}
                     <TableCell>
                       <PartnerCustomerRoleControl
                         customer={customer}
@@ -209,6 +221,7 @@ export function PartnerCustomerList({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
+                            className="rounded-md"
                             align="end"
                             onClick={preventCustomerRowClick}
                           >

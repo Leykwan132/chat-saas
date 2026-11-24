@@ -132,7 +132,7 @@ export function InboxThreadMessages({
     <>
       <ConversationContent
         scrollClassName="no-scrollbar overscroll-y-contain"
-        className="gap-2 px-6 py-6"
+        className="min-w-0 max-w-full gap-2 px-4 py-6 sm:px-6"
       >
         {loading ? null : messages.length === 0 ? (
           <ConversationEmptyState
@@ -173,14 +173,17 @@ export function InboxThreadMessages({
                 <Message
                   from={inboxMessageFrom(m.role)}
                   key={m.key}
-                  className="w-full"
+                  className="w-full min-w-0"
                 >
                   <MessageContent
-                    className={cn("max-w-[78%]", !isCustomer && "ml-auto")}
+                    className={cn(
+                      "min-w-0 max-w-[85%] sm:max-w-[78%]",
+                      !isCustomer && "ml-auto",
+                    )}
                   >
                     {isCustomer ? (
-                      <div className="group flex w-fit max-w-full flex-col items-start gap-1">
-                        <div className="relative">
+                      <div className="group flex w-fit min-w-0 max-w-full flex-col items-start gap-1">
+                        <div className="relative min-w-0 max-w-full">
                           <div className="absolute -right-8 top-1/2 z-10 -translate-y-1/2">
                             <ReactionPicker message={m} onReact={handleReact} />
                           </div>
@@ -211,9 +214,9 @@ export function InboxThreadMessages({
                         </span>
                       </div>
                     ) : (
-                      <div className="group flex w-fit max-w-full flex-col items-end gap-1">
+                      <div className="group flex w-fit min-w-0 max-w-full flex-col items-end gap-1">
                         <OutgoingLabel message={m} />
-                        <div className="relative">
+                        <div className="relative min-w-0 max-w-full">
                           <div className="absolute -left-8 top-1/2 z-10 -translate-y-1/2">
                             <ReactionPicker message={m} onReact={handleReact} />
                           </div>
