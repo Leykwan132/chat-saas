@@ -17,6 +17,7 @@ import "@workos-inc/widgets/styles.css";
 import "@smastrom/react-rating/style.css";
 import "./styles/workos-widgets-overrides.css";
 import "./index.css";
+import "./styles/mobile-sidebar.css";
 import HomePage from "./pages/HomePage.tsx";
 import SignInPage from "./pages/SignInPage.tsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.tsx";
