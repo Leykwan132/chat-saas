@@ -169,7 +169,7 @@ export function InboxMessageBody({
       {showText ? (
         <div
           className={cn(
-            "w-fit max-w-full px-3 py-1.5 text-sm leading-snug whitespace-pre-wrap break-words",
+            "w-fit max-w-full px-3 py-1.5 text-sm leading-snug whitespace-pre-wrap [overflow-wrap:anywhere]",
             message.workflowAutomationSource && !isCommentAutomation
               ? "text-foreground"
               : isCustomer
