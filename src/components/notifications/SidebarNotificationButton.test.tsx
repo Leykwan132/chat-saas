@@ -24,14 +24,14 @@ vi.mock("./usePushNotificationSettings", () => ({
   }),
 }));
 
-afterEach(() =>
+afterEach(() => {
   Object.assign(state, {
     installed: true,
     enabled: false,
     configured: true,
     busy: false,
-  }),
-);
+  });
+});
 
 function markup() {
   return renderToStaticMarkup(

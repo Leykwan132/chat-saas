@@ -6,7 +6,9 @@ import {
 } from "./lastLocation";
 import { isInstalledApp } from "./installedApp";
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 test("saved locations are separated by user and team", () => {
   expect(locationKey("user-a", "team-a")).not.toBe(
