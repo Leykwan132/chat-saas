@@ -1,4 +1,5 @@
 import { SidebarNotificationButton } from "./notifications/SidebarNotificationButton";
+import { SidebarNavigationContent as SidebarContent } from "./SidebarNavigationContent";
 import { useQuery } from "convex/react";
 import { useAuth } from "@/partnerAuth/AppAuthProvider";
 import { PanelLeftOpen } from "lucide-react";
@@ -11,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   Sidebar,
-  SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
