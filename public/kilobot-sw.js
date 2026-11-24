@@ -1,5 +1,5 @@
 const offlinePage = new Response(
-  '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Kilobot is offline</title><body><main><h1>You’re offline</h1><p>Reconnect to open your Kilobot workspace.</p><a href="/workspace">Try again</a></main></body></html>',
+  '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Workspace is offline</title><body><main><h1>You’re offline</h1><p>Reconnect to open your workspace.</p><a href="/workspace">Try again</a></main></body></html>',
   {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
