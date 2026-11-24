@@ -1,3 +1,5 @@
+import { clearLastLocations } from "@/pwa/lastLocation";
+import { detachPushDevice } from "@/pwa/detachPushDevice";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useAuth as useWorkosAuth } from "@workos-inc/authkit-react";
 
@@ -25,37 +27,47 @@ const AppAuthContext = createContext<AppAuthContextValue | null>(null);
 
 export function useAuth() {
   const value = useContext(AppAuthContext);
-  if (value === null) throw new Error("useAuth must be used within an AppAuthProvider.");
+  if (value === null)
+    throw new Error("useAuth must be used within an AppAuthProvider.");
   return value;
 }
 
 export function NativeAppAuthProvider({ children }: { children: ReactNode }) {
   const workosAuth = useWorkosAuth();
-  const value = useMemo<AppAuthContextValue>(() => ({
-    isLoading: workosAuth.isLoading,
-    user: workosAuth.user,
-    surface: "kilobot",
-    getAccessToken: async (options) => await workosAuth.getAccessToken(options),
-    signIn: async (options) => await workosAuth.signIn(options),
-    signUp: async (options) => await workosAuth.signUp(options),
-    signOut: async (options) => {
-      if (options?.navigate === true) {
-        workosAuth.signOut({
-          returnTo: options.returnTo,
-          navigate: true,
+  const value = useMemo<AppAuthContextValue>(
+    () => ({
+      isLoading: workosAuth.isLoading,
+      user: workosAuth.user,
+      surface: "kilobot",
+      getAccessToken: async (options) =>
+        await workosAuth.getAccessToken(options),
+      signIn: async (options) => await workosAuth.signIn(options),
+      signUp: async (options) => await workosAuth.signUp(options),
+      signOut: async (options) => {
+        clearLastLocations();
+        await detachPushDevice(() => workosAuth.getAccessToken());
+        if (options?.navigate === true) {
+          workosAuth.signOut({
+            returnTo: options.returnTo,
+            navigate: true,
+          });
+          return;
+        }
+
+        await workosAuth.signOut({
+          returnTo: options?.returnTo,
+          navigate: false,
         });
-        return;
-      }
+      },
+      switchToOrganization: async (options) =>
+        await workosAuth.switchToOrganization(options),
+    }),
+    [workosAuth],
+  );
 
-      await workosAuth.signOut({
-        returnTo: options?.returnTo,
-        navigate: false,
-      });
-    },
-    switchToOrganization: async (options) => await workosAuth.switchToOrganization(options),
-  }), [workosAuth]);
-
-  return <AppAuthContext.Provider value={value}>{children}</AppAuthContext.Provider>;
+  return (
+    <AppAuthContext.Provider value={value}>{children}</AppAuthContext.Provider>
+  );
 }
 
 export function AppAuthProvider({
@@ -65,5 +77,7 @@ export function AppAuthProvider({
   value: AppAuthContextValue;
   children: ReactNode;
 }) {
-  return <AppAuthContext.Provider value={value}>{children}</AppAuthContext.Provider>;
+  return (
+    <AppAuthContext.Provider value={value}>{children}</AppAuthContext.Provider>
+  );
 }
