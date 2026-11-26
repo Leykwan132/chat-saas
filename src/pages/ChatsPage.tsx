@@ -109,6 +109,7 @@ import {
   type InboxConversationSort,
 } from "@/components/inbox/InboxConversationList";
 import { InboxSearchResults } from "@/components/inbox/InboxSearchResults";
+import { ConversationAiExclusion } from "@/components/inbox/ConversationAiExclusion";
 import { InboxMobileDetailsSheet } from "@/components/inbox/InboxMobileDetailsSheet";
 import { InboxDemoPreview } from "@/components/inbox/InboxDemoPreview";
 import type { InboxActiveFilter } from "@/components/inbox/InboxActiveFilterChips";
@@ -1672,41 +1673,47 @@ export default function ChatsPage({
                   {escalationAction}
                 </div>
               )}
-              {!focusMode && (
-                <div className="flex shrink-0 items-center gap-2.5">
-                  {selectedConversation ? (
-                    <div className="inline-flex h-8 w-fit shrink-0 items-center gap-1 px-0 shadow-none">
-                      <InboxMobileDetailsSheet
-                        open={mobileDetailsOpen}
-                        onOpenChange={setMobileDetailsOpen}
-                        customerName={
-                          customerSidebarDetails?.name ??
-                          displayHeaderName ??
-                          "Customer"
-                        }
-                        platform={
-                          customerSidebarDetails?.platformLabel ??
-                          selectedConversation.service
-                        }
-                        phone={customerSidebarDetails?.phone}
-                        email={customerSidebarDetails?.email}
-                        status={selectedConversation.status.replaceAll(
-                          "_",
-                          " ",
-                        )}
-                        leadTemperature={
-                          customerSidebarDetails?.leadTemperature
-                        }
-                        tags={
-                          customerSidebarDetails?.tags ??
-                          selectedConversation.tags ??
-                          []
-                        }
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              )}
+              <div className="flex shrink-0 items-center gap-2.5">
+                {selectedConversation ? (
+                  <div className="inline-flex h-8 w-fit shrink-0 items-center gap-1 px-0 shadow-none">
+                    <InboxMobileDetailsSheet
+                      showOnDesktop={focusMode}
+                      open={mobileDetailsOpen}
+                      onOpenChange={setMobileDetailsOpen}
+                      customerName={
+                        customerSidebarDetails?.name ??
+                        displayHeaderName ??
+                        "Customer"
+                      }
+                      platform={
+                        customerSidebarDetails?.platformLabel ??
+                        selectedConversation.service
+                      }
+                      phone={customerSidebarDetails?.phone}
+                      email={customerSidebarDetails?.email}
+                      status={selectedConversation.status.replaceAll("_", " ")}
+                      leadTemperature={customerSidebarDetails?.leadTemperature}
+                      aiExclusionControl={
+                        <ConversationAiExclusion
+                          conversationId={selectedConversation._id}
+                          excluded={
+                            selectedConversation.excludeFromAiReplies === true
+                          }
+                          canEdit={
+                            can(Permission.CHATS_ASSIGN) &&
+                            conversationDocMatchesSelection
+                          }
+                        />
+                      }
+                      tags={
+                        customerSidebarDetails?.tags ??
+                        selectedConversation.tags ??
+                        []
+                      }
+                    />
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <div className="relative row-start-2 min-h-0 overflow-hidden">
@@ -2094,6 +2101,17 @@ export default function ChatsPage({
                               )}
                             </div>
                           </div>
+                          {conversationDocMatchesSelection &&
+                            selectedConversation && (
+                              <ConversationAiExclusion
+                                conversationId={selectedConversation._id}
+                                excluded={
+                                  selectedConversation.excludeFromAiReplies ===
+                                  true
+                                }
+                                canEdit={can(Permission.CHATS_ASSIGN)}
+                              />
+                            )}
                         </div>
                       </div>
 

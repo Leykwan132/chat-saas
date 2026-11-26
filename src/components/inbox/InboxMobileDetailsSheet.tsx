@@ -1,5 +1,5 @@
-import { Contact, PanelRightOpen, Tag } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Contact, PanelRightOpen, Tag } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -7,7 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
+} from "@/components/ui/sheet";
 
 type InboxMobileDetailsSheetProps = {
   open: boolean;
@@ -19,6 +19,8 @@ type InboxMobileDetailsSheetProps = {
   status?: string;
   leadTemperature?: string;
   tags?: string[];
+  aiExclusionControl?: React.ReactNode;
+  showOnDesktop?: boolean;
 };
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -26,7 +28,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-start justify-between gap-4 border-b border-border/70 py-3 last:border-b-0">
       <span className="shrink-0 text-sm text-muted-foreground">{label}</span>
       <span className="min-w-0 truncate text-right text-sm font-medium text-foreground">
-        {value || '—'}
+        {value || "—"}
       </span>
     </div>
   );
@@ -42,6 +44,8 @@ export function InboxMobileDetailsSheet({
   status,
   leadTemperature,
   tags = [],
+  aiExclusionControl,
+  showOnDesktop = false,
 }: InboxMobileDetailsSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -51,7 +55,7 @@ export function InboxMobileDetailsSheet({
           type="button"
           variant="ghost"
           size="icon"
-          className="size-8 shrink-0 text-muted-foreground hover:text-foreground md:hidden"
+          className={`size-8 shrink-0 text-muted-foreground hover:text-foreground ${showOnDesktop ? "" : "md:hidden"}`}
           aria-label="Show customer details"
         >
           <PanelRightOpen className="size-4" />
@@ -68,10 +72,11 @@ export function InboxMobileDetailsSheet({
         <div className="flex-1 overflow-y-auto px-4 py-3">
           <div className="rounded-xl border border-border bg-background px-3">
             <DetailRow label="Platform" value={platform} />
-            <DetailRow label="Status" value={status ?? ''} />
-            <DetailRow label="Phone number" value={phone ?? ''} />
-            <DetailRow label="Email" value={email ?? ''} />
-            {leadTemperature ? <DetailRow label="Lead temperature" value={leadTemperature} /> : null}
+            <DetailRow label="Status" value={status ?? ""} />
+            <DetailRow label="Phone number" value={phone ?? ""} />
+            <DetailRow label="Email" value={email ?? ""} />
+            <DetailRow label="Lead status" value={leadTemperature ?? "None"} />
+            {aiExclusionControl}
           </div>
           <div className="mt-4 rounded-xl border border-border bg-background px-3 py-3">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -81,7 +86,10 @@ export function InboxMobileDetailsSheet({
             {tags.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">
                 {tags.map((tag) => (
-                  <span key={tag} className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                  <span
+                    key={tag}
+                    className="rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"
+                  >
                     {tag}
                   </span>
                 ))}

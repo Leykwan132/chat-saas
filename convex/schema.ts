@@ -1349,6 +1349,7 @@ export default defineSchema({
     assignedAgentId: v.optional(v.id("agents")),
     assignedUserId: v.optional(v.string()),
     assignToAiAgent: v.boolean(),
+    excludeFromAiReplies: v.optional(v.boolean()),
     leadAssignmentFallback: v.optional(v.boolean()),
     metaConversationId: v.optional(v.string()),
     threadId: v.string(),

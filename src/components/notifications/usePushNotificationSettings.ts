@@ -89,7 +89,7 @@ export function usePushNotificationSettings(agentId: Id<"agents">) {
     }
   }
 
-  async function enable() {
+  async function enable(kinds?: TelegramNotificationKind[]) {
     if (!settings?.publicKey)
       throw new Error("Push delivery is not configured yet");
     const device = await subscribePushDevice(
@@ -103,6 +103,7 @@ export function usePushNotificationSettings(agentId: Id<"agents">) {
       origin,
       ...device,
       kinds:
+        kinds ??
         settings.subscription?.kinds ??
         eligibleOptions.map((option) => option.kind),
     });
