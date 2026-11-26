@@ -3,6 +3,7 @@ import { expect, test, vi } from "vitest";
 import { useQuery } from "convex/react";
 import { InboxFocusSettings } from "./InboxFocusSettings";
 
+vi.mock("react-router", () => ({ useParams: () => ({}) }));
 vi.mock("convex/react", () => ({ useQuery: vi.fn() }));
 vi.mock("@/partnerAuth/AppAuthProvider", () => ({
   useAuth: () => ({ user: { email: "person@example.com" } }),
